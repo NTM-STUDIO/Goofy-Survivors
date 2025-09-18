@@ -1,8 +1,9 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Movement : MonoBehaviour
 {
-    public float speed = 1f;
+    [SerializeField] private float speed = 10f;
     private Rigidbody2D rb;
     private Vector2 moveInput;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -14,14 +15,11 @@ public class Movement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        moveInput.x = Input.GetAxisRaw("Horizontal");
-        moveInput.y = Input.GetAxisRaw("Vertical");
-
-        moveInput.Normalize();
+        rb.linearVelocity = moveInput * speed;
     }
 
-    private void FixedUpdate()
+    public void Move(InputAction.CallbackContext context)
     {
-        rb.linearVelocity = moveInput * speed;
+        moveInput = context.ReadValue<Vector2>();
     }
 }
