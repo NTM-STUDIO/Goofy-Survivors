@@ -209,10 +209,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   TrackerSettings:
-    BindingMode: 4
-    PositionDamping: {x: 1, y: 1, z: 1}
+    BindingMode: 3
+    PositionDamping: {x: 0, y: 0, z: 0}
     AngularDampingMode: 0
-    RotationDamping: {x: 1, y: 1, z: 1}
+    RotationDamping: {x: 0, y: 0, z: 0}
     QuaternionDamping: 1
   FollowOffset: {x: 0, y: 0, z: -10}
 --- !u!114 &60939580
@@ -633,10 +633,10 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: 25.253765, y: 20.644884}
-      - {x: -26.678755, y: 20.5733}
-      - {x: -26.613487, y: -19.086605}
-      - {x: 25.123463, y: -19.285275}
+    - - {x: 26.54512, y: 21.240892}
+      - {x: -27.572767, y: 21.367977}
+      - {x: -27.507504, y: -19.881283}
+      - {x: 26.414818, y: -19.980618}
   m_UseDelaunayMesh: 0
 --- !u!4 &1076450676
 Transform:
