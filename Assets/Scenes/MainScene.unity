@@ -332,7 +332,7 @@ MonoBehaviour:
   m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
-    TrackingTarget: {fileID: 0}
+    TrackingTarget: {fileID: 431917048}
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
@@ -2189,10 +2189,10 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: 75.69436, y: 35.593353}
-      - {x: -27.274536, y: 36.080635}
-      - {x: -26.789682, y: -27.182165}
-      - {x: 75.620346, y: -27.010914}
+    - - {x: 49.69436, y: 23.593353}
+      - {x: -2.2745361, y: 24.080635}
+      - {x: -1.7896824, y: -16.182165}
+      - {x: 49.620346, y: -16.010914}
   m_UseDelaunayMesh: 0
 --- !u!4 &444448724
 Transform:
