@@ -2743,6 +2743,7 @@ GameObject:
   m_Component:
   - component: {fileID: 734906699}
   - component: {fileID: 734906698}
+  - component: {fileID: 734906700}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -2814,13 +2815,29 @@ Transform:
   m_GameObject: {fileID: 734906697}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 10.3295, y: 1.0852, z: 0}
+  m_LocalPosition: {x: 41.3, y: 18.7, z: 0}
   m_LocalScale: {x: 0.56395394, y: 0.56395394, z: 0.56395394}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1091928960}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &734906700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 734906697}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78d38f3981850ff4bab94d8bddb1c5eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  baseHealth: 100
+  currentHealth: 0
+  speed: 3
+  damage: 10
 --- !u!1 &795138991
 GameObject:
   m_ObjectHideFlags: 0
@@ -3390,6 +3407,58 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &1080717433
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1080717435}
+  - component: {fileID: 1080717434}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1080717434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1080717433}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9411fe8643a319d4a9063132e85b09eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  waves:
+  - waveName: The Start
+    enemies:
+    - enemyPrefab: {fileID: 734906697}
+      enemyCount: 20
+    spawnInterval: 2
+    healthMultiplierPerWave: 1
+  waveIndex: 0
+--- !u!4 &1080717435
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1080717433}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.5301862, y: 3.5716739, z: 2.1797707}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1091928959
 GameObject:
   m_ObjectHideFlags: 0
@@ -5086,7 +5155,7 @@ Transform:
   m_GameObject: {fileID: 1939293909}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.99691737, z: -0, w: -0.07845902}
-  m_LocalPosition: {x: -8.02, y: 2.43, z: 0}
+  m_LocalPosition: {x: 43.6, y: 24.7, z: -8.4}
   m_LocalScale: {x: 0.56395394, y: 0.56395394, z: 0.56395394}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -6042,3 +6111,4 @@ SceneRoots:
   - {fileID: 352181587}
   - {fileID: 734906699}
   - {fileID: 1939293911}
+  - {fileID: 1080717435}
