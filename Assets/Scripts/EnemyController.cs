@@ -26,6 +26,7 @@ public class EnemyController : MonoBehaviour
         }
     }
 
+    /// Idea
     /// <summary>
     /// Sets the enemy's stats, applying multipliers.
     /// </summary>
