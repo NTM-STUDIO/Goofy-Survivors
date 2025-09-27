@@ -10,6 +10,10 @@ public class EnemySpawner : MonoBehaviour
     void Start()
     {
         mainCamera = Camera.main;
+    }
+
+    public void StartSpawning()
+    {
         StartCoroutine(SpawnWaves());
     }
 
