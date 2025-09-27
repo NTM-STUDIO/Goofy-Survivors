@@ -704,7 +704,7 @@ GameObject:
   - component: {fileID: 1987066042}
   - component: {fileID: 1987066041}
   m_Layer: 0
-  m_Name: GameManager
+  m_Name: GameManagerRenderMap
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -722,6 +722,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf8b558c844551d498d945787900b518, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  tiles:
+  - tileSprite: {fileID: -1221696356, guid: 74d52128551fd0447be26473b9407443, type: 3}
+    weight: 5
+  - tileSprite: {fileID: 1259159755, guid: 74d52128551fd0447be26473b9407443, type: 3}
+    weight: 2
+  - tileSprite: {fileID: 1102223825, guid: 7a9fb400cf7835046995a00dd01056fb, type: 3}
+    weight: 2
+  - tileSprite: {fileID: 1759741404, guid: 7a9fb400cf7835046995a00dd01056fb, type: 3}
+    weight: 1
+  mapWidth: 500
+  mapHeight: 300
+  tilePrefab: {fileID: 2865266679031100099, guid: 24f6f62f8ab3bd44aa58527a3c1b4b08, type: 3}
 --- !u!4 &1987066042
 Transform:
   m_ObjectHideFlags: 0
