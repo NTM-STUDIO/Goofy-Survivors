@@ -2097,7 +2097,7 @@ MonoBehaviour:
   - waveName: Default
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 10
+      enemyCount: 1000
     spawnInterval: 2
     healthMultiplierPerWave: 1.2
   waveIndex: 0
