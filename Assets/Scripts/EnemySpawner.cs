@@ -10,7 +10,12 @@ public class EnemySpawner : MonoBehaviour
     void Start()
     {
         mainCamera = Camera.main;
-        StartCoroutine(SpawnWaves());
+
+        // Ensure there are waves to spawn
+        if (waves != null && waves.Count > 0)
+            StartCoroutine(SpawnWaves());
+        else
+            Debug.LogWarning("EnemySpawner: No waves assigned in inspector.");
     }
 
     Vector2 GetSpawnPositionOutsideCamera()
@@ -61,7 +66,7 @@ public class EnemySpawner : MonoBehaviour
 
                     yield return new WaitForSeconds(currentWave.spawnInterval);
                 }
-            }            
+            }
             waveIndex++;
         }
         Debug.Log("All waves completed!");
@@ -70,6 +75,6 @@ public class EnemySpawner : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 }

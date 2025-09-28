@@ -12,7 +12,7 @@ public class WaveEnemy
 public class Wave
 {
     public string waveName; // Name of the wave (optional)
-    public List<WaveEnemy> enemies; // List of enemy groups in this wave
+    public List<WaveEnemy> enemies = new List<WaveEnemy>(); // List of enemy groups in this wave (new List<WaveEnemy>()) -> not null on start
     public float spawnInterval; // Time between spawns in seconds
     public float healthMultiplierPerWave = 0.1f; // Health increase multiplier per wave 
 }
