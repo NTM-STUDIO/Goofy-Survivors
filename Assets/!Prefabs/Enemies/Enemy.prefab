@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: -4432557400096275119}
   - component: {fileID: 4284822525752983333}
   - component: {fileID: -4036624671072493463}
+  - component: {fileID: 4602663416659819679}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Enemy
@@ -80,7 +81,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -749189981324814303, guid: e84308110a7b12e4494c7e0c613a0f67, type: 3}
+  m_Sprite: {fileID: 2460532211164355792, guid: 23c36bcfbe251274b94f5f19200b6e8d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -103,10 +104,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78d38f3981850ff4bab94d8bddb1c5eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseHealth: 100
-  currentHealth: 0
-  speed: 3
-  damage: 10
   knockbackForce: 5
   knockbackDuration: 0.2
 --- !u!50 &4284822525752983333
@@ -182,6 +179,20 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 3.2100291, y: 4.947978}
   m_EdgeRadius: 0
+--- !u!114 &4602663416659819679
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6482347200803263970}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 853117fdcad11eb468dce0024d64eb22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 100
+  moveSpeed: 2
 --- !u!1 &8600561634032360642
 GameObject:
   m_ObjectHideFlags: 0

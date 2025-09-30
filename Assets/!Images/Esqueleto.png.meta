@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 3d1bbc8a2b8fc92489c6ec299f730dd9
+guid: 23c36bcfbe251274b94f5f19200b6e8d
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2397521406278678811
-    second: e11dc24c934a2b5140607c4416f558a2_0
+      213: 2460532211164355792
+    second: Esqueleto_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: e11dc24c934a2b5140607c4416f558a2_0
+      name: Esqueleto_0
       rect:
         serializedVersion: 2
-        x: 328
-        y: 23
-        width: 375
-        height: 528
+        x: 329
+        y: 24
+        width: 385
+        height: 523
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 5e64d5dcbfa4abed0800000000000000
-      internalID: -2397521406278678811
+      spriteID: 0dc9bd47201952220800000000000000
+      internalID: 2460532211164355792
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      e11dc24c934a2b5140607c4416f558a2_0: -2397521406278678811
+      Esqueleto_0: 2460532211164355792
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

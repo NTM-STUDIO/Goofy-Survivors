@@ -1,15 +1,24 @@
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+
 
 public class EnemySpawner : MonoBehaviour
 {
     public List<Wave> waves;
     public int waveIndex = 0; // Current wave
     private Camera mainCamera;
-    void Start()
+
+    // Use Awake() for initialization that needs to happen before other scripts run.
+    void Awake()
     {
         mainCamera = Camera.main;
+
+        // Add a check to be safe and provide a clearer error message.
+        if (mainCamera == null)
+        {
+            Debug.LogError("EnemySpawner Error: Main Camera not found! Make sure your camera is tagged 'MainCamera'.");
+        }
     }
 
     Vector2 GetSpawnPositionOutsideCamera()
@@ -45,8 +54,6 @@ public class EnemySpawner : MonoBehaviour
             Wave currentWave = waves[waveIndex];
             Debug.Log("Starting Wave: " + (currentWave.waveName != "" ? currentWave.waveName : (waveIndex + 1).ToString()));
 
-            float healthMultiplier = Mathf.Pow(1 + currentWave.healthMultiplierPerWave, waveIndex);
-
             foreach (WaveEnemy waveEnemy in currentWave.enemies)
             {
                 for (int i = 0; i < waveEnemy.enemyCount; i++)
@@ -54,25 +61,40 @@ public class EnemySpawner : MonoBehaviour
                     Vector2 spawnPos = GetSpawnPositionOutsideCamera();
                     GameObject enemy = Instantiate(waveEnemy.enemyPrefab, spawnPos, Quaternion.identity);
 
-                    EnemyController controller = enemy.GetComponent<EnemyController>();
-                    if (controller != null)
-                        controller.SetStats(healthMultiplier);
 
                     yield return new WaitForSeconds(currentWave.spawnInterval);
                 }
             }
+            yield return new WaitForSeconds(currentWave.timeUntilNextWave);
+
             waveIndex++;
         }
         Debug.Log("All waves completed!");
     }
 
-    // Update is called once per frame
+
     public void StartSpawning()
     {
-        // Ensure there are waves to spawn
         if (waves != null && waves.Count > 0)
             StartCoroutine(SpawnWaves());
         else
             Debug.LogWarning("EnemySpawner: No waves assigned in inspector.");
     }
+}
+
+
+[System.Serializable]
+public class WaveEnemy
+{
+    public GameObject enemyPrefab;
+    public int enemyCount;
+}
+
+[System.Serializable]
+public class Wave
+{
+    public string waveName;
+    public List<WaveEnemy> enemies;
+    public float timeUntilNextWave = 10f;
+    public float spawnInterval = 0.5f;
 }

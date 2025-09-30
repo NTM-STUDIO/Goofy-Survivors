@@ -1,13 +1,8 @@
 using UnityEngine;
 using System.Collections;
 
-public class EnemyController : MonoBehaviour
+public class EnemyMovement : MonoBehaviour
 {
-    [Header("Stats")]
-    public float baseHealth = 100f;
-    public float currentHealth;
-    public float speed = 3f;
-    public float damage = 10f;
 
     [Header("Knockback Settings")]
     public float knockbackForce = 10f;
@@ -19,7 +14,6 @@ public class EnemyController : MonoBehaviour
 
     void Awake()
     {
-        currentHealth = baseHealth;
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
         rb = GetComponent<Rigidbody2D>();
     }
@@ -31,13 +25,10 @@ public class EnemyController : MonoBehaviour
         if (player != null && !isKnockbacked)
         {
             Vector2 direction = (player.position - transform.position).normalized;
-            rb.linearVelocity = direction * speed;
+            rb.linearVelocity = direction * GetComponent<EnemyStats>().moveSpeed;
         }
     }
 
-    /// <summary>
-    /// Public method to initiate the knockback sequence.
-    /// </summary>
     public void ApplyKnockback(Vector2 knockbackDirection)
     {
         // Prevent multiple knockbacks from starting at the same time.
@@ -45,15 +36,6 @@ public class EnemyController : MonoBehaviour
 
         StartCoroutine(KnockbackCoroutine(knockbackDirection));
     }
-
-    /// <summary>
-    /// Handles the knockback "stun" effect.
-    /// 1. Stops current movement.
-    /// 2. Applies an instant knockback force.
-    /// 3. Pauses for the stun duration.
-    /// 4. Stops all movement again to prevent sliding.
-    /// 5. Resumes normal behavior.
-    /// </summary>
     private IEnumerator KnockbackCoroutine(Vector2 knockbackDirection)
     {
         isKnockbacked = true;
@@ -71,27 +53,5 @@ public class EnemyController : MonoBehaviour
         rb.linearVelocity = Vector2.zero;
 
         isKnockbacked = false;
-    }
-
-    // --- Other Methods ---
-
-    public void SetStats(float healthMultiplier)
-    {
-        currentHealth = baseHealth * healthMultiplier;
-    }
-
-    public void TakeDamage(float amount)
-    {
-        currentHealth -= amount;
-        if (currentHealth <= 0)
-        {
-            DestroyEnemy();
-        }
-    }
-
-    private void DestroyEnemy()
-    {
-        // You can add particle effects or sounds here before destroying.
-        Destroy(gameObject);
     }
 }

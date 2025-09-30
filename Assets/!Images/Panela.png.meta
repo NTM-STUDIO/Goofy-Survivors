@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: e84308110a7b12e4494c7e0c613a0f67
+guid: 90b21788cb2639043a89ea71a03b7090
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -749189981324814303
-    second: a674ceda19e92103d1b10c67afaa0d0f_0
+      213: -8978904937898687666
+    second: Panela_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: a674ceda19e92103d1b10c67afaa0d0f_0
+      name: Panela_0
       rect:
         serializedVersion: 2
-        x: 329
-        y: 24
-        width: 385
-        height: 523
+        x: 113
+        y: 60
+        width: 797
+        height: 459
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1285add6ea75a95f0800000000000000
-      internalID: -749189981324814303
+      spriteID: e434c800885846380800000000000000
+      internalID: -8978904937898687666
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      a674ceda19e92103d1b10c67afaa0d0f_0: -749189981324814303
+      Panela_0: -8978904937898687666
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

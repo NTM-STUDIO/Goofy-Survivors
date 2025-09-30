@@ -12,11 +12,11 @@ public class PlayerCollision : MonoBehaviour
         {
             StartCoroutine(GracePeriod());
 
-            EnemyController enemyController = collision.gameObject.GetComponent<EnemyController>();
-            if (enemyController != null)
+            EnemyMovement enemyMovement = collision.gameObject.GetComponent<EnemyMovement>();
+            if (enemyMovement != null)
             {
                 Vector2 knockbackDirection = (collision.transform.position - transform.position).normalized;
-                enemyController.ApplyKnockback(knockbackDirection);
+                enemyMovement.ApplyKnockback(knockbackDirection);
             }
         }
     }
