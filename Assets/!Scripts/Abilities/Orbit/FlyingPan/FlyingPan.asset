@@ -18,11 +18,11 @@ MonoBehaviour:
   weaponPrefab: {fileID: 6969291154112545986, guid: 29845c9427df0d94780766f2d257512a, type: 3}
   archetype: 3
   damage: 20
-  cooldown: 8
-  area: 1.5
-  amount: 1
-  speed: 150
-  duration: 5
+  cooldown: 99
+  area: 2
+  amount: 5
+  speed: 300
+  duration: 3
   criticalChance: 0
   criticalMultiplier: 1.5
   pierce: 0
