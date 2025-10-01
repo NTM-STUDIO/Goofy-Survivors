@@ -109,7 +109,7 @@ public class GameManager : MonoBehaviour
     {
         if (!bossSpawned && currentTime <= 10.0f)
         {
-            SpawnBoss();
+            //SpawnBoss();
             bossSpawned = true;
         }
     }
