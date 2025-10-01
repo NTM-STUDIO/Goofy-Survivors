@@ -1189,11 +1189,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f0878a6349e1d584891e5f6b8d6388de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  panPrefab: {fileID: 6969291154112545986, guid: 29845c9427df0d94780766f2d257512a, type: 3}
-  numberOfPans: 5
-  rotationSpeed: 200
-  orbitDistance: 7
-  cooldownTime: 5
+  startingWeapons:
+  - {fileID: 11400000, guid: 71f30611e4b0a0b4a808ab2598cd8ca4, type: 2}
+  weaponParent: {fileID: 431917048}
 --- !u!1 &435501341
 GameObject:
   m_ObjectHideFlags: 0
