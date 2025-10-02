@@ -18,7 +18,7 @@ MonoBehaviour:
   weaponPrefab: {fileID: 6969291154112545986, guid: 29845c9427df0d94780766f2d257512a, type: 3}
   archetype: 3
   damage: 20
-  cooldown: 99
+  cooldown: 3
   area: 2
   amount: 5
   speed: 300
