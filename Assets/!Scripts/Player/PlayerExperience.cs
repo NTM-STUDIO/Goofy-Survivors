@@ -12,6 +12,12 @@ public class PlayerExperience : MonoBehaviour
 
     public UnityEvent<int> OnLevelUp;
 
+    private void Awake()
+    {
+        // Ensure the event is initialized so invoking it is always safe even with no listeners
+        OnLevelUp ??= new UnityEvent<int>();
+    }
+
     public void AddXP(float xp)
     {
         currentXP += xp;
@@ -28,6 +34,6 @@ public class PlayerExperience : MonoBehaviour
         xpToNextLevel *= xpIncreaseFactor;
         
         Debug.Log($"Leveled up to Level {currentLevel}!");
-        OnLevelUp.Invoke(currentLevel);
+        OnLevelUp?.Invoke(currentLevel);
     }
 }
