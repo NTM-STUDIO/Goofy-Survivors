@@ -12,8 +12,8 @@ public class MapGenerator : MonoBehaviour
     }
 
     public TileData[] tiles;
-    public int mapWidth = 4000;
-    public int mapHeight = 2400;
+    public int mapWidth = 2000;
+    public int mapHeight = 1200;
     public GameObject tilePrefab; // Um GameObject com SpriteRenderer
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -24,11 +24,15 @@ public class MapGenerator : MonoBehaviour
 
     void GenerateMap()
     {
+        // Inicia o processo de geração do mapa isométrico
         Debug.Log("Iniciando geração do mapa isométrico...");
+
+        // Soma os pesos de todas as tiles para cálculo de probabilidade
         float totalWeight = 0f;
         foreach (var tile in tiles)
             totalWeight += tile.weight;
 
+        // Valida o SpriteRenderer do prefab
         var spriteRenderer = tilePrefab.GetComponent<SpriteRenderer>();
         if (spriteRenderer == null)
         {
@@ -40,37 +44,48 @@ public class MapGenerator : MonoBehaviour
             Debug.LogError("tilePrefab não tem sprite atribuído!");
             return;
         }
+        // Obtém o tamanho do tile em unidades do mundo
         float tileWidth = spriteRenderer.sprite.bounds.size.x;
         float tileHeight = spriteRenderer.sprite.bounds.size.y;
         Debug.Log($"tileWidth: {tileWidth}, tileHeight: {tileHeight}");
 
-        // Offset para alinhar o canto inferior esquerdo na origem
-        float offsetX = (mapHeight - 1) * (tileWidth / 2f);
-        float offsetY = 0f;
+        // Calcula os limites para desenhar o mapa centrado em (0,0)
+        int halfWidth = mapWidth / 2;
+        int halfHeight = mapHeight / 2;
 
         int logCount = 0;
-        for (int x = 0; x < mapWidth; x++)
+        for (int gridX = -halfWidth; gridX < halfWidth; gridX++) // Percorre colunas centradas
         {
-            for (int y = 0; y < mapHeight; y++)
+            for (int gridY = -halfHeight; gridY < halfHeight; gridY++) // Percorre linhas centradas
             {
+                // Escolhe uma tile aleatória com base nos pesos
                 TileData chosenTile = GetRandomTile(totalWeight);
-                // Calcula a posição isométrica achatada
-                float isoX = (x - y) * (tileWidth / 2f) + offsetX;
-                float isoY = (y + x) * (tileHeight / 4f) + offsetY;
+
+                // Converte as coordenadas do grid para coordenadas isométricas no mundo - mundo achatado
+                float isoX = (gridX - gridY) * (tileWidth / 2f);
+                float isoY = (gridY + gridX) * (tileHeight / 4f);
                 Vector2 isoPosition = new Vector2(isoX, isoY);
-                if (logCount < 10)
+
+                // Log das primeiras 5 tiles para debug
+                if (logCount < 5)
                 {
-                    Debug.Log($"Tile ({x},{y}) -> IsoPos: {isoPosition}");
+                    Debug.Log($"Tile ({gridX},{gridY}) -> IsoPos: {isoPosition}");
                     logCount++;
                 }
+
+                // Instancia o tile na posição calculada
                 GameObject tileGO = Instantiate(tilePrefab, isoPosition, Quaternion.identity, transform);
+                // Define o sprite da tile escolhida
                 tileGO.GetComponent<SpriteRenderer>().sprite = chosenTile.tileSprite;
-                tileGO.GetComponent<SpriteRenderer>().sortingOrder = (mapWidth - x) + (mapHeight - y);
+                // Define a ordem de renderização para garantir sobreposição correta
+                tileGO.GetComponent<SpriteRenderer>().sortingOrder = (halfWidth * 2 - (gridX + halfWidth)) + (halfHeight * 2 - (gridY + halfHeight));
             }
         }
+        // Fim da geração do mapa
         Debug.Log("Geração do mapa isométrico finalizada.");
     }
 
+    // Função para escolher uma tile aleatória com base nos pesos
     TileData GetRandomTile(float totalWeight)
     {
         float randomValue = Random.Range(0, totalWeight);
@@ -83,7 +98,7 @@ public class MapGenerator : MonoBehaviour
                 return tile;
         }
 
-        //erro
+        // Caso algo corra mal, retorna a última tile e avisa no log
         Debug.LogWarning("Erro tile usada — verifica os pesos!");
         return tiles[tiles.Length - 1]; 
     }
