@@ -22,7 +22,7 @@ MonoBehaviour:
   area: 1
   amount: 1
   speed: 180
-  duration: 3
+  duration: 5
   criticalChance: 0
   criticalMultiplier: 1.5
   pierce: 0

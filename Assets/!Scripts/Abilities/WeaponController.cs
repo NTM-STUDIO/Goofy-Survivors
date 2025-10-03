@@ -83,6 +83,8 @@ public class WeaponController : MonoBehaviour
         for (int i = 0; i < weaponData.amount; i++)
         {
             // Determine the starting angle for this specific instance.
+            //Randomize starting angle for more dynamic look
+            
             float startingAngle = i * angleStep;
             
             // Instantiate the weapon prefab and parent it to the orbit center to keep the hierarchy clean.

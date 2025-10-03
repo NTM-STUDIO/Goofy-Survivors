@@ -804,7 +804,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -959.84, y: -536.39}
+  m_AnchoredPosition: {x: -959.7927, y: -536.4373}
   m_SizeDelta: {x: 5.1332, y: 0.8836}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &342946453
@@ -2671,6 +2671,7 @@ GameObject:
   - component: {fileID: 1080717438}
   - component: {fileID: 1080717437}
   - component: {fileID: 1080717439}
+  - component: {fileID: 1080717440}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -2744,10 +2745,30 @@ MonoBehaviour:
   - waveName: Wavy
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 10
+      enemyCount: 2147483647
     timeUntilNextWave: 0
     spawnInterval: 1
   waveIndex: 0
+--- !u!114 &1080717440
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1080717433}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78b3ee8ac3bcebd4483083db5c08355e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentXP: 0
+  xpToNextLevel: 100
+  currentLevel: 1
+  currentDifficulty: 1
+  difficultyIncreasePer100XP: 1.4
+  levelUpUIPrefab: {fileID: 0}
+  canvasTransform: {fileID: 1242726739}
+  xpSlider: {fileID: 352039730}
 --- !u!1 &1097082030
 GameObject:
   m_ObjectHideFlags: 0
@@ -3552,7 +3573,7 @@ Transform:
   m_GameObject: {fileID: 1397577414}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 24.294807, y: 14.906812, z: -1.5120001}
+  m_LocalPosition: {x: 24.294807, y: 14.906812, z: 2}
   m_LocalScale: {x: 4.024, y: 4.024, z: 4.024}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3882,8 +3903,8 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 0adc7576b99f0884c9b942a034cf021d, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 0.249
-  m_Pitch: 1
+  m_Volume: 0.146
+  m_Pitch: 0.91
   Loop: 0
   Mute: 0
   Spatialize: 0
@@ -3926,7 +3947,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -3956,7 +3977,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 1
+      value: 1.1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
