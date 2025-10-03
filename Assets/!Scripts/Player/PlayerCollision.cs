@@ -3,28 +3,13 @@ using System.Collections;
 
 public class PlayerCollision : MonoBehaviour
 {
-    private bool isInGracePeriod = false;
-    private float gracePeriodDuration = 2f;
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Enemy") && !isInGracePeriod)
-        {
-            StartCoroutine(GracePeriod());
+        //Verificar se é Monstro/Item/Chest
 
-            EnemyStats enemyStats = collision.gameObject.GetComponent<EnemyStats>();
-            if (enemyStats != null)
-            {
-                Vector2 knockbackDirection = (collision.transform.position - transform.position).normalized;
-                enemyStats.ApplyKnockback(5f, knockbackDirection);
-            }
-        }
+        //Fazer o KnockBack e o Grace Period
     }
 
-    private IEnumerator GracePeriod()
-    {
-        isInGracePeriod = true;
-        yield return new WaitForSeconds(gracePeriodDuration);
-        isInGracePeriod = false;
-    }
+
 }
