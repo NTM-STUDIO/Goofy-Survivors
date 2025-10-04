@@ -78,7 +78,7 @@ public class GameManager : MonoBehaviour
         currentEnemyHealthMultiplier = 1f;
         currentEnemyDamageMultiplier = 1f;
 
-        Time.timeScale = 1f;
+        Time.timeScale = 10f;
 
         if (player != null) player.enabled = true;
         enemySpawner.StartSpawning();
@@ -147,7 +147,7 @@ public class GameManager : MonoBehaviour
         else if (currentState == GameState.Paused)
         {
             currentState = GameState.Playing;
-            Time.timeScale = 1f;
+            Time.timeScale = 10f;
             if (player != null) player.enabled = true;
             UIManager.Instance.ShowPauseMenu(false);
         }

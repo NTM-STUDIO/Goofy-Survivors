@@ -18,7 +18,7 @@ MonoBehaviour:
   maxHp: 175
   hpRegen: 10
   damageMultiplier: 1.2
-  critChance: 0.01
+  critChance: 0
   critDamageMultiplier: 2
   attackSpeedMultiplier: 1
   projectileCount: 0
@@ -27,6 +27,6 @@ MonoBehaviour:
   durationMultiplier: 1.1
   knockbackMultiplier: 1
   movementSpeed: 20
-  luck: 0
+  luck: 1
   pickupRange: 5
   xpGainMultiplier: 1.1
