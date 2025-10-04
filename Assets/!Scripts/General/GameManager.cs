@@ -2,8 +2,6 @@ using UnityEngine;
 using System.Collections;
 using UnityEngine.SceneManagement;
 
-
-
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
@@ -12,13 +10,25 @@ public class GameManager : MonoBehaviour
     public GameState currentState;
 
     [Header("Timer Settings")]
-    public float totalGameTime = 900f; // 15 minutos em segundos (pode ser 450 = 7.5min)
+    public float totalGameTime = 900f; // 15 minutos em segundos
     private float currentTime;
     private bool isTimerRunning = false;
 
+    // --- NOVAS VARIÁVEIS DE DIFICULDADE ---
     [Header("Difficulty Settings")]
-    public float difficultyMultiplier = 1.2f;
+    [Tooltip("O multiplicador de vida inicial para os inimigos.")]
+    public float currentEnemyHealthMultiplier = 1f;
+    [Tooltip("O multiplicador de dano inicial para os inimigos.")]
+    public float currentEnemyDamageMultiplier = 1f;
+    
+    [Space]
+    [Tooltip("Quanto o multiplicador de vida aumenta a cada minuto.")]
+    public float healthIncreasePerMinute = 0.2f; // Aumenta a vida em 20% a cada minuto
+    [Tooltip("Quanto o multiplicador de dano aumenta a cada minuto.")]
+    public float damageIncreasePerMinute = 0.15f; // Aumenta o dano em 15% a cada minuto
+
     private int lastMinuteMark = 0;
+    // --- FIM DAS NOVAS VARIÁVEIS ---
 
     [Header("Boss Settings")]
     public GameObject bossPrefab;
@@ -56,7 +66,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Inicia Jogo
     public void StartGame()
     {
         currentState = GameState.Playing;
@@ -64,6 +73,10 @@ public class GameManager : MonoBehaviour
         isTimerRunning = true;
         bossSpawned = false;
         lastMinuteMark = 0;
+        
+        // Reseta os multiplicadores no início de cada jogo
+        currentEnemyHealthMultiplier = 1f;
+        currentEnemyDamageMultiplier = 1f;
 
         Time.timeScale = 1f;
 
@@ -71,7 +84,6 @@ public class GameManager : MonoBehaviour
         enemySpawner.StartSpawning();
     }
 
-    // Atualiza Timer
     private void UpdateTimer()
     {
         if (isTimerRunning)
@@ -82,12 +94,10 @@ public class GameManager : MonoBehaviour
                 currentTime = 0;
                 EndGame();
             }
-
             UIManager.Instance.UpdateTimerText(currentTime);
         }
     }
 
-    // Escala dificuldade a cada minuto
     private void CheckForDifficultyIncrease()
     {
         int currentMinute = Mathf.FloorToInt((totalGameTime - currentTime) / 60);
@@ -98,13 +108,15 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // --- LÓGICA DE DIFICULDADE ATUALIZADA ---
     private void IncreaseDifficulty()
     {
-        // enemySpawner.IncreaseEnemyStats(difficultyMultiplier);
-        Debug.Log($"Dificuldade aumentada em {difficultyMultiplier}x no minuto {lastMinuteMark}");
+        currentEnemyHealthMultiplier += healthIncreasePerMinute;
+        currentEnemyDamageMultiplier += damageIncreasePerMinute;
+
+        Debug.Log($"DIFICULDADE AUMENTADA! Minuto {lastMinuteMark}. Multiplicador de Vida: {currentEnemyHealthMultiplier:F2}x, Multiplicador de Dano: {currentEnemyDamageMultiplier:F2}x");
     }
 
-    // Spawn do Boss 10s antes do fim
     private void CheckForBossSpawn()
     {
         if (!bossSpawned && currentTime <= 10.0f)
@@ -123,7 +135,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Pausa/Resume
     public void TogglePause()
     {
         if (currentState == GameState.Playing)
@@ -142,19 +153,15 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Quando o jogador morre
     public void PlayerDied()
     {
         currentState = GameState.GameOver;
         isTimerRunning = false;
-
         if (player != null) player.enabled = false;
         // enemySpawner.StopSpawning();
-
         UIManager.Instance.ShowUsernameInput();
     }
 
-    // Submeter username (placeholder BD)
     public void SubmitUsername(string username)
     {
         StartCoroutine(SubmitToDatabase(username, (int)currentTime));
@@ -172,16 +179,10 @@ public class GameManager : MonoBehaviour
         isTimerRunning = false;
         currentState = GameState.GameOver;
         Debug.Log("🏁 O tempo acabou! Fim de jogo.");
-        // Pode mostrar ecrã de vitória aqui
     }
-
-    // Getter público para o tempo restante
-    public float GetRemainingTime()
-    {
-        return currentTime;
-    }
-
-    // Setter para ajustar duração (ex: 15m → 7.5m)
+    
+    // As funções Getter e Setter continuam úteis
+    public float GetRemainingTime() { return currentTime; }
     public void SetGameDuration(float newDuration)
     {
         totalGameTime = newDuration;

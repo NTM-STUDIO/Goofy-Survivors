@@ -1,5 +1,7 @@
 using UnityEngine;
-
+using System.Collections.Generic;
+using System;
+using System.Linq;
 /// <summary>
 /// This component is attached to a GameObject managed by the PlayerWeaponManager.
 /// It reads the assigned WeaponData and executes the weapon's behavior based on its archetype.
@@ -14,8 +16,9 @@ public class WeaponController : MonoBehaviour
 
     void Start()
     {
-        // Set the initial cooldown when the weapon is first equipped.
-        currentCooldown = weaponData.cooldown;
+        // --- ESTA É A MUDANÇA ---
+        // Ao definir o cooldown inicial para 0, o primeiro ataque será instantâneo.
+        currentCooldown = 1f;
     }
 
     void Update()
@@ -27,6 +30,8 @@ public class WeaponController : MonoBehaviour
         if (currentCooldown <= 0f)
         {
             Attack();
+            // Depois do primeiro ataque, o cooldown é definido para o seu valor normal,
+            // estabelecendo o ciclo de ataque regular.
             currentCooldown = weaponData.cooldown;
         }
     }
@@ -62,7 +67,7 @@ public class WeaponController : MonoBehaviour
                 // ActivateAura();
                 break;
 
-            // Add cases for Laser, Shield, etc. as you implement them.
+                // Add cases for Laser, Shield, etc. as you implement them.
         }
     }
 
@@ -72,36 +77,38 @@ public class WeaponController : MonoBehaviour
     /// </summary>
     private void ActivateOrbitingWeapon()
     {
-        Debug.Log("Activating Orbiting Weapon: " + weaponData.weaponName);
-        
-        // The center of the orbit is the parent of this controller (i.e., the Player's WeaponManager).
         Transform orbitCenter = transform.parent;
-
-        // Calculate the angle between each weapon to space them out evenly.
         float angleStep = 360f / weaponData.amount;
+        float randomGroupRotation = UnityEngine.Random.Range(0f, 360f);
 
         for (int i = 0; i < weaponData.amount; i++)
         {
-            // Determine the starting angle for this specific instance.
-            //Randomize starting angle for more dynamic look
-            
-            float startingAngle = i * angleStep;
-            
-            // Instantiate the weapon prefab and parent it to the orbit center to keep the hierarchy clean.
-            GameObject orbitingWeaponObj = Instantiate(weaponData.weaponPrefab, orbitCenter.position, Quaternion.identity, orbitCenter);
+            float startingAngle = randomGroupRotation + (i * angleStep);
 
-            // Get the OrbitingWeapon component from the newly created prefab.
+            // --- ESTA É A MUDANÇA PRINCIPAL ---
+
+            // 1. Calcula o vetor de direção a partir do ângulo.
+            // Mathf.Deg2Rad converte graus para radianos, que é o que as funções de seno e cosseno usam.
+            Vector3 direction = new Vector3(Mathf.Cos(startingAngle * Mathf.Deg2Rad), Mathf.Sin(startingAngle * Mathf.Deg2Rad), 0);
+
+            // 2. Calcula a posição final da arma.
+            // Posição Final = Posição do Centro + Direção * Raio
+            // Assumindo que o raio está em `weaponData.radius`. Se o nome for diferente, ajuste aqui.
+            Vector3 spawnPosition = orbitCenter.position + direction * weaponData.area * 4f; // Multiplicador de 4 para ajustar escala visual
+
+            // 3. Gera uma rotação visual aleatória para o sprite.
+            Quaternion randomSpriteRotation = Quaternion.Euler(0, 0, UnityEngine.Random.Range(0f, 360f));
+
+            // 4. Instancia o objeto DIRETAMENTE na sua posição orbital final.
+            GameObject orbitingWeaponObj = Instantiate(weaponData.weaponPrefab, spawnPosition, randomSpriteRotation, orbitCenter);
+
+            // --- FIM DA MUDANÇA ---
+
             OrbitingWeapon orbiter = orbitingWeaponObj.GetComponent<OrbitingWeapon>();
-
-            // Pass all the necessary data from the ScriptableObject to the instance.
             if (orbiter != null)
             {
+                // Agora o Initialize não precisa de mover o objeto, apenas de guardar os dados para a rotação contínua.
                 orbiter.Initialize(weaponData, orbitCenter, startingAngle);
-            }
-            else
-            {
-                // This error is crucial for debugging if you forget to attach the script to your prefab.
-                Debug.LogError("The weaponPrefab for " + weaponData.name + " is missing an OrbitingWeapon script!");
             }
         }
     }
