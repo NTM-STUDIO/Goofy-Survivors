@@ -14,15 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponName: FlyingPan
   description: Flying Pan Orbiting
-  icon: {fileID: 0}
+  icon: {fileID: -8978904937898687666, guid: 90b21788cb2639043a89ea71a03b7090, type: 3}
   weaponPrefab: {fileID: 6969291154112545986, guid: 29845c9427df0d94780766f2d257512a, type: 3}
   archetype: 3
   damage: 50
-  cooldown: 5
+  cooldown: 3
   area: 1
   amount: 1
   speed: 180
-  duration: 5
+  duration: 2
   criticalChance: 0
   criticalMultiplier: 1.5
   pierce: 0

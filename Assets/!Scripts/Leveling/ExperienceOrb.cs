@@ -5,65 +5,68 @@ using UnityEngine;
 public class ExperienceOrb : MonoBehaviour
 {
     [Header("Orb Properties")]
-    public int xpValue = 10; // How much XP this orb gives. Set this differently for each prefab.
+    public int xpValue = 10;
 
-    [Header("Movement")]
-    public float pickupRadius = 3f; // How close the player needs to be to attract the orb.
-    public float moveSpeed = 8f;
-    public float dropForce = 5f; // The upward force for the "bounce" animation.
+    [Header("Fluid Movement")]
+    public float smoothTime = 0.1f; // Roughly the time it will take to reach the target. A smaller value means faster, snappier movement.
+    public float maxSpeed = 50f;   // The maximum speed the orb can travel.
+    public float collectionDistance = 2f;
 
-    private Transform player;
-    private Rigidbody2D rb;
+    private Transform attractionTarget; // The shadow's transform
     private bool isAttracted = false;
 
-    void Awake()
-    {
-        rb = GetComponent<Rigidbody2D>();
-        // Find the player by their tag. Make sure your player GameObject is tagged "Player".
-        player = GameObject.FindGameObjectWithTag("Player")?.transform;
-    }
+    // This is a special variable that SmoothDamp uses to track the orb's current velocity.
+    private Vector3 currentVelocity = Vector3.zero;
 
-    void Start()
-    {
-        // Apply a small, random upward bounce when the orb is created.
-        float randomX = Random.Range(-0.5f, 0.5f);
-        Vector2 forceDirection = new Vector2(randomX, 1).normalized;
-        rb.AddForce(forceDirection * dropForce, ForceMode2D.Impulse);
-    }
 
+    // All movement logic is now in Update.
     void Update()
     {
-        if (player == null) return;
+        // If the orb isn't attracted, do nothing.
+        if (!isAttracted || attractionTarget == null) return;
 
-        // Check distance to the player to start the attraction.
-        float distanceToPlayer = Vector2.Distance(transform.position, player.position);
-        if (distanceToPlayer <= pickupRadius)
+        // --- DISTANCE CHECK FOR COLLECTION ---
+        // First, check if we are close enough to be collected.
+        if (Vector2.Distance(transform.position, attractionTarget.position) < collectionDistance)
         {
-            isAttracted = true;
+            CollectOrb();
+            return; // Exit the Update loop immediately after collection
         }
 
-        // If attracted, move towards the player.
-        if (isAttracted)
-        {
-            Vector2 direction = (player.position - transform.position).normalized;
-            rb.linearVelocity = direction * moveSpeed;
-        }
+        // --- FLUID MOVEMENT LOGIC ---
+        // If we are not close enough, move the orb smoothly towards its target.
+        // Vector3.SmoothDamp gradually changes the orb's position towards the target over time.
+        transform.position = Vector3.SmoothDamp(
+            transform.position,   // Current position
+            attractionTarget.position,   // Target position
+            ref currentVelocity,  // The current velocity (the function modifies this)
+            smoothTime,           // The time to reach the target
+            maxSpeed              // The maximum speed allowed
+        );
     }
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        // When the orb touches the player...
-        if (other.CompareTag("Player"))
+        // This function's only job is to start the attraction process.
+        if (!isAttracted && other.CompareTag("Items"))
         {
-            // Find the LevelUpManager in the scene and give it the XP.
-            LevelUpManager manager = FindObjectOfType<LevelUpManager>();
-            if (manager != null)
-            {
-                manager.AddXP(xpValue);
-            }
-            
-            // Destroy the orb object.
-            Destroy(gameObject);
+            isAttracted = true;
+            attractionTarget = other.transform; // The target is the shadow
         }
+    }
+
+    private void CollectOrb()
+    {
+        // The attractionTarget is the shadow, but the scripts are on the parent.
+        PlayerExperience playerExperience = attractionTarget.GetComponentInParent<PlayerExperience>();
+        PlayerStats playerStats = attractionTarget.GetComponentInParent<PlayerStats>();
+
+        if (playerExperience != null && playerStats != null)
+        {
+            float finalXp = xpValue * playerStats.xpGainMultiplier;
+            playerExperience.AddXP(finalXp);
+        }
+        
+        Destroy(gameObject);
     }
 }

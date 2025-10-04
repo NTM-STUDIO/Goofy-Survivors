@@ -1,26 +1,29 @@
+
 using UnityEngine;
 using UnityEngine.Events;
-
-// Attach this script to your Player GameObject.
+using UnityEngine.UI;
+using TMPro;
 public class PlayerExperience : MonoBehaviour
 {
+    public Slider xpSlider;
+
+    public TMP_Text levelText;
     public int currentLevel = 1;
     public float currentXP = 0;
     public float xpToNextLevel = 100;
     public float xpIncreaseFactor = 1.2f; // How much harder the next level is
 
-
-    public UnityEvent<int> OnLevelUp;
-
-    private void Awake()
+    public void Start()
     {
-        // Ensure the event is initialized so invoking it is always safe even with no listeners
-        OnLevelUp ??= new UnityEvent<int>();
+        xpSlider.maxValue = xpToNextLevel;
+        xpSlider.value = currentXP;
+        levelText.text = $"Lvl: {currentLevel}";
     }
-
     public void AddXP(float xp)
     {
         currentXP += xp;
+        xpSlider.maxValue = xpToNextLevel;
+        xpSlider.value = currentXP;
         while (currentXP >= xpToNextLevel)
         {
             LevelUp();
@@ -32,8 +35,9 @@ public class PlayerExperience : MonoBehaviour
         currentLevel++;
         currentXP -= xpToNextLevel;
         xpToNextLevel *= xpIncreaseFactor;
-        
-        Debug.Log($"Leveled up to Level {currentLevel}!");
-        OnLevelUp?.Invoke(currentLevel);
+        xpSlider.maxValue = xpToNextLevel;
+        xpSlider.value = currentXP;
+        levelText.text = $"Lvl: {currentLevel}";
+
     }
 }

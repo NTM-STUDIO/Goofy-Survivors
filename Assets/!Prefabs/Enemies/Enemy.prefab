@@ -81,8 +81,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -946755919
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_Sprite: {fileID: 2460532211164355792, guid: 23c36bcfbe251274b94f5f19200b6e8d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -193,11 +193,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   health: 100
-  moveSpeed: 2
-  chanceToDropNothing: 50
+  moveSpeed: 3
+  chanceToDropNothing: 10
   orbDrops:
   - orbPrefab: {fileID: 8326750618715067698, guid: 3f0fbb90971ba4441913d7efaea77fca, type: 3}
-    dropChance: 40
+    dropChance: 80
   - orbPrefab: {fileID: 1154120037122087691, guid: 0c16bdaa5df793949a03c99847af810a, type: 3}
     dropChance: 8
   - orbPrefab: {fileID: 2229382513563764699, guid: 1c9fe8c97995a1a45b65587d3a15ed12, type: 3}
@@ -278,8 +278,8 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 1059366671
+  m_SortingLayer: 2
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 2ca4b6f5bb3972c469243525b6c68a8a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 0.7372549}

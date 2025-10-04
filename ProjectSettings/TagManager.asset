@@ -5,16 +5,17 @@ TagManager:
   serializedVersion: 3
   tags:
   - Enemy
+  - Items
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Player
   - Water
   - UI
   - Bounds
-  - 
-  - 
+  - Map
+  - Items
   - 
   - 
   - 
@@ -41,6 +42,21 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Background
+    uniqueID: 956755197
+    locked: 0
+  - name: Shadows
+    uniqueID: 1059366671
+    locked: 0
+  - name: Items
+    uniqueID: 580247611
+    locked: 0
+  - name: Players
+    uniqueID: 3348211377
+    locked: 0
+  - name: VFX
+    uniqueID: 2737780903
     locked: 0
   m_RenderingLayers:
   - Default
