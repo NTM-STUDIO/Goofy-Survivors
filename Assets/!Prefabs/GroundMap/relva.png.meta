@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: bed0c795748413f4e83a8b653c8ac706
+guid: d05a46e3a1ad3e84a95f41c19397134f
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5919109726075490299
-    second: Generated_Image_October_05_2025_-_11_36AM_1_0
+      213: -6930474823159529909
+    second: relva_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Generated_Image_October_05_2025_-_11_36AM_1_0
+      name: relva_0
       rect:
         serializedVersion: 2
-        x: 135
-        y: 236
-        width: 764
-        height: 553
+        x: 150
+        y: 327
+        width: 730
+        height: 444
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 500f5be90191bdda0800000000000000
-      internalID: -5919109726075490299
+      spriteID: b4eb9c81ed102df90800000000000000
+      internalID: -6930474823159529909
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Generated_Image_October_05_2025_-_11_36AM_1_0: -5919109726075490299
+      relva_0: -6930474823159529909
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
