@@ -154,31 +154,31 @@ public class UpgradeManager : MonoBehaviour
                 playerStats.IncreaseCritDamageMultiplier(value / 100f);
                 break;
             case StatType.AttackSpeedMultiplier:
-                playerStats.IncreaseAttackSpeedMultiplier(value * playerStats.attackSpeedMultiplier - playerStats.attackSpeedMultiplier);
+                playerStats.IncreaseAttackSpeedMultiplier(value / 100f);
                 break;
             case StatType.ProjectileCount:
                 playerStats.IncreaseProjectileCount(Mathf.RoundToInt(value));
                 break;
             case StatType.ProjectileSizeMultiplier:
-                playerStats.IncreaseProjectileSizeMultiplier(value * playerStats.projectileSizeMultiplier - playerStats.projectileSizeMultiplier);
+                playerStats.IncreaseProjectileSizeMultiplier(value / 100f);
                 break;
             case StatType.ProjectileSpeedMultiplier:
-                playerStats.IncreaseProjectileSpeedMultiplier(value * playerStats.projectileSpeedMultiplier - playerStats.projectileSpeedMultiplier);
+                playerStats.IncreaseProjectileSpeedMultiplier(value / 100f);
                 break;
             case StatType.DurationMultiplier:
-                playerStats.IncreaseDurationMultiplier(value * playerStats.durationMultiplier - playerStats.durationMultiplier);
+                playerStats.IncreaseDurationMultiplier(value / 100f);
                 break;
             case StatType.KnockbackMultiplier:
                 playerStats.IncreaseKnockbackMultiplier(value * playerStats.knockbackMultiplier - playerStats.knockbackMultiplier);
                 break;
             case StatType.MovementSpeed:
-                playerStats.IncreaseMovementSpeed(value);
+                playerStats.IncreaseMovementSpeed(value / 100f * playerStats.movementSpeed);
                 break;
             case StatType.Luck:
                 playerStats.IncreaseLuck(value);
                 break;
             case StatType.PickupRange:
-                playerStats.IncreasePickupRange(value / 100f);
+                playerStats.IncreasePickupRange(value * playerStats.pickupRange - playerStats.pickupRange);
                 break;
             case StatType.XPGainMultiplier:
                 playerStats.IncreaseXPGainMultiplier(value / 100f);

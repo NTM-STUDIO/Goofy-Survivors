@@ -19,7 +19,7 @@ MonoBehaviour:
   archetype: 3
   damage: 50
   cooldown: 7
-  area: 2
+  area: 1
   amount: 1
   speed: 180
   duration: 4
