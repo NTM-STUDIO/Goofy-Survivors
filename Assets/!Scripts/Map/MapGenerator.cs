@@ -66,8 +66,8 @@ public class MapGenerator : MonoBehaviour
                 TileData chosenTile = GetRandomTile(totalWeight);
 
                 // Converte as coordenadas do grid para coordenadas isom�tricas no mundo - mundo achatado
-                float isoX = (gridX - gridY) * (tileWidth) / 2.065f;
-                float isoY = (gridY + gridX) * (tileHeight) / 2.5f;
+                float isoX = (gridX - gridY) * (tileWidth) / 4.11f;
+                float isoY = (gridY + gridX) * (tileHeight) / 5f;
                 Vector2 isoPosition = new Vector2(isoX, isoY);
 
                 // Log das primeiras 5 tiles para debug

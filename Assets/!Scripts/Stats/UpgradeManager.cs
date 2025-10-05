@@ -133,7 +133,7 @@ public class UpgradeManager : MonoBehaviour
     public void ApplyUpgrade(GeneratedUpgrade upgrade)
     {
         float value = upgrade.Value;
-        
+
         // Apply the stat modification using a switch statement
         switch (upgrade.BaseData.statToUpgrade)
         {
@@ -154,25 +154,25 @@ public class UpgradeManager : MonoBehaviour
                 playerStats.IncreaseCritDamageMultiplier(value / 100f);
                 break;
             case StatType.AttackSpeedMultiplier:
-                playerStats.IncreaseAttackSpeedMultiplier(value / 100f);
+                playerStats.IncreaseAttackSpeedMultiplier(value * playerStats.attackSpeedMultiplier - playerStats.attackSpeedMultiplier);
                 break;
             case StatType.ProjectileCount:
                 playerStats.IncreaseProjectileCount(Mathf.RoundToInt(value));
                 break;
             case StatType.ProjectileSizeMultiplier:
-                playerStats.IncreaseProjectileSizeMultiplier(value / 100f);
+                playerStats.IncreaseProjectileSizeMultiplier(value * playerStats.projectileSizeMultiplier - playerStats.projectileSizeMultiplier);
                 break;
             case StatType.ProjectileSpeedMultiplier:
-                playerStats.IncreaseProjectileSpeedMultiplier(value / 100f);
+                playerStats.IncreaseProjectileSpeedMultiplier(value * playerStats.projectileSpeedMultiplier - playerStats.projectileSpeedMultiplier);
                 break;
             case StatType.DurationMultiplier:
-                playerStats.IncreaseDurationMultiplier(value / 100f);
+                playerStats.IncreaseDurationMultiplier(value * playerStats.durationMultiplier - playerStats.durationMultiplier);
                 break;
             case StatType.KnockbackMultiplier:
-                playerStats.IncreaseKnockbackMultiplier(value / 100f);
+                playerStats.IncreaseKnockbackMultiplier(value * playerStats.knockbackMultiplier - playerStats.knockbackMultiplier);
                 break;
             case StatType.MovementSpeed:
-                playerStats.IncreaseMovementSpeed(value /100f);
+                playerStats.IncreaseMovementSpeed(value);
                 break;
             case StatType.Luck:
                 playerStats.IncreaseLuck(value);
@@ -184,7 +184,8 @@ public class UpgradeManager : MonoBehaviour
                 playerStats.IncreaseXPGainMultiplier(value / 100f);
                 break;
         }
-
+        Debug.Log($"Applied Upgrade: {upgrade.BaseData.statToUpgrade} +{value} ({upgrade.Rarity.rarity})");
+        playerStats.PrintStats();
         // Clean up UI and unpause
         foreach (Transform child in choicesContainer)
         {

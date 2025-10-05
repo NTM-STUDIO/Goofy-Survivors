@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 public class Movement : MonoBehaviour
 {
-    [SerializeField] private float speed = 10f;
+    private float speed;
     private Rigidbody2D rb;
     private Vector2 moveInput;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -15,6 +15,7 @@ public class Movement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        speed = GetComponent<PlayerStats>().movementSpeed;
         rb.linearVelocity = moveInput * speed;
     }
 

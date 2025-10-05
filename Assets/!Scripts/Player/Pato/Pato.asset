@@ -26,7 +26,7 @@ MonoBehaviour:
   projectileSpeedMultiplier: 5
   durationMultiplier: 1.1
   knockbackMultiplier: 1
-  movementSpeed: 20
+  movementSpeed: 5
   luck: 1
   pickupRange: 5
   xpGainMultiplier: 1.1
