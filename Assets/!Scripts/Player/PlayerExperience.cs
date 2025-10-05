@@ -1,39 +1,60 @@
 using UnityEngine;
-using UnityEngine.Events;
+using UnityEngine.UI;
+using TMPro;
 
-// Attach this script to your Player GameObject.
 public class PlayerExperience : MonoBehaviour
 {
+    [Header("UI References")]
+    public Slider xpSlider;
+    public TMP_Text levelText;
+
+    [Header("Experience Settings")]
     public int currentLevel = 1;
     public float currentXP = 0;
     public float xpToNextLevel = 100;
     public float xpIncreaseFactor = 1.2f; // How much harder the next level is
 
+    [Header("System References")]
+    [SerializeField] private UpgradeManager upgradeManager;
 
-    public UnityEvent<int> OnLevelUp;
-
-    private void Awake()
+    public void Start()
     {
-        // Ensure the event is initialized so invoking it is always safe even with no listeners
-        OnLevelUp ??= new UnityEvent<int>();
+
+        if (upgradeManager == null)
+        {
+            Debug.LogError("UpgradeManager is not assigned on the PlayerExperience script!");
+        }
+
+        xpSlider.maxValue = xpToNextLevel;
+        xpSlider.value = currentXP;
+        levelText.text = $"Lvl: {currentLevel}";
     }
 
     public void AddXP(float xp)
     {
         currentXP += xp;
+        xpSlider.value = currentXP; 
+
         while (currentXP >= xpToNextLevel)
         {
             LevelUp();
         }
+        xpSlider.maxValue = xpToNextLevel;
     }
 
     private void LevelUp()
     {
+        currentXP -= xpToNextLevel; 
         currentLevel++;
-        currentXP -= xpToNextLevel;
         xpToNextLevel *= xpIncreaseFactor;
-        
-        Debug.Log($"Leveled up to Level {currentLevel}!");
-        OnLevelUp?.Invoke(currentLevel);
+        levelText.text = $"Lvl: {currentLevel}";
+        xpSlider.value = currentXP;
+        xpSlider.maxValue = xpToNextLevel;
+
+
+        if (upgradeManager != null)
+        {
+            upgradeManager.TriggerLevelUp();
+        }
     }
 }

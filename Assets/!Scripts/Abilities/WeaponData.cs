@@ -10,7 +10,7 @@ public enum WeaponArchetype
     Shield
 }
 
-[CreateAssetMenu(fileName = "New WeaponData", menuName = "Vampire Survivors/Weapon Data")]
+[CreateAssetMenu(fileName = "New WeaponData", menuName = "Goofy Survivors/Weapon Data")]
 public class WeaponData : ScriptableObject
 {
     [Header("General")]
