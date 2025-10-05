@@ -49,8 +49,8 @@ public class MapGenerator : MonoBehaviour
         spriteRenderer.sortingLayerName = "Background";
 
         // Obt�m o tamanho do tile em unidades do mundo
-        float tileWidth = 7.64f;
-        float tileHeight = 5.53f;
+        float tileWidth = 3.64f;
+        float tileHeight = 2.20f;
         Debug.Log($"tileWidth: {tileWidth}, tileHeight: {tileHeight}");
 
         // Calcula os limites para desenhar o mapa centrado em (0,0)
@@ -66,8 +66,8 @@ public class MapGenerator : MonoBehaviour
                 TileData chosenTile = GetRandomTile(totalWeight);
 
                 // Converte as coordenadas do grid para coordenadas isom�tricas no mundo - mundo achatado
-                float isoX = (gridX - gridY) * (tileWidth) / 4.11f;
-                float isoY = (gridY + gridX) * (tileHeight) / 5f;
+                float isoX = (gridX - gridY) * (tileWidth);
+                float isoY = (gridY + gridX) * (tileHeight);
                 Vector2 isoPosition = new Vector2(isoX, isoY);
 
                 // Log das primeiras 5 tiles para debug
@@ -82,7 +82,8 @@ public class MapGenerator : MonoBehaviour
                 // Define o sprite da tile escolhida
                 tileGO.GetComponent<SpriteRenderer>().sprite = chosenTile.tileSprite;
                 // Define a ordem de renderiza��o para garantir sobreposi��o correta
-                tileGO.GetComponent<SpriteRenderer>().sortingOrder = (halfWidth * 2 - (gridX + halfWidth)) + (halfHeight * 2 - (gridY + halfHeight));
+                tileGO.GetComponent<SpriteRenderer>().sortingOrder = -(gridX + gridY);
+                //(halfWidth * 2 - (gridX + halfWidth)) + (halfHeight * 2 - (gridY + halfHeight));
             }
         }
         // Fim da gera��o do mapa

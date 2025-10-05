@@ -3142,8 +3142,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tiles:
-  - tileSprite: {fileID: -5919109726075490299, guid: bed0c795748413f4e83a8b653c8ac706, type: 3}
-    weight: 7
+  - tileSprite: {fileID: -6930474823159529909, guid: d05a46e3a1ad3e84a95f41c19397134f, type: 3}
+    weight: 10
   mapWidth: 100
   mapHeight: 100
   tilePrefab: {fileID: 2865266679031100099, guid: 24f6f62f8ab3bd44aa58527a3c1b4b08, type: 3}
@@ -4678,7 +4678,7 @@ Grid:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1932982504}
   m_Enabled: 1
-  m_CellSize: {x: 4, y: 2.5, z: 1}
+  m_CellSize: {x: 3.65, y: 2.25, z: 1}
   m_CellGap: {x: 0, y: 0, z: 0}
   m_CellLayout: 2
   m_CellSwizzle: 0
