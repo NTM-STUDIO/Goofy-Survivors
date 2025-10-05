@@ -26,8 +26,8 @@ public class PlayerStats : MonoBehaviour
     {
         if (characterData != null)
         {
-            maxHp = characterData.maxHp;
-            hpRegen = characterData.hpRegen;
+            maxHp = characterData.maxHp; //Blouso
+            hpRegen = characterData.hpRegen; //Blouso
             damageMultiplier = characterData.damageMultiplier;
             critChance = characterData.critChance;
             critDamageMultiplier = characterData.critDamageMultiplier;
@@ -39,8 +39,8 @@ public class PlayerStats : MonoBehaviour
             knockbackMultiplier = characterData.knockbackMultiplier;
             movementSpeed = characterData.movementSpeed;
             luck = characterData.luck;
-            pickupRange = characterData.pickupRange;
-            xpGainMultiplier = characterData.xpGainMultiplier;
+            pickupRange = characterData.pickupRange; 
+            xpGainMultiplier = characterData.xpGainMultiplier; 
         }
     }
 

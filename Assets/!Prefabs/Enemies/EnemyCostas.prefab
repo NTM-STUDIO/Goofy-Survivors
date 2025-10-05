@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: -4036624671072493463}
   - component: {fileID: 4602663416659819679}
   m_Layer: 0
-  m_Name: Enemy
+  m_Name: EnemyCostas
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -84,7 +84,7 @@ SpriteRenderer:
   m_SortingLayerID: -946755919
   m_SortingLayer: 4
   m_SortingOrder: 0
-  m_Sprite: {fileID: 2460532211164355792, guid: 23c36bcfbe251274b94f5f19200b6e8d, type: 3}
+  m_Sprite: {fileID: -4469049575818415048, guid: 36f61df1b01c4d3448021db61676b037, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -172,7 +172,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 3.85, y: 5.23}
+    oldSize: {x: 3.75, y: 5.28}
     newSize: {x: 3.85, y: 5.23}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
