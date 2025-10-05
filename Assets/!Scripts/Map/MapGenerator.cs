@@ -49,8 +49,8 @@ public class MapGenerator : MonoBehaviour
         spriteRenderer.sortingLayerName = "Background";
 
         // Obt�m o tamanho do tile em unidades do mundo
-        float tileWidth = 3.64f;
-        float tileHeight = 2.20f;
+        float tileWidth = 7.3f;
+        float tileHeight = 4.44f;
         Debug.Log($"tileWidth: {tileWidth}, tileHeight: {tileHeight}");
 
         // Calcula os limites para desenhar o mapa centrado em (0,0)
@@ -66,8 +66,8 @@ public class MapGenerator : MonoBehaviour
                 TileData chosenTile = GetRandomTile(totalWeight);
 
                 // Converte as coordenadas do grid para coordenadas isom�tricas no mundo - mundo achatado
-                float isoX = (gridX - gridY) * (tileWidth);
-                float isoY = (gridY + gridX) * (tileHeight);
+                float isoX = (gridX - gridY) * (tileWidth) / 2.06f;
+                float isoY = (gridY + gridX) * (tileHeight) / 2.06f;
                 Vector2 isoPosition = new Vector2(isoX, isoY);
 
                 // Log das primeiras 5 tiles para debug

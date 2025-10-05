@@ -3142,7 +3142,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tiles:
-  - tileSprite: {fileID: -6930474823159529909, guid: d05a46e3a1ad3e84a95f41c19397134f, type: 3}
+  - tileSprite: {fileID: -284492762719052998, guid: d8baa3ce1048ebb4a8f7ff68673a1fb4, type: 3}
     weight: 10
   mapWidth: 100
   mapHeight: 100
