@@ -30,19 +30,12 @@ public class Movement : MonoBehaviour
         moveInput = context.ReadValue<Vector2>();
     }
 
-    public void ApplyKnockback(Vector2 direction, float force, float duration)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (force <= 0f || duration <= 0f || rb == null) return;
-        if (knockbackRoutine != null) StopCoroutine(knockbackRoutine);
-        knockbackRoutine = StartCoroutine(KnockbackCoroutine(direction.normalized, force, duration));
-    }
-
-    private IEnumerator KnockbackCoroutine(Vector2 direction, float force, float duration)
-    {
-        isKnockedBack = true;
-        rb.linearVelocity = Vector2.zero;
-        rb.AddForce(direction * force, ForceMode2D.Impulse);
-        yield return new WaitForSeconds(duration);
-        isKnockedBack = false;
+        //If tag player collides with tag enemy
+        if (collision.gameObject.CompareTag("Enemy") && gameObject.CompareTag("Player"))
+        {
+            Debug.Log("Enemy collided with player: " + collision.gameObject.name);
+        }
     }
 }

@@ -65,13 +65,13 @@ public class EnemyStats : MonoBehaviour
         if (currentHealth <= 0) Die();
 
         Debug.Log(gameObject.name + " took " + damage + " damage. Remaining health: " + currentHealth);
-        GetComponent<SpriteRenderer>().color = Color.red;
+        GetComponentInChildren<SpriteRenderer>().color = Color.red;
         Invoke("ResetColor", 0.1f);
     }
 
     void ResetColor()
     {
-        GetComponent<SpriteRenderer>().color = Color.white;
+        GetComponentInChildren<SpriteRenderer>().color = Color.white;
     }
 
     public void Die()

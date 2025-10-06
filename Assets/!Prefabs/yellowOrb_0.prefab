@@ -169,10 +169,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90bff61e563a52242941d960c462e178, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExperienceOrb
-  xpValue: 2000
+  xpValue: 1000
   smoothTime: 0.1
-  maxSpeed: 30
   collectionDistance: 1
+  maxSpeed: 30
 --- !u!1 &8934529160906730265
 GameObject:
   m_ObjectHideFlags: 0
