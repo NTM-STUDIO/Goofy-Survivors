@@ -17,4 +17,4 @@ MonoBehaviour:
   upgradeDescription: 
   icon: {fileID: -5447403752590868552, guid: 7b2c28d91c991cd47bf25e8d3b8ea53b, type: 3}
   baseValueMin: 10
-  baseValueMax: 20
+  baseValueMax: 30

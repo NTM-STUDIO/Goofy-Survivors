@@ -259,7 +259,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90bff61e563a52242941d960c462e178, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExperienceOrb
-  xpValue: 35
+  xpValue: 200
   smoothTime: 0.1
   maxSpeed: 30
   collectionDistance: 1

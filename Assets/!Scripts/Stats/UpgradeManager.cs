@@ -133,7 +133,7 @@ public class UpgradeManager : MonoBehaviour
     public void ApplyUpgrade(GeneratedUpgrade upgrade)
     {
         float value = upgrade.Value;
-        
+
         // Apply the stat modification using a switch statement
         switch (upgrade.BaseData.statToUpgrade)
         {
@@ -169,22 +169,23 @@ public class UpgradeManager : MonoBehaviour
                 playerStats.IncreaseDurationMultiplier(value / 100f);
                 break;
             case StatType.KnockbackMultiplier:
-                playerStats.IncreaseKnockbackMultiplier(value / 100f);
+                playerStats.IncreaseKnockbackMultiplier(value * playerStats.knockbackMultiplier - playerStats.knockbackMultiplier);
                 break;
             case StatType.MovementSpeed:
-                playerStats.IncreaseMovementSpeed(value /100f);
+                playerStats.IncreaseMovementSpeed(value / 100f * playerStats.movementSpeed);
                 break;
             case StatType.Luck:
                 playerStats.IncreaseLuck(value);
                 break;
             case StatType.PickupRange:
-                playerStats.IncreasePickupRange(value / 100f);
+                playerStats.IncreasePickupRange(value * playerStats.pickupRange - playerStats.pickupRange);
                 break;
             case StatType.XPGainMultiplier:
                 playerStats.IncreaseXPGainMultiplier(value / 100f);
                 break;
         }
-
+        Debug.Log($"Applied Upgrade: {upgrade.BaseData.statToUpgrade} +{value} ({upgrade.Rarity.rarity})");
+        playerStats.PrintStats();
         // Clean up UI and unpause
         foreach (Transform child in choicesContainer)
         {

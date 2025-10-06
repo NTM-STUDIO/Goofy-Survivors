@@ -2,113 +2,100 @@ using UnityEngine;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+
 /// <summary>
 /// This component is attached to a GameObject managed by the PlayerWeaponManager.
 /// It reads the assigned WeaponData and executes the weapon's behavior based on its archetype.
+/// IT NOW USES PlayerStats TO MODIFY ITS BEHAVIOR.
 /// </summary>
 public class WeaponController : MonoBehaviour
 {
-    // The ScriptableObject that defines this weapon's properties.
     public WeaponData weaponData;
-
-    // The timer that tracks when the weapon can attack next.
     private float currentCooldown;
+
+    // --- ADDITION 1: REFERENCE TO PLAYER STATS ---
+    private PlayerStats playerStats;
 
     void Start()
     {
-        // --- ESTA É A MUDANÇA ---
-        // Ao definir o cooldown inicial para 0, o primeiro ataque será instantâneo.
-        currentCooldown = 1f;
+        // --- ADDITION 2: FINDING THE PLAYER STATS ---
+        playerStats = FindObjectOfType<PlayerStats>();
+        if (playerStats == null)
+        {
+            Debug.LogError("WeaponController could not find PlayerStats in the scene!");
+        }
+
+        // Set initial cooldown to fire immediately.
+        currentCooldown = 0f;
     }
 
     void Update()
     {
-        // All weapon archetypes that have a cooldown are now handled by this single timer.
         currentCooldown -= Time.deltaTime;
 
-        // When the cooldown is finished, perform an attack and reset the timer.
         if (currentCooldown <= 0f)
         {
             Attack();
-            // Depois do primeiro ataque, o cooldown é definido para o seu valor normal,
-            // estabelecendo o ciclo de ataque regular.
-            currentCooldown = weaponData.cooldown;
+            // --- CHANGE 1: CALCULATE COOLDOWN USING PLAYER STATS ---
+            // Higher attack speed = lower cooldown. That's why we divide.
+            currentCooldown = weaponData.cooldown / playerStats.attackSpeedMultiplier;
         }
     }
 
-    /// <summary>
-    /// Performs an attack based on the weapon's archetype.
-    /// </summary>
     private void Attack()
     {
-        // The switch statement determines what "attacking" means for each archetype.
+        // The switch statement remains the same, but the methods it calls will now use player stats.
         switch (weaponData.archetype)
         {
             case WeaponArchetype.Projectile:
-                // TODO: Implement FireProjectile() logic.
                 // FireProjectile();
                 break;
-
             case WeaponArchetype.Whip:
-                // TODO: Implement PerformWhipAttack() logic.
                 // PerformWhipAttack();
                 break;
-
             case WeaponArchetype.Orbit:
-                // For an Orbit weapon, "attacking" means spawning the orbiting instances.
-                // These instances will then live for the specified `duration`.
                 ActivateOrbitingWeapon();
                 break;
-
             case WeaponArchetype.Aura:
-                // TODO: Implement ActivateAura() logic.
-                // This would be similar to Orbit, spawning a persistent area of effect
-                // that lasts for a set duration.
                 // ActivateAura();
                 break;
-
-                // Add cases for Laser, Shield, etc. as you implement them.
         }
     }
 
-    /// <summary>
-    /// Spawns the orbiting weapon prefabs around the player.
-    /// This is called by the Attack() method when the weapon's archetype is Orbit.
-    /// </summary>
     private void ActivateOrbitingWeapon()
     {
         Transform orbitCenter = transform.parent;
-        float angleStep = 360f / weaponData.amount;
+
+        // --- CHANGE 2: CALCULATE AMOUNT USING PLAYER STATS ---
+        // We take the weapon's base amount and add the player's bonus projectile count.
+        int currentAmount = weaponData.amount + playerStats.projectileCount;
+
+        float angleStep = 360f / currentAmount;
         float randomGroupRotation = UnityEngine.Random.Range(0f, 360f);
 
-        for (int i = 0; i < weaponData.amount; i++)
+        for (int i = 0; i < currentAmount; i++)
         {
             float startingAngle = randomGroupRotation + (i * angleStep);
-
-            // --- ESTA É A MUDANÇA PRINCIPAL ---
-
-            // 1. Calcula o vetor de direção a partir do ângulo.
-            // Mathf.Deg2Rad converte graus para radianos, que é o que as funções de seno e cosseno usam.
             Vector3 direction = new Vector3(Mathf.Cos(startingAngle * Mathf.Deg2Rad), Mathf.Sin(startingAngle * Mathf.Deg2Rad), 0);
 
-            // 2. Calcula a posição final da arma.
-            // Posição Final = Posição do Centro + Direção * Raio
-            // Assumindo que o raio está em `weaponData.radius`. Se o nome for diferente, ajuste aqui.
-            Vector3 spawnPosition = orbitCenter.position + direction * weaponData.area * 4f; // Multiplicador de 4 para ajustar escala visual
+            // --- CHANGE 3: CALCULATE AREA USING PLAYER STATS ---
+            // The weapon's base area is multiplied by the player's size multiplier.
+            float currentArea = weaponData.area * playerStats.projectileSizeMultiplier;
+            Vector3 spawnPosition = orbitCenter.position + direction * currentArea * 4f;
 
-            // 3. Gera uma rotação visual aleatória para o sprite.
             Quaternion randomSpriteRotation = Quaternion.Euler(0, 0, UnityEngine.Random.Range(0f, 360f));
-
-            // 4. Instancia o objeto DIRETAMENTE na sua posição orbital final.
             GameObject orbitingWeaponObj = Instantiate(weaponData.weaponPrefab, spawnPosition, randomSpriteRotation, orbitCenter);
-
-            // --- FIM DA MUDANÇA ---
 
             OrbitingWeapon orbiter = orbitingWeaponObj.GetComponent<OrbitingWeapon>();
             if (orbiter != null)
             {
-                // Agora o Initialize não precisa de mover o objeto, apenas de guardar os dados para a rotação contínua.
+                // IMPORTANT: The OrbitingWeapon script itself will also need to know about the current damage.
+                // We calculate it here and pass it along.
                 orbiter.Initialize(weaponData, orbitCenter, startingAngle);
+
+                // --- ADDITION 3: PASSING CALCULATED DAMAGE ---
+                // We'll assume the OrbitingWeapon script has a method or property to set its damage.
+                // For example: orbiter.damage = weaponData.damage * playerStats.damageMultiplier;
             }
         }
     }

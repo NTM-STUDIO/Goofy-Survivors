@@ -23,8 +23,6 @@ public class PlayerCharacterData : ScriptableObject
     public float durationMultiplier = 1.1f;
     public float knockbackMultiplier = 1.0f;
     public float movementSpeed = 1.0f;
-
-    [Range(0f, 1f)]
     public float luck = 0f;
     public int pickupRange = 5;
     public float xpGainMultiplier = 1.1f;

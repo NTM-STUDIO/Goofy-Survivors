@@ -4,10 +4,10 @@ public class PlayerStats : MonoBehaviour
 {
     [Header("Character Data")]
     public PlayerCharacterData characterData;
-    
-    // Your existing stat fields
+
+    // --- Your Original Stat Fields ---
     [HideInInspector] public int maxHp;
-    [HideInInspector] public float hpRegen; // Changed to float for precision
+    [HideInInspector] public float hpRegen;
     [HideInInspector] public float damageMultiplier;
     [HideInInspector] public float critChance;
     [HideInInspector] public float critDamageMultiplier;
@@ -19,16 +19,15 @@ public class PlayerStats : MonoBehaviour
     [HideInInspector] public float knockbackMultiplier;
     [HideInInspector] public float movementSpeed;
     [HideInInspector] public float luck;
-    [HideInInspector] public float pickupRange; // Changed to float for precision
+    [HideInInspector] public float pickupRange;
     [HideInInspector] public float xpGainMultiplier;
 
     private void Awake()
     {
-        // Your Awake method is fine as is
         if (characterData != null)
         {
-            maxHp = characterData.maxHp;
-            hpRegen = characterData.hpRegen;
+            maxHp = characterData.maxHp; //Blouso
+            hpRegen = characterData.hpRegen; //Blouso
             damageMultiplier = characterData.damageMultiplier;
             critChance = characterData.critChance;
             critDamageMultiplier = characterData.critDamageMultiplier;
@@ -45,8 +44,7 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    // --- Public Methods to Modify Stats ---
-    
+    // --- Public Methods to INCREASE Stats ---
     public void IncreaseMaxHP(int amount) { maxHp += amount; }
     public void IncreaseHPRegen(float amount) { hpRegen += amount; }
     public void IncreaseDamageMultiplier(float amount) { damageMultiplier += amount; }
@@ -62,4 +60,33 @@ public class PlayerStats : MonoBehaviour
     public void IncreaseLuck(float amount) { luck += amount; }
     public void IncreasePickupRange(float amount) { pickupRange += amount; }
     public void IncreaseXPGainMultiplier(float amount) { xpGainMultiplier += amount; }
+
+    // --- Public Methods to DECREASE Stats (Essential for removing buffs) ---
+    public void DecreaseMaxHP(int amount) { maxHp -= amount; }
+    public void DecreaseHPRegen(float amount) { hpRegen -= amount; }
+    public void DecreaseDamageMultiplier(float amount) { damageMultiplier -= amount; }
+    public void DecreaseCritChance(float amount) { critChance -= amount; }
+    public void DecreaseCritDamageMultiplier(float amount) { critDamageMultiplier -= amount; }
+    public void DecreaseAttackSpeedMultiplier(float amount) { attackSpeedMultiplier -= amount; }
+    public void DecreaseProjectileCount(int amount) { projectileCount -= amount; }
+    public void DecreaseProjectileSizeMultiplier(float amount) { projectileSizeMultiplier -= amount; }
+    public void DecreaseProjectileSpeedMultiplier(float amount) { projectileSpeedMultiplier -= amount; }
+    public void DecreaseDurationMultiplier(float amount) { durationMultiplier -= amount; }
+    public void DecreaseKnockbackMultiplier(float amount) { knockbackMultiplier -= amount; }
+    public void DecreaseMovementSpeed(float amount) { movementSpeed -= amount; }
+    public void DecreaseLuck(float amount) { luck -= amount; }
+    public void DecreasePickupRange(float amount) { pickupRange -= amount; }
+    public void DecreaseXPGainMultiplier(float amount) { xpGainMultiplier -= amount; }
+
+
+    public void PrintStats()
+    {
+        Debug.Log("Stats Initialized from Character Data");
+        Debug.Log($"MaxHP: {maxHp}, HPRegen: {hpRegen}, DamageMultiplier: {damageMultiplier}");
+        Debug.Log($"CritChance: {critChance}, CritDamageMultiplier: {critDamageMultiplier}, AttackSpeedMultiplier: {attackSpeedMultiplier}");
+        Debug.Log($"ProjectileCount: {projectileCount}, ProjectileSizeMultiplier: {projectileSizeMultiplier}, ProjectileSpeedMultiplier: {projectileSpeedMultiplier}");
+        Debug.Log($"DurationMultiplier: {durationMultiplier}, KnockbackMultiplier: {knockbackMultiplier}, MovementSpeed: {movementSpeed}");
+        Debug.Log($"Luck: {luck}, PickupRange: {pickupRange}, XPGainMultiplier: {xpGainMultiplier}");
+    }
+
 }

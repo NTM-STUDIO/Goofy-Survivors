@@ -22,7 +22,7 @@ public class UpgradeChoiceUI : MonoBehaviour
         // Populate UI
         backgroundImage.color = upgrade.Rarity.backgroundColor;
         iconImage.sprite = upgrade.BaseData.icon;
-        nameText.text = $"{upgrade.BaseData.upgradeName} ({upgrade.Rarity.name})";
+        nameText.text = upgrade.BaseData.upgradeName;
 
         // Format the description to show the actual value
         string formattedValue = GetFormattedValue(upgrade.BaseData.statToUpgrade, upgrade.Value);
