@@ -19,7 +19,16 @@ public class WeaponController : MonoBehaviour
     void Start()
     {
         // --- ADDITION 2: FINDING THE PLAYER STATS ---
+        #if UNITY_2023_1_OR_NEWER
+        playerStats = UnityEngine.Object.FindFirstObjectByType<PlayerStats>();
+        if (playerStats == null)
+            playerStats = UnityEngine.Object.FindAnyObjectByType<PlayerStats>();
+        #else
+        // Fallback for older Unity: may be marked obsolete but used under pre-2023
+        #pragma warning disable 618
         playerStats = FindObjectOfType<PlayerStats>();
+        #pragma warning restore 618
+        #endif
         if (playerStats == null)
         {
             Debug.LogError("WeaponController could not find PlayerStats in the scene!");
@@ -38,7 +47,8 @@ public class WeaponController : MonoBehaviour
             Attack();
             // --- CHANGE 1: CALCULATE COOLDOWN USING PLAYER STATS ---
             // Higher attack speed = lower cooldown. That's why we divide.
-            currentCooldown = weaponData.cooldown / playerStats.attackSpeedMultiplier;
+            float atkSpeed = playerStats != null ? playerStats.attackSpeedMultiplier : 1f;
+            currentCooldown = weaponData.cooldown / Mathf.Max(0.0001f, atkSpeed);
         }
     }
 
@@ -68,7 +78,8 @@ public class WeaponController : MonoBehaviour
 
         // --- CHANGE 2: CALCULATE AMOUNT USING PLAYER STATS ---
         // We take the weapon's base amount and add the player's bonus projectile count.
-        int currentAmount = weaponData.amount + playerStats.projectileCount;
+    int bonusCount = playerStats != null ? playerStats.projectileCount : 0;
+    int currentAmount = Mathf.Max(1, weaponData.amount + bonusCount);
 
         float angleStep = 360f / currentAmount;
         float randomGroupRotation = UnityEngine.Random.Range(0f, 360f);
@@ -80,7 +91,8 @@ public class WeaponController : MonoBehaviour
 
             // --- CHANGE 3: CALCULATE AREA USING PLAYER STATS ---
             // The weapon's base area is multiplied by the player's size multiplier.
-            float currentArea = weaponData.area * playerStats.projectileSizeMultiplier;
+            float sizeMult = playerStats != null ? playerStats.projectileSizeMultiplier : 1f;
+            float currentArea = weaponData.area * sizeMult;
             Vector3 spawnPosition = orbitCenter.position + direction * currentArea * 4f;
 
             Quaternion randomSpriteRotation = Quaternion.Euler(0, 0, UnityEngine.Random.Range(0f, 360f));

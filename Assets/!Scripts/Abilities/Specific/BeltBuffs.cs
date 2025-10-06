@@ -57,7 +57,15 @@ public class BeltBuffs : MonoBehaviour
     {
         if (playerStats == null)
         {
+            #if UNITY_2023_1_OR_NEWER
+            playerStats = UnityEngine.Object.FindFirstObjectByType<PlayerStats>();
+            if (playerStats == null)
+                playerStats = UnityEngine.Object.FindAnyObjectByType<PlayerStats>();
+            #else
+            #pragma warning disable 618
             playerStats = FindObjectOfType<PlayerStats>();
+            #pragma warning restore 618
+            #endif
         }
     }
 
