@@ -27,19 +27,33 @@ public class PlayerCollision : MonoBehaviour
             float dmg = enemyStats != null ? enemyStats.GetAttackDamage() : 10f;
             Vector2 from = other.transform.position;
             // Always use default i-frames from PlayerStats
-            playerStats.ApplyDamage(dmg, from, null, 0f); // no knockback
+            playerStats.ApplyDamage(dmg, from, null);
+            Debug.Log("Player hit by enemy body for " + dmg + " damage. Player HP: " + playerStats.CurrentHp + "/" + playerStats.maxHp);
             return;
         }
 
-        // Enemy projectile trigger (tag-based, no component dependency)
-        if (other.CompareTag("EnemyProjectile"))
-        {
-            float dmg = 10f; // default projectile damage if not using a component
-            Vector2 from = other.transform.position;
-            playerStats.ApplyDamage(dmg, from, null, 0f); // no knockback
+        // Enemy projectile trigger
+        // if (other.CompareTag("EnemyProjectile"))
+        // {
+        //     float dmg = 10f; // default projectile damage if not using a component
+        //     Vector2 from = other.transform.position;
+        //     playerStats.ApplyDamage(dmg, from, null, 0f); // no knockback
 
-            // Destroy projectile on hit (optional; depends on your design)
-            Destroy(other.gameObject);
+        //     // Destroy projectile on hit (optional; depends on your design)
+        //     Destroy(other.gameObject);
+        // }
+    }
+    
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        if (playerStats == null) return;
+
+        if (other.CompareTag("Enemy"))
+        {
+            var enemyStats = other.GetComponent<EnemyStats>();
+            float dmg = enemyStats != null ? enemyStats.GetAttackDamage() : 10f;
+            Vector2 from = other.transform.position;
+            playerStats.ApplyDamage(dmg, from, null);
         }
     }
 }

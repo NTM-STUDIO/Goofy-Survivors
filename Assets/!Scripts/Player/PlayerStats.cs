@@ -133,11 +133,11 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    public void ApplyDamage(float amount, Vector2? hitFromWorldPos = null, float? customIFrameDuration = null, float knockbackForce = 0f)
+    public void ApplyDamage(float amount, Vector2? hitFromWorldPos = null, float? customIFrameDuration = null)
     {
         if (amount <= 0f) return;
-        if (invincible) return; // i-frames
-        if (currentHp <= 0) return; // already dead
+        if (invincible) return;
+        if (currentHp <= 0) return;
 
         int damageInt = Mathf.CeilToInt(amount);
         currentHp = Mathf.Clamp(currentHp - damageInt, 0, maxHp);
@@ -150,9 +150,7 @@ public class PlayerStats : MonoBehaviour
         }
         OnDamaged?.Invoke();
         OnHealthChanged?.Invoke(currentHp, maxHp);
-
-        // Knockback intentionally disabled for player on damage
-
+        
         // Begin invincibility frames
         float iFrames = customIFrameDuration.HasValue ? Mathf.Max(0f, customIFrameDuration.Value) : invincibilityDuration;
         if (iFrames > 0f) BeginInvincibility(iFrames);
