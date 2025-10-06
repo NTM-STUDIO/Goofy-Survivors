@@ -29,6 +29,7 @@ public class PlayerCollision : MonoBehaviour
             // Always use default i-frames from PlayerStats
             playerStats.ApplyDamage(dmg, from, null);
             Debug.Log("Player hit by enemy body for " + dmg + " damage. Player HP: " + playerStats.CurrentHp + "/" + playerStats.maxHp);
+            UIManager.Instance.UpdateHealthBar(playerStats.CurrentHp, playerStats.maxHp);
             return;
         }
 

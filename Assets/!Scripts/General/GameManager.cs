@@ -6,6 +6,8 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
+    
+
     public enum GameState { Playing, Paused, GameOver }
     public GameState currentState;
 

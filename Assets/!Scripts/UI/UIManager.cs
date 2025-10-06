@@ -10,17 +10,29 @@ public class UIManager : MonoBehaviour
     public GameObject usernamePanel;
     public TMP_InputField usernameInput;
 
+    public Slider healthBar;
     void Awake()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
     }
 
+
+
     public void UpdateTimerText(float time)
     {
         int minutes = Mathf.FloorToInt(time / 60);
         int seconds = Mathf.FloorToInt(time % 60);
         timerText.text = $"{minutes:00}:{seconds:00}";
+    }
+
+    public void UpdateHealthBar(float currentHealth, float maxHealth)
+    {
+        if (healthBar != null)
+        {
+            healthBar.maxValue = maxHealth;
+            healthBar.value = currentHealth;
+        }
     }
 
     public void ShowPauseMenu(bool show)
