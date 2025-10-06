@@ -16,7 +16,7 @@ public class EnemyStats : MonoBehaviour
     public int baseHealth = 100;
     [Tooltip("O dano do inimigo no início do jogo (minuto 0).")]
     public int baseDamage = 10;
-    public float moveSpeed = 2f;
+    public float moveSpeed = 3f;
 
     public float currentHealth;
 

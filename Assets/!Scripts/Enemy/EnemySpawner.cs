@@ -75,10 +75,10 @@ public class EnemySpawner : MonoBehaviour
 
     public void StartSpawning()
     {
-       // if (waves != null && waves.Count > 0)
-        //   StartCoroutine(SpawnWaves());
-      // else
-         //   Debug.LogWarning("EnemySpawner: No waves assigned in inspector.");
+        if (waves != null && waves.Count > 0)
+            StartCoroutine(SpawnWaves());
+        else
+            Debug.LogWarning("EnemySpawner: No waves assigned in inspector.");
     }
 }
 
