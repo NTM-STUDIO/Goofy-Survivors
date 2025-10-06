@@ -23,4 +23,13 @@ public class Movement : MonoBehaviour
     {
         moveInput = context.ReadValue<Vector2>();
     }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        //If tag player collides with tag enemy
+        if (collision.gameObject.CompareTag("Enemy") && gameObject.CompareTag("Player"))
+        {
+            Debug.Log("Enemy collided with player: " + collision.gameObject.name);
+        }
+    }
 }

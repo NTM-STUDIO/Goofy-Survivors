@@ -144,7 +144,7 @@ public class GameManager : MonoBehaviour
         else if (currentState == GameState.Paused)
         {
             currentState = GameState.Playing;
-            Time.timeScale = 10f;
+            Time.timeScale = 1f;
             if (player != null) player.enabled = true;
             UIManager.Instance.ShowPauseMenu(false);
         }
