@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 4284822525752983333}
   - component: {fileID: -4036624671072493463}
   - component: {fileID: 4602663416659819679}
+  - component: {fileID: 7945774641016657705}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Enemy
@@ -204,6 +205,23 @@ MonoBehaviour:
     dropChance: 8
   - orbPrefab: {fileID: 2229382513563764699, guid: 1c9fe8c97995a1a45b65587d3a15ed12, type: 3}
     dropChance: 2
+--- !u!114 &7945774641016657705
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6482347200803263970}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3e1d4e0f9954c44aa7f76aa7ef76a5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TwoSpriteIsometricController
+  frontFacingSprite: {fileID: 2460532211164355792, guid: 23c36bcfbe251274b94f5f19200b6e8d, type: 3}
+  backFacingSprite: {fileID: -4469049575818415048, guid: 36f61df1b01c4d3448021db61676b037, type: 3}
+  isPlayer: 0
+  rotationSpeed: 10
+  movementThreshold: 0.1
 --- !u!1 &8600561634032360642
 GameObject:
   m_ObjectHideFlags: 0

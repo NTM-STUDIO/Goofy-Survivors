@@ -14,7 +14,6 @@ public class GameManager : MonoBehaviour
     private float currentTime;
     private bool isTimerRunning = false;
 
-    // --- NOVAS VARIÁVEIS DE DIFICULDADE ---
     [Header("Difficulty Settings")]
     [Tooltip("O multiplicador de vida inicial para os inimigos.")]
     public float currentEnemyHealthMultiplier = 1f;
@@ -23,12 +22,11 @@ public class GameManager : MonoBehaviour
     
     [Space]
     [Tooltip("Quanto o multiplicador de vida aumenta a cada minuto.")]
-    public float healthIncreasePerMinute = 0.2f; // Aumenta a vida em 20% a cada minuto
+    public float healthIncreasePerMinute = 0.2f; 
     [Tooltip("Quanto o multiplicador de dano aumenta a cada minuto.")]
-    public float damageIncreasePerMinute = 0.15f; // Aumenta o dano em 15% a cada minuto
+    public float damageIncreasePerMinute = 0.15f; 
 
-    private int lastMinuteMark = 0;
-    // --- FIM DAS NOVAS VARIÁVEIS ---
+    private int lastMinuteMark  = 0; 
 
     [Header("Boss Settings")]
     public GameObject bossPrefab;
@@ -74,11 +72,11 @@ public class GameManager : MonoBehaviour
         bossSpawned = false;
         lastMinuteMark = 0;
         
-        // Reseta os multiplicadores no início de cada jogo
+
         currentEnemyHealthMultiplier = 1f;
         currentEnemyDamageMultiplier = 1f;
 
-        Time.timeScale = 10f;
+        Time.timeScale = 1f ;
 
         if (player != null) player.enabled = true;
         enemySpawner.StartSpawning();
@@ -108,7 +106,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // --- LÓGICA DE DIFICULDADE ATUALIZADA ---
     private void IncreaseDifficulty()
     {
         currentEnemyHealthMultiplier += healthIncreasePerMinute;
@@ -121,7 +118,7 @@ public class GameManager : MonoBehaviour
     {
         if (!bossSpawned && currentTime <= 10.0f)
         {
-            //SpawnBoss();
+            SpawnBoss();
             bossSpawned = true;
         }
     }
@@ -181,7 +178,6 @@ public class GameManager : MonoBehaviour
         Debug.Log("🏁 O tempo acabou! Fim de jogo.");
     }
     
-    // As funções Getter e Setter continuam úteis
     public float GetRemainingTime() { return currentTime; }
     public void SetGameDuration(float newDuration)
     {
