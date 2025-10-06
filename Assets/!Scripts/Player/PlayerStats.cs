@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 public class PlayerStats : MonoBehaviour
 {
@@ -22,6 +23,28 @@ public class PlayerStats : MonoBehaviour
     [HideInInspector] public float pickupRange;
     [HideInInspector] public float xpGainMultiplier;
 
+    [Header("Health & Invincibility")]
+    [Tooltip("Current HP of the player (clamped to [0, maxHp])")]
+    [SerializeField] private int currentHp;
+    [Tooltip("Duration of invincibility frames after taking a hit (seconds)")]
+    [Min(0f)]
+    [SerializeField] private float invincibilityDuration = 0.6f;
+    [Tooltip("Whether the player is currently invincible (i-frames)")]
+    [SerializeField] private bool invincible = false;
+    [Tooltip("Optional flash on damage")] [SerializeField] private SpriteRenderer spriteRenderer;
+    [ColorUsage(true,true)] [SerializeField] private Color hurtFlashColor = new Color(1f, 0.4f, 0.4f, 1f);
+    [SerializeField] private float hurtFlashTime = 0.1f;
+    private Color _originalColor;
+
+    // Events for UI and gameplay hooks
+    public event Action<int, int> OnHealthChanged; // (current, max)
+    public event Action OnDamaged;
+    public event Action OnHealed;
+    public event Action OnDeath;
+
+    public bool IsInvincible => invincible;
+    public int CurrentHp => currentHp;
+
     private void Awake()
     {
         if (characterData != null)
@@ -42,6 +65,14 @@ public class PlayerStats : MonoBehaviour
             pickupRange = characterData.pickupRange;
             xpGainMultiplier = characterData.xpGainMultiplier;
         }
+
+        // Initialize health and visuals
+        currentHp = Mathf.Max(0, maxHp);
+        if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        if (spriteRenderer != null) _originalColor = spriteRenderer.color;
+
+        // Raise initial health event
+        OnHealthChanged?.Invoke(currentHp, maxHp);
     }
 
     // --- Public Methods to INCREASE Stats ---
@@ -87,6 +118,87 @@ public class PlayerStats : MonoBehaviour
         Debug.Log($"ProjectileCount: {projectileCount}, ProjectileSizeMultiplier: {projectileSizeMultiplier}, ProjectileSpeedMultiplier: {projectileSpeedMultiplier}");
         Debug.Log($"DurationMultiplier: {durationMultiplier}, KnockbackMultiplier: {knockbackMultiplier}, MovementSpeed: {movementSpeed}");
         Debug.Log($"Luck: {luck}, PickupRange: {pickupRange}, XPGainMultiplier: {xpGainMultiplier}");
+    }
+
+    // --- Health API ---
+    public void Heal(int amount)
+    {
+        if (amount <= 0 || currentHp <= 0) return;
+        int prev = currentHp;
+        currentHp = Mathf.Clamp(currentHp + amount, 0, maxHp);
+        if (currentHp != prev)
+        {
+            OnHealed?.Invoke();
+            OnHealthChanged?.Invoke(currentHp, maxHp);
+        }
+    }
+
+    public void ApplyDamage(float amount, Vector2? hitFromWorldPos = null, float? customIFrameDuration = null, float knockbackForce = 0f)
+    {
+        if (amount <= 0f) return;
+        if (invincible) return; // i-frames
+        if (currentHp <= 0) return; // already dead
+
+        int damageInt = Mathf.CeilToInt(amount);
+        currentHp = Mathf.Clamp(currentHp - damageInt, 0, maxHp);
+
+        // Feedback
+        if (spriteRenderer != null)
+        {
+            StopCoroutine(nameof(FlashRoutine));
+            StartCoroutine(FlashRoutine());
+        }
+        OnDamaged?.Invoke();
+        OnHealthChanged?.Invoke(currentHp, maxHp);
+
+        // Knockback intentionally disabled for player on damage
+
+        // Begin invincibility frames
+        float iFrames = customIFrameDuration.HasValue ? Mathf.Max(0f, customIFrameDuration.Value) : invincibilityDuration;
+        if (iFrames > 0f) BeginInvincibility(iFrames);
+
+        if (currentHp <= 0)
+        {
+            HandleDeath();
+        }
+    }
+
+    public void BeginInvincibility(float duration)
+    {
+        if (duration <= 0f) return;
+        StopCoroutine(nameof(InvincibilityRoutine));
+        StartCoroutine(InvincibilityRoutine(duration));
+    }
+
+    private System.Collections.IEnumerator InvincibilityRoutine(float duration)
+    {
+        invincible = true;
+        yield return new WaitForSeconds(duration);
+        invincible = false;
+    }
+
+    private System.Collections.IEnumerator FlashRoutine()
+    {
+        if (spriteRenderer == null) yield break;
+        spriteRenderer.color = hurtFlashColor;
+        yield return new WaitForSeconds(hurtFlashTime);
+        spriteRenderer.color = _originalColor;
+    }
+
+    private void HandleDeath()
+    {
+        Debug.Log("Player died.");
+        OnDeath?.Invoke();
+
+        // Optionally disable movement/collisions here; GameManager can listen to OnDeath to handle game over
+        var movement = GetComponent<Movement>();
+        if (movement != null)
+        {
+            movement.enabled = false;
+        }
+
+        var colls = GetComponentsInChildren<Collider2D>();
+        foreach (var c in colls) c.enabled = false;
     }
 
 }

@@ -30,7 +30,7 @@ Transform:
   m_GameObject: {fileID: 6482347200803263970}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 10.3295, y: 1.0852, z: -2}
+  m_LocalPosition: {x: 10.3295, y: 1.0852, z: 0}
   m_LocalScale: {x: 0.37, y: 0.37, z: 0.37}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -195,6 +195,7 @@ MonoBehaviour:
   baseHealth: 100
   baseDamage: 10
   moveSpeed: 3
+  knockback: 5
   currentHealth: 0
   chanceToDropNothing: 10
   orbDrops:

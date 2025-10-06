@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections;
 
-// A sua classe OrbDropConfig está perfeita, não precisa de alterações.
 [System.Serializable]
 public class OrbDropConfig
 {
@@ -12,25 +11,20 @@ public class OrbDropConfig
 [RequireComponent(typeof(Rigidbody2D))] 
 public class EnemyStats : MonoBehaviour
 {
-    // --- MUDANÇA: Stats base ---
     [Header("Base Stats")]
     [Tooltip("A vida do inimigo no início do jogo (minuto 0).")]
     public int baseHealth = 100;
     [Tooltip("O dano do inimigo no início do jogo (minuto 0).")]
-    public int baseDamage = 10; // --- NOVO: Variável de dano base ---
+    public int baseDamage = 10;
     public float moveSpeed = 2f;
 
-    // --- Stats Atuais (calculados no início) ---
     public float currentHealth;
 
-    // --- Cached Components ---
     private Rigidbody2D rb;
 
-    // --- State Management ---
     private bool isKnockedBack = false;
     public bool IsKnockedBack { get { return isKnockedBack; } }
 
-    // --- Experience Drop Settings (sem alterações) ---
     [Header("Experience Drops")]
     [Range(0f, 100f)] public float chanceToDropNothing = 20f;
     public OrbDropConfig[] orbDrops;
@@ -57,12 +51,10 @@ public class EnemyStats : MonoBehaviour
     {
         if (GameManager.Instance != null)
         {
-            // Pega no multiplicador de dano e calcula o dano final
             float damageMultiplier = GameManager.Instance.currentEnemyDamageMultiplier;
             return baseDamage * damageMultiplier;
         }
         
-        // Fallback: Se não houver GameManager, usa o dano base
         return baseDamage;
     }
 
