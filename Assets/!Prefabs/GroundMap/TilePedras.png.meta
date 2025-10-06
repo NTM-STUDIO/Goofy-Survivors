@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: d05a46e3a1ad3e84a95f41c19397134f
+guid: 56d5fa5c5aa76e349aec00d71aecd61e
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -6930474823159529909
-    second: relva_0
+      213: 8912971518025818497
+    second: TilePedras_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,7 +100,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: relva_0
+      name: TilePedras_0
       rect:
         serializedVersion: 2
         x: 150
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b4eb9c81ed102df90800000000000000
-      internalID: -6930474823159529909
+      spriteID: 1816a196f5c31bb70800000000000000
+      internalID: 8912971518025818497
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      relva_0: -6930474823159529909
+      TilePedras_0: 8912971518025818497
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
