@@ -2324,10 +2324,8 @@ MonoBehaviour:
   waves:
   - waveName: Wavy
     enemies:
-    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 1000
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
-      enemyCount: 1000
+      enemyCount: 2
     timeUntilNextWave: 0
     spawnInterval: 0.2
   waveIndex: 0
