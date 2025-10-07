@@ -3072,8 +3072,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tiles:
-  - tileSprite: {fileID: -284492762719052998, guid: d8baa3ce1048ebb4a8f7ff68673a1fb4, type: 3}
+  - tileSprite: {fileID: -6930474823159529909, guid: d05a46e3a1ad3e84a95f41c19397134f, type: 3}
     weight: 10
+  - tileSprite: {fileID: -1769049749814658988, guid: 94f4ccac7710c2f4faa095e56e6bb83f, type: 3}
+    weight: 5
+  - tileSprite: {fileID: -3653489756416933973, guid: 7496205aaee9c9442bfce4d738cd4d1e, type: 3}
+    weight: 5
+  - tileSprite: {fileID: -1036191625680060263, guid: 2badfa8ac519cd74f88edf535f879c45, type: 3}
+    weight: 5
+  - tileSprite: {fileID: 8912971518025818497, guid: 56d5fa5c5aa76e349aec00d71aecd61e, type: 3}
+    weight: 2
+  - tileSprite: {fileID: 2602402445093601726, guid: 786cc7d7fd6ee6b4fb3b674d9826d09e, type: 3}
+    weight: 1
   mapWidth: 100
   mapHeight: 100
   tilePrefab: {fileID: 2865266679031100099, guid: 24f6f62f8ab3bd44aa58527a3c1b4b08, type: 3}
