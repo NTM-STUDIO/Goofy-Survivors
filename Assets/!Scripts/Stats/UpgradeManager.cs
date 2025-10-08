@@ -26,6 +26,23 @@ public class UpgradeManager : MonoBehaviour
         public float Value;
     }
 
+    void Awake()
+    {
+        // Find PlayerStats by PlayerTag
+        if (playerStats == null)
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+            if (playerObject != null)
+            {
+                playerStats = playerObject.GetComponent<PlayerStats>();
+            }
+            else
+            {
+                Debug.LogError("UpgradeManager Error: Player with tag 'Player' not found! Make sure your player is tagged correctly.");
+            }
+        }
+    }
+
     // For testing: call this from a level up event
     void Update()
     {

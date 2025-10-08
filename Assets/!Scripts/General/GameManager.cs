@@ -49,6 +49,20 @@ public class GameManager : MonoBehaviour
         {
             Instance = this;
         }
+
+        //Find playerMovement by player tag
+        if (player == null)
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+            if (playerObject != null)
+            {
+                player = playerObject.GetComponent<Movement>();
+            }
+            else
+            {
+                Debug.LogError("GameManager Error: Player with tag 'Player' not found! Make sure your player is tagged correctly.");
+            }
+        }
     }
 
     void Start()

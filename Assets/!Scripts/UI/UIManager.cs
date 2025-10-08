@@ -15,6 +15,28 @@ public class UIManager : MonoBehaviour
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
+
+        //find slider by player tag
+        if (healthBar == null)
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+            if (playerObject != null)
+            {
+                UIManager uiManager = playerObject.GetComponent<UIManager>();
+                if (uiManager != null)
+                {
+                    healthBar = uiManager.healthBar;
+                }
+                else
+                {
+                    Debug.LogError("UIManager Error: UIManager component not found on the player object!");
+                }
+            }
+            else
+            {
+                Debug.LogError("UIManager Error: Player with tag 'Player' not found! Make sure your player is tagged correctly.");
+            }
+        }
     }
 
 
