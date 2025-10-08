@@ -16,14 +16,19 @@ public class PlayerExperience : MonoBehaviour
 
     [Header("System References")]
     [SerializeField] private UpgradeManager upgradeManager;
+    [SerializeField] private UIManager uiManager;
 
     public void Start()
     {
+        //how to find component by name?
+        //Find Upgrade Manager xpSlider and LevelText
+        upgradeManager = FindObjectOfType<UpgradeManager>();
 
-        if (upgradeManager == null)
-        {
-            Debug.LogError("UpgradeManager is not assigned on the PlayerExperience script!");
-        }
+
+
+        uiManager = FindObjectOfType<UIManager>();
+        xpSlider = uiManager.xpSlider;
+        levelText = uiManager.levelText;
 
         xpSlider.maxValue = xpToNextLevel;
         xpSlider.value = currentXP;

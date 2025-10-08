@@ -499,6 +499,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2556f049396219b4c928b9b85c62000a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  uiManager: {fileID: 0}
   extraIFrameOnCollision: 0
 --- !u!114 &7934618857094552494
 MonoBehaviour:
@@ -534,6 +535,7 @@ MonoBehaviour:
   xpToNextLevel: 100
   xpIncreaseFactor: 1.4
   upgradeManager: {fileID: 0}
+  uiManager: {fileID: 0}
 --- !u!114 &756791112541759263
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -587,6 +589,7 @@ MonoBehaviour:
   isPlayer: 1
   rotationSpeed: 9999
   movementThreshold: 0
+  enemyQuadrantThreshold: 1
 --- !u!1 &5265315392580758394
 GameObject:
   m_ObjectHideFlags: 0
@@ -651,8 +654,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 3304928515198908679}
   - {fileID: 3082991873037809152}
+  - {fileID: 3304928515198908679}
   - {fileID: 5072057905203456945}
   m_Father: {fileID: 6105381744674506462}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1041,6 +1044,10 @@ PrefabInstance:
     - target: {fileID: 3514391754032089312, guid: 46953767f50a1674a840e9653e7aa11e, type: 3}
       propertyPath: m_Layer
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3986759773826399462, guid: 46953767f50a1674a840e9653e7aa11e, type: 3}
+      propertyPath: m_SortingLayer
+      value: 5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

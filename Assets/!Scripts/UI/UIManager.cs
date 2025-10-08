@@ -3,41 +3,14 @@ using UnityEngine.UI;
 using TMPro;
 public class UIManager : MonoBehaviour
 {
-    public static UIManager Instance;
-
     public TextMeshProUGUI timerText;
     public GameObject pauseMenu;
     public GameObject usernamePanel;
     public TMP_InputField usernameInput;
 
+    public Slider xpSlider;
+    public TMP_Text levelText;
     public Slider healthBar;
-    void Awake()
-    {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
-
-        //find slider by player tag
-        if (healthBar == null)
-        {
-            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-            if (playerObject != null)
-            {
-                UIManager uiManager = playerObject.GetComponent<UIManager>();
-                if (uiManager != null)
-                {
-                    healthBar = uiManager.healthBar;
-                }
-                else
-                {
-                    Debug.LogError("UIManager Error: UIManager component not found on the player object!");
-                }
-            }
-            else
-            {
-                Debug.LogError("UIManager Error: Player with tag 'Player' not found! Make sure your player is tagged correctly.");
-            }
-        }
-    }
 
 
 
@@ -50,6 +23,10 @@ public class UIManager : MonoBehaviour
 
     public void UpdateHealthBar(float currentHealth, float maxHealth)
     {
+        if (healthBar == null)
+        {
+            healthBar = GameObject.Find("HP BAR").GetComponent<Slider>();
+        }
         if (healthBar != null)
         {
             healthBar.maxValue = maxHealth;

@@ -6,7 +6,7 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    
+    public UIManager uiManager;
 
     public enum GameState { Playing, Paused, GameOver }
     public GameState currentState;
@@ -108,7 +108,7 @@ public class GameManager : MonoBehaviour
                 currentTime = 0;
                 EndGame();
             }
-            UIManager.Instance.UpdateTimerText(currentTime);
+            uiManager.UpdateTimerText(currentTime);
         }
     }
 
@@ -155,7 +155,7 @@ public class GameManager : MonoBehaviour
             currentState = GameState.Paused;
             Time.timeScale = 0f;
             if (player != null) player.enabled = false;
-            UIManager.Instance.ShowPauseMenu(true);
+            uiManager.ShowPauseMenu(true);
         }
         else if (currentState == GameState.Paused)
         {
@@ -163,7 +163,7 @@ public class GameManager : MonoBehaviour
             Time.timeScale = 1f;
             Time.timeScale = 1f;
             if (player != null) player.enabled = true;
-            UIManager.Instance.ShowPauseMenu(false);
+            uiManager.ShowPauseMenu(false);
         }
     }
 
@@ -173,7 +173,7 @@ public class GameManager : MonoBehaviour
         isTimerRunning = false;
         if (player != null) player.enabled = false;
         // enemySpawner.StopSpawning();
-        UIManager.Instance.ShowUsernameInput();
+        uiManager.ShowUsernameInput();
     }
 
     public void SubmitUsername(string username)

@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class PlayerCollision : MonoBehaviour
 {
+    public UIManager uiManager;
     [Header("Damage Settings")]
     [Tooltip("Additional i-frame duration after enemy trigger hits (seconds)")] public float extraIFrameOnCollision = 0.0f;
 
@@ -14,6 +15,7 @@ public class PlayerCollision : MonoBehaviour
         {
             Debug.LogWarning("PlayerCollision requires PlayerStats on the same GameObject.");
         }
+        uiManager = FindObjectOfType<UIManager>();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -32,7 +34,7 @@ public class PlayerCollision : MonoBehaviour
             EnemyStats enemy = other.GetComponent<EnemyStats>();
             Vector2 knockbackDirection = (transform.position - other.transform.position).normalized;
             enemy.ApplyKnockback(5f, 0.4f, -knockbackDirection);
-            UIManager.Instance.UpdateHealthBar(playerStats.CurrentHp, playerStats.maxHp);
+            uiManager.UpdateHealthBar(playerStats.CurrentHp, playerStats.maxHp);
             return;
         }
 
