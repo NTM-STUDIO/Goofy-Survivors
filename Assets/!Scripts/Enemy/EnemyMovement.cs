@@ -15,12 +15,20 @@ public class EnemyMovement : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float predictiveChance = 0.6f;
     [SerializeField, Range(0f, 1f)] private float flankChance = 0.3f;
 
+    [Header("Movement")]
+    [Tooltip("How quickly the enemy accelerates to its top speed. Higher values are more responsive.")]
+    [SerializeField] private float acceleration = 50f;
+
     [Header("Prediction")]
     [SerializeField] private float leadTime = 0.5f;
 
     [Header("Flank")]
     [SerializeField] private float flankOffset = 2f;
     [SerializeField] private float flankFalloffDistance = 2f;
+
+    [Header("Collision")]
+    [Tooltip("How hard another object must hit this enemy to trigger its knockback state.")]
+    [SerializeField] private float minCollisionForceForStun = 5f;
 
     [Header("Debug")]
     [SerializeField] private bool showGizmos = true;
@@ -66,15 +74,62 @@ public class EnemyMovement : MonoBehaviour
         Vector2 direction = targetPosition - enemyPosition;
         if (direction.sqrMagnitude <= 0.0001f)
         {
-            rb.linearVelocity = Vector2.zero;
+            rb.linearVelocity = Vector2.zero; // This is fine for stopping completely.
             hasDebugTarget = false;
             return;
         }
 
-        rb.linearVelocity = direction.normalized * stats.moveSpeed;
+        // --- REVISED MOVEMENT LOGIC ---
+        // This new method uses forces to avoid negating knockback.
+
+        // 1. Determine the velocity we WANT to have.
+        Vector2 targetVelocity = direction.normalized * stats.moveSpeed;
+
+        // 2. Find the difference between our current velocity and the one we want.
+        Vector2 velocityDifference = targetVelocity - rb.linearVelocity;
+
+        // 3. Calculate the force needed to overcome the difference, using our acceleration.
+        Vector2 moveForce = velocityDifference * acceleration;
+
+        // 4. Apply the force. This will work WITH the physics engine, not against it.
+        rb.AddForce(moveForce, ForceMode2D.Force);
+
+        // --- END OF REVISED LOGIC ---
 
         debugDestination = targetPosition;
         hasDebugTarget = true;
+    }
+
+    /// <summary>
+    /// This is the new function that handles chain-reaction knockbacks.
+    /// It triggers when another physics object collides with this one.
+    /// </summary>
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        // If we are already knocked back, ignore new collisions.
+        if (stats.IsKnockedBack)
+        {
+            return;
+        }
+
+        // Check if the object that hit us was another enemy with the "Enemy" tag.
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            // A collision's "relativeVelocity" tells us how fast the two objects were moving towards each other.
+            // A high magnitude means a hard impact.
+            if (collision.relativeVelocity.magnitude > minCollisionForceForStun)
+            {
+                // The other enemy hit us hard enough to cause a stun.
+                
+                // Calculate a direction away from the point of impact.
+                Vector2 knockbackDir = (transform.position - collision.transform.position).normalized;
+
+                // Trigger our own knockback/stun state.
+                // We use the impact force (relative velocity) as the strength of the knockback.
+                // You can adjust the stun duration (0.25f) as needed.
+                stats.ApplyKnockback(collision.relativeVelocity.magnitude, 0.25f, knockbackDir);
+            }
+        }
     }
 
     // Decide which position to travel toward based on the configured behaviour.

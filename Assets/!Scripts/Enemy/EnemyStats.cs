@@ -97,18 +97,28 @@ public class EnemyStats : MonoBehaviour
         }
     }
 
-    public void ApplyKnockback(float knockbackForce, Vector2 direction)
+    public void ApplyKnockback(float knockbackForce, float duration, Vector2 direction)
     {
-        if (knockbackForce <= 0) return;
+        if (knockbackForce <= 0 || isKnockedBack) return; // Prevent new knockback while already stunned
+
         isKnockedBack = true;
-        rb.linearVelocity = Vector2.zero; 
-        rb.AddForce(direction * knockbackForce, ForceMode2D.Impulse);
-        StartCoroutine(KnockbackCooldown());
+        rb.linearVelocity = Vector2.zero; // Use rb.velocity to be consistent with Rigidbody2D properties
+        rb.AddForce(direction.normalized * knockbackForce, ForceMode2D.Impulse);
+
+        // Start the cooldown coroutine and pass the duration to it
+        StartCoroutine(KnockbackCooldown(duration));
     }
 
-    private IEnumerator KnockbackCooldown()
+    private IEnumerator KnockbackCooldown(float duration)
     {
-        yield return new WaitForSeconds(0.2f);
+        // Wait for the specified amount of time
+        yield return new WaitForSeconds(duration);
+
+        // After waiting, end the knockback state
         isKnockedBack = false;
+        
+        // Optional: You might want to zero out velocity here to stop any sliding
+        // after the stun ends, for more precise control.
+        rb.linearVelocity = Vector2.zero; 
     }
 }

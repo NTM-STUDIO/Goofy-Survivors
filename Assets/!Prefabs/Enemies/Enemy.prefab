@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 2211068760244866075}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.197, y: 0.463, z: -2}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.37, y: 0.37, z: 0.37}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -120,7 +120,7 @@ Transform:
   m_GameObject: {fileID: 6482347200803263970}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 10.3295, y: 1.0852, z: -2}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.37, y: 0.37, z: 0.37}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -141,12 +141,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviour: 2
   randomizeOnAwake: 1
-  predictiveChance: 0.94
-  flankChance: 0.739
+  predictiveChance: 0.27
+  flankChance: 0.29
+  acceleration: 30
   leadTime: 0.5
   flankOffset: 5
   flankFalloffDistance: 20
-  showGizmos: 1
+  minCollisionForceForStun: 5
+  showGizmos: 0
 --- !u!50 &4284822525752983333
 Rigidbody2D:
   serializedVersion: 5
@@ -234,7 +236,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseHealth: 100
   baseDamage: 10
-  moveSpeed: 3
+  moveSpeed: 1.6
   currentHealth: 0
   chanceToDropNothing: 10
   orbDrops:
@@ -251,18 +253,19 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6482347200803263970}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d3e1d4e0f9954c44aa7f76aa7ef76a5d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TwoSpriteIsometricController
   frontFacingSprite: {fileID: 2460532211164355792, guid: 23c36bcfbe251274b94f5f19200b6e8d, type: 3}
-  backFacingSprite: {fileID: -4469049575818415048, guid: 36f61df1b01c4d3448021db61676b037, type: 3}
-  visualsTransform: {fileID: 96496312138116250}
+  backFacingSprite: {fileID: -7884508479607033610, guid: 12b9554dd93011c498674669bcf79e7e, type: 3}
+  visualsTransform: {fileID: 3975292519066201491}
   spriteRenderer: {fileID: 3247412389836495601}
   isPlayer: 0
-  rotationSpeed: 999
-  movementThreshold: 0
+  rotationSpeed: 999999
+  movementThreshold: 10
+  enemyQuadrantThreshold: 1
 --- !u!1 &7291366060297437777
 GameObject:
   m_ObjectHideFlags: 0
@@ -288,7 +291,7 @@ Transform:
   m_GameObject: {fileID: 7291366060297437777}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.2845678, y: -1.172027, z: 5.4054055}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 2.7027028, y: 2.7027028, z: 2.7027028}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -322,7 +325,7 @@ Transform:
   m_GameObject: {fileID: 8600561634032360642}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.2818899, y: -0.42474997, z: -1.6299999}
+  m_LocalPosition: {x: 0, y: -0.8, z: 0}
   m_LocalScale: {x: 0.0126409205, y: 0.0126409205, z: 0.0126409205}
   m_ConstrainProportionsScale: 0
   m_Children: []

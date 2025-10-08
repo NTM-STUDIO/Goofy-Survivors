@@ -29,6 +29,9 @@ public class PlayerCollision : MonoBehaviour
             // Always use default i-frames from PlayerStats
             playerStats.ApplyDamage(dmg, from, null);
             Debug.Log("Player hit by enemy body for " + dmg + " damage. Player HP: " + playerStats.CurrentHp + "/" + playerStats.maxHp);
+            EnemyStats enemy = other.GetComponent<EnemyStats>();
+            Vector2 knockbackDirection = (transform.position - other.transform.position).normalized;
+            enemy.ApplyKnockback(5f, 0.4f, -knockbackDirection);
             UIManager.Instance.UpdateHealthBar(playerStats.CurrentHp, playerStats.maxHp);
             return;
         }

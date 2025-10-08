@@ -2324,8 +2324,8 @@ MonoBehaviour:
   waves:
   - waveName: Wavy
     enemies:
-    - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
-      enemyCount: 2
+    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
+      enemyCount: 200
     timeUntilNextWave: 0
     spawnInterval: 0.2
   waveIndex: 0
@@ -3225,6 +3225,10 @@ PrefabInstance:
     - target: {fileID: 8723021309873437529, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: m_Enabled
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8723021309873437529, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+      propertyPath: movementThreshold
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 9091615075258643040, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: xpSlider

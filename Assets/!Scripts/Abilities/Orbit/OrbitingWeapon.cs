@@ -59,7 +59,7 @@ public class OrbitingWeapon : MonoBehaviour
                 enemyStats.TakeDamage((int)damage);
                 
                 Vector2 knockbackDirection = (other.transform.position - orbitCenter.position).normalized;
-                enemyStats.ApplyKnockback(knockbackForce, knockbackDirection);
+                enemyStats.ApplyKnockback(knockbackForce, 0.4f, knockbackDirection);
 
                 currentPierce--;
                 if (currentPierce <= 0)

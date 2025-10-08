@@ -3,134 +3,135 @@ using UnityEngine;
 public class TwoSpriteIsometricController : MonoBehaviour
 {
     [Header("Base Isometric Sprites")]
-    public Sprite frontFacingSprite; // Used for moving/facing generally "down" or "front"
-    public Sprite backFacingSprite;  // Used for moving/facing generally "up" or "back"
+    public Sprite frontFacingSprite; // Used for looking "down" or "front"
+    public Sprite backFacingSprite;  // Used for looking "up" or "back"
 
     [Header("Visuals References")]
     public Transform visualsTransform; // Assign the 'Visuals' child GameObject's Transform here
-    public SpriteRenderer spriteRenderer; // Assign the SpriteRenderer on the 'Visuals' child here
+    public SpriteRenderer spriteRenderer; // Assign the SpriteRenderer from the 'Visuals' child here
 
     [Header("Settings")]
     public bool isPlayer = false; // Check if this is a player for different input handling
     public float rotationSpeed = 10f; // How fast the sprite rotates around the Y-axis
     public float movementThreshold = 0.1f; // How much movement is needed to determine direction
 
-    private Vector2 currentMovementInput = Vector2.zero; // Stores the raw movement input
-    private Vector2 lastLookDirection = Vector2.down;    // Stores the last significant direction for sprite choice and rotation
+    // This is no longer used by the enemy's new logic but may be useful for other things.
+    [Header("Enemy AI Settings")]
+    [Tooltip("How far past the center the player must be to trigger a turn. Prevents rapid flipping.")]
+    public float enemyQuadrantThreshold = 1f;
+
+    // Private state variables
+    private Vector2 lastLookDirection = Vector2.down;
+    private Transform playerTransform;
+    private float currentTargetYAngle = 0f;
 
     void Awake()
     {
-        // Add checks to ensure references are set
-        if (visualsTransform == null)
+        if (visualsTransform == null || spriteRenderer == null)
         {
-            Debug.LogError("Visuals Transform not assigned on " + gameObject.name + ". Please assign the 'Visuals' child.");
-            enabled = false;
-            return;
-        }
-        if (spriteRenderer == null)
-        {
-            Debug.LogError("SpriteRenderer not assigned on " + gameObject.name + ". Please assign the SpriteRenderer from the 'Visuals' child.");
+            Debug.LogError("Visuals references not assigned on " + gameObject.name);
             enabled = false;
             return;
         }
 
-        // Set initial sprite
+        // Make sure the visuals are not rotated at the start.
+        visualsTransform.localRotation = Quaternion.identity;
+
+        if (!isPlayer)
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+            if (playerObject != null)
+            {
+                playerTransform = playerObject.transform;
+            }
+            else
+            {
+                Debug.LogError("Player with tag 'Player' not found! The enemy needs this reference.");
+                enabled = false;
+                return;
+            }
+        }
+
         if (frontFacingSprite != null)
         {
             spriteRenderer.sprite = frontFacingSprite;
         }
-        // Ensure initial Z-rotation is 0, but Y-rotation will be controlled on the visualsTransform
-        visualsTransform.localEulerAngles = new Vector3(visualsTransform.localEulerAngles.x, 0, visualsTransform.localEulerAngles.z);
     }
 
-    void Update()
+    void FixedUpdate()
     {
         if (isPlayer)
         {
-            HandlePlayerInput();
+            // --- PLAYER LOGIC (UNCHANGED) ---
+            float moveX = Input.GetAxisRaw("Horizontal");
+            float moveY = Input.GetAxisRaw("Vertical");
+            Vector2 moveInput = new Vector2(moveX, moveY);
+            lastLookDirection = moveInput.normalized;
+            UpdatePlayerVisuals(lastLookDirection);
         }
         else
         {
-            // For enemies, AI should set currentMovementInput
-            // Example: SetEnemyMovementInput((target.position - transform.position).normalized);
-        }
-
-        UpdateIsometricVisuals();
-    }
-
-    void HandlePlayerInput()
-    {
-        float moveX = Input.GetAxisRaw("Horizontal");
-        float moveY = Input.GetAxisRaw("Vertical");
-        currentMovementInput = new Vector2(moveX, moveY);
-    }
-
-    void UpdateIsometricVisuals()
-    {
-        Vector2 activeDirection = Vector2.zero;
-
-        // Determine if moving, and get the active direction
-        if (currentMovementInput.magnitude > movementThreshold)
-        {
-            activeDirection = currentMovementInput.normalized;
-            // Update lastLookDirection when moving for both sprite choice and idle rotation
-            lastLookDirection = activeDirection;
-        }
-        else if (lastLookDirection != Vector2.zero) // If idle, use the last direction
-        {
-            activeDirection = lastLookDirection;
-        }
-        else // Fallback if no movement and no last direction
-        {
-            activeDirection = Vector2.down; // Default to facing front
-            lastLookDirection = Vector2.down; // Also set last direction
-        }
-
-        // --- Determine Sprite (Front or Back) ---
-        if (activeDirection.y > 0) // Facing generally up/back
-        {
-            if (spriteRenderer.sprite != backFacingSprite)
+            // --- ENEMY LOGIC ---
+            if (playerTransform != null)
             {
-                spriteRenderer.sprite = backFacingSprite;
+                Vector3 directionToPlayer = playerTransform.position - transform.position;
+                UpdateEnemyVisuals(directionToPlayer);
             }
         }
-        else // Facing generally down/front, or primarily horizontal
+    }
+
+    // --- PLAYER FUNCTION (UNCHANGED) ---
+    void UpdatePlayerVisuals(Vector2 direction)
+    {
+        // 1. Determine Sprite based on vertical movement
+        if (direction.y > 0.1f) // Moving Up
         {
-            if (spriteRenderer.sprite != frontFacingSprite)
-            {
-                spriteRenderer.sprite = frontFacingSprite;
-            }
+            spriteRenderer.sprite = backFacingSprite;
+        }
+        else if (direction.y < -0.1f) // Moving Down
+        {
+            spriteRenderer.sprite = frontFacingSprite;
         }
 
-        // --- Determine Y-Axis Rotation (Left or Right) ---
-        // Your base sprites should be drawn facing one direction (e.g., Left or Right).
-        // Let's assume your sprites are drawn facing RIGHT, so 0 Y-rotation means "right".
-        // Then 180 Y-rotation means "left".
-
-        float targetYAngle = visualsTransform.localEulerAngles.y; // Keep current Y-angle if no strong horizontal
-        
-        if (activeDirection.x < -0.1f) // Moving/Facing Left
+        // 2. Determine Rotation based on horizontal movement
+        if (direction.x < -0.1f) // Moving Left
         {
-            targetYAngle = 0f; // Rotate 180 degrees around Y to face left
+            currentTargetYAngle = 0f;
         }
-        else if (activeDirection.x > 0.1f) // Moving/Facing Right
+        else if (direction.x > 0.1f) // Moving Right
         {
-            targetYAngle = 180f; // Reset Y-rotation to 0 to face right
+            currentTargetYAngle = 180f;
         }
 
-        // Smoothly interpolate the Y-rotation of the visualsTransform
+        // 3. Apply the Rotation Smoothly
         Quaternion currentVisualsRotation = visualsTransform.localRotation;
-        Quaternion targetVisualsRotation = Quaternion.Euler(currentVisualsRotation.eulerAngles.x, targetYAngle, currentVisualsRotation.eulerAngles.z);
+        Quaternion targetVisualsRotation = Quaternion.Euler(currentVisualsRotation.eulerAngles.x, currentTargetYAngle, currentVisualsRotation.eulerAngles.z);
         visualsTransform.localRotation = Quaternion.Slerp(currentVisualsRotation, targetVisualsRotation, rotationSpeed * Time.deltaTime);
     }
 
-    // Public method for AI to set movement direction for enemies
-    public void SetEnemyMovementInput(Vector2 moveInput)
+    // --- ENEMY FUNCTION (REWRITTEN TO USE SPRITE FLIPPING) ---
+    void UpdateEnemyVisuals(Vector2 offset)
     {
-        currentMovementInput = moveInput;
-        if (moveInput.magnitude > movementThreshold)
+        // 1. Determine Vertical Facing (Up/Down Sprite)
+        if (offset.y > 0) // Player is above the enemy
         {
-            lastLookDirection = moveInput.normalized;
+            spriteRenderer.sprite = backFacingSprite;
+        }
+        else // Player is below or level with the enemy
+        {
+            spriteRenderer.sprite = frontFacingSprite;
+        }
+
+        // 2. Determine Horizontal Facing (Flip Sprite on X-axis)
+        // This assumes your base sprites are drawn facing left.
+        // If your sprites are drawn facing right, change this to offset.x < 0.
+        if (offset.x > 0) // Player is to the right of the enemy
+        {
+            spriteRenderer.flipX = true; // Flip sprite to face right
+        }
+        else // Player is to the left of the enemy
+        {
+            spriteRenderer.flipX = false; // Use the default sprite direction (facing left)
         }
     }
 }
