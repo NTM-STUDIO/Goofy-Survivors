@@ -82,7 +82,7 @@ public class MapGenerator : MonoBehaviour
                 Vector2 isoPosition = new Vector2(isoX, isoY);
 
                 // Log das primeiras 5 tiles para debug
-                if (logCount < 5)
+                if (logCount < 2)
                 {
                     Debug.Log($"Tile ({gridX},{gridY}) -> IsoPos: {isoPosition}");
                     logCount++;
