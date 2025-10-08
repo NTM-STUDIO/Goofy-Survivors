@@ -361,7 +361,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TwoSpriteIsometricController
   frontFacingSprite: {fileID: 6457755217153254001, guid: e4e8468ce3e087446859197aa0204ab6, type: 3}
-  backFacingSprite: {fileID: -899459628680033812, guid: c3cae91eb09bc3b49ad17a28e7e9ffdc, type: 3}
+  backFacingSprite: {fileID: -2411140879512065293, guid: 41cd9202056b5014f99f51ccdc298318, type: 3}
   visualsTransform: {fileID: 3967456697048404461}
   spriteRenderer: {fileID: 8662487606146076013}
   isPlayer: 0
