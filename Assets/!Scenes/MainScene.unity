@@ -3147,6 +3147,8 @@ MonoBehaviour:
     weight: 10
   - assetPrefab: {fileID: 6050591176458649254, guid: b37f1c7ade03d274790e81b69bdea4bf, type: 3}
     weight: 5
+  - assetPrefab: {fileID: 1010114737999647873, guid: 400cca9a532574a48875d09870502710, type: 3}
+    weight: 5
   mapWidth: 150
   mapHeight: 150
   tilePrefab: {fileID: 2865266679031100099, guid: 24f6f62f8ab3bd44aa58527a3c1b4b08, type: 3}
