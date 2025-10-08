@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 7496205aaee9c9442bfce4d738cd4d1e
+guid: 4922704972ce53444b6e049dfe2f425c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3653489756416933973
-    second: TileFlores_0
+      213: -1951860770725164454
+    second: Tronco_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: TileFlores_0
+      name: Tronco_0
       rect:
         serializedVersion: 2
-        x: 150
-        y: 329
-        width: 726
-        height: 441
+        x: 244
+        y: 259
+        width: 543
+        height: 453
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: baf7d3e6c623c4dc0800000000000000
-      internalID: -3653489756416933973
+      spriteID: a5a08ed68f899e4e0800000000000000
+      internalID: -1951860770725164454
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      TileFlores_0: -3653489756416933973
+      Tronco_0: -1951860770725164454
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

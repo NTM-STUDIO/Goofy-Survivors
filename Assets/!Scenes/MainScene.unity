@@ -3074,18 +3074,19 @@ MonoBehaviour:
   tiles:
   - tileSprite: {fileID: -6930474823159529909, guid: d05a46e3a1ad3e84a95f41c19397134f, type: 3}
     weight: 10
-  - tileSprite: {fileID: -1769049749814658988, guid: 94f4ccac7710c2f4faa095e56e6bb83f, type: 3}
+  assets:
+  - assetPrefab: {fileID: 2765567052452416103, guid: e720e348a4a19d7448852d1b7ef0d0f2, type: 3}
+    weight: 100
+  - assetPrefab: {fileID: 3877457435698082047, guid: 389a3402b51cae244a21a34b78cd0f7b, type: 3}
+    weight: 25
+  - assetPrefab: {fileID: 4709354192823547604, guid: b0454d639e9905340bf67446c3a143e9, type: 3}
+    weight: 25
+  - assetPrefab: {fileID: 570421501351505163, guid: df3fae62bb9acd74596a834f5d65342e, type: 3}
+    weight: 10
+  - assetPrefab: {fileID: 6050591176458649254, guid: b37f1c7ade03d274790e81b69bdea4bf, type: 3}
     weight: 5
-  - tileSprite: {fileID: -3653489756416933973, guid: 7496205aaee9c9442bfce4d738cd4d1e, type: 3}
-    weight: 5
-  - tileSprite: {fileID: -1036191625680060263, guid: 2badfa8ac519cd74f88edf535f879c45, type: 3}
-    weight: 5
-  - tileSprite: {fileID: 8912971518025818497, guid: 56d5fa5c5aa76e349aec00d71aecd61e, type: 3}
-    weight: 2
-  - tileSprite: {fileID: 2602402445093601726, guid: 786cc7d7fd6ee6b4fb3b674d9826d09e, type: 3}
-    weight: 1
-  mapWidth: 100
-  mapHeight: 100
+  mapWidth: 150
+  mapHeight: 150
   tilePrefab: {fileID: 2865266679031100099, guid: 24f6f62f8ab3bd44aa58527a3c1b4b08, type: 3}
 --- !u!4 &1301954345
 Transform:
