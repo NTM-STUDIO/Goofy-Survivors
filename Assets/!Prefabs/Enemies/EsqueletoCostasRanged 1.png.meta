@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 94f4ccac7710c2f4faa095e56e6bb83f
+guid: 41cd9202056b5014f99f51ccdc298318
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -1769049749814658988
-    second: TileArbusto_0
+      213: -2411140879512065293
+    second: EsqueletoCostasRanged 1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: TileArbusto_0
+      name: EsqueletoCostasRanged 1_0
       rect:
         serializedVersion: 2
-        x: 150
-        y: 329
-        width: 726
-        height: 441
+        x: 237
+        y: 35
+        width: 477
+        height: 504
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 458bd4810a21377e0800000000000000
-      internalID: -1769049749814658988
+      spriteID: 3faa2451528e98ed0800000000000000
+      internalID: -2411140879512065293
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      TileArbusto_0: -1769049749814658988
+      EsqueletoCostasRanged 1_0: -2411140879512065293
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

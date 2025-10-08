@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 56d5fa5c5aa76e349aec00d71aecd61e
+guid: f05a86951392200468491d60c9d26b3f
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8912971518025818497
-    second: TilePedras_0
+      213: -3444684537588130483
+    second: Pedras_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: TilePedras_0
+      name: Pedras_0
       rect:
         serializedVersion: 2
-        x: 150
-        y: 329
-        width: 726
-        height: 441
+        x: 258
+        y: 333
+        width: 483
+        height: 332
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1816a196f5c31bb70800000000000000
-      internalID: 8912971518025818497
+      spriteID: d4d57cde9a50230d0800000000000000
+      internalID: -3444684537588130483
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      TilePedras_0: 8912971518025818497
+      Pedras_0: -3444684537588130483
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

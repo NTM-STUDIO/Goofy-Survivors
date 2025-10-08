@@ -2,16 +2,22 @@ using UnityEngine;
 
 public class MapGenerator : MonoBehaviour
 {
-
-
     [System.Serializable]
     public class TileData
     {
         public Sprite tileSprite;
-        public float weight; // Quanto maior, mais comum � a tile
+        public float weight; // Quanto maior, mais comum é a tile
+    }
+
+    [System.Serializable]
+    public class AssetData
+    {
+        public GameObject assetPrefab;
+        public float weight; // Quanto maior, mais comum é o asset
     }
 
     public TileData[] tiles;
+    public AssetData[] assets; // Lista de assets para spawnar
     public int mapWidth = 2000;
     public int mapHeight = 1200;
     public GameObject tilePrefab; // Um GameObject com SpriteRenderer
@@ -32,6 +38,11 @@ public class MapGenerator : MonoBehaviour
         foreach (var tile in tiles)
             totalWeight += tile.weight;
 
+        // Soma os pesos dos assets
+        float totalAssetWeight = 0f;
+        foreach (var asset in assets)
+            totalAssetWeight += asset.weight;
+
         // Valida o SpriteRenderer do prefab
         var spriteRenderer = tilePrefab.GetComponent<SpriteRenderer>();
         if (spriteRenderer == null)
@@ -48,7 +59,7 @@ public class MapGenerator : MonoBehaviour
 
         spriteRenderer.sortingLayerName = "Background";
 
-        // Obt�m o tamanho do tile em unidades do mundo
+        // Obtem o tamanho do tile em unidades do mundo
         float tileWidth = 7.3f;
         float tileHeight = 4.44f;
         Debug.Log($"tileWidth: {tileWidth}, tileHeight: {tileHeight}");
@@ -84,6 +95,17 @@ public class MapGenerator : MonoBehaviour
                 // Define a ordem de renderiza��o para garantir sobreposi��o correta
                 tileGO.GetComponent<SpriteRenderer>().sortingOrder = -(gridX + gridY);
                 //(halfWidth * 2 - (gridX + halfWidth)) + (halfHeight * 2 - (gridY + halfHeight));
+
+                // Spawn de asset aleatório sobre a tile
+                if (assets != null && assets.Length > 0)
+                {
+                    AssetData chosenAsset = GetRandomAsset(totalAssetWeight);
+                    if (chosenAsset != null && chosenAsset.assetPrefab != null)
+                    {
+                        Vector3 assetPosition = new Vector3(isoPosition.x, isoPosition.y, -1f); // Z para ficar acima da tile
+                        Instantiate(chosenAsset.assetPrefab, assetPosition, Quaternion.identity, transform);
+                    }
+                }
             }
         }
         // Fim da gera��o do mapa
@@ -106,5 +128,18 @@ public class MapGenerator : MonoBehaviour
         // Caso algo corra mal, retorna a �ltima tile e avisa no log
         Debug.LogWarning("Erro tile usada � verifica os pesos!");
         return tiles[tiles.Length - 1];
+    }
+
+    AssetData GetRandomAsset(float totalWeight)
+    {
+        float randomValue = Random.Range(0, totalWeight);
+        float cumulative = 0f;
+        foreach (var asset in assets)
+        {
+            cumulative += asset.weight;
+            if (randomValue <= cumulative)
+                return asset;
+        }
+        return assets[assets.Length - 1];
     }
 }

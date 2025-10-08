@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 7496205aaee9c9442bfce4d738cd4d1e
+guid: 2748bede88421a94eac9792d00d0ba1b
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3653489756416933973
-    second: TileFlores_0
+      213: 7299931111331947499
+    second: TimCheese_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: TileFlores_0
+      name: TimCheese_0
       rect:
         serializedVersion: 2
-        x: 150
-        y: 329
-        width: 726
-        height: 441
+        x: 384
+        y: 14
+        width: 360
+        height: 546
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: baf7d3e6c623c4dc0800000000000000
-      internalID: -3653489756416933973
+      spriteID: be363c74ba09e4560800000000000000
+      internalID: 7299931111331947499
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      TileFlores_0: -3653489756416933973
+      TimCheese_0: 7299931111331947499
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
