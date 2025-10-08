@@ -54,15 +54,45 @@ public class EnemySpawner : MonoBehaviour
             Wave currentWave = waves[waveIndex];
             Debug.Log("Starting Wave: " + (currentWave.waveName != "" ? currentWave.waveName : (waveIndex + 1).ToString()));
 
+            List<int> remainingCounts = new List<int>();
+            int totalEnemiesToSpawn = 0;
+
             foreach (WaveEnemy waveEnemy in currentWave.enemies)
             {
-                for (int i = 0; i < waveEnemy.enemyCount; i++)
+                int clampedCount = Mathf.Max(0, waveEnemy.enemyCount);
+                remainingCounts.Add(clampedCount);
+                totalEnemiesToSpawn += clampedCount;
+            }
+
+            if (totalEnemiesToSpawn == 0)
+            {
+                Debug.LogWarning($"Wave '{currentWave.waveName}' has no enemies with a positive count.");
+            }
+
+            while (totalEnemiesToSpawn > 0)
+            {
+                int roll = Random.Range(0, totalEnemiesToSpawn);
+                int cumulative = 0;
+
+                for (int enemyIndex = 0; enemyIndex < currentWave.enemies.Count; enemyIndex++)
                 {
-                    Vector2 spawnPos = GetSpawnPositionOutsideCamera();
-                    GameObject enemy = Instantiate(waveEnemy.enemyPrefab, spawnPos, Quaternion.identity);
+                    if (remainingCounts[enemyIndex] == 0)
+                        continue;
 
+                    cumulative += remainingCounts[enemyIndex];
 
-                    yield return new WaitForSeconds(currentWave.spawnInterval);
+                    if (roll < cumulative)
+                    {
+                        WaveEnemy selectedEnemy = currentWave.enemies[enemyIndex];
+                        Vector2 spawnPos = GetSpawnPositionOutsideCamera();
+                        GameObject enemy = Instantiate(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
+
+                        remainingCounts[enemyIndex]--;
+                        totalEnemiesToSpawn--;
+
+                        yield return new WaitForSeconds(currentWave.spawnInterval);
+                        break;
+                    }
                 }
             }
             yield return new WaitForSeconds(currentWave.timeUntilNextWave);
