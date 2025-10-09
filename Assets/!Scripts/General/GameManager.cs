@@ -24,9 +24,9 @@ public class GameManager : MonoBehaviour
     
     [Space]
     [Tooltip("Quanto o multiplicador de vida aumenta a cada minuto.")]
-    public float healthIncreasePerMinute = 0.2f; 
+    public float healthIncreasePerMinute = 40f; 
     [Tooltip("Quanto o multiplicador de dano aumenta a cada minuto.")]
-    public float damageIncreasePerMinute = 0.15f; 
+    public float damageIncreasePerMinute = 5f; 
 
     private int lastMinuteMark  = 0; 
 
@@ -77,6 +77,10 @@ public class GameManager : MonoBehaviour
             UpdateTimer();
             CheckForDifficultyIncrease();
             CheckForBossSpawn();
+        }
+        if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            uiManager.ShowStatsPanel(!uiManager.statsPanel.activeSelf);
         }
     }
 

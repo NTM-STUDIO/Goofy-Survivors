@@ -6,8 +6,8 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI timerText;
     public GameObject pauseMenu;
     public GameObject usernamePanel;
+    public GameObject statsPanel;
     public TMP_InputField usernameInput;
-
     public Slider xpSlider;
     public TMP_Text levelText;
     public Slider healthBar;
@@ -38,6 +38,14 @@ public class UIManager : MonoBehaviour
     {
         if (pauseMenu != null)
             pauseMenu.SetActive(show);
+    }
+
+    public void ShowStatsPanel(bool show)
+    {
+        if (statsPanel != null)
+        {
+            statsPanel.SetActive(show);
+        }
     }
 
     public void ShowUsernameInput()

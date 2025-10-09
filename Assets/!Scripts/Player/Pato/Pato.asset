@@ -15,18 +15,18 @@ MonoBehaviour:
   characterName: Pato
   playerPrefab: {fileID: 4343297250839089127, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
   defaultWeaponPrefab: {fileID: 6969291154112545986, guid: 29845c9427df0d94780766f2d257512a, type: 3}
-  maxHp: 175
-  hpRegen: 10
-  damageMultiplier: 1.2
+  maxHp: 50
+  hpRegen: 0
+  damageMultiplier: 1
   critChance: 0.1
   critDamageMultiplier: 2
   attackSpeedMultiplier: 1
-  projectileCount: 1
+  projectileCount: 0
   projectileSizeMultiplier: 1
-  projectileSpeedMultiplier: 3
-  durationMultiplier: 1.1
+  projectileSpeedMultiplier: 1
+  durationMultiplier: 1
   knockbackMultiplier: 1
   movementSpeed: 5
   luck: 1
   pickupRange: 5
-  xpGainMultiplier: 1.1
+  xpGainMultiplier: 1
