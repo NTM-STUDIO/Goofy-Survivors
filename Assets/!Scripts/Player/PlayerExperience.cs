@@ -22,11 +22,11 @@ public class PlayerExperience : MonoBehaviour
     {
         //how to find component by name?
         //Find Upgrade Manager xpSlider and LevelText
-        upgradeManager = FindObjectOfType<UpgradeManager>();
+        upgradeManager = FindFirstObjectByType<UpgradeManager>();
 
 
 
-        uiManager = FindObjectOfType<UIManager>();
+        uiManager = FindFirstObjectByType<UIManager>();
         xpSlider = uiManager.xpSlider;
         levelText = uiManager.levelText;
 

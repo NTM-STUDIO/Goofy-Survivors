@@ -24,6 +24,10 @@ PrefabInstance:
       propertyPath: m_Interactable
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2371237134162643201, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+      propertyPath: m_Radius
+      value: 200
+      objectReference: {fileID: 0}
     - target: {fileID: 4343297250839089127, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: m_Name
       value: Pato
@@ -155,6 +159,22 @@ PrefabInstance:
     - target: {fileID: 9091615075258643040, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: xpIncreaseFactor
       value: 1.12
+      objectReference: {fileID: 0}
+    - target: {fileID: 9192336796988247481, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+      propertyPath: m_Size.x
+      value: 0.7283528
+      objectReference: {fileID: 0}
+    - target: {fileID: 9192336796988247481, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+      propertyPath: m_Size.y
+      value: 1.7498778
+      objectReference: {fileID: 0}
+    - target: {fileID: 9192336796988247481, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+      propertyPath: m_Offset.x
+      value: -0.009981811
+      objectReference: {fileID: 0}
+    - target: {fileID: 9192336796988247481, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+      propertyPath: m_Offset.y
+      value: 0.098568976
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

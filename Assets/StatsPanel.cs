@@ -28,7 +28,7 @@ public class StatsPanel : MonoBehaviour
 
     private void OnEnable()
     {
-        playerStats = FindObjectOfType<PlayerStats>();
+        playerStats = FindFirstObjectByType<PlayerStats>();
 
         // It's crucial to check if playerStats is assigned to prevent errors.
         if (playerStats == null)

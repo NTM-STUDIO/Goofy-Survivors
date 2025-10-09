@@ -15,4 +15,5 @@ public class StatUpgradeData : ScriptableObject
     public float baseValueMin;
     [Tooltip("The maximum base value for this upgrade.")]
     public float baseValueMax;
+
 }

@@ -82,7 +82,7 @@ public class EnemyStats : MonoBehaviour
 
     public void TryDropOrb()
     {
-        if (Random.Range(0f, 100f) <= chanceToDropNothing)
+        if (Random.Range(1f, 100f) <= chanceToDropNothing)
         {
             return;
         }
@@ -105,20 +105,5 @@ public class EnemyStats : MonoBehaviour
         rb.linearVelocity = Vector2.zero; // Use rb.velocity to be consistent with Rigidbody2D properties
         rb.AddForce(direction.normalized * knockbackForce, ForceMode2D.Impulse);
 
-        // Start the cooldown coroutine and pass the duration to it
-        StartCoroutine(KnockbackCooldown(duration));
-    }
-
-    private IEnumerator KnockbackCooldown(float duration)
-    {
-        // Wait for the specified amount of time
-        yield return new WaitForSeconds(duration);
-
-        // After waiting, end the knockback state
-        isKnockedBack = false;
-        
-        // Optional: You might want to zero out velocity here to stop any sliding
-        // after the stun ends, for more precise control.
-        rb.linearVelocity = Vector2.zero; 
     }
 }

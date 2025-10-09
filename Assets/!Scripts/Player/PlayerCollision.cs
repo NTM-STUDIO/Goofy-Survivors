@@ -15,7 +15,7 @@ public class PlayerCollision : MonoBehaviour
         {
             Debug.LogWarning("PlayerCollision requires PlayerStats on the same GameObject.");
         }
-        uiManager = FindObjectOfType<UIManager>();
+        uiManager = FindFirstObjectByType<UIManager>();
     }
 
     private void OnTriggerEnter2D(Collider2D other)

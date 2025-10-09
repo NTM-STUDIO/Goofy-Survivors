@@ -3214,67 +3214,67 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   waves:
-  - waveName: Wavy
+  - waveName: Wave 15:00-14:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
       enemyCount: 60
-    timeUntilNextWave: 60
-    spawnInterval: 2
-  - waveName: Fire
-    enemies:
-    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 30
-    - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
-      enemyCount: 5
-    timeUntilNextWave: 120
-    spawnInterval: 2
-  - waveName: Fuego
+    timeUntilNextWave: 0
+    spawnInterval: 1
+  - waveName: Wave 14:00-13:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
       enemyCount: 120
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
       enemyCount: 5
-    timeUntilNextWave: 180
-    spawnInterval: 1
-  - waveName: Fuego
+    timeUntilNextWave: 0
+    spawnInterval: 2
+  - waveName: Wave 13:00-12:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 300
+      enemyCount: 240
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
       enemyCount: 5
-    timeUntilNextWave: 240
+    timeUntilNextWave: 0
+    spawnInterval: 1
+  - waveName: Wave 12:00-11:00
+    enemies:
+    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
+      enemyCount: 480
+    - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
+      enemyCount: 5
+    timeUntilNextWave: 0
     spawnInterval: 0.9
-  - waveName: Fuego
+  - waveName: Wave 11:00-10:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 500
+      enemyCount: 960
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
       enemyCount: 5
-    timeUntilNextWave: 300
-    spawnInterval: 1
-  - waveName: Fuego
+    timeUntilNextWave: 0
+    spawnInterval: 0.8
+  - waveName: Wave 10:00-09:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 1000
+      enemyCount: 1800
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
       enemyCount: 5
-    timeUntilNextWave: 360
+    timeUntilNextWave: 0
     spawnInterval: 0.7
+  - waveName: Wave 09:00-08:00
+    enemies:
+    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
+      enemyCount: 3600
+    - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
+      enemyCount: 5
+    timeUntilNextWave: 0
+    spawnInterval: 0.6
   - waveName: Fuego
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 1500
+      enemyCount: 5000
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
       enemyCount: 5
-    timeUntilNextWave: 420
-    spawnInterval: 0.7
-  - waveName: Fuego
-    enemies:
-    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 2000
-    - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
-      enemyCount: 5
-    timeUntilNextWave: 500
+    timeUntilNextWave: 0
     spawnInterval: 0.5
   waveIndex: 0
 --- !u!114 &1080717440
@@ -3293,6 +3293,7 @@ MonoBehaviour:
   upgradePanel: {fileID: 1754829982}
   upgradeChoicePrefab: {fileID: 9209661984835970440, guid: dd9061c775bee354f8222a6395caf098, type: 3}
   choicesContainer: {fileID: 61759100}
+  luckScalingFactor: 0.1
   availableUpgrades:
   - {fileID: 11400000, guid: 0de2cee94758c6748b46297a606f3074, type: 2}
   - {fileID: 11400000, guid: 3911b77109ed8054ba6ce69ecd7ab808, type: 2}
@@ -6751,6 +6752,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1242726739}
     m_Modifications:
+    - target: {fileID: 2075713923728942121, guid: 40f5beefc2511614b865a77069890a08, type: 3}
+      propertyPath: m_text
+      value: '>'
+      objectReference: {fileID: 0}
     - target: {fileID: 2906854980865552447, guid: 40f5beefc2511614b865a77069890a08, type: 3}
       propertyPath: m_Name
       value: Select Unit
@@ -6851,6 +6856,18 @@ PrefabInstance:
       propertyPath: cinemachineCamera
       value: 
       objectReference: {fileID: 60939575}
+    - target: {fileID: 6021529790532987408, guid: 40f5beefc2511614b865a77069890a08, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6021529790532987408, guid: 40f5beefc2511614b865a77069890a08, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6021529790532987408, guid: 40f5beefc2511614b865a77069890a08, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

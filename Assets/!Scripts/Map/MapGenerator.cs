@@ -30,8 +30,7 @@ public class MapGenerator : MonoBehaviour
 
     void GenerateMap()
     {
-        // Inicia o processo de gera��o do mapa isom�trico
-        Debug.Log("Iniciando gera��o do mapa isom�trico...");
+
 
         // Soma os pesos de todas as tiles para c�lculo de probabilidade
         float totalWeight = 0f;
@@ -62,7 +61,6 @@ public class MapGenerator : MonoBehaviour
         // Obtem o tamanho do tile em unidades do mundo
         float tileWidth = 7.3f;
         float tileHeight = 4.44f;
-        Debug.Log($"tileWidth: {tileWidth}, tileHeight: {tileHeight}");
 
         // Calcula os limites para desenhar o mapa centrado em (0,0)
         int halfWidth = mapWidth / 2;
@@ -84,7 +82,6 @@ public class MapGenerator : MonoBehaviour
                 // Log das primeiras 5 tiles para debug
                 if (logCount < 2)
                 {
-                    Debug.Log($"Tile ({gridX},{gridY}) -> IsoPos: {isoPosition}");
                     logCount++;
                 }
 
@@ -108,8 +105,6 @@ public class MapGenerator : MonoBehaviour
                 }
             }
         }
-        // Fim da gera��o do mapa
-        Debug.Log("Gera��o do mapa isom�trico finalizada.");
     }
 
     // Fun��o para escolher uma tile aleat�ria com base nos pesos

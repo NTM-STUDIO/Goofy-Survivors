@@ -10,6 +10,8 @@ public class UpgradeManager : MonoBehaviour
     [SerializeField] private UpgradeChoiceUI upgradeChoicePrefab;
     [SerializeField] private Transform choicesContainer;
 
+    public float luckScalingFactor = 0.1f; // How much luck influences upgrade values
+
     [Header("Upgrade Pool")]
     [Tooltip("All possible stat upgrades that can be offered.")]
     [SerializeField] private List<StatUpgradeData> availableUpgrades;
@@ -40,15 +42,6 @@ public class UpgradeManager : MonoBehaviour
             {
                 Debug.LogError("UpgradeManager Error: Player with tag 'Player' not found! Make sure your player is tagged correctly.");
             }
-        }
-    }
-
-    // For testing: call this from a level up event
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            TriggerLevelUp();
         }
     }
 
@@ -99,6 +92,7 @@ public class UpgradeManager : MonoBehaviour
             
             // Calculate final value
             float baseValue = Random.Range(chosenData.baseValueMin, chosenData.baseValueMax);
+
             generatedUpgrade.Value = baseValue * generatedUpgrade.Rarity.valueMultiplier;
 
             generatedChoices.Add(generatedUpgrade);
@@ -186,7 +180,7 @@ public class UpgradeManager : MonoBehaviour
                 playerStats.IncreaseDurationMultiplier(value / 100f);
                 break;
             case StatType.KnockbackMultiplier:
-                playerStats.IncreaseKnockbackMultiplier(value * playerStats.knockbackMultiplier - playerStats.knockbackMultiplier);
+                playerStats.IncreaseKnockbackMultiplier(value / 100f);
                 break;
             case StatType.MovementSpeed:
                 playerStats.IncreaseMovementSpeed(value / 100f * playerStats.movementSpeed);
