@@ -4049,9 +4049,9 @@ MonoBehaviour:
     weight: 10
   assets:
   - assetPrefab: {fileID: 2765567052452416103, guid: e720e348a4a19d7448852d1b7ef0d0f2, type: 3}
-    weight: 100
+    weight: 300
   - assetPrefab: {fileID: 3877457435698082047, guid: 389a3402b51cae244a21a34b78cd0f7b, type: 3}
-    weight: 200
+    weight: 100
   - assetPrefab: {fileID: 4709354192823547604, guid: b0454d639e9905340bf67446c3a143e9, type: 3}
     weight: 25
   - assetPrefab: {fileID: 570421501351505163, guid: df3fae62bb9acd74596a834f5d65342e, type: 3}

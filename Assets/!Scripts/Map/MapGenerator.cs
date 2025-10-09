@@ -93,14 +93,49 @@ public class MapGenerator : MonoBehaviour
                 tileGO.GetComponent<SpriteRenderer>().sortingOrder = -(gridX + gridY);
                 //(halfWidth * 2 - (gridX + halfWidth)) + (halfHeight * 2 - (gridY + halfHeight));
 
+
+
                 // Spawn de asset aleatório sobre a tile
-                if (assets != null && assets.Length > 0)
+                int maxAssetsPerTile = 2; // Limite de assets por tile
+                var assetPositions = new System.Collections.Generic.List<Vector2>();
+
+                int assetsSpawned = 0;
+                int attempts = 0;
+                while (assetsSpawned < maxAssetsPerTile && attempts < maxAssetsPerTile * 20)
                 {
-                    AssetData chosenAsset = GetRandomAsset(totalAssetWeight);
-                    if (chosenAsset != null && chosenAsset.assetPrefab != null)
+                    attempts++;
+                    if (assets != null && assets.Length > 0)
                     {
-                        Vector3 assetPosition = new Vector3(isoPosition.x, isoPosition.y, -1f); // Z para ficar acima da tile
-                        Instantiate(chosenAsset.assetPrefab, assetPosition, Quaternion.identity, transform);
+                        AssetData chosenAsset = GetRandomAsset(totalAssetWeight);
+                        if (chosenAsset != null && chosenAsset.assetPrefab != null)
+                        {
+                            // Obtém o tamanho do asset (sprite bounds)
+                            var assetRenderer = chosenAsset.assetPrefab.GetComponent<SpriteRenderer>();
+                            float assetSize = assetRenderer != null ? Mathf.Max(assetRenderer.bounds.size.x, assetRenderer.bounds.size.y) : 1f;
+                            float minDistance = assetSize * 1.1f; // Garante espaço maior que o asset
+
+                            float offsetX = Random.Range(-tileWidth / 5f, tileWidth / 5f);
+                            float offsetY = Random.Range(-tileHeight / 5f, tileHeight / 5f);
+                            Vector2 assetPos = new Vector2(isoPosition.x + offsetX, isoPosition.y + offsetY);
+
+                            bool validPos = true;
+                            foreach (var pos in assetPositions)
+                            {
+                                if (Vector2.Distance(pos, assetPos) < minDistance)
+                                {
+                                    validPos = false;
+                                    break;
+                                }
+                            }
+
+                            if (validPos)
+                            {
+                                assetPositions.Add(assetPos);
+                                Vector3 finalPos = new Vector3(assetPos.x, assetPos.y, -1f);
+                                Instantiate(chosenAsset.assetPrefab, finalPos, Quaternion.identity, transform);
+                                assetsSpawned++;
+                            }
+                        }
                     }
                 }
             }
