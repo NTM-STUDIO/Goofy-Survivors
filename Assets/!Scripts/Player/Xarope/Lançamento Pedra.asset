@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a235ba29a21fe3c4194c1d40bc43f19b, type: 3}
-  m_Name: Pedra
+  m_Name: "Lan\xE7amento Pedra"
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: Pedra
   description: "Lan\xE7amento de pedra"
@@ -18,14 +18,14 @@ MonoBehaviour:
   weaponPrefab: {fileID: 3341698084558261502, guid: f7f7b6d5ecca79643b0878c82e38c93f, type: 3}
   archetype: 0
   damage: 10
-  cooldown: 3
+  cooldown: 1
   area: 1
   amount: 1
   speed: 1
-  duration: 2
+  duration: 1
   criticalChance: 0
   criticalMultiplier: 1.5
-  pierce: 1
+  pierce: 0
   pierceCount: 1
   knockback: 0
   maxLevel: 8
