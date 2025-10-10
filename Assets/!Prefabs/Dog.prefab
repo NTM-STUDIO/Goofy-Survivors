@@ -88,10 +88,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2184979161469537397, guid: a972f4d80d88fb54a89e9a406ce522d6, type: 3}
-      propertyPath: m_Volume
-      value: 0.557
-      objectReference: {fileID: 0}
     - target: {fileID: 4340471749736591693, guid: a972f4d80d88fb54a89e9a406ce522d6, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -102,7 +98,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8476348927198278900, guid: a972f4d80d88fb54a89e9a406ce522d6, type: 3}
       propertyPath: m_Name
-      value: Dog
+      value: Dog Variant
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
