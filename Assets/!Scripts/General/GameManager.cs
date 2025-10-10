@@ -84,6 +84,12 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void RestartGame()
+    {
+        // Reload the current scene
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
     public void StartGame()
     {
         currentState = GameState.Playing;
