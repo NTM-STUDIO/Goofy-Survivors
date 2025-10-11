@@ -28,6 +28,10 @@ public class UpgradeManager : MonoBehaviour
         public float Value;
     }
 
+    // MODIFIED: Queue to handle multiple level-ups
+    private Queue<int> levelUpQueue = new Queue<int>();
+    private bool isUpgradeInProgress = false;
+
     void Awake()
     {
         // Find PlayerStats by PlayerTag
@@ -45,7 +49,36 @@ public class UpgradeManager : MonoBehaviour
         }
     }
 
-    public void TriggerLevelUp()
+    // MODIFIED: Public method for PlayerExperience to call
+    public void AddLevelUpToQueue()
+    {
+        levelUpQueue.Enqueue(1); // Enqueue a "token" for a level up
+        // If an upgrade isn't already being shown, process the next one
+        if (!isUpgradeInProgress)
+        {
+            ProcessNextUpgrade();
+        }
+    }
+
+    // MODIFIED: New method to process the queue
+    private void ProcessNextUpgrade()
+    {
+        // If there are level-ups waiting in the queue
+        if (levelUpQueue.Count > 0)
+        {
+            isUpgradeInProgress = true;
+            levelUpQueue.Dequeue(); // Consume one level-up token
+            ShowUpgradeChoices(); // Show the upgrade panel
+        }
+        else
+        {
+            // If the queue is empty, we are done
+            isUpgradeInProgress = false;
+        }
+    }
+
+    // MODIFIED: Renamed TriggerLevelUp to ShowUpgradeChoices and made it private
+    private void ShowUpgradeChoices()
     {
         // Clear any previous choices
         foreach (Transform child in choicesContainer)
@@ -63,9 +96,7 @@ public class UpgradeManager : MonoBehaviour
 
     private int GetNumberOfChoices(float currentLuck)
     {
-        // Luck provides a chance for more choices.
-        // Every 10 luck gives a 10% chance for a 4th option.
-        // Every 20 luck gives a 10% chance for a 5th option.
+        // ... (rest of the method is unchanged)
         if (Random.Range(0f, 100f) < currentLuck / 2f) return 5;
         if (Random.Range(0f, 100f) < currentLuck) return 4;
         return 3;
@@ -73,6 +104,7 @@ public class UpgradeManager : MonoBehaviour
 
     private List<GeneratedUpgrade> GenerateUpgradeChoices(int count)
     {
+        // ... (method is unchanged)
         var generatedChoices = new List<GeneratedUpgrade>();
         var availableUpgradesCopy = new List<StatUpgradeData>(availableUpgrades);
 
@@ -80,19 +112,15 @@ public class UpgradeManager : MonoBehaviour
         {
             if (availableUpgradesCopy.Count == 0) break;
 
-            // Select a random upgrade type from the remaining pool
             int randomIndex = Random.Range(0, availableUpgradesCopy.Count);
             StatUpgradeData chosenData = availableUpgradesCopy[randomIndex];
-            availableUpgradesCopy.RemoveAt(randomIndex); // Ensure no duplicate stat types
+            availableUpgradesCopy.RemoveAt(randomIndex);
 
-            // Generate the full upgrade instance
             var generatedUpgrade = new GeneratedUpgrade();
             generatedUpgrade.BaseData = chosenData;
             generatedUpgrade.Rarity = DetermineRarity(playerStats.luck);
             
-            // Calculate final value
             float baseValue = Random.Range(chosenData.baseValueMin, chosenData.baseValueMax);
-
             generatedUpgrade.Value = baseValue * generatedUpgrade.Rarity.valueMultiplier;
 
             generatedChoices.Add(generatedUpgrade);
@@ -102,20 +130,18 @@ public class UpgradeManager : MonoBehaviour
 
     private RarityTier DetermineRarity(float currentLuck)
     {
+        // ... (method is unchanged)
         float totalWeight = 0;
         var weightedTiers = new List<(RarityTier, float)>();
 
-        // Calculate modified weights based on luck
         foreach (var tier in rarityTiers)
         {
-            // Luck increases the weight of all non-common rarities
             float luckModifier = (tier.rarity == Rarity.Common) ? 1f : 1f + (currentLuck / 100f);
             float modifiedWeight = tier.baseWeight * luckModifier;
             weightedTiers.Add((tier, modifiedWeight));
             totalWeight += modifiedWeight;
         }
 
-        // Perform the weighted random roll
         float randomRoll = Random.Range(0, totalWeight);
         float currentWeight = 0;
 
@@ -128,12 +154,12 @@ public class UpgradeManager : MonoBehaviour
             }
         }
         
-        // Fallback (shouldn't happen)
         return rarityTiers.First();
     }
 
     private void DisplayUpgradeChoices(List<GeneratedUpgrade> choices)
     {
+        // ... (method is unchanged)
         foreach (var choice in choices)
         {
             UpgradeChoiceUI uiInstance = Instantiate(upgradeChoicePrefab, choicesContainer);
@@ -145,7 +171,7 @@ public class UpgradeManager : MonoBehaviour
     {
         float value = upgrade.Value;
 
-        // Apply the stat modification using a switch statement
+        // ... (switch statement is unchanged)
         switch (upgrade.BaseData.statToUpgrade)
         {
             case StatType.MaxHP:
@@ -155,9 +181,8 @@ public class UpgradeManager : MonoBehaviour
                 playerStats.IncreaseHPRegen(value);
                 break;
             case StatType.DamageMultiplier:
-                playerStats.IncreaseDamageMultiplier(value / 100f); // Convert percentage
+                playerStats.IncreaseDamageMultiplier(value / 100f);
                 break;
-            // ... Add cases for ALL other stats
             case StatType.CritChance:
                 playerStats.IncreaseCritChance(value / 100f);
                 break;
@@ -195,14 +220,28 @@ public class UpgradeManager : MonoBehaviour
                 playerStats.IncreaseXPGainMultiplier(value / 100f);
                 break;
         }
+
         Debug.Log($"Applied Upgrade: {upgrade.BaseData.statToUpgrade} +{value} ({upgrade.Rarity.rarity})");
         playerStats.PrintStats();
-        // Clean up UI and unpause
-        foreach (Transform child in choicesContainer)
+        
+        // MODIFIED: Logic for handling the panel and time scale has changed
+        
+        // Don't unpause or hide the panel yet. First, check if more upgrades are waiting.
+        if (levelUpQueue.Count > 0)
         {
-            Destroy(child.gameObject);
+            // If there's another level-up waiting, immediately show the next set of choices.
+            ProcessNextUpgrade();
         }
-        upgradePanel.SetActive(false);
-        Time.timeScale = 1f;
+        else
+        {
+            // Only if the queue is empty do we unpause and hide the panel.
+            isUpgradeInProgress = false; // Mark that we are done upgrading for now
+            foreach (Transform child in choicesContainer)
+            {
+                Destroy(child.gameObject);
+            }
+            upgradePanel.SetActive(false);
+            Time.timeScale = 1f;
+        }
     }
 }

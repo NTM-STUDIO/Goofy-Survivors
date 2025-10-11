@@ -2265,7 +2265,7 @@ MonoBehaviour:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
       enemyCount: 20
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
-      enemyCount: 5
+      enemyCount: 2
     timeUntilNextWave: 0
     spawnInterval: 1
   - waveName: Wave 14:00-13:00
@@ -2273,7 +2273,7 @@ MonoBehaviour:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
       enemyCount: 120
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
-      enemyCount: 10
+      enemyCount: 4
     timeUntilNextWave: 0
     spawnInterval: 1
   - waveName: Wave 13:00-12:00
