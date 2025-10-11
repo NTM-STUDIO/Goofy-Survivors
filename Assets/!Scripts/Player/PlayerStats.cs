@@ -8,7 +8,7 @@ public class PlayerStats : MonoBehaviour
 
     // --- Your Original Stat Fields ---
     [HideInInspector] public int maxHp;
-    [HideInInspector] public float hpRegen;
+    [Tooltip("HP regenerated per second from stats and upgrades")]
     [HideInInspector] public float damageMultiplier;
     [HideInInspector] public float critChance;
     [HideInInspector] public float critDamageMultiplier;
@@ -35,6 +35,24 @@ public class PlayerStats : MonoBehaviour
     [ColorUsage(true,true)] [SerializeField] private Color hurtFlashColor = new Color(1f, 0.4f, 0.4f, 1f);
     [SerializeField] private float hurtFlashTime = 0.1f;
     private Color _originalColor;
+
+    [Header("Health Regeneration")]
+    [Tooltip("Enable or disable passive health regeneration")]
+    [SerializeField] private bool enableHealthRegen = true;
+
+    [Tooltip("Flat health restored each tick before applying hpRegen stat (useful for designer tweaks)")]
+    [Min(0f)]
+    [SerializeField] public float hpRegen = 1f;
+        /*[SerializeField] private float baseRegenPerTick = 0f;
+    [Tooltip("Seconds between regeneration ticks")]
+    [Min(0.1f)]*/
+
+    [Tooltip("Seconds between regeneration ticks")]
+    [Min(0.1f)]
+    
+    [SerializeField] private float regenTickInterval = 1f;
+    private Coroutine _regenRoutine;
+    private float _regenOverflow;
 
     // Events for UI and gameplay hooks
     public event Action<int, int> OnHealthChanged; // (current, max)
@@ -73,6 +91,8 @@ public class PlayerStats : MonoBehaviour
 
         // Raise initial health event
         OnHealthChanged?.Invoke(currentHp, maxHp);
+
+        TryStartHealthRegen();
     }
 
     // --- Public Methods to INCREASE Stats ---
@@ -128,6 +148,7 @@ public class PlayerStats : MonoBehaviour
         currentHp = Mathf.Clamp(currentHp + amount, 0, maxHp);
         if (currentHp != prev)
         {
+            Debug.Log($"Player healed {currentHp - prev} HP (current: {currentHp}/{maxHp})");
             OnHealed?.Invoke();
             OnHealthChanged?.Invoke(currentHp, maxHp);
         }
@@ -170,6 +191,79 @@ public class PlayerStats : MonoBehaviour
         if (duration <= 0f) return;
         StopCoroutine(nameof(InvincibilityRoutine));
         StartCoroutine(InvincibilityRoutine(duration));
+    }
+
+    private void TryStartHealthRegen()
+    {
+        if (_regenRoutine != null)
+        {
+            StopCoroutine(_regenRoutine);
+            _regenRoutine = null;
+        }
+
+        if (!enableHealthRegen || regenTickInterval <= 0f) return;
+        if (!isActiveAndEnabled) return;
+
+        _regenRoutine = StartCoroutine(HealthRegenRoutine());
+    }
+
+    private void OnEnable()
+    {
+        TryStartHealthRegen();
+    }
+
+    private void OnDisable()
+    {
+        if (_regenRoutine != null)
+        {
+            StopCoroutine(_regenRoutine);
+            _regenRoutine = null;
+        }
+    }
+
+    private void OnValidate()
+    {
+        regenTickInterval = Mathf.Max(0.1f, regenTickInterval);
+        //baseRegenPerTick = Mathf.Max(0f, baseRegenPerTick);
+
+        if (Application.isPlaying)
+        {
+            TryStartHealthRegen();
+        }
+    }
+
+    private System.Collections.IEnumerator HealthRegenRoutine()
+    {
+        var wait = new WaitForSeconds(regenTickInterval);
+
+        while (true)
+        {
+            yield return wait;
+            ProcessRegenTick();
+        }
+    }
+
+    private void ProcessRegenTick()
+    {
+        if (currentHp <= 0 || currentHp >= maxHp) return;
+
+        float regenFromStatsPerTick = Mathf.Max(0f, hpRegen) * regenTickInterval;
+        float totalRegen = /*baseRegenPerTick + */regenFromStatsPerTick;
+        if (totalRegen <= 0f) return;
+
+        _regenOverflow += totalRegen;
+        int healAmount = Mathf.FloorToInt(_regenOverflow);
+        if (healAmount <= 0) return;
+
+        _regenOverflow -= healAmount;
+        Debug.Log($"Health regen tick (+{healAmount} HP) | basePerTick={hpRegen} | statPerSec={hpRegen} | interval={regenTickInterval}s");
+        Heal(healAmount);
+    }
+
+    public float GetRegenPerSecond()
+    {
+        if (!enableHealthRegen || regenTickInterval <= 0f) return 0f;
+        return (hpRegen / regenTickInterval) + Mathf.Max(0f, hpRegen);
     }
 
     private System.Collections.IEnumerator InvincibilityRoutine(float duration)

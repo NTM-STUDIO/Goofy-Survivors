@@ -64,7 +64,7 @@ public class StatsPanel : MonoBehaviour
         UpdateHealth(playerStats.CurrentHp, playerStats.maxHp);
 
         // Update the rest of the stats
-        hpRegenText.text = $"HP Regen: {playerStats.hpRegen:F2}/s";
+    hpRegenText.text = $"HP Regen: {playerStats.GetRegenPerSecond():F2}/s";
         damageMultiplierText.text = $"Damage: {playerStats.damageMultiplier * 100:F0}%";
         critChanceText.text = $"Crit Chance: {playerStats.critChance:P1}"; // P1 formats as a percentage with 1 decimal
         critDamageMultiplierText.text = $"Crit Damage: {playerStats.critDamageMultiplier * 100:F0}%";

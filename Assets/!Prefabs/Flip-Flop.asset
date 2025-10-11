@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a235ba29a21fe3c4194c1d40bc43f19b, type: 3}
   m_Name: Flip-Flop
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  weaponName: 
+  weaponName: FlipFlop
   description: 
-  icon: {fileID: 0}
-  weaponPrefab: {fileID: 0}
-  archetype: 0
+  icon: {fileID: -3638269243578002030, guid: 5baa99f7a02a3dc458e93b5fc5950032, type: 3}
+  weaponPrefab: {fileID: 627485569957632336, guid: 5aa8b1fa4db7e7d45aeb901f211be295, type: 3}
+  archetype: 3
   damage: 10
   cooldown: 1
   area: 1
