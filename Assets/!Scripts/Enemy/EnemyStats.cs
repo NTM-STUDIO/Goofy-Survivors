@@ -104,6 +104,13 @@ public class EnemyStats : MonoBehaviour
         isKnockedBack = true;
         rb.linearVelocity = Vector2.zero; // Use rb.velocity to be consistent with Rigidbody2D properties
         rb.AddForce(direction.normalized * knockbackForce, ForceMode2D.Impulse);
+        StartCoroutine(KnockbackCoroutine(duration));
+    }
 
+    IEnumerator KnockbackCoroutine(float duration)
+    {
+        yield return new WaitForSeconds(duration);
+        rb.linearVelocity = Vector2.zero; // Stop movement after knockback duration
+        isKnockedBack = false;
     }
 }

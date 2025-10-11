@@ -16,8 +16,11 @@ public class EnemyProjectileDamage : MonoBehaviour
             var playerStats = other.GetComponent<PlayerStats>();
             if (playerStats != null)
             {
-                playerStats.ApplyDamage(damageAmount, transform.position, 0f); 
+                playerStats.ApplyDamage(damageAmount, transform.position, 0f);
             }
+
+            // Destruir o proj�til ap�s colidir com o player
+            Destroy(gameObject);
         }
     }
 }
