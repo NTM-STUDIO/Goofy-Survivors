@@ -159,6 +159,10 @@ public class PlayerStats : MonoBehaviour
         {
             HandleDeath();
         }
+
+        var uiManager = FindFirstObjectByType<UIManager>();
+        if (uiManager != null)
+            uiManager.UpdateHealthBar(currentHp, maxHp);
     }
 
     public void BeginInvincibility(float duration)
@@ -197,6 +201,12 @@ public class PlayerStats : MonoBehaviour
 
         var colls = GetComponentsInChildren<Collider2D>();
         foreach (var c in colls) c.enabled = false;
+
+        UIManager uiManager = FindFirstObjectByType<UIManager>();
+        if (uiManager != null)
+        {
+            uiManager.ShowEndGamePanel(true);
+        }
     }
 
 }

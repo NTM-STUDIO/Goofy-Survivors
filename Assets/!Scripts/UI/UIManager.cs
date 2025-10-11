@@ -7,7 +7,10 @@ public class UIManager : MonoBehaviour
     public GameObject pauseMenu;
     public GameObject usernamePanel;
     public GameObject statsPanel;
+    public GameObject playAgainButton;
     public TMP_InputField usernameInput;
+
+    public GameObject endGamePanel;
     public Slider xpSlider;
     public TMP_Text levelText;
     public Slider healthBar;
@@ -34,6 +37,16 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public void ShowEndGamePanel(bool show)
+    {
+        if (endGamePanel != null)
+            endGamePanel.SetActive(show);
+    }
+
+    public void PlayAgainButton()
+    {
+        GameManager.Instance.RestartGame();
+    }
     public void ShowPauseMenu(bool show)
     {
         if (pauseMenu != null)

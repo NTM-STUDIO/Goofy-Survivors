@@ -20,13 +20,8 @@ public class PlayerExperience : MonoBehaviour
 
     public void Start()
     {
-        //how to find component by name?
-        //Find Upgrade Manager xpSlider and LevelText
-        upgradeManager = FindObjectOfType<UpgradeManager>();
-
-
-
-        uiManager = FindObjectOfType<UIManager>();
+        upgradeManager = FindFirstObjectByType<UpgradeManager>();
+        uiManager = FindFirstObjectByType<UIManager>();
         xpSlider = uiManager.xpSlider;
         levelText = uiManager.levelText;
 
@@ -38,7 +33,7 @@ public class PlayerExperience : MonoBehaviour
     public void AddXP(float xp)
     {
         currentXP += xp;
-        xpSlider.value = currentXP; 
+        xpSlider.value = currentXP;
 
         while (currentXP >= xpToNextLevel)
         {
@@ -49,17 +44,17 @@ public class PlayerExperience : MonoBehaviour
 
     private void LevelUp()
     {
-        currentXP -= xpToNextLevel; 
+        currentXP -= xpToNextLevel;
         currentLevel++;
         xpToNextLevel *= xpIncreaseFactor;
         levelText.text = $"Lvl: {currentLevel}";
         xpSlider.value = currentXP;
         xpSlider.maxValue = xpToNextLevel;
 
-
         if (upgradeManager != null)
         {
-            upgradeManager.TriggerLevelUp();
+            // This is the correct method to call now
+            upgradeManager.AddLevelUpToQueue();
         }
     }
 }

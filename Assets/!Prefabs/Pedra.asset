@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Pedra
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: Pedra
-  description: 
-  icon: {fileID: 0}
-  weaponPrefab: {fileID: 0}
+  description: "Lan\xE7amento de pedra"
+  icon: {fileID: 9167361028535897922, guid: 96c456af18e84eb49b0b36992c1c0f16, type: 3}
+  weaponPrefab: {fileID: 3341698084558261502, guid: f7f7b6d5ecca79643b0878c82e38c93f, type: 3}
   archetype: 0
   damage: 10
   cooldown: 3

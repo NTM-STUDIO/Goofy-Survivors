@@ -28,7 +28,7 @@ public class UnitCarouselSelector : MonoBehaviour
     void Start()
     {
         // Find the GameInitializer in the scene
-        gameInitializer = FindObjectOfType<GameInitializer>();
+        gameInitializer = FindFirstObjectByType<GameInitializer>();
         if (gameInitializer == null)
         {
             Debug.LogError("GameInitializer not found in the scene! The 'Select' button will not work.");
@@ -55,8 +55,8 @@ public class UnitCarouselSelector : MonoBehaviour
 
     public void NextUnit()
     {
+        Debug.Log("Next Unit button clicked.");
         currentIndex++;
-        // If we go past the end of the list, loop back to the beginning
         if (currentIndex >= unitPrefabs.Count)
         {
             currentIndex = 0;

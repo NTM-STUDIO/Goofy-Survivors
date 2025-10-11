@@ -5,8 +5,8 @@ public class EnemyShooter : MonoBehaviour
     public GameObject projectilePrefab;   // Prefab do projétil
     public Transform firePoint;           // Ponto de disparo
     public float fireRate = 2f;           // Tempo entre disparos (cooldown)
-    public float projectileSpeed = 10f;   // Velocidade do projétil
-    public float shootRange = 10f;        // Distância Maxima para disparar
+    public float projectileSpeed = 8f;   // Velocidade do projétil
+    public float shootRange = 12f;        // Distância Maxima para disparar
 
     private float fireTimer;              // Temporizador para controlar o cooldown
     private Transform player;             // Referência ao jogador
