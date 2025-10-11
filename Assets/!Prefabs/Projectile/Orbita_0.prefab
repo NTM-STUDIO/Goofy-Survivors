@@ -168,5 +168,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c98202547fc86647a85b0a1d8a1eb12, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyProjectileDamage
-  damageAmount: 10
-  enemyStats: {fileID: 0}
+  damage: 100
+  knockback: 0
+  destroyOnHit: 1
