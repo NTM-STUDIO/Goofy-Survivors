@@ -59,5 +59,8 @@ TagManager:
   - name: VFX
     uniqueID: 2737780903
     locked: 0
+  - name: cONSUMABLES
+    uniqueID: 4150487449
+    locked: 0
   m_RenderingLayers:
   - Default

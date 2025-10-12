@@ -1,19 +1,19 @@
 using UnityEngine;
 
-// Componente a colocar no arbusto (ou outro "consumível" do mapa)
+// Componente a colocar no arbusto (ou outro "consumï¿½vel" do mapa)
 
-// Objetivo: quando o Player entra em contacto (Trigger ou Colisão) com este objeto,
-// é instanciado um item (prefab) escolhido por pesos a partir da lista de drops.
+// Objetivo: quando o Player entra em contacto (Trigger ou Colisï¿½o) com este objeto,
+// ï¿½ instanciado um item (prefab) escolhido por pesos a partir da lista de drops.
 
-// Requisitos de física 2D para os eventos dispararem:
-// - Este objeto: precisa de um Collider2D (obrigatório por [RequireComponent]).
+// Requisitos de fï¿½sica 2D para os eventos dispararem:
+// - Este objeto: precisa de um Collider2D (obrigatï¿½rio por [RequireComponent]).
 // - Player: precisa de um Rigidbody2D OU este objeto pode ter um Rigidbody2D.
 //   Pelo menos um dos dois participantes do contacto deve ter Rigidbody2D.
 // Notas:
-// - Se usar Trigger (recomendado), marque dropOnTrigger e o collider será isTrigger.
-// - Se usar Colisão, marque dropOnCollision e o collider NÃO deve ser isTrigger.
-// - onlyOnce controla se faz o drop só na primeira interação.
-// - destroyAfterDrop permite remover o arbusto após o drop, com atraso opcional.
+// - Se usar Trigger (recomendado), marque dropOnTrigger e o collider serï¿½ isTrigger.
+// - Se usar Colisï¿½o, marque dropOnCollision e o collider Nï¿½O deve ser isTrigger.
+// - onlyOnce controla se faz o drop sï¿½ na primeira interaï¿½ï¿½o.
+// - destroyAfterDrop permite remover o arbusto apï¿½s o drop, com atraso opcional.
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Collider2D))]
@@ -24,62 +24,62 @@ public class MapConsumable : MonoBehaviour
     {
         // Prefab do item a instanciar quando o drop for escolhido
         public GameObject prefab;
-        // Peso relativo da probabilidade do item sair (quanto maior, mais provável)
+        // Peso relativo da probabilidade do item sair (quanto maior, mais provï¿½vel)
         public float weight = 1f;
-        // Offset em relação à posição do arbusto onde o item será instanciado
+        // Offset em relaï¿½ï¿½o ï¿½ posiï¿½ï¿½o do arbusto onde o item serï¿½ instanciado
         [Tooltip("Offset relativo ao arbusto onde o item aparece")] public Vector2 spawnOffset;
     }
 
     [Header("Tabela de Drops (por pesos)")]
-    // Lista configurável no Inspetor. Um destes itens será escolhido por pesos.
+    // Lista configurï¿½vel no Inspetor. Um destes itens serï¿½ escolhido por pesos.
     public DropEntry[] drops;
 
-    [Header("Deteção do Player")]
+    [Header("Deteï¿½ï¿½o do Player")]
     // Tag que identifica o Player (o objeto que ativa o drop)
     [Tooltip("Tag usada pelo Player")] public string playerTag = "Player";
     // Ative para usar eventos de Trigger 2D (OnTriggerEnter2D/Stay). Exige collider.isTrigger = true
     [Tooltip("Se verdadeiro, usa OnTriggerEnter2D (collider isTrigger)")] public bool dropOnTrigger = true;
-    // Ative para usar eventos de Colisão 2D (OnCollisionEnter2D/Stay). Exige collider.isTrigger = false
+    // Ative para usar eventos de Colisï¿½o 2D (OnCollisionEnter2D/Stay). Exige collider.isTrigger = false
     [Tooltip("Se verdadeiro, usa OnCollisionEnter2D (collider normal)")] public bool dropOnCollision = false;
 
-    [Header("Comportamento após Drop")]
-    // Se true, só dropa na primeira interação e ignora próximas
-    [Tooltip("Se verdadeiro, só dropa uma vez")] public bool onlyOnce = true;
-    // Se true, destrói este objeto depois de dropar
-    [Tooltip("Se verdadeiro, destrói este objeto após dropar")] public bool destroyAfterDrop = false;
+    [Header("Comportamento apï¿½s Drop")]
+    // Se true, sï¿½ dropa na primeira interaï¿½ï¿½o e ignora prï¿½ximas
+    [Tooltip("Se verdadeiro, sï¿½ dropa uma vez")] public bool onlyOnce = true;
+    // Se true, destrï¿½i este objeto depois de dropar
+    [Tooltip("Se verdadeiro, destrï¿½i este objeto apï¿½s dropar")] public bool destroyAfterDrop = false;
     // Atraso em segundos para destruir (se ativado)
     public float destroyDelay = 0f;
 
     [Header("Debug")]
-    // Mostra mensagens úteis no Console para diagnosticar (tags, eventos, item dropado)
+    // Mostra mensagens ï¿½teis no Console para diagnosticar (tags, eventos, item dropado)
     public bool debugLogs = false;
 
-    // Guarda estado para não dropar outra vez quando onlyOnce está ativo
+    // Guarda estado para nï¿½o dropar outra vez quando onlyOnce estï¿½ ativo
     private bool hasDropped = false;
 
     void Awake()
     {
-        // Mantém o collider coerente com as flags dropOnTrigger/dropOnCollision
+        // Mantï¿½m o collider coerente com as flags dropOnTrigger/dropOnCollision
         SyncColliderMode();
 #if UNITY_EDITOR
-        // Ajuda no Editor: alerta se o Player não tiver Rigidbody2D (necessário para eventos 2D)
+        // Ajuda no Editor: alerta se o Player nï¿½o tiver Rigidbody2D (necessï¿½rio para eventos 2D)
         var player = GameObject.FindWithTag(playerTag);
         if (player != null && player.GetComponent<Rigidbody2D>() == null)
         {
-            Debug.LogWarning($"MapConsumable em '{name}': O objeto com tag '{playerTag}' não tem Rigidbody2D. Eventos de Trigger/Collision 2D requerem pelo menos um Rigidbody2D.");
+            Debug.LogWarning($"MapConsumable em '{name}': O objeto com tag '{playerTag}' nï¿½o tem Rigidbody2D. Eventos de Trigger/Collision 2D requerem pelo menos um Rigidbody2D.");
         }
 #endif
     }
 
     void Reset()
     {
-        // Chamado quando o componente é adicionado ou resetado no Inspetor
+        // Chamado quando o componente ï¿½ adicionado ou resetado no Inspetor
         SyncColliderMode();
     }
 
     void OnValidate()
     {
-        // Garante configuração consistente ao editar valores no Inspetor
+        // Garante configuraï¿½ï¿½o consistente ao editar valores no Inspetor
         SyncColliderMode();
     }
 
@@ -89,7 +89,7 @@ public class MapConsumable : MonoBehaviour
         var col = GetComponent<Collider2D>();
         if (col == null) return;
 
-        // Se ambos estiverem ativos, prioriza Trigger para evitar confusões
+        // Se ambos estiverem ativos, prioriza Trigger para evitar confusï¿½es
         if (dropOnTrigger && !dropOnCollision)
             col.isTrigger = true;
         else if (dropOnCollision && !dropOnTrigger)
@@ -98,8 +98,8 @@ public class MapConsumable : MonoBehaviour
             col.isTrigger = true;
         else
         {
-            // Nenhum modo ativo -> não haverá eventos, log opcional de aviso
-            if (debugLogs) Debug.LogWarning($"MapConsumable em '{name}': dropOnTrigger e dropOnCollision estão desativados. Nenhum drop irá ocorrer.");
+            // Nenhum modo ativo -> nï¿½o haverï¿½ eventos, log opcional de aviso
+            if (debugLogs) Debug.LogWarning($"MapConsumable em '{name}': dropOnTrigger e dropOnCollision estï¿½o desativados. Nenhum drop irï¿½ ocorrer.");
         }
     }
 
@@ -118,17 +118,17 @@ public class MapConsumable : MonoBehaviour
     // Disparado a cada frame enquanto outro collider permanece sobreposto ao trigger
     private void OnTriggerStay2D(Collider2D other)
     {
-        // Fallback útil caso o jogador já esteja sobreposto no início da cena
+        // Fallback ï¿½til caso o jogador jï¿½ esteja sobreposto no inï¿½cio da cena
         if (!dropOnTrigger) return;
         if (onlyOnce && hasDropped) return;
         if (!other.CompareTag(playerTag)) return;
         TryDrop();
     }
 
-    // Disparado quando ocorre uma colisão física (isTrigger = false)
+    // Disparado quando ocorre uma colisï¿½o fï¿½sica (isTrigger = false)
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (!dropOnCollision) return; // Modo Colisão desativado
+        if (!dropOnCollision) return; // Modo Colisï¿½o desativado
         if (!collision.collider.CompareTag(playerTag))
         {
             if (debugLogs) Debug.Log($"MapConsumable '{name}': Collision com '{collision.collider.name}' ignorado (tag {collision.collider.tag}).");
@@ -137,10 +137,10 @@ public class MapConsumable : MonoBehaviour
         TryDrop();
     }
 
-    // Disparado a cada frame enquanto a colisão persiste
+    // Disparado a cada frame enquanto a colisï¿½o persiste
     private void OnCollisionStay2D(Collision2D collision)
     {
-        // Fallback caso o objeto já comece encostado
+        // Fallback caso o objeto jï¿½ comece encostado
         if (!dropOnCollision) return;
         if (onlyOnce && hasDropped) return;
         if (!collision.collider.CompareTag(playerTag)) return;
@@ -152,26 +152,26 @@ public class MapConsumable : MonoBehaviour
     {
         // Respeita o modo single-drop
         if (onlyOnce && hasDropped) return;
-        // Sem tabela de drops não há o que fazer
+        // Sem tabela de drops nï¿½o hï¿½ o que fazer
         if (drops == null || drops.Length == 0) return;
 
         var chosen = GetWeightedRandomDrop();
         if (chosen != null && chosen.prefab != null)
         {
-            // Instancia exatamente UM item na posição do arbusto + offset
+            // Instancia exatamente UM item na posiï¿½ï¿½o do arbusto + offset
             Vector3 spawnPos = transform.position + (Vector3)chosen.spawnOffset;
             Instantiate(chosen.prefab, spawnPos, Quaternion.identity);
             if (debugLogs) Debug.Log($"MapConsumable '{name}': Dropou '{chosen.prefab.name}' em {spawnPos}.");
         }
         else if (debugLogs)
         {
-            Debug.LogWarning($"MapConsumable '{name}': Nenhum drop válido encontrado.");
+            Debug.LogWarning($"MapConsumable '{name}': Nenhum drop vï¿½lido encontrado.");
         }
 
-        // Marca que já dropou (se onlyOnce estiver ativo, impedirá futuras execuções)
+        // Marca que jï¿½ dropou (se onlyOnce estiver ativo, impedirï¿½ futuras execuï¿½ï¿½es)
         hasDropped = true;
 
-        // Destrói o arbusto após o drop, se configurado
+        // Destrï¿½i o arbusto apï¿½s o drop, se configurado
         if (destroyAfterDrop)
             Destroy(gameObject, destroyDelay);
     }
@@ -179,7 +179,7 @@ public class MapConsumable : MonoBehaviour
     // Escolhe uma entrada de drop com base em pesos (roleta viciada)
     private DropEntry GetWeightedRandomDrop()
     {
-        // Soma dos pesos válidos (> 0)
+        // Soma dos pesos vï¿½lidos (> 0)
         float totalWeight = 0f;
         for (int i = 0; i < drops.Length; i++)
         {
@@ -187,9 +187,9 @@ public class MapConsumable : MonoBehaviour
             if (d != null && d.weight > 0f)
                 totalWeight += d.weight;
         }
-        if (totalWeight <= 0f) return null; // Todos os pesos são 0 ou a lista está inválida
+        if (totalWeight <= 0f) return null; // Todos os pesos sï¿½o 0 ou a lista estï¿½ invï¿½lida
 
-        // Escolhe um número no intervalo [0, totalWeight] e percorre acumulando
+        // Escolhe um nï¿½mero no intervalo [0, totalWeight] e percorre acumulando
         float r = Random.Range(0f, totalWeight);
         float cumulative = 0f;
         for (int i = 0; i < drops.Length; i++)
@@ -197,11 +197,11 @@ public class MapConsumable : MonoBehaviour
             var d = drops[i];
             if (d == null || d.weight <= 0f) continue;
             cumulative += d.weight;
-            // Quando o acumulado ultrapassa o número sorteado, encontramos o drop
+            // Quando o acumulado ultrapassa o nï¿½mero sorteado, encontramos o drop
             if (r <= cumulative)
                 return d;
         }
-        // Fallback defensivo (não deve ocorrer, mas evita null)
+        // Fallback defensivo (nï¿½o deve ocorrer, mas evita null)
         return drops[drops.Length - 1];
     }
 }

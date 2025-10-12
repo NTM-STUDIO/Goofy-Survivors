@@ -2969,7 +2969,9 @@ MonoBehaviour:
   - assetPrefab: {fileID: 570421501351505163, guid: df3fae62bb9acd74596a834f5d65342e, type: 3}
     weight: 3
   - assetPrefab: {fileID: 6050591176458649254, guid: b37f1c7ade03d274790e81b69bdea4bf, type: 3}
-    weight: 10
+    weight: 3
+  - assetPrefab: {fileID: 1010114737999647873, guid: 400cca9a532574a48875d09870502710, type: 3}
+    weight: 1
   - assetPrefab: {fileID: 1010114737999647873, guid: 400cca9a532574a48875d09870502710, type: 3}
     weight: 0
   mapWidth: 150
@@ -3363,7 +3365,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 0}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1

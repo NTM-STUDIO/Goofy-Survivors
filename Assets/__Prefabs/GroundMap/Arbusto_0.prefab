@@ -10,7 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 6396916082375942857}
   - component: {fileID: 5714875663580417378}
-  m_Layer: 8
+  - component: {fileID: -3962767699053365186}
+  - component: {fileID: 5927982661190185773}
+  m_Layer: 7
   m_Name: Arbusto_0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -90,3 +92,56 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!58 &-3962767699053365186
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6050591176458649254}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 2
+--- !u!114 &5927982661190185773
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6050591176458649254}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f95fe04a170072644a1bf3cf8340fa8a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapConsumable
+  possibleDrops:
+  - itemPrefab: {fileID: 8326750618715067698, guid: 3f0fbb90971ba4441913d7efaea77fca, type: 3}
+    weight: 8
+  - itemPrefab: {fileID: 1154120037122087691, guid: 0c16bdaa5df793949a03c99847af810a, type: 3}
+    weight: 1
