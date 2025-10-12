@@ -48,6 +48,10 @@ PrefabInstance:
       propertyPath: m_SortingLayer
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 5021868315648865272, guid: 9d937b1d2b52e414b95ee6ffc9e9e5fb, type: 3}
+      propertyPath: 'startingWeapons.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 8b260eb6d3e2d9043b29667be138df17, type: 2}
     - target: {fileID: 5954403870747497231, guid: 9d937b1d2b52e414b95ee6ffc9e9e5fb, type: 3}
       propertyPath: backFacingSprite
       value: 

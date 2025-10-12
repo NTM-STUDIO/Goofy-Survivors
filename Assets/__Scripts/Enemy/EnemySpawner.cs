@@ -2,55 +2,207 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+
 public class EnemySpawner : MonoBehaviour
 {
+    private enum SpawnSide
+    {
+        Left,
+        Right,
+        Top,
+        Bottom
+    }
+
     public List<Wave> waves;
-    public int waveIndex = 0;
+    public int waveIndex = 0; // Current wave
     private Camera mainCamera;
 
+    // Use Awake() for initialization that needs to happen before other scripts run.
     void Awake()
     {
         mainCamera = Camera.main;
+
+        // Add a check to be safe and provide a clearer error message.
         if (mainCamera == null)
         {
             Debug.LogError("EnemySpawner Error: Main Camera not found! Make sure your camera is tagged 'MainCamera'.");
         }
     }
 
-    void Start()
+    SpawnSide ChooseBalancedSpawnSide()
     {
-        StartSpawning();
+        SpawnSide fallback = (SpawnSide)Random.Range(0, 4);
+
+        if (mainCamera == null)
+        {
+            return fallback;
+        }
+
+    EnemyStats[] activeEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
+        if (activeEnemies == null || activeEnemies.Length == 0)
+        {
+            return fallback;
+        }
+
+        const float viewportMargin = 0.15f;
+        int leftCount = 0;
+        int rightCount = 0;
+        int topCount = 0;
+        int bottomCount = 0;
+
+        foreach (EnemyStats enemy in activeEnemies)
+        {
+            if (enemy == null || !enemy.isActiveAndEnabled)
+            {
+                continue;
+            }
+
+            Vector3 viewport = mainCamera.WorldToViewportPoint(enemy.transform.position);
+
+            if (viewport.z < 0f)
+            {
+                continue;
+            }
+
+            if (viewport.x < -viewportMargin || viewport.x > 1f + viewportMargin ||
+                viewport.y < -viewportMargin || viewport.y > 1f + viewportMargin)
+            {
+                continue;
+            }
+
+            if (viewport.x >= 0.5f)
+            {
+                rightCount++;
+            }
+            else
+            {
+                leftCount++;
+            }
+
+            if (viewport.y >= 0.5f)
+            {
+                topCount++;
+            }
+            else
+            {
+                bottomCount++;
+            }
+        }
+
+        int totalVisible = leftCount + rightCount;
+        if (totalVisible == 0)
+        {
+            return fallback;
+        }
+
+        int verticalDiff = topCount - bottomCount;
+        int horizontalDiff = rightCount - leftCount;
+        const int imbalanceThreshold = 3;
+
+        if (Mathf.Abs(verticalDiff) >= Mathf.Abs(horizontalDiff) && Mathf.Abs(verticalDiff) >= imbalanceThreshold)
+        {
+            return verticalDiff > 0 ? SpawnSide.Bottom : SpawnSide.Top;
+        }
+
+        if (Mathf.Abs(horizontalDiff) >= imbalanceThreshold)
+        {
+            return horizontalDiff > 0 ? SpawnSide.Left : SpawnSide.Right;
+        }
+
+        int[] counts = new int[4];
+        counts[(int)SpawnSide.Left] = leftCount;
+        counts[(int)SpawnSide.Right] = rightCount;
+        counts[(int)SpawnSide.Top] = topCount;
+        counts[(int)SpawnSide.Bottom] = bottomCount;
+
+        float[] weights = new float[counts.Length];
+        int maxCount = 0;
+        for (int i = 0; i < counts.Length; i++)
+        {
+            if (counts[i] > maxCount)
+            {
+                maxCount = counts[i];
+            }
+        }
+
+        if (maxCount == 0)
+        {
+            return fallback;
+        }
+
+        float totalWeight = 0f;
+        for (int i = 0; i < counts.Length; i++)
+        {
+            float bias = (maxCount - counts[i]) + 1f;
+            float weight = bias * bias;
+            weights[i] = weight;
+            totalWeight += weight;
+        }
+
+        if (totalWeight <= 0f)
+        {
+            return fallback;
+        }
+
+        float roll = Random.value * totalWeight;
+        float cumulative = 0f;
+
+        for (int i = 0; i < weights.Length; i++)
+        {
+            cumulative += weights[i];
+            if (roll <= cumulative)
+            {
+                return (SpawnSide)i;
+            }
+        }
+
+        return fallback;
     }
 
-    Vector2 GetSpawnPositionOutsideCamera()
+    Vector2 GetSpawnPositionOutsideCamera(SpawnSide side)
     {
+        if (mainCamera == null)
+        {
+            return Vector2.zero;
+        }
+
+        // Extend the camera bounds by a buffer to ensure spawning is off-screen
         float buffer = 1.5f;
         Vector2 min = mainCamera.ViewportToWorldPoint(new Vector2(0, 0));
         Vector2 max = mainCamera.ViewportToWorldPoint(new Vector2(1, 1));
-        float spawnX, spawnY;
 
-        if (Random.value < 0.5f)
+        float spawnX = 0f;
+        float spawnY = 0f;
+
+        switch (side)
         {
-            spawnX = Random.value < 0.5f ? min.x - buffer : max.x + buffer;
-            spawnY = Random.Range(min.y, max.y);
+            case SpawnSide.Left:
+                spawnX = min.x - buffer;
+                spawnY = Random.Range(min.y, max.y);
+                break;
+            case SpawnSide.Right:
+                spawnX = max.x + buffer;
+                spawnY = Random.Range(min.y, max.y);
+                break;
+            case SpawnSide.Top:
+                spawnX = Random.Range(min.x, max.x);
+                spawnY = max.y + buffer;
+                break;
+            case SpawnSide.Bottom:
+                spawnX = Random.Range(min.x, max.x);
+                spawnY = min.y - buffer;
+                break;
         }
-        else
-        {
-            spawnX = Random.Range(min.x, max.x);
-            spawnY = Random.value < 0.5f ? min.y - buffer : max.y + buffer;
-        }
+
         return new Vector2(spawnX, spawnY);
     }
 
     IEnumerator SpawnWaves()
     {
-        // ADDED DEBUG: Log how many waves are configured.
-        Debug.Log($"Spawner starting with {waves.Count} total waves configured.");
-
         while (waveIndex < waves.Count)
         {
             Wave currentWave = waves[waveIndex];
-            Debug.Log($"<color=yellow>--- Starting Wave {waveIndex + 1}: {(currentWave.waveName != "" ? currentWave.waveName : "Unnamed")} ---</color>");
+            Debug.Log("Starting Wave: " + (currentWave.waveName != "" ? currentWave.waveName : (waveIndex + 1).ToString()));
 
             List<int> remainingCounts = new List<int>();
             int totalEnemiesToSpawn = 0;
@@ -64,12 +216,7 @@ public class EnemySpawner : MonoBehaviour
 
             if (totalEnemiesToSpawn == 0)
             {
-                Debug.LogWarning($"Wave '{currentWave.waveName}' has no enemies to spawn. Skipping.");
-            }
-            else
-            {
-                // ADDED DEBUG: Announce the total number of enemies for this wave.
-                Debug.Log($"Wave {waveIndex + 1} will spawn a total of {totalEnemiesToSpawn} enemies.");
+                Debug.LogWarning($"Wave '{currentWave.waveName}' has no enemies with a positive count.");
             }
 
             while (totalEnemiesToSpawn > 0)
@@ -87,12 +234,9 @@ public class EnemySpawner : MonoBehaviour
                     if (roll < cumulative)
                     {
                         WaveEnemy selectedEnemy = currentWave.enemies[enemyIndex];
-
-                        // ADDED DEBUG: Announce which enemy is being spawned.
-                        Debug.Log($"Spawning '{selectedEnemy.enemyPrefab.name}'. {totalEnemiesToSpawn - 1} enemies left in wave.");
-                        
-                        Vector2 spawnPos = GetSpawnPositionOutsideCamera();
-                        Instantiate(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
+                        SpawnSide spawnSide = ChooseBalancedSpawnSide();
+                        Vector2 spawnPos = GetSpawnPositionOutsideCamera(spawnSide);
+                        GameObject enemy = Instantiate(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
 
                         remainingCounts[enemyIndex]--;
                         totalEnemiesToSpawn--;
@@ -102,17 +246,13 @@ public class EnemySpawner : MonoBehaviour
                     }
                 }
             }
-
-            // ADDED DEBUG: Announce that the wave's spawning is complete and the wait is beginning.
-            Debug.Log($"<color=green>Wave {waveIndex + 1} spawning complete. Waiting for {currentWave.timeUntilNextWave} seconds...</color>");
-            
             yield return new WaitForSeconds(currentWave.timeUntilNextWave);
 
             waveIndex++;
         }
-        
-        Debug.Log("<color=cyan>--- All waves completed! ---</color>");
+        Debug.Log("All waves completed!");
     }
+
 
     public void StartSpawning()
     {
