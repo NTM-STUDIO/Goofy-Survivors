@@ -2239,10 +2239,10 @@ MonoBehaviour:
   uiManager: {fileID: 1242726740}
   currentState: 0
   totalGameTime: 900
-  currentEnemyHealthMultiplier: 1
-  currentEnemyDamageMultiplier: 1
-  healthIncreasePerMinute: 0.6
-  damageIncreasePerMinute: 0.6
+  currentEnemyHealthMultiplier: 2
+  currentEnemyDamageMultiplier: 2
+  healthIncreasePerMinute: 40
+  damageIncreasePerMinute: 40
   bossPrefab: {fileID: 7201113416102569411, guid: 2f1b9704be2280e43b6721a8e4c79e67, type: 3}
   bossSpawnPoint: {fileID: 0}
   player: {fileID: 0}
@@ -2263,51 +2263,51 @@ MonoBehaviour:
   - waveName: Wave 15:00-14:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 20
+      enemyCount: 30
+    - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
+      enemyCount: 1
+    timeUntilNextWave: 0
+    spawnInterval: 1.4
+  - waveName: Wave 14:00-13:00
+    enemies:
+    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
+      enemyCount: 70
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
       enemyCount: 2
     timeUntilNextWave: 0
-    spawnInterval: 1
-  - waveName: Wave 14:00-13:00
+    spawnInterval: 0.7
+  - waveName: Wave 13:00-12:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
       enemyCount: 120
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
-      enemyCount: 4
+      enemyCount: 6
     timeUntilNextWave: 0
-    spawnInterval: 1
-  - waveName: Wave 13:00-12:00
-    enemies:
-    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 240
-    - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
-      enemyCount: 5
-    timeUntilNextWave: 0
-    spawnInterval: 1
+    spawnInterval: 0.2
   - waveName: Wave 12:00-11:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 480
+      enemyCount: 1
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
-      enemyCount: 5
+      enemyCount: 40
     timeUntilNextWave: 0
-    spawnInterval: 0.9
+    spawnInterval: 0.4
   - waveName: Wave 11:00-10:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 960
+      enemyCount: 2000
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
-      enemyCount: 5
+      enemyCount: 200
     timeUntilNextWave: 0
-    spawnInterval: 0.8
+    spawnInterval: 0.05
   - waveName: Wave 10:00-09:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
       enemyCount: 1800
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
-      enemyCount: 5
+      enemyCount: 900
     timeUntilNextWave: 0
-    spawnInterval: 0.7
+    spawnInterval: 0.2
   - waveName: Wave 09:00-08:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
@@ -2345,48 +2345,45 @@ MonoBehaviour:
   availableUpgrades:
   - {fileID: 11400000, guid: 0de2cee94758c6748b46297a606f3074, type: 2}
   - {fileID: 11400000, guid: 3911b77109ed8054ba6ce69ecd7ab808, type: 2}
-  - {fileID: 11400000, guid: 35cbd3af7e546a2478df2f643bdba395, type: 2}
-  - {fileID: 11400000, guid: 2759e66aaf21de547988fe82e9207ef2, type: 2}
+  - {fileID: 11400000, guid: 801653973fb83ab4a9dd700403fac486, type: 2}
   - {fileID: 11400000, guid: ce97eba395c861046b96f0c4931a05c9, type: 2}
   - {fileID: 11400000, guid: 8dffb2882502e4440b455a53ca724caf, type: 2}
-  - {fileID: 11400000, guid: dae4a817139c6974595503dda96e3464, type: 2}
   - {fileID: 11400000, guid: c62d2e22b5dfc6746bb5e5aa247fd1d9, type: 2}
-  - {fileID: 11400000, guid: 7d56997c36a360e45b78a6243e6fbaaa, type: 2}
-  - {fileID: 11400000, guid: ad513ca583d2bdf488f71443adc3d51d, type: 2}
+  - {fileID: 11400000, guid: 9990a515f4e066b479058b567af9161c, type: 2}
   - {fileID: 11400000, guid: a96c4f31e5a5ca943aee6e37203f7ffb, type: 2}
   - {fileID: 11400000, guid: 9199b16ee1f803344bbce7601eacf3e7, type: 2}
-  - {fileID: 11400000, guid: 760e1c7516f648b4383103d0aeaf4d74, type: 2}
+  - {fileID: 11400000, guid: 7d56997c36a360e45b78a6243e6fbaaa, type: 2}
   rarityTiers:
   - rarity: 0
     name: Common
-    valueMultiplier: 1
+    valueMultiplier: 0.8
     backgroundColor: {r: 0.23713954, g: 0.6886792, b: 0.23713954, a: 1}
-    baseWeight: 80
+    baseWeight: 75
   - rarity: 1
     name: Rare
-    valueMultiplier: 1.4
+    valueMultiplier: 1.5
     backgroundColor: {r: 0.19166073, g: 0.5639373, b: 0.6886792, a: 1}
-    baseWeight: 10
+    baseWeight: 14
   - rarity: 2
     name: Epic
-    valueMultiplier: 1.8
+    valueMultiplier: 2
     backgroundColor: {r: 0.735849, g: 0.107600555, b: 0.735849, a: 1}
-    baseWeight: 7
+    baseWeight: 8
   - rarity: 3
     name: Legendary
-    valueMultiplier: 2.5
-    backgroundColor: {r: 0.23713954, g: 0.6886792, b: 0.23713954, a: 1}
+    valueMultiplier: 3
+    backgroundColor: {r: 0.91832316, g: 1, b: 0, a: 1}
     baseWeight: 2
   - rarity: 4
-    name: Legendary
-    valueMultiplier: 3.5
+    name: Ultra
+    valueMultiplier: 5
     backgroundColor: {r: 1, g: 0.08445278, b: 0, a: 1}
-    baseWeight: 0.99
+    baseWeight: 0.89
   - rarity: 5
     name: Legendary
     valueMultiplier: 20
     backgroundColor: {r: 0, g: 0, b: 0, a: 1}
-    baseWeight: 0.3
+    baseWeight: 0.11
 --- !u!1 &1172735763
 GameObject:
   m_ObjectHideFlags: 0
@@ -2969,7 +2966,7 @@ MonoBehaviour:
   - assetPrefab: {fileID: 570421501351505163, guid: df3fae62bb9acd74596a834f5d65342e, type: 3}
     weight: 3
   - assetPrefab: {fileID: 6050591176458649254, guid: b37f1c7ade03d274790e81b69bdea4bf, type: 3}
-    weight: 10
+    weight: 20
   - assetPrefab: {fileID: 1010114737999647873, guid: 400cca9a532574a48875d09870502710, type: 3}
     weight: 0
   mapWidth: 150
