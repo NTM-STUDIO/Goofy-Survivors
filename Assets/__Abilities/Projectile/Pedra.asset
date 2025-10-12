@@ -15,13 +15,13 @@ MonoBehaviour:
   weaponName: Pedra
   description: "Lan\xE7amento de pedra"
   icon: {fileID: 9167361028535897922, guid: 96c456af18e84eb49b0b36992c1c0f16, type: 3}
-  weaponPrefab: {fileID: 3341698084558261502, guid: 22fdd37f9bf80a4418599ea85df93742, type: 3}
+  weaponPrefab: {fileID: 3341698084558261502, guid: f7f7b6d5ecca79643b0878c82e38c93f, type: 3}
   archetype: 0
-  damage: 5
-  cooldown: 1
+  damage: 15
+  cooldown: 3
   area: 1
   amount: 1
-  speed: 10
+  speed: 7
   duration: 10
   criticalChance: 0
   criticalMultiplier: 1.5
