@@ -10,22 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a235ba29a21fe3c4194c1d40bc43f19b, type: 3}
-  m_Name: Pedra
+  m_Name: ShadowClone
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  weaponName: Pedra
-  description: "Lan\xE7amento de pedra"
-  icon: {fileID: 9167361028535897922, guid: 96c456af18e84eb49b0b36992c1c0f16, type: 3}
-  weaponPrefab: {fileID: 3341698084558261502, guid: 22fdd37f9bf80a4418599ea85df93742, type: 3}
-  archetype: 0
-  damage: 5
-  cooldown: 1
+  weaponName: Shadow Clone Jutsu
+  description: 
+  icon: {fileID: 0}
+  weaponPrefab: {fileID: 262326077648569168, guid: d7933f62337495f49992b19c5a09e25b, type: 3}
+  archetype: 6
+  damage: 10
+  cooldown: 30
   area: 1
-  amount: 1
-  speed: 10
+  amount: 0
+  speed: 1
   duration: 10
   criticalChance: 0
   criticalMultiplier: 1.5
-  pierce: 1
+  pierce: 0
   pierceCount: 1
   knockback: 0
   maxLevel: 8

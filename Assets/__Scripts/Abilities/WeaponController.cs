@@ -1,19 +1,16 @@
 using UnityEngine;
 
-/// <summary>
-/// This component is attached to a GameObject managed by the PlayerWeaponManager.
-/// It reads the assigned WeaponData and executes the weapon's behavior.
-/// It uses PlayerStats to modify its behavior by calculating final stats and passing them to the spawned weapon.
-/// </summary>
+// ... (other using statements)
+
 public class WeaponController : MonoBehaviour
 {
+    // ... (variables and Start/Update methods are the same)
     public WeaponData weaponData;
     private float currentCooldown;
     private PlayerStats playerStats;
 
     void Start()
     {
-        // Find the PlayerStats component in the scene. A more robust way is to have it assigned directly.
         #if UNITY_2023_1_OR_NEWER
         playerStats = FindFirstObjectByType<PlayerStats>();
         #else
@@ -22,69 +19,91 @@ public class WeaponController : MonoBehaviour
         #pragma warning restore 618
         #endif
 
-        if (playerStats == null)
-        {
-            Debug.LogError("WeaponController could not find PlayerStats in the scene!");
-        }
-
-        // Set initial cooldown to fire immediately.
+        if (playerStats == null) Debug.LogError("WeaponController could not find PlayerStats!");
         currentCooldown = 0f;
     }
 
+
     void Update()
     {
-        // Safety check in case PlayerStats or WeaponData aren't set.
         if (playerStats == null || weaponData == null) return;
         
         currentCooldown -= Time.deltaTime;
-
         if (currentCooldown <= 0f)
         {
             Attack();
-            // Calculate cooldown using the player's attack speed multiplier.
-            // Higher attack speed = lower cooldown.
             float finalAttackSpeed = playerStats.attackSpeedMultiplier;
             currentCooldown = weaponData.cooldown / Mathf.Max(0.01f, finalAttackSpeed);
-            
-            // Cap attackspeed to be duration of cooldown at minimum
-            // This prevents absurdly high attackspeeds from breaking the game.
             currentCooldown = Mathf.Max(currentCooldown, weaponData.cooldown);
         }
     }
+
 
     private void Attack()
     {
         switch (weaponData.archetype)
         {
             case WeaponArchetype.Projectile:
-                FireProjectile(); // You would apply the same logic here
+                FireProjectile();
                 break;
             case WeaponArchetype.Whip:
-                // PerformWhipAttack(); // And here
+                // PerformWhipAttack();
                 break;
             case WeaponArchetype.Orbit:
                 ActivateOrbitingWeapon();
                 break;
             case WeaponArchetype.Aura:
-                // ActivateAura(); // And here
+                // ActivateAura();
+                break;
+            case WeaponArchetype.Clone: // <-- ADD THIS NEW CASE
+                SpawnShadowClone();
                 break;
         }
     }
-    
-    // NEW METHOD FOR PROJECTILES
+
+    // === NEW METHOD FOR SHADOW CLONE ===
+    private void SpawnShadowClone()
+    {
+        // Step 1: Calculate final stats from PlayerStats
+        int finalAmount = weaponData.amount + playerStats.projectileCount;
+        float finalDuration = weaponData.duration * playerStats.durationMultiplier;
+        float finalSize = weaponData.area * playerStats.projectileSizeMultiplier;
+
+        // Step 2: Spawn the clones
+        for (int i = 0; i < finalAmount; i++)
+        {
+            // Spawn at a random position near the player
+            // You can adjust the range (e.g., 3f) to your liking
+            Vector2 spawnPosition = (Vector2)transform.position + Random.insideUnitCircle * 3f;
+
+            // Instantiate the prefab. The weaponPrefab for this weapon should be the PlayerClone_Prefab
+            GameObject cloneObj = Instantiate(weaponData.weaponPrefab, spawnPosition, Quaternion.identity);
+
+            // Pass the stats to the clone's script
+            ShadowClone clone = cloneObj.GetComponent<ShadowClone>();
+            if (clone != null)
+            {
+                clone.Initialize(finalDuration, finalSize);
+            }
+            else
+            {
+                Debug.LogWarning($"The prefab for '{weaponData.weaponName}' is missing the ShadowClone script.");
+            }
+        }
+    }
+
+
+    // ... (rest of the methods: FireProjectile, ActivateOrbitingWeapon, etc.)
     private void FireProjectile()
     {
-        // === STEP 1: CALCULATE ALL FINAL STATS FROM PLAYERSTATS ===
         float finalDamage = weaponData.damage * playerStats.damageMultiplier;
         int finalAmount = weaponData.amount + playerStats.projectileCount;
         float finalSize = weaponData.area * playerStats.projectileSizeMultiplier;
         float finalSpeed = weaponData.speed * playerStats.projectileSpeedMultiplier;
         float finalDuration = weaponData.duration * playerStats.durationMultiplier;
         float finalKnockback = weaponData.knockback * playerStats.knockbackMultiplier;
-        int finalPierce = weaponData.pierce ? weaponData.pierceCount + playerStats.pierceCount : 1; // Default to 1 hit if pierce is false
+        int finalPierce = weaponData.pierce ? weaponData.pierceCount + playerStats.pierceCount : 1;
 
-
-        // === STEP 2: FIND TARGETS AND FIRE ===
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
         System.Array.Sort(enemies, (a, b) => 
             Vector3.Distance(transform.position, a.transform.position)
@@ -93,26 +112,22 @@ public class WeaponController : MonoBehaviour
 
         int targetsToFireAt = Mathf.Min(finalAmount, enemies.Length);
 
-        if (targetsToFireAt > 0)
+        for (int i = 0; i < targetsToFireAt; i++)
         {
-            for (int i = 0; i < targetsToFireAt; i++)
-            {
-                Vector2 direction = (enemies[i].transform.position - transform.position).normalized;
-                SpawnAndInitializeProjectile(direction, finalDamage, finalSpeed, finalDuration, finalKnockback, finalPierce, finalSize);
-            }
+            Transform target = enemies[i].transform;
+            Vector2 direction = (target.position - transform.position).normalized;
+            SpawnAndInitializeProjectile(target, direction, finalDamage, finalSpeed, finalDuration, finalKnockback, finalPierce, finalSize);
         }
-        else if (finalAmount > 0) // Fallback: If no enemies are present, fire in a random direction.
+        
+        int projectilesRemaining = finalAmount - targetsToFireAt;
+        for (int i = 0; i < projectilesRemaining; i++)
         {
-            for (int i = 0; i < finalAmount; i++)
-            {
-                Vector2 randomDirection = Random.insideUnitCircle.normalized;
-                SpawnAndInitializeProjectile(randomDirection, finalDamage, finalSpeed, finalDuration, finalKnockback, finalPierce, finalSize);
-            }
+            Vector2 randomDirection = Random.insideUnitCircle.normalized;
+            SpawnAndInitializeProjectile(null, randomDirection, finalDamage, finalSpeed, finalDuration, finalKnockback, finalPierce, finalSize);
         }
     }
-
-    // NEW HELPER METHOD
-    private void SpawnAndInitializeProjectile(Vector2 direction, float finalDamage, float finalSpeed, float finalDuration, float finalKnockback, int finalPierce, float finalSize)
+    
+    private void SpawnAndInitializeProjectile(Transform target, Vector2 direction, float finalDamage, float finalSpeed, float finalDuration, float finalKnockback, int finalPierce, float finalSize)
     {
         GameObject projectileObj = Instantiate(weaponData.weaponPrefab, transform.position, Quaternion.identity);
         ProjectileWeapon projectile = projectileObj.GetComponent<ProjectileWeapon>();
@@ -120,6 +135,7 @@ public class WeaponController : MonoBehaviour
         if (projectile != null)
         {
             projectile.Initialize(
+                target,
                 direction,
                 finalDamage,
                 finalSpeed,
@@ -133,7 +149,6 @@ public class WeaponController : MonoBehaviour
 
     private void ActivateOrbitingWeapon()
     {
-        // === STEP 1: CALCULATE ALL FINAL STATS FROM PLAYERSTATS ===
         float finalDamage = weaponData.damage * playerStats.damageMultiplier;
         int finalAmount = weaponData.amount + playerStats.projectileCount;
         float finalSize = weaponData.area * playerStats.projectileSizeMultiplier;
@@ -141,29 +156,18 @@ public class WeaponController : MonoBehaviour
         float finalDuration = weaponData.duration * playerStats.durationMultiplier;
         float finalKnockback = weaponData.knockback * playerStats.knockbackMultiplier;
         
-        // === STEP 2: SPAWN THE WEAPONS AND PASS THE STATS ===
-        Transform orbitCenter = transform.parent; // Assumes the weapon manager is the parent
+        Transform orbitCenter = transform.parent;
         float angleStep = 360f / finalAmount;
         float randomGroupRotation = Random.Range(0f, 360f);
 
         for (int i = 0; i < finalAmount; i++)
         {
             float startingAngle = randomGroupRotation + (i * angleStep);
-            
             GameObject orbitingWeaponObj = Instantiate(weaponData.weaponPrefab, orbitCenter.position, Quaternion.identity, orbitCenter);
-
             OrbitingWeapon orbiter = orbitingWeaponObj.GetComponent<OrbitingWeapon>();
             if (orbiter != null)
             {
-                orbiter.Initialize(
-                    orbitCenter,
-                    startingAngle,
-                    finalDamage,
-                    finalSpeed,
-                    finalDuration,
-                    finalKnockback,
-                    finalSize
-                );
+                orbiter.Initialize(orbitCenter, startingAngle, finalDamage, finalSpeed, finalDuration, finalKnockback, finalSize);
             }
         }
     }

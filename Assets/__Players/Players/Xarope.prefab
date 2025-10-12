@@ -112,6 +112,14 @@ PrefabInstance:
       propertyPath: extraIFrameOnCollision
       value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 5906726222852642585, guid: 23dac1469c9ba584a8d7286832cd70cf, type: 3}
+      propertyPath: startingWeapons.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5906726222852642585, guid: 23dac1469c9ba584a8d7286832cd70cf, type: 3}
+      propertyPath: 'startingWeapons.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: f51291457a043f446aa1e7da7b62d70a, type: 2}
     - target: {fileID: 7736948463339555433, guid: 23dac1469c9ba584a8d7286832cd70cf, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

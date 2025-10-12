@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 4206929815901151918}
   - component: {fileID: -8173885730153259245}
   m_Layer: 0
-  m_Name: PedraProjectil_0
+  m_Name: FlipFlop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81,7 +81,7 @@ SpriteRenderer:
   m_SortingLayerID: -1557186393
   m_SortingLayer: 5
   m_SortingOrder: 0
-  m_Sprite: {fileID: 9167361028535897922, guid: 96c456af18e84eb49b0b36992c1c0f16, type: 3}
+  m_Sprite: {fileID: -3638269243578002030, guid: 5baa99f7a02a3dc458e93b5fc5950032, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
