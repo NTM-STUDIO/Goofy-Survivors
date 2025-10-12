@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a235ba29a21fe3c4194c1d40bc43f19b, type: 3}
+  m_Name: Cinto do Poe
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  weaponName: Cinto do POE
+  description: 
+  icon: {fileID: 7299482299069153243, guid: fc9b99a2377b0ac4a8c452a490082eb3, type: 3}
+  weaponPrefab: {fileID: 3514391754032089312, guid: 46953767f50a1674a840e9653e7aa11e, type: 3}
+  archetype: 5
+  damage: 0
+  cooldown: 0
+  area: 0
+  amount: 0
+  speed: 0
+  duration: 0
+  criticalChance: 0
+  criticalMultiplier: 0
+  pierce: 0
+  pierceCount: 0
+  knockback: 0
+  maxLevel: 1
