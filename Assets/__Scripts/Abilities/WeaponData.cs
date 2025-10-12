@@ -8,7 +8,7 @@ public enum WeaponArchetype
     Orbit,
     Laser,
     Shield,
-    Custom
+    Clone // <-- ADD THIS NEW ARCHETYPE
 }
 
 [CreateAssetMenu(fileName = "New WeaponData", menuName = "Goofy Survivors/Weapon Data")]

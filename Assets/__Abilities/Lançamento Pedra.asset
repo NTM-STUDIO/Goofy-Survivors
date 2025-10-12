@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a235ba29a21fe3c4194c1d40bc43f19b, type: 3}
   m_Name: "Lan\xE7amento Pedra"
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  weaponName: Pedra
-  description: "Lan\xE7amento de pedra"
-  icon: {fileID: 9167361028535897922, guid: 96c456af18e84eb49b0b36992c1c0f16, type: 3}
+  weaponName: Flip-Flop
+  description: Flip-Flop
+  icon: {fileID: -3638269243578002030, guid: 5baa99f7a02a3dc458e93b5fc5950032, type: 3}
   weaponPrefab: {fileID: 3341698084558261502, guid: f7f7b6d5ecca79643b0878c82e38c93f, type: 3}
   archetype: 0
   damage: 10

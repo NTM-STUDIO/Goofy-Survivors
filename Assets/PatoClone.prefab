@@ -14,7 +14,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 756791112541759263, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 756791112541759263, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: spriteRenderer
@@ -24,13 +24,25 @@ PrefabInstance:
       propertyPath: m_Interactable
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1683499714787280267, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2371237134162643201, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: m_Radius
       value: 300
       objectReference: {fileID: 0}
     - target: {fileID: 4343297250839089127, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: m_Name
-      value: Pato
+      value: PatoClone
+      objectReference: {fileID: 0}
+    - target: {fileID: 4343297250839089127, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+      propertyPath: m_TagString
+      value: Kage
+      objectReference: {fileID: 0}
+    - target: {fileID: 5887508019304911516, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+      propertyPath: m_SortingLayer
+      value: 32714
       objectReference: {fileID: 0}
     - target: {fileID: 6105381744674506462, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: m_Pivot.x
@@ -124,13 +136,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6560147356850679304, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7934618857094552494, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7934618857094552494, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: startingWeapons.Array.size
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7934618857094552494, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: 'startingWeapons.Array.data[1]'
@@ -142,7 +158,7 @@ PrefabInstance:
       objectReference: {fileID: 11400000, guid: a4f8aa778fe333b45bc9d25c22642145, type: 2}
     - target: {fileID: 8311995065857901373, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8491541124801989214, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: m_AnchorMax.x
@@ -154,7 +170,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8723021309873437529, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8723021309873437529, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: movementThreshold
@@ -162,7 +178,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9091615075258643040, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9091615075258643040, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: xpToNextLevel
@@ -181,6 +197,10 @@ PrefabInstance:
       value: 1.7498778
       objectReference: {fileID: 0}
     - target: {fileID: 9192336796988247481, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9192336796988247481, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
       propertyPath: m_Offset.x
       value: -0.009981811
       objectReference: {fileID: 0}
@@ -188,11 +208,41 @@ PrefabInstance:
       propertyPath: m_Offset.y
       value: 0.098568976
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedComponents:
+    - {fileID: 9091615075258643040, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+    - {fileID: 756791112541759263, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+    - {fileID: 8723021309873437529, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+    - {fileID: 1683499714787280267, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+    - {fileID: 6560147356850679304, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+    - {fileID: 9192336796988247481, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+    - {fileID: 2574637662631615887, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+    - {fileID: 8311995065857901373, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+    m_RemovedGameObjects:
+    - {fileID: 8511116008055956407, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+    - {fileID: 6206753119124514458, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4343297250839089127, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8793918618183854329}
   m_SourcePrefab: {fileID: 100100000, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+--- !u!1 &262326077648569168 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4343297250839089127, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+  m_PrefabInstance: {fileID: 4604233511428246711}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8793918618183854329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 262326077648569168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ecf46a692c980404e8b16c2c8216cb1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShadowClone
 --- !u!212 &726649300911555593 stripped
 SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: 3886630992194029758, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
