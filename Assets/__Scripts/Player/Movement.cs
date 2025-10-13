@@ -21,7 +21,12 @@ public class Movement : MonoBehaviour
         speed = GetComponent<PlayerStats>().movementSpeed;
         if (!isKnockedBack)
         {
-            rb.linearVelocity = moveInput * speed;
+            speed = GetComponent<PlayerStats>().movementSpeed;
+            if (!isKnockedBack)
+            {
+                Vector2 clampedInput = moveInput.sqrMagnitude > 1f ? moveInput.normalized : moveInput;
+                rb.linearVelocity = clampedInput * speed;
+            }
         }
     }
 

@@ -86,7 +86,7 @@ public class PlayerStats : MonoBehaviour
     }
 
     // --- Public Methods to INCREASE Stats ---
-    public void IncreaseMaxHP(int amount) { maxHp += amount; }
+    public void IncreaseMaxHP(int amount) { maxHp += amount; currentHp += amount; UIManager uiManager = FindFirstObjectByType<UIManager>(); if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp); }
     public void IncreaseHPRegen(float amount) { hpRegen += amount; }
     public void IncreaseDamageMultiplier(float amount) { damageMultiplier += amount; }
     public void IncreaseCritChance(float amount) { critChance += amount; }
@@ -247,6 +247,9 @@ public class PlayerStats : MonoBehaviour
             // Since this runs every second, we can use hpRegen directly.
             // No need for Time.deltaTime anymore.
             Heal(Mathf.CeilToInt(hpRegen));
+            UIManager uiManager = FindFirstObjectByType<UIManager>();
+            if (uiManager != null)
+                uiManager.UpdateHealthBar(currentHp, maxHp);
         }
     }
 }

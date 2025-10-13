@@ -2670,11 +2670,11 @@ MonoBehaviour:
   - waveName: Wave 15:00-14:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 20
+      enemyCount: 50
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
       enemyCount: 2
     timeUntilNextWave: 0
-    spawnInterval: 1
+    spawnInterval: 0.6
   - waveName: Wave 14:00-13:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
@@ -2682,7 +2682,7 @@ MonoBehaviour:
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
       enemyCount: 4
     timeUntilNextWave: 0
-    spawnInterval: 1
+    spawnInterval: 0.8
   - waveName: Wave 13:00-12:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
@@ -3381,9 +3381,7 @@ MonoBehaviour:
   - assetPrefab: {fileID: 6050591176458649254, guid: b37f1c7ade03d274790e81b69bdea4bf, type: 3}
     weight: 2
   - assetPrefab: {fileID: 1010114737999647873, guid: 400cca9a532574a48875d09870502710, type: 3}
-    weight: 0.4
-  - assetPrefab: {fileID: 1010114737999647873, guid: 400cca9a532574a48875d09870502710, type: 3}
-    weight: 0
+    weight: 1
   mapWidth: 300
   mapHeight: 300
   tilePrefab: {fileID: 2865266679031100099, guid: 24f6f62f8ab3bd44aa58527a3c1b4b08, type: 3}
@@ -3803,7 +3801,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.17887053, g: 0.009611958, b: 0.2264151, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
