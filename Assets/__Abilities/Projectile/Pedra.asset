@@ -17,8 +17,8 @@ MonoBehaviour:
   icon: {fileID: 9167361028535897922, guid: 96c456af18e84eb49b0b36992c1c0f16, type: 3}
   weaponPrefab: {fileID: 3341698084558261502, guid: f7f7b6d5ecca79643b0878c82e38c93f, type: 3}
   archetype: 0
-  damage: 15
-  cooldown: 3
+  damage: 20
+  cooldown: 5
   area: 1
   amount: 1
   speed: 10

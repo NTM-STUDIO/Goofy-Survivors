@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 3304928515198908679}
   - component: {fileID: 1328697056486936371}
   - component: {fileID: 2371237134162643201}
-  m_Layer: 3
+  m_Layer: 8
   m_Name: Shadow
   m_TagString: Items
   m_Icon: {fileID: 0}
@@ -264,7 +264,7 @@ RectTransform:
   m_GameObject: {fileID: 4343297250839089127}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -10}
-  m_LocalScale: {x: 1.32, y: 1.32, z: 1.32}
+  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2407041880514359892}
@@ -467,7 +467,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: -0.009981811, y: 0.098568976}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -477,7 +477,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 2}
+  m_Size: {x: 0.7283528, y: 1.7498778}
   m_EdgeRadius: 0
 --- !u!222 &4572127529168959185
 CanvasRenderer:
@@ -494,7 +494,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4343297250839089127}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2556f049396219b4c928b9b85c62000a, type: 3}
   m_Name: 
@@ -508,13 +508,17 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4343297250839089127}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f0878a6349e1d584891e5f6b8d6388de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startingWeapons:
+  weapons:
   - {fileID: 11400000, guid: 71f30611e4b0a0b4a808ab2598cd8ca4, type: 2}
+  possibleWeapons:
+  - {fileID: 11400000, guid: f51291457a043f446aa1e7da7b62d70a, type: 2}
+  - {fileID: 11400000, guid: 7f82ddfef3f925449a966956605fc32b, type: 2}
+  - {fileID: 11400000, guid: a4f8aa778fe333b45bc9d25c22642145, type: 2}
   weaponParent: {fileID: 6105381744674506462}
 --- !u!114 &9091615075258643040
 MonoBehaviour:
@@ -523,7 +527,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4343297250839089127}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d167982b0508c75449a25953ee2b7bc7, type: 3}
   m_Name: 
@@ -532,8 +536,8 @@ MonoBehaviour:
   levelText: {fileID: 0}
   currentLevel: 1
   currentXP: 0
-  xpToNextLevel: 100
-  xpIncreaseFactor: 1.4
+  xpToNextLevel: 120
+  xpIncreaseFactor: 1.12
   upgradeManager: {fileID: 0}
   uiManager: {fileID: 0}
 --- !u!114 &756791112541759263
@@ -543,7 +547,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4343297250839089127}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 51ab94343354c7045a23e17c3b9d997b, type: 3}
   m_Name: 
@@ -564,10 +568,11 @@ MonoBehaviour:
   luck: 0
   pickupRange: 0
   xpGainMultiplier: 0
+  pierceCount: 0
   currentHp: 0
   invincibilityDuration: 0.6
   invincible: 0
-  spriteRenderer: {fileID: 0}
+  spriteRenderer: {fileID: 3886630992194029758}
   hurtFlashColor: {r: 1, g: 0.4, b: 0.4, a: 1}
   hurtFlashTime: 0.1
 --- !u!114 &8723021309873437529
@@ -577,7 +582,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4343297250839089127}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d3e1d4e0f9954c44aa7f76aa7ef76a5d, type: 3}
   m_Name: 
@@ -588,7 +593,7 @@ MonoBehaviour:
   spriteRenderer: {fileID: 3886630992194029758}
   isPlayer: 1
   rotationSpeed: 9999
-  movementThreshold: 0
+  movementThreshold: 10
   enemyQuadrantThreshold: 1
 --- !u!1 &5265315392580758394
 GameObject:
@@ -657,11 +662,47 @@ RectTransform:
   - {fileID: 3082991873037809152}
   - {fileID: 3304928515198908679}
   - {fileID: 5072057905203456945}
+  - {fileID: 1524080397890412758}
   m_Father: {fileID: 6105381744674506462}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &6238962860432190844
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1524080397890412758}
+  m_Layer: 3
+  m_Name: FirePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1524080397890412758
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6238962860432190844}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2407041880514359892}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -0.409, y: -0.417}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &6307862597274582649
@@ -741,7 +782,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 0}
   m_FillRect: {fileID: 8491541124801989214}
   m_HandleRect: {fileID: 0}

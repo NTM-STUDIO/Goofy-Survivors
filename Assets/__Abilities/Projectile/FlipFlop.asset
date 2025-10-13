@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: Flip-Flop
   description: Fllipping floppig
-  icon: {fileID: -3638269243578002030, guid: 5baa99f7a02a3dc458e93b5fc5950032, type: 3}
+  icon: {fileID: -3638269243578002030, guid: d1ab5ae35c98a31499dd1bb26f0df89c, type: 3}
   weaponPrefab: {fileID: 3341698084558261502, guid: 22fdd37f9bf80a4418599ea85df93742, type: 3}
   archetype: 0
-  damage: 5
-  cooldown: 1
+  damage: 7
+  cooldown: 2.5
   area: 1
   amount: 1
   speed: 10

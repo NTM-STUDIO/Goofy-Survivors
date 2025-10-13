@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: Shadow Clone Jutsu
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: 8852049594086427796, guid: 496b596a78c84b44797088d8a71c7efa, type: 3}
   weaponPrefab: {fileID: 262326077648569168, guid: d7933f62337495f49992b19c5a09e25b, type: 3}
   archetype: 6
   damage: 10

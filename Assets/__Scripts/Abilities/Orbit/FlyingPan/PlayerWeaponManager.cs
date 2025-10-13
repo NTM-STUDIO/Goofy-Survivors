@@ -3,12 +3,13 @@ using UnityEngine;
 
 public class PlayerWeaponManager : MonoBehaviour
 {
-    public List<WeaponData> startingWeapons; // Assign starting weapons in the Inspector
+    public List<WeaponData> weapons; // Current weapons
+    public List<WeaponData> possibleWeapons; // All possible weapons
     public Transform weaponParent; // A transform to spawn weapons under
 
     void Start()
     {
-        foreach (WeaponData weapon in startingWeapons)
+        foreach (WeaponData weapon in weapons)
         {
             AddWeapon(weapon);
         }
@@ -16,7 +17,7 @@ public class PlayerWeaponManager : MonoBehaviour
 
     public void AddWeapon(WeaponData weaponData)
     {
-        // Create a new GameObject to hold the weapon's logic
+        // Create a new GameObject to hold the weapon's logiac
         GameObject weaponObject = new GameObject(weaponData.weaponName + " Controller");
         weaponObject.transform.SetParent(weaponParent); // Keep the hierarchy clean
 
@@ -25,4 +26,3 @@ public class PlayerWeaponManager : MonoBehaviour
         controller.weaponData = weaponData;
     }
 }
-

@@ -15,7 +15,24 @@ public class UIManager : MonoBehaviour
     public TMP_Text levelText;
     public Slider healthBar;
 
+    public GameObject newWeaponPanel;
+    public TextMeshProUGUI weaponNameText;
+    public Image weaponSpriteImage;
 
+    public void NewWeaponUi(WeaponData weaponData)
+    {
+        // Activate the panel
+        newWeaponPanel.SetActive(true);
+
+        // Set the weapon name and sprite
+        weaponNameText.text = weaponData.weaponName;
+        weaponSpriteImage.sprite = weaponData.icon;
+    }
+
+    public void CloseNewWeaponPanel()
+    {
+        newWeaponPanel.SetActive(false);
+    }
 
     public void UpdateTimerText(float time)
     {
