@@ -2858,7 +2858,7 @@ MonoBehaviour:
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
       enemyCount: 3
     timeUntilNextWave: 0
-    spawnInterval: 1
+    spawnInterval: 0.5
   - waveName: Wave 12:00-11:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
@@ -5853,7 +5853,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3258646194851266297, guid: 40f5beefc2511614b865a77069890a08, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.15008545
+      value: 0.15014648
       objectReference: {fileID: 0}
     - target: {fileID: 3258646194851266297, guid: 40f5beefc2511614b865a77069890a08, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
