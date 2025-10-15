@@ -1,7 +1,9 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody))]
 public class EnemyMovement : MonoBehaviour
 {
+    // --- Enums and Serialized Fields remain the same ---
     private enum PursuitBehaviour
     {
         Direct,
@@ -25,108 +27,183 @@ public class EnemyMovement : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool showGizmos = true;
 
+    // --- Private Variables ---
     private Transform player;
-    private Rigidbody2D playerRb;
-    private Rigidbody2D rb;
+    private Rigidbody playerRb;
+    private Rigidbody rb;
     private EnemyStats stats;
     private float flankSign = 1f;
 
-    private Vector2 debugIntercept;
-    private Vector2 debugDestination;
+    private Vector3 debugIntercept;
+    private Vector3 debugDestination;
     private bool hasDebugTarget;
 
-    // Grab references and optionally randomise this enemy's behaviour.
+    // --- NEW: State variable to track collision ---
+    private bool isCollidingWithPlayer = false;
+
     private void Awake()
     {
-        player = GameObject.FindGameObjectWithTag("Player")?.transform;
-        playerRb = player ? player.GetComponent<Rigidbody2D>() : null;
-        rb = GetComponent<Rigidbody2D>();
+        // ... (Awake logic remains the same)
+        Debug.Log("--- EnemyMovement Awake() ---", gameObject);
+        GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
+        if (playerGO != null)
+        {
+            player = playerGO.transform;
+            playerRb = player.GetComponent<Rigidbody>();
+            Debug.Log("Player found successfully.", gameObject);
+            if (playerRb == null)
+            {
+                Debug.LogWarning("Player was found, but it does not have a Rigidbody component. Predictive movement will not work correctly.", gameObject);
+            }
+        }
+        else
+        {
+            Debug.LogError("CRITICAL: Player transform not found! Make sure the player object is tagged 'Player'.", gameObject);
+        }
+        rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            Debug.Log("Enemy Rigidbody found.", gameObject);
+        }
+        else
+        {
+            Debug.LogError("CRITICAL: Enemy Rigidbody component is missing.", gameObject);
+        }
         stats = GetComponent<EnemyStats>();
-
+        if (stats != null)
+        {
+            Debug.Log($"EnemyStats found. Move Speed is: {stats.moveSpeed}", gameObject);
+        }
+        else
+        {
+            Debug.LogError("CRITICAL: EnemyStats component is missing.", gameObject);
+        }
         if (randomizeOnAwake)
         {
             RandomiseBehaviour();
+            Debug.Log($"Behaviour randomized to: {behaviour}", gameObject);
         }
-
         flankSign = Random.value < 0.5f ? -1f : 1f;
+        rb.useGravity = false;
+        rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
     }
 
-    // Move the enemy toward the chosen target point each physics tick.
     private void FixedUpdate()
     {
-        if (stats == null || rb == null || player == null || stats.IsKnockedBack)
+        if (stats == null || rb == null || player == null)
         {
+            return;
+        }
+
+        if (stats.IsKnockedBack)
+        {
+            Debug.Log("FixedUpdate STOP: Enemy is knocked back. No movement will be calculated.", gameObject);
             hasDebugTarget = false;
             return;
         }
 
-        Vector2 enemyPosition = rb.position;
-        Vector2 targetPosition = GetTargetPosition(enemyPosition);
+        // --- NEW: Check if inside player trigger ---
+        // If we are colliding, stop all movement calculations and exit the function.
+        if (isCollidingWithPlayer)
+        {
+            return;
+        }
 
-        Vector2 direction = targetPosition - enemyPosition;
+        // --- Movement Calculation ---
+        Vector3 enemyPosition = transform.position;
+        Vector3 targetPosition = GetTargetPosition(enemyPosition);
+
+        Debug.Log($"Current Pos: {enemyPosition} | Target Pos: {targetPosition}", gameObject);
+
+        Vector3 direction = targetPosition - enemyPosition;
+        direction.y = 0;
+
         if (direction.sqrMagnitude <= 0.0001f)
         {
-            rb.linearVelocity = Vector2.zero;
+            Debug.Log("FixedUpdate STOP: Direction magnitude is too small. Setting velocity to zero.", gameObject);
+            rb.linearVelocity = Vector3.zero; // CORRECTED: Use .velocity for 3D Rigidbody
             hasDebugTarget = false;
             return;
         }
 
-        rb.linearVelocity = direction.normalized * stats.moveSpeed;
+        Vector3 newVelocity = direction.normalized * stats.moveSpeed;
+        rb.linearVelocity = newVelocity; // CORRECTED: Use .velocity for 3D Rigidbody
+
+        Debug.Log($"SUCCESS: Setting velocity to {newVelocity} (Direction: {direction.normalized}, Speed: {stats.moveSpeed})", gameObject);
 
         debugDestination = targetPosition;
         hasDebugTarget = true;
     }
 
-    // Decide which position to travel toward based on the configured behaviour.
-    private Vector2 GetTargetPosition(Vector2 enemyPosition)
+    // --- NEW: Trigger Detection Functions ---
+
+    private void OnTriggerEnter(Collider other)
     {
+        // Check if the object we entered is the player
+        if (other.CompareTag("Player"))
+        {
+            isCollidingWithPlayer = true;
+            rb.linearVelocity = Vector3.zero; // Stop movement immediately
+            Debug.Log("Entered Player trigger, stopping movement.", gameObject);
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        // Check if the object we are exiting is the player
+        if (other.CompareTag("Player"))
+        {
+            isCollidingWithPlayer = false;
+            Debug.Log("Exited Player trigger, resuming movement.", gameObject);
+        }
+    }
+
+
+    private Vector3 GetTargetPosition(Vector3 enemyPosition)
+    {
+        // ... (This function remains the same)
         if (player == null)
         {
             return enemyPosition;
         }
-
-        Vector2 playerPosition = player.position;
-        Vector2 predicted = playerPosition;
-
+        Vector3 playerPosition = player.position;
+        Vector3 predicted = playerPosition;
         if (behaviour != PursuitBehaviour.Direct)
         {
-            Vector2 velocity = playerRb ? playerRb.linearVelocity : Vector2.zero;
-
+            // CORRECTED: Use .velocity for 3D Rigidbody
+            Vector3 velocity = playerRb ? playerRb.linearVelocity : Vector3.zero;
+            velocity.y = 0;
             if (velocity.sqrMagnitude < 0.001f)
             {
                 velocity = (playerPosition - enemyPosition).normalized * stats.moveSpeed;
+                velocity.y = 0;
             }
-
             predicted += velocity * Mathf.Max(0f, leadTime);
         }
-
         debugIntercept = predicted;
-
+        debugIntercept.y = transform.position.y;
         if (behaviour != PursuitBehaviour.PredictiveFlank)
         {
             return predicted;
         }
-
-        Vector2 toTarget = predicted - enemyPosition;
+        Vector3 toTarget = predicted - enemyPosition;
+        toTarget.y = 0;
         if (toTarget.sqrMagnitude <= 0.0001f)
         {
             return predicted;
         }
-
-        Vector2 perpendicular = new Vector2(-toTarget.y, toTarget.x).normalized;
+        Vector3 perpendicular = new Vector3(-toTarget.z, 0, toTarget.x).normalized;
         float distance = toTarget.magnitude;
         float falloff = flankFalloffDistance <= 0f ? 1f : Mathf.Clamp01(distance / flankFalloffDistance);
-
         return predicted + perpendicular * flankOffset * flankSign * falloff;
     }
 
-    // Roll a behaviour using the configured probabilities.
+    // ... (RandomiseBehaviour and OnDrawGizmos remain the same)
     private void RandomiseBehaviour()
     {
         float roll = Random.value;
         float flankThreshold = Mathf.Clamp01(flankChance);
         float predictiveThreshold = Mathf.Clamp01(flankThreshold + predictiveChance);
-
         if (roll < flankThreshold)
         {
             behaviour = PursuitBehaviour.PredictiveFlank;
@@ -140,22 +217,17 @@ public class EnemyMovement : MonoBehaviour
             behaviour = PursuitBehaviour.Direct;
         }
     }
-
 #if UNITY_EDITOR
-    // Show the predicted position and target path while in play mode.
     private void OnDrawGizmos()
     {
         if (!showGizmos || !Application.isPlaying || !hasDebugTarget)
         {
             return;
         }
-
         Gizmos.color = Color.cyan;
         Gizmos.DrawSphere(debugIntercept, 0.12f);
-
         Gizmos.color = Color.magenta;
         Gizmos.DrawSphere(debugDestination, 0.12f);
-
         Gizmos.color = Color.yellow;
         Gizmos.DrawLine(transform.position, debugDestination);
     }

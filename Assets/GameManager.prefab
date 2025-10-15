@@ -1,0 +1,204 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5151584149293965363
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6943602259960948440}
+  - component: {fileID: 4722085253826651455}
+  - component: {fileID: 873956162807130501}
+  - component: {fileID: 7626246958269781099}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &6943602259960948440
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5151584149293965363}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -3.5302124, y: 3.5717163, z: 2.1797707}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4722085253826651455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5151584149293965363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d32320cc5d28da4b84096d9ab0f871c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiManager: {fileID: 0}
+  currentState: 0
+  totalGameTime: 900
+  currentEnemyHealthMultiplier: 1
+  currentEnemyDamageMultiplier: 1
+  healthIncreasePerMinute: 0.6
+  damageIncreasePerMinute: 0.6
+  bossPrefab: {fileID: 7201113416102569411, guid: 2f1b9704be2280e43b6721a8e4c79e67, type: 3}
+  bossSpawnPoint: {fileID: 0}
+  player: {fileID: 0}
+  enemySpawner: {fileID: 873956162807130501}
+--- !u!114 &873956162807130501
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5151584149293965363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9411fe8643a319d4a9063132e85b09eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  waves:
+  - waveName: Wave 15:00-14:00
+    enemies:
+    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
+      enemyCount: 7
+    - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
+      enemyCount: 0
+    timeUntilNextWave: 10
+    spawnInterval: 0.25
+  - waveName: Wave 14:00-13:00
+    enemies:
+    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
+      enemyCount: 10
+    - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
+      enemyCount: 1
+    timeUntilNextWave: 10
+    spawnInterval: 0.4
+  - waveName: Wave 13:00-12:00
+    enemies:
+    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
+      enemyCount: 30
+    - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
+      enemyCount: 3
+    timeUntilNextWave: 0
+    spawnInterval: 0.5
+  - waveName: Wave 12:00-11:00
+    enemies:
+    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
+      enemyCount: 50
+    - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
+      enemyCount: 5
+    timeUntilNextWave: 0
+    spawnInterval: 0.9
+  - waveName: Wave 11:00-10:00
+    enemies:
+    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
+      enemyCount: 200
+    - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
+      enemyCount: 20
+    timeUntilNextWave: 0
+    spawnInterval: 0.8
+  - waveName: Wave 10:00-09:00
+    enemies:
+    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
+      enemyCount: 1800
+    - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
+      enemyCount: 5
+    timeUntilNextWave: 0
+    spawnInterval: 0.7
+  - waveName: Wave 09:00-08:00
+    enemies:
+    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
+      enemyCount: 3600
+    - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
+      enemyCount: 5
+    timeUntilNextWave: 0
+    spawnInterval: 0.6
+  - waveName: Fuego
+    enemies:
+    - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
+      enemyCount: 5000
+    - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
+      enemyCount: 5
+    timeUntilNextWave: 0
+    spawnInterval: 0.5
+  waveIndex: 0
+--- !u!114 &7626246958269781099
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5151584149293965363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2c581171a338f2499108ade1fbe05bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeManager
+  playerStats: {fileID: 0}
+  upgradePanel: {fileID: 0}
+  upgradeChoicePrefab: {fileID: 9209661984835970440, guid: dd9061c775bee354f8222a6395caf098, type: 3}
+  choicesContainer: {fileID: 0}
+  availableUpgrades:
+  - {fileID: 11400000, guid: 0de2cee94758c6748b46297a606f3074, type: 2}
+  - {fileID: 11400000, guid: 3911b77109ed8054ba6ce69ecd7ab808, type: 2}
+  - {fileID: 11400000, guid: 801653973fb83ab4a9dd700403fac486, type: 2}
+  - {fileID: 11400000, guid: ce97eba395c861046b96f0c4931a05c9, type: 2}
+  - {fileID: 11400000, guid: 8dffb2882502e4440b455a53ca724caf, type: 2}
+  - {fileID: 11400000, guid: dae4a817139c6974595503dda96e3464, type: 2}
+  - {fileID: 11400000, guid: c62d2e22b5dfc6746bb5e5aa247fd1d9, type: 2}
+  - {fileID: 11400000, guid: 9990a515f4e066b479058b567af9161c, type: 2}
+  - {fileID: 11400000, guid: 7d56997c36a360e45b78a6243e6fbaaa, type: 2}
+  - {fileID: 11400000, guid: a96c4f31e5a5ca943aee6e37203f7ffb, type: 2}
+  - {fileID: 11400000, guid: 760e1c7516f648b4383103d0aeaf4d74, type: 2}
+  - {fileID: 11400000, guid: 9199b16ee1f803344bbce7601eacf3e7, type: 2}
+  rarityTiers:
+  - rarity: 0
+    name: Common
+    valueMultiplier: 0.8
+    backgroundColor: {r: 0.23713954, g: 0.6886792, b: 0.23713954, a: 1}
+    baseWeight: 70
+    maxLuckWeight: 0
+  - rarity: 1
+    name: Rare
+    valueMultiplier: 1.4
+    backgroundColor: {r: 0.19166073, g: 0.5639373, b: 0.6886792, a: 1}
+    baseWeight: 20
+    maxLuckWeight: 25
+  - rarity: 2
+    name: Epic
+    valueMultiplier: 2
+    backgroundColor: {r: 0.735849, g: 0.107600555, b: 0.735849, a: 1}
+    baseWeight: 5
+    maxLuckWeight: 40
+  - rarity: 3
+    name: Legendary
+    valueMultiplier: 3
+    backgroundColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+    baseWeight: 1
+    maxLuckWeight: 25
+  - rarity: 4
+    name: Legendary
+    valueMultiplier: 4
+    backgroundColor: {r: 1, g: 0.08445278, b: 0, a: 1}
+    baseWeight: 0.1
+    maxLuckWeight: 15
+  - rarity: 5
+    name: Godly
+    valueMultiplier: 10
+    backgroundColor: {r: 0, g: 0, b: 0, a: 1}
+    baseWeight: 0.01
+    maxLuckWeight: 1
+  maxLuckForRarity: 100

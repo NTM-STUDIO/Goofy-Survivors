@@ -8,19 +8,23 @@ public class OrbDropConfig
     [Range(0f, 100f)] public float dropChance;
 }
 
-[RequireComponent(typeof(Rigidbody2D))] 
+// The script now requires a 3D Rigidbody.
+[RequireComponent(typeof(Rigidbody))] 
 public class EnemyStats : MonoBehaviour
 {
     [Header("Base Stats")]
-    [Tooltip("A vida do inimigo no início do jogo (minuto 0).")]
+    [Tooltip("The enemy's health at the start of the game (minute 0).")]
     public int baseHealth = 100;
-    [Tooltip("O dano do inimigo no início do jogo (minuto 0).")]
+    [Tooltip("The enemy's damage at the start of the game (minute 0).")]
     public int baseDamage = 10;
     public float moveSpeed = 3f;
 
     public float currentHealth;
 
-    private Rigidbody2D rb;
+    // --- 3D Changes ---
+    private Rigidbody rb; // Changed from Rigidbody2D
+    private Renderer enemyRenderer; // Generic Renderer for Sprite or Mesh
+    private Color originalColor;
 
     private bool isKnockedBack = false;
     public bool IsKnockedBack { get { return isKnockedBack; } }
@@ -31,7 +35,16 @@ public class EnemyStats : MonoBehaviour
 
     void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
+        // Get the 3D Rigidbody component
+        rb = GetComponent<Rigidbody>(); 
+
+        // Get the renderer (works for both 3D meshes and 2D sprites)
+        enemyRenderer = GetComponentInChildren<Renderer>();
+        if (enemyRenderer != null)
+        {
+            // Store the original material color to revert to after taking damage
+            originalColor = enemyRenderer.material.color;
+        }
     }
 
     void Start()
@@ -64,13 +77,21 @@ public class EnemyStats : MonoBehaviour
         currentHealth -= damage;
         if (currentHealth <= 0) Die();
 
-        GetComponentInChildren<SpriteRenderer>().color = Color.red;
-        Invoke("ResetColor", 0.2f);
+        // Flash red using the cached renderer
+        if (enemyRenderer != null)
+        {
+            enemyRenderer.material.color = Color.red;
+            Invoke("ResetColor", 0.2f);
+        }
     }
 
     void ResetColor()
     {
-        GetComponentInChildren<SpriteRenderer>().color = Color.white;
+        // Revert to the original color
+        if (enemyRenderer != null)
+        {
+            enemyRenderer.material.color = originalColor;
+        }
     }
 
     public void Die()
@@ -81,6 +102,7 @@ public class EnemyStats : MonoBehaviour
 
     public void TryDropOrb()
     {
+        // Logic for this function remains the same, as it's not physics-dependent
         if (Random.Range(1f, 100f) <= chanceToDropNothing)
         {
             return;
@@ -96,20 +118,28 @@ public class EnemyStats : MonoBehaviour
         }
     }
 
-    public void ApplyKnockback(float knockbackForce, float duration, Vector2 direction)
+    // --- 3D Knockback Implementation ---
+    public void ApplyKnockback(float knockbackForce, float duration, Vector3 direction)
     {
-        if (knockbackForce <= 0 || isKnockedBack) return; // Prevent new knockback while already stunned
+        if (knockbackForce <= 0 || isKnockedBack) return;
 
         isKnockedBack = true;
-        rb.linearVelocity = Vector2.zero; // Use rb.velocity to be consistent with Rigidbody2D properties
-        rb.AddForce(direction.normalized * knockbackForce, ForceMode2D.Impulse);
+        
+        // Ensure knockback is only on the XZ plane for isometric view
+        direction.y = 0; 
+        
+        rb.linearVelocity = Vector3.zero; // Use Vector3.zero
+        
+        // Use the 3D ForceMode.Impulse
+        rb.AddForce(direction.normalized * knockbackForce, ForceMode.Impulse);
+        
         StartCoroutine(KnockbackCoroutine(duration));
     }
 
     IEnumerator KnockbackCoroutine(float duration)
     {
         yield return new WaitForSeconds(duration);
-        rb.linearVelocity = Vector2.zero; // Stop movement after knockback duration
+        rb.linearVelocity = Vector3.zero; // Use Vector3.zero to stop movement
         isKnockedBack = false;
     }
 }
