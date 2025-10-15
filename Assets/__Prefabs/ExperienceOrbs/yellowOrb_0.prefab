@@ -169,7 +169,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90bff61e563a52242941d960c462e178, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExperienceOrb
-  xpValue: 1000
+  xpValue: 500
   smoothTime: 0.1
   collectionDistance: 1
   maxSpeed: 30
@@ -199,7 +199,7 @@ Transform:
   m_GameObject: {fileID: 8934529160906730265}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.04863637, y: -1.258102, z: 7.122507}
+  m_LocalPosition: {x: -0.88, y: -1.34, z: 7.122507}
   m_LocalScale: {x: 0.033663206, y: 0.040693797, z: 0.07997732}
   m_ConstrainProportionsScale: 0
   m_Children: []

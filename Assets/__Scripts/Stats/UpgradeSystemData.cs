@@ -1,6 +1,8 @@
 using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 
-// Enum to identify each stat. This avoids using error-prone strings.
+// Enum to identify each stat.
 public enum StatType
 {
     MaxHP,
@@ -31,15 +33,16 @@ public enum Rarity
     OneIn100
 }
 
-// A simple class to hold all data related to a rarity tier.
-// [System.Serializable] allows us to edit this in the Inspector.
+// MERGED CLASS: Includes fields from your script and the new blending logic.
 [System.Serializable]
 public class RarityTier
 {
     public Rarity rarity;
     public string name;
     public float valueMultiplier;
-    public Color backgroundColor;
-    [Tooltip("The base chance weight. Higher is more common.")]
+    public Color backgroundColor; // From your original script
+    [Tooltip("The base chance weight at 0 luck.")]
     public float baseWeight;
+    [Tooltip("The target weight when luck reaches the 'Max Luck Value'.")]
+    public float maxLuckWeight; // New field for the blending system
 }

@@ -24,7 +24,7 @@ public class GameManager : MonoBehaviour
     
     [Space]
     [Tooltip("Quanto o multiplicador de vida aumenta a cada minuto.")]
-    public float healthIncreasePerMinute = 40f; 
+    public float healthIncreasePerMinute = 30f; 
     [Tooltip("Quanto o multiplicador de dano aumenta a cada minuto.")]
     public float damageIncreasePerMinute = 5f; 
 

@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a235ba29a21fe3c4194c1d40bc43f19b, type: 3}
   m_Name: FlipFlop
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  weaponName: Flip-Flop
+  weaponID: FlipFlop
+  weaponName: FlipFlop
   description: Fllipping floppig
   icon: {fileID: -3638269243578002030, guid: d1ab5ae35c98a31499dd1bb26f0df89c, type: 3}
   weaponPrefab: {fileID: 3341698084558261502, guid: 22fdd37f9bf80a4418599ea85df93742, type: 3}

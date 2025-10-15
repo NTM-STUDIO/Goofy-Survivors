@@ -16,5 +16,5 @@ MonoBehaviour:
   upgradeName: Damage
   upgradeDescription: 
   icon: {fileID: -4714010648331255260, guid: b9eb046e36f50fa4f84c10fa1b742783, type: 3}
-  baseValueMin: 15
-  baseValueMax: 20
+  baseValueMin: 5
+  baseValueMax: 10

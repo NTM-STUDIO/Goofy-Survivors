@@ -9,7 +9,11 @@ public class PlayerWeaponManager : MonoBehaviour
 
     void Start()
     {
-        foreach (WeaponData weapon in weapons)
+        // This part is for starting weapons, it's a bit redundant but okay.
+        // We will make a temp copy to avoid issues while iterating.
+        var startingWeapons = new List<WeaponData>(weapons); 
+        weapons.Clear(); // Start with a clean list
+        foreach (WeaponData weapon in startingWeapons)
         {
             AddWeapon(weapon);
         }
@@ -17,8 +21,19 @@ public class PlayerWeaponManager : MonoBehaviour
 
     public void AddWeapon(WeaponData weaponData)
     {
-        // Create a new GameObject to hold the weapon's logiac
-        GameObject weaponObject = new GameObject(weaponData.weaponName + " Controller");
+        // First, check if we already have this weapon to be absolutely safe.
+        if (weapons.Contains(weaponData))
+        {
+            // Optionally handle leveling up the weapon here instead.
+            return; 
+        }
+
+        // --- THIS IS THE MISSING LINE ---
+        weapons.Add(weaponData);
+        // ---------------------------------
+
+        // Create a new GameObject to hold the weapon's logic
+        GameObject weaponObject = new GameObject(weaponData.name + " Controller");
         weaponObject.transform.SetParent(weaponParent); // Keep the hierarchy clean
 
         // Add the controller and assign its data

@@ -16,5 +16,5 @@ MonoBehaviour:
   upgradeName: Projectile Speed
   upgradeDescription: 
   icon: {fileID: -5432176002854289831, guid: c801820153c6d304192774aea7194b1d, type: 3}
-  baseValueMin: 20
-  baseValueMax: 40
+  baseValueMin: 10
+  baseValueMax: 15

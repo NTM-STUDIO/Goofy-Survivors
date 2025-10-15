@@ -15,6 +15,7 @@ public enum WeaponArchetype
 public class WeaponData : ScriptableObject
 {
     [Header("General")]
+    public string weaponID; // Unique identifier for the weapon
     public string weaponName;
     public string description;
     public Sprite icon;

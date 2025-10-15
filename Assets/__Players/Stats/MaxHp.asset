@@ -16,5 +16,5 @@ MonoBehaviour:
   upgradeName: Max HP
   upgradeDescription: 
   icon: {fileID: 4606908045521496030, guid: 55bc236edb3fa0f419ce535d7f07a5bb, type: 3}
-  baseValueMin: 20
+  baseValueMin: 10
   baseValueMax: 40
