@@ -2670,27 +2670,27 @@ MonoBehaviour:
   - waveName: Wave 15:00-14:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 50
+      enemyCount: 200
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
-      enemyCount: 2
+      enemyCount: 50
     timeUntilNextWave: 0
-    spawnInterval: 0.6
+    spawnInterval: 0.8
   - waveName: Wave 14:00-13:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
-      enemyCount: 120
+      enemyCount: 300
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
       enemyCount: 4
     timeUntilNextWave: 0
-    spawnInterval: 0.8
+    spawnInterval: 0.4
   - waveName: Wave 13:00-12:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
       enemyCount: 240
     - enemyPrefab: {fileID: 3517956219550783608, guid: ef27b741f3e42a847be4b46b80a50975, type: 3}
-      enemyCount: 5
+      enemyCount: 100
     timeUntilNextWave: 0
-    spawnInterval: 1
+    spawnInterval: 0.5
   - waveName: Wave 12:00-11:00
     enemies:
     - enemyPrefab: {fileID: 6482347200803263970, guid: 5456a299396d93f40a2bff994ff15dec, type: 3}
@@ -2765,34 +2765,34 @@ MonoBehaviour:
   rarityTiers:
   - rarity: 0
     name: Common
-    valueMultiplier: 1
+    valueMultiplier: 0.8
     backgroundColor: {r: 0.23713954, g: 0.6886792, b: 0.23713954, a: 1}
-    baseWeight: 80
+    baseWeight: 75
   - rarity: 1
     name: Rare
     valueMultiplier: 1.4
     backgroundColor: {r: 0.19166073, g: 0.5639373, b: 0.6886792, a: 1}
-    baseWeight: 10
+    baseWeight: 15
   - rarity: 2
     name: Epic
-    valueMultiplier: 1.8
+    valueMultiplier: 2
     backgroundColor: {r: 0.735849, g: 0.107600555, b: 0.735849, a: 1}
     baseWeight: 7
   - rarity: 3
     name: Legendary
-    valueMultiplier: 2.5
-    backgroundColor: {r: 0.23713954, g: 0.6886792, b: 0.23713954, a: 1}
+    valueMultiplier: 4
+    backgroundColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
     baseWeight: 2
   - rarity: 4
     name: Legendary
-    valueMultiplier: 3.5
+    valueMultiplier: 8
     backgroundColor: {r: 1, g: 0.08445278, b: 0, a: 1}
     baseWeight: 0.99
   - rarity: 5
     name: Legendary
     valueMultiplier: 20
     backgroundColor: {r: 0, g: 0, b: 0, a: 1}
-    baseWeight: 0.3
+    baseWeight: 0.2
 --- !u!1 &1172735763
 GameObject:
   m_ObjectHideFlags: 0
@@ -3785,7 +3785,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.000061035156, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -939.3203, y: -349.1402}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1410231190
@@ -5418,7 +5418,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3258646194851266297, guid: 40f5beefc2511614b865a77069890a08, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.15008545
+      value: 0.15014648
       objectReference: {fileID: 0}
     - target: {fileID: 3258646194851266297, guid: 40f5beefc2511614b865a77069890a08, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
