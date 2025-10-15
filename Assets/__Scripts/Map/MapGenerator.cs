@@ -42,21 +42,6 @@ public class MapGenerator : MonoBehaviour
         foreach (var asset in assets)
             totalAssetWeight += asset.weight;
 
-        // Valida o SpriteRenderer do prefab
-        var spriteRenderer = tilePrefab.GetComponent<SpriteRenderer>();
-        if (spriteRenderer == null)
-        {
-            Debug.LogError("tilePrefab n�o tem SpriteRenderer!");
-            return;
-        }
-        if (spriteRenderer.sprite == null)
-        {
-            Debug.LogError("tilePrefab n�o tem sprite atribu�do!");
-            return;
-        }
-
-
-        spriteRenderer.sortingLayerName = "Background";
 
         // Obtem o tamanho do tile em unidades do mundo
         float tileWidth = 7.3f;

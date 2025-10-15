@@ -2,24 +2,20 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!78 &1
 TagManager:
-  serializedVersion: 3
-  tags:
-  - Enemy
-  - Items
-  - Kage
-  - Chest
+  serializedVersion: 2
+  tags: []
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - Player
+  - 
   - Water
   - UI
-  - Bounds
-  - Map
-  - Items
-  - Enemy
-  - VFX
+  - 
+  - 
+  - 
+  - 
+  - 
   - 
   - 
   - 
@@ -45,23 +41,36 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: Background
-    uniqueID: 956755197
-    locked: 0
-  - name: Shadows
-    uniqueID: 1059366671
-    locked: 0
-  - name: Items
-    uniqueID: 580247611
-    locked: 0
-  - name: Players
-    uniqueID: 3348211377
-    locked: 0
-  - name: VFX
-    uniqueID: 2737780903
-    locked: 0
-  - name: cONSUMABLES
-    uniqueID: 4150487449
-    locked: 0
   m_RenderingLayers:
   - Default
+  - Light Layer 1
+  - Light Layer 2
+  - Light Layer 3
+  - Light Layer 4
+  - Light Layer 5
+  - Light Layer 6
+  - Light Layer 7
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
