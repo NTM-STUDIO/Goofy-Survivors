@@ -102,7 +102,7 @@ GameObject:
   - component: {fileID: 6297376134751599430}
   m_Layer: 0
   m_Name: EsqueletoCostas
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -142,8 +142,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2.4487152, y: 4.7573133, z: 2.084976}
-  m_Center: {x: -0.23894787, y: 2.2963164, z: 1.193426}
+  m_Size: {x: 2.4487152, y: 4.7573133, z: 10.70368}
+  m_Center: {x: -0.23894787, y: 2.2963164, z: 5.502778}
 --- !u!114 &3902742526642890872
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -207,5 +207,7 @@ MonoBehaviour:
   baseDamage: 10
   moveSpeed: 3
   currentHealth: 0
-  chanceToDropNothing: 20
-  orbDrops: []
+  chanceToDropNothing: 0
+  orbDrops:
+  - orbPrefab: {fileID: 8326750618715067698, guid: 3f0fbb90971ba4441913d7efaea77fca, type: 3}
+    dropChance: 100
