@@ -21,7 +21,7 @@ MonoBehaviour:
   damage: 25
   cooldown: 15
   area: 0.4
-  amount: 1
+  amount: 7
   speed: 100
   duration: 9
   criticalChance: 0

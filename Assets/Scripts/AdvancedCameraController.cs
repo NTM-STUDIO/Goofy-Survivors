@@ -7,10 +7,16 @@ public class AdvancedCameraController : MonoBehaviour
     [Header("Follow Settings")]
     [SerializeField] private Transform target;
 
-    [Header("Zoom Settings")]
-    [SerializeField] private float zoomSensitivity = 1f;
-    [SerializeField] private float minFieldOfView = 25f;
-    [SerializeField] private float maxFieldOfView = 70f;
+    [Header("Orthographic Settings")]
+    [SerializeField] private float orthoMinSize = 10f;
+    [SerializeField] private float orthoMaxSize = 20f;
+
+    [Header("Perspective Settings")]
+    [SerializeField] private float perspMinFov = 25f;
+    [SerializeField] private float perspMaxFov = 60f;
+
+    [Header("General Settings")]
+    [SerializeField] private float zoomSpeed = 5f; // Renamed from sensitivity for clarity
 
     private Camera cam;
     private Vector3 offset;
@@ -18,11 +24,14 @@ public class AdvancedCameraController : MonoBehaviour
     void Awake()
     {
         cam = GetComponent<Camera>();
-        cam.orthographic = false;
     }
 
     void Start()
     {
+        // --- Set the default starting state ---
+        cam.orthographic = true;
+        cam.orthographicSize = orthoMaxSize; // Default ortho zoom is 20
+
         if (target == null)
         {
             if (!TryAssignTargetByTag())
@@ -37,28 +46,87 @@ public class AdvancedCameraController : MonoBehaviour
         }
     }
 
-    // Use LateUpdate to ensure the player has finished moving for the frame.
     void Update()
     {
+        // Handle toggling between camera modes
+        HandleModeToggle();
+
+        // Handle zooming with the scroll wheel (for direct mouse polling)
         HandleScrollZoom();
     }
 
+    // Use LateUpdate to ensure the player has finished moving for the frame.
     void LateUpdate()
     {
         if (target == null && !TryAssignTargetByTag()) return;
 
+        // The follow logic remains the same
         transform.position = target.position + offset;
     }
 
-    // This function will be called by the PlayerInput component
+    // --- NEW: Function to toggle between Perspective and Orthographic ---
+    private void HandleModeToggle()
+    {
+        // Use the new Input System to check for the middle mouse button press this frame
+        if (Mouse.current != null && Mouse.current.middleButton.wasPressedThisFrame)
+        {
+            // Flip the camera's projection mode
+            cam.orthographic = !cam.orthographic;
+
+            // After toggling, reset the zoom to the default for the new mode
+            if (cam.orthographic)
+            {
+                cam.orthographicSize = orthoMaxSize; // Reset to 20
+            }
+            else
+            {
+                cam.fieldOfView = perspMaxFov; // Reset to 60
+            }
+        }
+    }
+
+    // --- UPDATED: This function is called by the PlayerInput component via Unity Events ---
     public void OnCameraZoom(InputAction.CallbackContext context)
     {
+        // Read the raw scroll value from the Input Action
         float scrollValue = context.ReadValue<Vector2>().y;
         if (Mathf.Approximately(scrollValue, 0f)) return;
 
-        ApplyZoomDelta(scrollValue * -1f);
+        ApplyZoom(scrollValue);
+    }
+    
+    // --- UPDATED: This function polls the mouse directly every frame ---
+    private void HandleScrollZoom()
+    {
+        if (Mouse.current == null) return;
+        
+        // Read the raw scroll value directly from the mouse device
+        float scrollValue = Mouse.current.scroll.ReadValue().y;
+        if (Mathf.Approximately(scrollValue, 0f)) return;
+
+        ApplyZoom(scrollValue);
     }
 
+    // --- NEW: A single function to apply zoom, aware of the camera's current mode ---
+    private void ApplyZoom(float scrollValue)
+    {
+        // Scrolling up (positive value) should zoom in (decrease size/FOV)
+        // We normalize the raw scroll value (often +/- 120) to a smaller delta
+        float delta = -scrollValue / 120f;
+
+        if (cam.orthographic)
+        {
+            float newSize = cam.orthographicSize + delta * zoomSpeed;
+            cam.orthographicSize = Mathf.Clamp(newSize, orthoMinSize, orthoMaxSize);
+        }
+        else // Perspective
+        {
+            float newFov = cam.fieldOfView + delta * zoomSpeed;
+            cam.fieldOfView = Mathf.Clamp(newFov, perspMinFov, perspMaxFov);
+        }
+    }
+
+    // --- Target finding logic remains the same ---
     private bool TryAssignTargetByTag()
     {
         GameObject taggedPlayer = GameObject.FindGameObjectWithTag("Player");
@@ -72,21 +140,5 @@ public class AdvancedCameraController : MonoBehaviour
     {
         target = newTarget;
         offset = transform.position - target.position;
-    }
-
-    private void HandleScrollZoom()
-    {
-        if (Mouse.current == null) return;
-
-        float scrollValue = Mouse.current.scroll.ReadValue().y;
-        if (Mathf.Approximately(scrollValue, 0f)) return;
-
-        ApplyZoomDelta(scrollValue * -1f);
-    }
-
-    private void ApplyZoomDelta(float scrollValue)
-    {
-        float newFov = cam.fieldOfView + (scrollValue * zoomSensitivity);
-        cam.fieldOfView = Mathf.Clamp(newFov, minFieldOfView, maxFieldOfView);
     }
 }
