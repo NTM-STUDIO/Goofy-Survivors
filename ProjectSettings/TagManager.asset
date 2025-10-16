@@ -2,8 +2,10 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!78 &1
 TagManager:
-  serializedVersion: 2
-  tags: []
+  serializedVersion: 3
+  tags:
+  - Items
+  - Enemy
   layers:
   - Default
   - TransparentFX
@@ -41,6 +43,21 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: BACKGROUND
+    uniqueID: 3234518241
+    locked: 0
+  - name: MAPCOSMETIC
+    uniqueID: 724221727
+    locked: 0
+  - name: PLAYERS
+    uniqueID: 3900518483
+    locked: 0
+  - name: ENEMIES
+    uniqueID: 3108290115
+    locked: 0
+  - name: VFX
+    uniqueID: 1781815235
+    locked: 0
   m_RenderingLayers:
   - Default
   - Light Layer 1
@@ -50,27 +67,3 @@ TagManager:
   - Light Layer 5
   - Light Layer 6
   - Light Layer 7
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 

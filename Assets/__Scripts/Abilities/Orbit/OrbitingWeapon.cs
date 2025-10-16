@@ -1,57 +1,41 @@
 using UnityEngine;
 
-/// <summary>
-/// Handles the behavior of an orbiting weapon prefab.
-/// This version is persistent and hits all enemies it touches until its duration ends.
-/// Pierce functionality has been removed.
-/// </summary>
 public class OrbitingWeapon : MonoBehaviour
 {
-    // --- Stats passed from WeaponData ---
+    // --- Stats remain the same ---
     public float damage;
-    public float knockbackForce; // Renamed from knockback for clarity
+    public float knockbackForce;
 
     [HideInInspector] public float rotationSpeed;
     [HideInInspector] public float orbitRadius;
     [HideInInspector] public Transform orbitCenter;
-
-    PlayerStats playerStats;
-
-    // --- Private variables ---
+    
     private float currentAngle;
     private float lifetime;
 
-    /// <summary>
-    /// Initializes the weapon's perties based on the WeaponData ScriptableObject.
-    /// Note: This method uses the weapon's base stats and does not account for PlayerStats multipliers.
-    /// </summary>
-    // Place this inside your OrbitingWeapon.cs script, replacing the old Initialize method.
+    // --- Initialize method is already compatible ---
     public void Initialize(Transform center, float startAngle, float finalDamage, float finalSpeed, float finalDuration, float finalKnockback, float finalSize)
     {
-        
         this.orbitCenter = center;
         this.currentAngle = startAngle;
-
-        // Assign all the calculated stats
+        
         this.damage = finalDamage;
         this.rotationSpeed = finalSpeed;
         this.lifetime = finalDuration;
         this.knockbackForce = finalKnockback;
 
-        // Use finalSize to determine the weapon's scale and orbit distance
-        this.orbitRadius = finalSize * 4f; // Adjust the '4f' multiplier to change how far the weapon orbits
-        transform.localScale = (Vector3.one * finalSize) / 4.5f;
+        this.orbitRadius = finalSize * 10f; // Adjust multiplier as needed for 3D space
+        transform.localScale = Vector3.one * finalSize;
     }
+
     void Update()
     {
-        // Safety check: if the center point is destroyed, destroy the weapon too.
         if (orbitCenter == null)
         {
             Destroy(gameObject);
             return;
         }
 
-        // Countdown the weapon's lifespan and destroy it when time is up.
         lifetime -= Time.deltaTime;
         if (lifetime <= 0f)
         {
@@ -59,32 +43,33 @@ public class OrbitingWeapon : MonoBehaviour
             return;
         }
 
-        // Calculate the new position in the orbit based on rotation speed.
         currentAngle += rotationSpeed * Time.deltaTime;
-        if (currentAngle > 360f) currentAngle -= 360f; // Keep the angle tidy
+        if (currentAngle > 360f) currentAngle -= 360f;
 
+        // --- 3D Change: Orbit on the XZ plane instead of XY ---
         float x = Mathf.Cos(currentAngle * Mathf.Deg2Rad) * orbitRadius;
-        float y = Mathf.Sin(currentAngle * Mathf.Deg2Rad) * orbitRadius;
-        transform.position = orbitCenter.position + new Vector3(x, y, 0);
+        float z = Mathf.Sin(currentAngle * Mathf.Deg2Rad) * orbitRadius; // Changed y to z
+        transform.position = orbitCenter.position + new Vector3(x, 0, z); // Changed y component to 0
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    // --- 3D Change: Use 3D Trigger Collider ---
+    void OnTriggerEnter(Collider other)
     {
-        // Check if the object we collided with has the "Enemy" tag.
         if (other.CompareTag("Enemy"))
         {
             var enemyStats = other.GetComponent<EnemyStats>();
             if (enemyStats != null)
             {
-                // Apply damage to the enemy.
                 enemyStats.TakeDamage((int)damage);
                 Debug.Log($"Orbiting weapon hit {other.name} for {damage} damage.");
 
-                // Calculate knockback direction away from the orbit center and apply it.
-                Vector2 knockbackDirection = (other.transform.position - orbitCenter.position).normalized;
+                // --- 3D Change: Calculate knockback on the XZ plane ---
+                Vector3 knockbackDirection = (other.transform.position - orbitCenter.position);
+                knockbackDirection.y = 0; // Ensure knockback is horizontal
+                knockbackDirection.Normalize();
+                
+                // Assumes your EnemyStats.ApplyKnockback now takes a Vector3
                 enemyStats.ApplyKnockback(knockbackForce, 0.4f, knockbackDirection);
-
-                // Pierce logic has been removed. The weapon will persist and can hit other enemies.
             }
         }
     }

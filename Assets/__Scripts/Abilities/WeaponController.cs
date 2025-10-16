@@ -56,7 +56,6 @@ public class WeaponController : MonoBehaviour
 
             float finalAttackSpeed = playerStats.attackSpeedMultiplier;
             currentCooldown = weaponData.cooldown / Mathf.Max(0.01f, finalAttackSpeed);
-            currentCooldown = Mathf.Max(currentCooldown, weaponData.cooldown);
         }
     }
 
@@ -68,11 +67,13 @@ public class WeaponController : MonoBehaviour
                 FireProjectile();
                 break;
             case WeaponArchetype.Whip:
+                // Add 3D Whip logic here
                 break;
             case WeaponArchetype.Orbit:
                 ActivateOrbitingWeapon();
                 break;
             case WeaponArchetype.Aura:
+                // Add 3D Aura logic here
                 break;
             case WeaponArchetype.Clone:
                 SpawnShadowClone();
@@ -88,7 +89,9 @@ public class WeaponController : MonoBehaviour
 
         for (int i = 0; i < finalAmount; i++)
         {
-            Vector2 spawnPosition = (Vector2)firePoint.position + Random.insideUnitCircle * 3f;
+            Vector2 randomCirclePos = Random.insideUnitCircle * 3f;
+            Vector3 spawnPosition = firePoint.position + new Vector3(randomCirclePos.x, 0, randomCirclePos.y);
+            
             GameObject cloneObj = Instantiate(weaponData.weaponPrefab, spawnPosition, Quaternion.identity, playerTransform);
 
             ShadowClone clone = cloneObj.GetComponent<ShadowClone>();
@@ -121,25 +124,30 @@ public class WeaponController : MonoBehaviour
         for (int i = 0; i < targetsToFireAt; i++)
         {
             Transform target = enemies[i].transform;
-            Vector2 direction = (target.position - firePoint.position).normalized;
+            Vector3 direction = (target.position - firePoint.position);
+            direction.y = 0;
+            direction.Normalize();
+
             SpawnAndInitializeProjectile(target, direction, finalDamage, finalSpeed, finalDuration, finalKnockback, finalPierce, finalSize);
         }
 
         int projectilesRemaining = finalAmount - targetsToFireAt;
         for (int i = 0; i < projectilesRemaining; i++)
         {
-            Vector2 randomDirection = Random.insideUnitCircle.normalized;
+            Vector2 randomCircleDir = Random.insideUnitCircle.normalized;
+            Vector3 randomDirection = new Vector3(randomCircleDir.x, 0, randomCircleDir.y);
             SpawnAndInitializeProjectile(null, randomDirection, finalDamage, finalSpeed, finalDuration, finalKnockback, finalPierce, finalSize);
         }
     }
-
-    private void SpawnAndInitializeProjectile(Transform target, Vector2 direction, float finalDamage, float finalSpeed, float finalDuration, float finalKnockback, int finalPierce, float finalSize)
+    
+    private void SpawnAndInitializeProjectile(Transform target, Vector3 direction, float finalDamage, float finalSpeed, float finalDuration, float finalKnockback, int finalPierce, float finalSize)
     {
         GameObject projectileObj = Instantiate(weaponData.weaponPrefab, firePoint.position, Quaternion.identity);
         ProjectileWeapon projectile = projectileObj.GetComponent<ProjectileWeapon>();
 
         if (projectile != null)
         {
+            // You will need to make sure your ProjectileWeapon's Initialize method also accepts a Vector3
             projectile.Initialize(target, direction, finalDamage, finalSpeed, finalDuration, finalKnockback, finalPierce, finalSize);
         }
     }
@@ -153,7 +161,12 @@ public class WeaponController : MonoBehaviour
         float finalDuration = weaponData.duration * playerStats.durationMultiplier;
         float finalKnockback = weaponData.knockback * playerStats.knockbackMultiplier;
 
+        // --- THIS IS THE FIXED LINE ---
+        // The WeaponController's game object is parented to the "weaponParent" transform,
+        // so we can access it using transform.parent.
         Transform orbitCenter = transform.parent;
+        // -----------------------------
+
         float angleStep = 360f / finalAmount;
         float randomGroupRotation = Random.Range(0f, 360f);
 
