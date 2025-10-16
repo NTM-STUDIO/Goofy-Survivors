@@ -77,7 +77,7 @@ SpriteRenderer:
   m_SortingLayerID: -394448813
   m_SortingLayer: 3
   m_SortingOrder: 0
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 12b9554dd93011c498674669bcf79e7e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -85,7 +85,7 @@ SpriteRenderer:
   m_Size: {x: 10.24, y: 5.76}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
+  m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &1880927956876971757
@@ -113,10 +113,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8102928579760724059}
-  - component: {fileID: 6191905067732679964}
   - component: {fileID: 3902742526642890872}
   - component: {fileID: 6562184088800466058}
   - component: {fileID: 6297376134751599430}
+  - component: {fileID: 1536442509239560898}
   m_Layer: 0
   m_Name: EsqueletoCostas
   m_TagString: Enemy
@@ -140,27 +140,6 @@ Transform:
   - {fileID: 2682051627743952468}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &6191905067732679964
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9116392235869641759}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 2.4487152, y: 4.7573133, z: 2.1520455}
-  m_Center: {x: -0.23894787, y: 2.2963164, z: 1.2269611}
 --- !u!114 &3902742526642890872
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -180,7 +159,10 @@ MonoBehaviour:
   leadTime: 0.5
   flankOffset: 2
   flankFalloffDistance: 2
-  showGizmos: 1
+  attackCooldown: 2
+  selfKnockbackForce: 20
+  selfKnockbackDuration: 1
+  showGizmos: 0
 --- !u!54 &6562184088800466058
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -220,7 +202,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 853117fdcad11eb468dce0024d64eb22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseHealth: 20
+  baseHealth: 999999
   baseDamage: 10
   moveSpeed: 3
   currentHealth: 0
@@ -228,3 +210,26 @@ MonoBehaviour:
   orbDrops:
   - orbPrefab: {fileID: 8326750618715067698, guid: 3f0fbb90971ba4441913d7efaea77fca, type: 3}
     dropChance: 100
+--- !u!136 &1536442509239560898
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9116392235869641759}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 1.6483103
+  m_Height: 5.607719
+  m_Direction: 1
+  m_Center: {x: 0, y: 2.3038561, z: 1.1483104}

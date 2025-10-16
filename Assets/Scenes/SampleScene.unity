@@ -1169,7 +1169,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dayDurationSeconds: 120
   sunriseAngle: 20
-  sunsetAngle: 160
+  sunsetAngle: 80
   maxIntensity: 0.5
   intensityCurve:
     serializedVersion: 2
@@ -1698,9 +1698,9 @@ MonoBehaviour:
   - waveName: XD
     enemies:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
-      enemyCount: 200
+      enemyCount: 1000
     timeUntilNextWave: 0
-    spawnInterval: 0.4
+    spawnInterval: 0.01
   waveIndex: 0
   groundLevelY: 0
   spawnBuffer: 3
@@ -3538,8 +3538,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2.4487152, y: 4.910026, z: 2.2225714}
-  m_Center: {x: -0.23894787, y: 1.9550126, z: 1.0858006}
+  m_Size: {x: 2.4487152, y: 4.910026, z: 11.132139}
+  m_Center: {x: -0.23894787, y: 1.9550126, z: 5.5405846}
 --- !u!54 &1044720160
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -4895,7 +4895,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 10.71
+  m_Radius: 3.67
   m_Center: {x: 0, y: 2.76, z: 0}
 --- !u!1 &1710586154
 GameObject:

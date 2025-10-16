@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5160719082514619542}
   - component: {fileID: -4507509080984299121}
   - component: {fileID: -1537910440251582161}
-  - component: {fileID: 2963952531550006621}
+  - component: {fileID: 5773753756138369328}
   m_Layer: 0
   m_Name: FlyingPan
   m_TagString: Untagged
@@ -28,8 +28,8 @@ Transform:
   m_GameObject: {fileID: 6260151671241025186}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
-  m_LocalScale: {x: 0.050000004, y: 0.050000004, z: 0.050000004}
+  m_LocalPosition: {x: 0, y: 2, z: 0}
+  m_LocalScale: {x: 0.61, y: 0.61, z: 0.61}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 3618285991855728780}
@@ -79,8 +79,8 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!65 &2963952531550006621
-BoxCollider:
+--- !u!136 &5773753756138369328
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -97,9 +97,11 @@ BoxCollider:
   m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 5.566473, y: 10.10418, z: 4.448428}
-  m_Center: {x: -0.011642872, y: 4.8563848, z: 2.1987128}
+  serializedVersion: 2
+  m_Radius: 2.6465025
+  m_Height: 13.988728
+  m_Direction: 2
+  m_Center: {x: -0.10386725, y: 0.29000023, z: 6.8043528}
 --- !u!1 &6942697660582106786
 GameObject:
   m_ObjectHideFlags: 0
