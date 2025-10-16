@@ -4,28 +4,26 @@ using System.Collections.Generic;
 
 public class EnemySpawner : MonoBehaviour
 {
-    private enum SpawnSide
-    {
-        Left,
-        Right,
-        Top,
-        Bottom
-    }
-
+    // ... (Your enums and other variables remain the same)
+    private enum SpawnSide { Left, Right, Top, Bottom }
     [Header("Wave Configuration")]
     public List<Wave> waves;
-    public int waveIndex = 0; // Current wave
-
+    public int waveIndex = 0;
     [Header("Spawning Position")]
     [Tooltip("The Y-coordinate of your ground level where enemies should spawn.")]
     public float groundLevelY = 0f;
     [Tooltip("How far outside the camera view should enemies spawn?")]
     public float spawnBuffer = 3f;
+    
+    // --- NEW VARIABLE ---
+    [Tooltip("A large distance to use as a fallback if a camera ray doesn't hit the ground (e.g., when looking at the horizon in perspective).")]
+    public float raycastFallbackDistance = 200f;
 
     private Camera mainCamera;
 
     void Awake()
     {
+        // ... (Awake remains the same)
         mainCamera = Camera.main;
         if (mainCamera == null)
         {
@@ -35,6 +33,7 @@ public class EnemySpawner : MonoBehaviour
 
     public void StartSpawning()
     {
+        // ... (StartSpawning remains the same)
         if (waves != null && waves.Count > 0)
             StartCoroutine(SpawnWaves());
         else
@@ -43,115 +42,74 @@ public class EnemySpawner : MonoBehaviour
 
     IEnumerator SpawnWaves()
     {
-        // Wait a frame to ensure the camera is fully initialized
+        // ... (SpawnWaves coroutine remains the same)
         yield return null;
-
         while (waveIndex < waves.Count)
         {
             Wave currentWave = waves[waveIndex];
             Debug.Log("Starting Wave: " + (currentWave.waveName != "" ? currentWave.waveName : (waveIndex + 1).ToString()));
-
             List<int> remainingCounts = new List<int>();
             int totalEnemiesToSpawn = 0;
-
             foreach (WaveEnemy waveEnemy in currentWave.enemies)
             {
                 int clampedCount = Mathf.Max(0, waveEnemy.enemyCount);
                 remainingCounts.Add(clampedCount);
                 totalEnemiesToSpawn += clampedCount;
             }
-
             if (totalEnemiesToSpawn == 0)
             {
                 Debug.LogWarning($"Wave '{currentWave.waveName}' has no enemies with a positive count.");
             }
-
             while (totalEnemiesToSpawn > 0)
             {
                 int roll = Random.Range(0, totalEnemiesToSpawn);
                 int cumulative = 0;
-
                 for (int enemyIndex = 0; enemyIndex < currentWave.enemies.Count; enemyIndex++)
                 {
                     if (remainingCounts[enemyIndex] == 0)
                         continue;
-
                     cumulative += remainingCounts[enemyIndex];
-
                     if (roll < cumulative)
                     {
                         WaveEnemy selectedEnemy = currentWave.enemies[enemyIndex];
                         SpawnSide spawnSide = ChooseBalancedSpawnSide();
-                        
-                        // --- 3D CHANGE: Use the new 3D position calculation ---
                         Vector3 spawnPos = GetSpawnPosition3D(spawnSide);
-                        
-                        // Spawn at the calculated position with no rotation
                         Instantiate(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
-
                         remainingCounts[enemyIndex]--;
                         totalEnemiesToSpawn--;
-
                         yield return new WaitForSeconds(currentWave.spawnInterval);
                         break;
                     }
                 }
             }
             yield return new WaitForSeconds(currentWave.timeUntilNextWave);
-
             waveIndex++;
         }
         Debug.Log("All waves completed!");
     }
 
-    // --- NEW 3D-AWARE SPAWN POSITION FUNCTION ---
+    // --- FULLY REWRITTEN AND ROBUST SPAWN POSITION FUNCTION ---
     Vector3 GetSpawnPosition3D(SpawnSide side)
     {
         if (mainCamera == null) return Vector3.zero;
 
-        // Create a mathematical plane at our ground level, facing upwards
         Plane groundPlane = new Plane(Vector3.up, new Vector3(0, groundLevelY, 0));
 
-        // Define the four corners of the screen in viewport space
-        Vector3 viewportBottomLeft = new Vector3(0, 0, 0);
-        Vector3 viewportTopRight = new Vector3(1, 1, 0);
-
-        // Create rays from the camera through the screen corners
-        Ray rayBottomLeft = mainCamera.ViewportPointToRay(viewportBottomLeft);
-        Ray rayTopRight = mainCamera.ViewportPointToRay(viewportTopRight);
-
-        // Find where these rays hit the ground plane
-        Vector3 worldBottomLeft, worldTopRight;
-        if (groundPlane.Raycast(rayBottomLeft, out float blDistance))
-        {
-            worldBottomLeft = rayBottomLeft.GetPoint(blDistance);
-        }
-        else
-        {
-            Debug.LogError("Camera ray for bottom-left corner does not intersect the ground plane!");
-            return Vector3.zero; // Or a fallback position
-        }
-
-        if (groundPlane.Raycast(rayTopRight, out float trDistance))
-        {
-            worldTopRight = rayTopRight.GetPoint(trDistance);
-        }
-        else
-        {
-            Debug.LogError("Camera ray for top-right corner does not intersect the ground plane!");
-            return Vector3.zero; // Or a fallback position
-        }
+        // Get all four corners of the screen on the ground plane
+        Vector3 worldBottomLeft = GetWorldPointOnPlane(new Vector2(0, 0), groundPlane);
+        Vector3 worldBottomRight = GetWorldPointOnPlane(new Vector2(1, 0), groundPlane);
+        Vector3 worldTopLeft = GetWorldPointOnPlane(new Vector2(0, 1), groundPlane);
+        Vector3 worldTopRight = GetWorldPointOnPlane(new Vector2(1, 1), groundPlane);
         
-        // Now we have the min/max X and Z coordinates of the view on the ground
-        float minX = worldBottomLeft.x - spawnBuffer;
-        float maxX = worldTopRight.x + spawnBuffer;
-        float minZ = worldBottomLeft.z - spawnBuffer;
-        float maxZ = worldTopRight.z + spawnBuffer;
+        // Find the absolute min and max coordinates from the four points
+        float minX = Mathf.Min(worldBottomLeft.x, worldTopLeft.x) - spawnBuffer;
+        float maxX = Mathf.Max(worldBottomRight.x, worldTopRight.x) + spawnBuffer;
+        float minZ = Mathf.Min(worldBottomLeft.z, worldBottomRight.z) - spawnBuffer;
+        float maxZ = Mathf.Max(worldTopLeft.z, worldTopRight.z) + spawnBuffer;
 
         float spawnX = 0f;
         float spawnZ = 0f;
         
-        // Choose a random point just outside these boundaries
         switch (side)
         {
             case SpawnSide.Left:
@@ -162,11 +120,11 @@ public class EnemySpawner : MonoBehaviour
                 spawnX = maxX;
                 spawnZ = Random.Range(minZ, maxZ);
                 break;
-            case SpawnSide.Top: // "Top" of the screen in an isometric view is likely the positive Z direction
+            case SpawnSide.Top:
                 spawnX = Random.Range(minX, maxX);
                 spawnZ = maxZ;
                 break;
-            case SpawnSide.Bottom: // "Bottom" of the screen is likely the negative Z direction
+            case SpawnSide.Bottom:
                 spawnX = Random.Range(minX, maxX);
                 spawnZ = minZ;
                 break;
@@ -174,110 +132,74 @@ public class EnemySpawner : MonoBehaviour
 
         return new Vector3(spawnX, groundLevelY, spawnZ);
     }
+    
+    // --- NEW HELPER FUNCTION TO ROBUSTLY FIND INTERSECTION POINTS ---
+    Vector3 GetWorldPointOnPlane(Vector2 viewportCoord, Plane plane)
+    {
+        Ray ray = mainCamera.ViewportPointToRay(viewportCoord);
+        if (plane.Raycast(ray, out float distance))
+        {
+            // Success: The ray hit the plane, return the intersection point
+            return ray.GetPoint(distance);
+        }
+        else
+        {
+            // Failure: The ray is parallel or points away from the plane
+            // Return a fallback point far along the ray's direction.
+            Debug.LogWarning($"Camera ray at viewport {viewportCoord} did not intersect ground plane. Using fallback distance.");
+            return ray.GetPoint(raycastFallbackDistance);
+        }
+    }
 
-    // This balancing function works fine as it is, since it operates in viewport space.
+
     SpawnSide ChooseBalancedSpawnSide()
     {
-        // ... (No changes needed in this function)
+        // ... (This function remains unchanged and is perfectly fine)
         SpawnSide fallback = (SpawnSide)Random.Range(0, 4);
-
-        if (mainCamera == null)
-        {
-            return fallback;
-        }
-
+        if (mainCamera == null) return fallback;
         EnemyStats[] activeEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
-        if (activeEnemies == null || activeEnemies.Length == 0)
-        {
-            return fallback;
-        }
-
+        if (activeEnemies == null || activeEnemies.Length == 0) return fallback;
         const float viewportMargin = 0.15f;
         int leftCount = 0;
         int rightCount = 0;
         int topCount = 0;
         int bottomCount = 0;
-
         foreach (EnemyStats enemy in activeEnemies)
         {
-            if (enemy == null || !enemy.isActiveAndEnabled)
-            {
-                continue;
-            }
-
+            if (enemy == null || !enemy.isActiveAndEnabled) continue;
             Vector3 viewport = mainCamera.WorldToViewportPoint(enemy.transform.position);
-
-            if (viewport.z < 0f)
-            {
-                continue;
-            }
-
-            if (viewport.x < -viewportMargin || viewport.x > 1f + viewportMargin ||
-                viewport.y < -viewportMargin || viewport.y > 1f + viewportMargin)
-            {
-                continue;
-            }
-
-            if (viewport.x >= 0.5f)
-            {
-                rightCount++;
-            }
-            else
-            {
-                leftCount++;
-            }
-
-            if (viewport.y >= 0.5f)
-            {
-                topCount++;
-            }
-            else
-            {
-                bottomCount++;
-            }
+            if (viewport.z < 0f) continue;
+            if (viewport.x < -viewportMargin || viewport.x > 1f + viewportMargin || viewport.y < -viewportMargin || viewport.y > 1f + viewportMargin) continue;
+            if (viewport.x >= 0.5f) rightCount++;
+            else leftCount++;
+            if (viewport.y >= 0.5f) topCount++;
+            else bottomCount++;
         }
-
         int totalVisible = leftCount + rightCount;
-        if (totalVisible == 0)
-        {
-            return fallback;
-        }
-
+        if (totalVisible == 0) return fallback;
         int verticalDiff = topCount - bottomCount;
         int horizontalDiff = rightCount - leftCount;
         const int imbalanceThreshold = 3;
-
         if (Mathf.Abs(verticalDiff) >= Mathf.Abs(horizontalDiff) && Mathf.Abs(verticalDiff) >= imbalanceThreshold)
         {
             return verticalDiff > 0 ? SpawnSide.Bottom : SpawnSide.Top;
         }
-
         if (Mathf.Abs(horizontalDiff) >= imbalanceThreshold)
         {
             return horizontalDiff > 0 ? SpawnSide.Left : SpawnSide.Right;
         }
-
         int[] counts = new int[4];
         counts[(int)SpawnSide.Left] = leftCount;
         counts[(int)SpawnSide.Right] = rightCount;
         counts[(int)SpawnSide.Top] = topCount;
         counts[(int)SpawnSide.Bottom] = bottomCount;
-
         float[] weights = new float[counts.Length];
         int maxCount = 0;
         for (int i = 0; i < counts.Length; i++)
         {
-            if (counts[i] > maxCount)
-            {
-                maxCount = counts[i];
-            }
+            if (counts[i] > maxCount) maxCount = counts[i];
         }
-
-        if (maxCount == 0)
-        {
-            return fallback;
-        }
-
+        if (maxCount == 0) return fallback;
         float totalWeight = 0f;
         for (int i = 0; i < counts.Length; i++)
         {
@@ -286,30 +208,20 @@ public class EnemySpawner : MonoBehaviour
             weights[i] = weight;
             totalWeight += weight;
         }
-
-        if (totalWeight <= 0f)
-        {
-            return fallback;
-        }
-
+        if (totalWeight <= 0f) return fallback;
         float roll = Random.value * totalWeight;
         float cumulative = 0f;
-
         for (int i = 0; i < weights.Length; i++)
         {
             cumulative += weights[i];
-            if (roll <= cumulative)
-            {
-                return (SpawnSide)i;
-            }
+            if (roll <= cumulative) return (SpawnSide)i;
         }
-
         return fallback;
     }
 }
 
 
-// These two classes can remain exactly the same.
+// These two classes remain the same
 [System.Serializable]
 public class WaveEnemy
 {

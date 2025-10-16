@@ -24,7 +24,7 @@ public class OrbitingWeapon : MonoBehaviour
         this.lifetime = finalDuration;
         this.knockbackForce = finalKnockback;
 
-        this.orbitRadius = finalSize * 10f; // Adjust multiplier as needed for 3D space
+        this.orbitRadius = finalSize * 13f; // Adjust multiplier as needed for 3D space
         transform.localScale = Vector3.one * finalSize;
     }
 

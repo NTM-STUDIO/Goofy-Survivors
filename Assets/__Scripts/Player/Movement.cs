@@ -15,10 +15,7 @@ public class Movement : MonoBehaviour
 
     void Start()
     {
-        // Get the Rigidbody2D component attached to this GameObject
         rb = GetComponent<Rigidbody>();
-
-        // We still don't want gravity and we don't want the player to spin
         rb.useGravity = false;
         rb.constraints = RigidbodyConstraints.FreezeRotation;
 
@@ -31,21 +28,13 @@ public class Movement : MonoBehaviour
 
     void Update()
     {
-        // Gather input from the horizontal and vertical axes (WASD or Arrow Keys)
         float horizontalInput = Input.GetAxisRaw("Horizontal");
         float verticalInput = Input.GetAxisRaw("Vertical");
-
-        // Store the input in a Vector2. This vector now directly represents
-        // the desired direction in world space.
         moveInput = new Vector3(horizontalInput, 0f, verticalInput);
     }
 
     void FixedUpdate()
     {
-        // All physics calculations should happen in FixedUpdate
-
-        // If a camera is available, reproject input onto the camera plane so isometric
-        // movement keeps a consistent on-screen speed in both axes.
         Vector3 movementDirection;
         if (referenceCamera != null)
         {
@@ -64,7 +53,19 @@ public class Movement : MonoBehaviour
                 Vector3 normalizedForward = projectedForward / forwardLength;
                 float forwardCompensation = compensateCameraTilt ? rightLength / forwardLength : 1f;
 
-                movementDirection = normalizedRight * planarInput.x + normalizedForward * (planarInput.y * forwardCompensation);
+                // --- THIS IS THE NEW LOGIC ---
+                // 1. Create a multiplier that defaults to 1.
+                float orthoVerticalMultiplier = 1f;
+
+                // 2. If the camera is in Orthographic mode, set the multiplier to 2.
+                if (referenceCamera.orthographic)
+                {
+                    orthoVerticalMultiplier = 2f;
+                }
+                // -----------------------------
+
+                // 3. Apply the multiplier to the vertical input (planarInput.y).
+                movementDirection = normalizedRight * planarInput.x + normalizedForward * (planarInput.y * forwardCompensation * orthoVerticalMultiplier);
             }
             else
             {
@@ -79,10 +80,12 @@ public class Movement : MonoBehaviour
 
         if (movementDirection.sqrMagnitude > 0.0001f)
         {
+            // CORRECTED to use .velocity for 3D Rigidbody
             rb.linearVelocity = movementDirection * moveSpeed;
         }
         else
         {
+            // CORRECTED to use .velocity for 3D Rigidbody
             rb.linearVelocity = Vector3.zero;
         }
     }
