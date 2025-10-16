@@ -1046,7 +1046,7 @@ GameObject:
   - component: {fileID: 410087042}
   - component: {fileID: 410087043}
   m_Layer: 0
-  m_Name: Directional Light
+  m_Name: MapLight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1328,6 +1328,7 @@ GameObject:
   - component: {fileID: 567395347}
   - component: {fileID: 567395346}
   - component: {fileID: 567395345}
+  - component: {fileID: 567395349}
   m_Layer: 0
   m_Name: Plane
   m_TagString: Untagged
@@ -1425,6 +1426,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 45, z: 0}
+--- !u!114 &567395349
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 567395344}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66a97452561a11f43ae4917abd28f890, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  totalDistanceX: 5
+  totalDistanceZ: 5
+  speed: 0.5
 --- !u!1 &571665073
 GameObject:
   m_ObjectHideFlags: 0
@@ -1471,6 +1487,7 @@ GameObject:
   m_Component:
   - component: {fileID: 640670826}
   - component: {fileID: 640670827}
+  - component: {fileID: 640670828}
   m_Layer: 0
   m_Name: Visuals
   m_TagString: Untagged
@@ -1502,7 +1519,7 @@ SpriteRenderer:
   m_GameObject: {fileID: 640670825}
   m_Enabled: 1
   m_CastShadows: 1
-  m_ReceiveShadows: 0
+  m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
@@ -1513,7 +1530,7 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
-  m_RenderingLayerMask: 1
+  m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 10308, guid: 0000000000000000f000000000000000, type: 0}
@@ -1548,6 +1565,20 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &640670828
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 640670825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a9f4b87971adc9498ac2f9a339e6133, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  LeftSprite: {fileID: 21300000, guid: 496b596a78c84b44797088d8a71c7efa, type: 3}
+  RightSprite: {fileID: 21300000, guid: 512c4a08604afe048a21179e7adf5412, type: 3}
 --- !u!1 &652298566
 GameObject:
   m_ObjectHideFlags: 0
@@ -1594,10 +1625,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2c581171a338f2499108ade1fbe05bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeManager
-  playerStats: {fileID: 0}
-  upgradePanel: {fileID: 0}
+  playerStats: {fileID: 1044720162}
+  upgradePanel: {fileID: 1496959704}
   upgradeChoicePrefab: {fileID: 9209661984835970440, guid: dd9061c775bee354f8222a6395caf098, type: 3}
-  choicesContainer: {fileID: 0}
+  choicesContainer: {fileID: 2042142775}
   availableUpgrades:
   - {fileID: 11400000, guid: 0de2cee94758c6748b46297a606f3074, type: 2}
   - {fileID: 11400000, guid: 3911b77109ed8054ba6ce69ecd7ab808, type: 2}
@@ -1665,9 +1696,9 @@ MonoBehaviour:
   - waveName: XD
     enemies:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
-      enemyCount: 5
+      enemyCount: 200
     timeUntilNextWave: 0
-    spawnInterval: 1
+    spawnInterval: 0.7
   waveIndex: 0
   groundLevelY: 0
   spawnBuffer: 3
@@ -3320,6 +3351,7 @@ GameObject:
   - component: {fileID: 1044720161}
   - component: {fileID: 1044720162}
   - component: {fileID: 1044720163}
+  - component: {fileID: 1044720164}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -3341,6 +3373,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 640670826}
+  - {fileID: 1699140486}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &1044720159
@@ -3455,6 +3488,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 10
+--- !u!114 &1044720164
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1044720156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d167982b0508c75449a25953ee2b7bc7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  xpSlider: {fileID: 1976936484}
+  levelText: {fileID: 756603454}
+  currentLevel: 1
+  currentXP: 0
+  xpToNextLevel: 100
+  xpIncreaseFactor: 1.2
+  upgradeManager: {fileID: 652298568}
+  uiManager: {fileID: 1116074935}
 --- !u!1 &1045116927
 GameObject:
   m_ObjectHideFlags: 0
@@ -4541,6 +4594,59 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1496959704}
   m_CullTransparentMesh: 1
+--- !u!1 &1699140485
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1699140486}
+  - component: {fileID: 1699140487}
+  m_Layer: 0
+  m_Name: OrbCollector
+  m_TagString: Items
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1699140486
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1699140485}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1044720158}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &1699140487
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1699140485}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 10.71
+  m_Center: {x: 0, y: 2.76, z: 0}
 --- !u!1 &1710586154
 GameObject:
   m_ObjectHideFlags: 0

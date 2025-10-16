@@ -1,10 +1,7 @@
 fileFormatVersion: 2
-guid: 23c36bcfbe251274b94f5f19200b6e8d
+guid: fd257706353d63341b58bc7ec291741a
 TextureImporter:
-  internalIDToNameTable:
-  - first:
-      213: 2460532211164355792
-    second: Esqueleto_0
+  internalIDToNameTable: []
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -42,7 +39,7 @@ TextureImporter:
     mipBias: 0
     wrapU: 1
     wrapV: 1
-    wrapW: 1
+    wrapW: 0
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
@@ -50,9 +47,9 @@ TextureImporter:
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 9
-  spritePivot: {x: 0.5326493, y: 0.05105427}
+  spritePivot: {x: 0.470016, y: 0.05105427}
   spritePixelsToUnits: 100
-  spriteBorder: {x: 333, y: 27, z: 312, w: 32}
+  spriteBorder: {x: 314, y: 25, z: 333, w: 32}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -98,29 +95,7 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites:
-    - serializedVersion: 2
-      name: Esqueleto_0
-      rect:
-        serializedVersion: 2
-        x: 329
-        y: 24
-        width: 385
-        height: 523
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0dc9bd47201952220800000000000000
-      internalID: 2460532211164355792
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
+    sprites: []
     outline: []
     customData: 
     physicsShape: []
@@ -134,8 +109,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      Esqueleto_0: 2460532211164355792
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
