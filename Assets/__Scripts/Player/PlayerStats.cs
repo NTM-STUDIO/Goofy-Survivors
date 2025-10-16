@@ -143,7 +143,8 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    public void ApplyDamage(float amount, Vector2? hitFromWorldPos = null, float? customIFrameDuration = null)
+    // --- CORRECTION #1: Changed Vector2? to Vector3? ---
+    public void ApplyDamage(float amount, Vector3? hitFromWorldPos = null, float? customIFrameDuration = null)
     {
         if (amount <= 0f) return;
         if (invincible) return;
@@ -189,6 +190,8 @@ public class PlayerStats : MonoBehaviour
         invincible = false;
     }
 
+
+
     private IEnumerator FlashRoutine()
     {
         if (spriteRenderer == null) yield break;
@@ -209,7 +212,8 @@ public class PlayerStats : MonoBehaviour
             movement.enabled = false;
         }
 
-        var colls = GetComponentsInChildren<Collider2D>();
+        // --- CORRECTION #2: Changed Collider2D to just Collider for 3D physics ---
+        var colls = GetComponentsInChildren<Collider>();
         foreach (var c in colls) c.enabled = false;
 
         UIManager uiManager = FindFirstObjectByType<UIManager>();

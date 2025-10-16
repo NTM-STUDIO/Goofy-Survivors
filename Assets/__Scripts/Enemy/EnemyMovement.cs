@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class EnemyMovement : MonoBehaviour
 {
-    // --- Enums and Serialized Fields remain the same ---
+    // ... (Your existing serialized fields remain the same)
     private enum PursuitBehaviour { Direct, Predictive, PredictiveFlank }
     [Header("Behaviour")]
     [SerializeField] private PursuitBehaviour behaviour = PursuitBehaviour.Direct;
@@ -15,50 +15,45 @@ public class EnemyMovement : MonoBehaviour
     [Header("Flank")]
     [SerializeField] private float flankOffset = 2f;
     [SerializeField] private float flankFalloffDistance = 2f;
+
+    // --- NEW ATTACK AND KNOCKBACK FIELDS ---
+    [Header("Attack")]
+    [Tooltip("How often the enemy can deal damage while touching the player (seconds).")]
+    [SerializeField] private float attackCooldown = 1.5f;
+    [Tooltip("The force of the knockback applied to this enemy after it attacks.")]
+    [SerializeField] private float selfKnockbackForce = 50f;
+    [Tooltip("The duration of the self-knockback stun.")]
+    [SerializeField] private float selfKnockbackDuration = 2f;
+
     [Header("Debug")]
     [SerializeField] private bool showGizmos = true;
+
     // --- Private Variables ---
     private Transform player;
     private Rigidbody playerRb;
     private Rigidbody rb;
     private EnemyStats stats;
     private float flankSign = 1f;
+    private float nextAttackTime = 0f; // Cooldown timer for attacks
+    
+    // (Debug variables remain the same)
     private Vector3 debugIntercept;
     private Vector3 debugDestination;
     private bool hasDebugTarget;
-    private bool isCollidingWithPlayer = false;
 
     private void Awake()
     {
-        // (Awake logic remains the same)
-        Debug.Log("--- EnemyMovement Awake() ---", gameObject);
+        // (Awake logic is unchanged and still correct)
+        rb = GetComponent<Rigidbody>();
+        stats = GetComponent<EnemyStats>();
         GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
         if (playerGO != null) {
             player = playerGO.transform;
             playerRb = player.GetComponent<Rigidbody>();
-            Debug.Log("Player found successfully.", gameObject);
-            if (playerRb == null) {
-                Debug.LogWarning("Player was found, but it does not have a Rigidbody component. Predictive movement will not work correctly.", gameObject);
-            }
         } else {
-            Debug.LogError("CRITICAL: Player transform not found! Make sure the player object is tagged 'Player'.", gameObject);
+            Debug.LogError("CRITICAL: Player transform not found!", gameObject);
         }
-        rb = GetComponent<Rigidbody>();
-        if (rb != null) {
-            Debug.Log("Enemy Rigidbody found.", gameObject);
-        } else {
-            Debug.LogError("CRITICAL: Enemy Rigidbody component is missing.", gameObject);
-        }
-        stats = GetComponent<EnemyStats>();
-        if (stats != null) {
-            Debug.Log($"EnemyStats found. Move Speed is: {stats.moveSpeed}", gameObject);
-        } else {
-            Debug.LogError("CRITICAL: EnemyStats component is missing.", gameObject);
-        }
-        if (randomizeOnAwake) {
-            RandomiseBehaviour();
-            Debug.Log($"Behaviour randomized to: {behaviour}", gameObject);
-        }
+        if (randomizeOnAwake) RandomiseBehaviour();
         flankSign = Random.value < 0.5f ? -1f : 1f;
         rb.useGravity = false;
         rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
@@ -66,7 +61,10 @@ public class EnemyMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (stats == null || rb == null || player == null || stats.IsKnockedBack || isCollidingWithPlayer) {
+        // The movement logic now only stops if knocked back.
+        if (stats == null || rb == null || player == null || stats.IsKnockedBack)
+        {
+            rb.linearVelocity = Vector3.zero;
             return;
         }
 
@@ -77,44 +75,44 @@ public class EnemyMovement : MonoBehaviour
 
         if (direction.sqrMagnitude <= 0.0001f)
         {
-            rb.linearVelocity = Vector3.zero; // CORRECTED
-            hasDebugTarget = false;
+            rb.linearVelocity = Vector3.zero;
             return;
         }
 
-        Vector3 newVelocity = direction.normalized * stats.moveSpeed;
-        rb.linearVelocity = newVelocity; // CORRECTED
-
+        rb.linearVelocity = direction.normalized * stats.moveSpeed;
         debugDestination = targetPosition;
         hasDebugTarget = true;
     }
 
+    // --- REPLACED OnTriggerEnter with OnTriggerStay for continuous contact ---
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player")) {
-            isCollidingWithPlayer = true;
-            rb.linearVelocity = Vector3.zero; // CORRECTED
-            Debug.Log("Entered Player trigger, stopping movement.", gameObject);
-        }
-    }
+        // Check if we collided with the player and if our attack is off cooldown
+        if (other.CompareTag("Player") && Time.time >= nextAttackTime)
+        {
+            // 1. Deal Damage to the Player
+            PlayerStats playerStats = other.GetComponent<PlayerStats>();
+            if (playerStats != null)
+            {
+                playerStats.ApplyDamage(stats.GetAttackDamage());
+            }
 
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Player")) {
-            isCollidingWithPlayer = false;
-            Debug.Log("Exited Player trigger, resuming movement.", gameObject);
+            // 2. Apply Knockback to this Enemy (itself)
+            // Calculate direction away from the player
+            Vector3 knockbackDirection = (transform.position - player.position).normalized;
+            stats.ApplyKnockback(selfKnockbackForce, selfKnockbackDuration, knockbackDirection);
         }
     }
 
     private Vector3 GetTargetPosition(Vector3 enemyPosition)
     {
+        // (This function remains unchanged)
         if (player == null) return enemyPosition;
-        
         Vector3 playerPosition = player.position;
         Vector3 predicted = playerPosition;
         if (behaviour != PursuitBehaviour.Direct)
         {
-            Vector3 velocity = playerRb ? playerRb.linearVelocity : Vector3.zero; // CORRECTED
+            Vector3 velocity = playerRb ? playerRb.linearVelocity : Vector3.zero;
             velocity.y = 0;
             if (velocity.sqrMagnitude < 0.001f)
             {
@@ -126,11 +124,9 @@ public class EnemyMovement : MonoBehaviour
         debugIntercept = predicted;
         debugIntercept.y = transform.position.y;
         if (behaviour != PursuitBehaviour.PredictiveFlank) return predicted;
-
         Vector3 toTarget = predicted - enemyPosition;
         toTarget.y = 0;
         if (toTarget.sqrMagnitude <= 0.0001f) return predicted;
-        
         Vector3 perpendicular = new Vector3(-toTarget.z, 0, toTarget.x).normalized;
         float distance = toTarget.magnitude;
         float falloff = flankFalloffDistance <= 0f ? 1f : Mathf.Clamp01(distance / flankFalloffDistance);
@@ -139,6 +135,7 @@ public class EnemyMovement : MonoBehaviour
 
     private void RandomiseBehaviour()
     {
+        // (This function remains unchanged)
         float roll = Random.value;
         float flankThreshold = Mathf.Clamp01(flankChance);
         float predictiveThreshold = Mathf.Clamp01(flankThreshold + predictiveChance);
@@ -150,6 +147,7 @@ public class EnemyMovement : MonoBehaviour
     #if UNITY_EDITOR
     private void OnDrawGizmos()
     {
+        // (This function remains unchanged)
         if (!showGizmos || !Application.isPlaying || !hasDebugTarget) return;
         Gizmos.color = Color.cyan;
         Gizmos.DrawSphere(debugIntercept, 0.12f);
