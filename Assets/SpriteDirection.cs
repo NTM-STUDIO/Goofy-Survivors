@@ -13,25 +13,38 @@ public class RobustIsometricController : MonoBehaviour
     [Tooltip("(Optional) Assign a child object like a fire point. Its local X-position will be flipped based on direction.")]
     public Transform firePoint;
 
+    [Header("Direction Vectors (Tweak in Inspector!)")]
+    // *** NOTE: The variable names no longer match the direction, but they match the color. ***
+    // This is intentional to make the logic below work with your color mapping.
+    [Tooltip("The world direction for the UP-RIGHT sprite (RED LINE)")]
+    public Vector3 directionVector_Red = new Vector3(1, 0, 0);
+
+    [Tooltip("The world direction for the UP-LEFT sprite (BLUE LINE)")]
+    public Vector3 directionVector_Blue = new Vector3(0, 0, 1);
+
+    [Tooltip("The world direction for the DOWN-RIGHT sprite (GREEN LINE)")]
+    public Vector3 directionVector_Green = new Vector3(-1, 0, 0);
+
+    [Tooltip("The world direction for the DOWN-LEFT sprite (YELLOW LINE)")]
+    public Vector3 directionVector_Yellow = new Vector3(0, 0, -1);
+
+
+    [Header("Debugging")]
+    [Tooltip("Show colored lines in the Scene view to visualize the direction vectors.")]
+    public bool showGizmos = true;
+
+
     // --- Private References ---
     private SpriteRenderer spriteRenderer;
     private Transform playerTransform;
-
-    // Caching for optimization
     private Sprite currentSprite;
-    private float firePointXMagnitude; // We only store the POSITIVE magnitude of X.
-
-    // --- The four isometric directions in world space ---
-    private static readonly Vector3 isoDirectionUpRight = new Vector3(1, 0, 1).normalized;
-    private static readonly Vector3 isoDirectionUpLeft = new Vector3(-1, 0, 1).normalized;
-    private static readonly Vector3 isoDirectionDownRight = new Vector3(1, 0, -1).normalized;
-    private static readonly Vector3 isoDirectionDownLeft = new Vector3(-1, 0, -1).normalized;
+    private float firePointXMagnitude;
+    private Vector3 _directionToPlayer; // For Gizmos
 
     void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
 
-        // Store the absolute value (magnitude) of the initial X position ONCE.
         if (firePoint != null)
         {
             firePointXMagnitude = Mathf.Abs(firePoint.localPosition.x);
@@ -47,60 +60,100 @@ public class RobustIsometricController : MonoBehaviour
             Debug.LogError("RobustIsometricController: Player not found! Make sure your player is tagged 'Player'.", this);
             this.enabled = false;
         }
+
+        // Normalize vectors on startup
+        directionVector_Red.Normalize();
+        directionVector_Blue.Normalize();
+        directionVector_Green.Normalize();
+        directionVector_Yellow.Normalize();
     }
 
     void LateUpdate()
     {
-        Vector3 directionToPlayer = (playerTransform.position - transform.position).normalized;
+        if (playerTransform == null) return;
 
-        float dotUpRight = Vector3.Dot(directionToPlayer, isoDirectionUpRight);
-        float dotUpLeft = Vector3.Dot(directionToPlayer, isoDirectionUpLeft);
-        float dotDownRight = Vector3.Dot(directionToPlayer, isoDirectionDownRight);
-        float dotDownLeft = Vector3.Dot(directionToPlayer, isoDirectionDownLeft);
+        Vector3 directionToPlayer = playerTransform.position - transform.position;
+        directionToPlayer.y = 0;
+        directionToPlayer.Normalize();
+        
+        _directionToPlayer = directionToPlayer; // Store for gizmo
 
-        float maxDot = Mathf.Max(dotUpRight, dotUpLeft, dotDownRight, dotDownLeft);
+        if (directionToPlayer.sqrMagnitude < 0.01f) return;
+
+        // Calculate the dot product for each of the four directions.
+        float dotRed = Vector3.Dot(directionToPlayer, directionVector_Red);
+        float dotBlue = Vector3.Dot(directionToPlayer, directionVector_Blue);
+        float dotGreen = Vector3.Dot(directionToPlayer, directionVector_Green);
+        float dotYellow = Vector3.Dot(directionToPlayer, directionVector_Yellow);
+
+        float maxDot = Mathf.Max(dotRed, dotBlue, dotGreen, dotYellow);
 
         Sprite newSprite = null;
-        
-        // *** INVERTED LOGIC ***
-        // We now decide the SIGN here. Default to positive for Right-facing sprites.
-        float newSign = 1f; 
+        // Default to right-facing for firepoint flipping
+        float newSign = 1f;
 
-        if (maxDot == dotUpRight)
+        // *** LOGIC UPDATED TO MATCH YOUR COLOR MAPPING ***
+        if (maxDot == dotRed) // Red Line
         {
             newSprite = UpRightSprite;
-            newSign = 1f; // Positive for Right
+            newSign = 1f; // Right-facing
         }
-        else if (maxDot == dotUpLeft)
+        else if (maxDot == dotBlue) // Blue Line
         {
             newSprite = UpLeftSprite;
-            newSign = -1f; // Negative for Left
+            newSign = -1f; // Left-facing
         }
-        else if (maxDot == dotDownRight)
+        else if (maxDot == dotGreen) // Green Line
         {
             newSprite = DownRightSprite;
-            newSign = 1f; // Positive for Right
+            newSign = 1f; // Right-facing
         }
-        else // maxDot == dotDownLeft
+        else // maxDot == dotYellow (Yellow Line)
         {
             newSprite = DownLeftSprite;
-            newSign = -1f; // Negative for Left
+            newSign = -1f; // Left-facing
         }
 
-        // Apply the new position if the firePoint exists
         if (firePoint != null)
         {
-            // Get the current position, but immediately overwrite X
             Vector3 newFirePointPos = firePoint.localPosition;
             newFirePointPos.x = firePointXMagnitude * newSign;
             firePoint.localPosition = newFirePointPos;
         }
 
-        // Only update the sprite if it has changed.
         if (newSprite != null && newSprite != currentSprite)
         {
             spriteRenderer.sprite = newSprite;
             currentSprite = newSprite;
         }
+    }
+
+    // --- VISUAL DEBUGGER (Comments updated to match your mapping) ---
+    private void OnDrawGizmosSelected()
+    {
+        if (!showGizmos) return; // Works in editor too now
+
+        Vector3 origin = transform.position;
+        float lineLength = 2.5f;
+
+        // Only draw the white line if the game is playing
+        if(Application.isPlaying)
+        {
+            Gizmos.color = Color.white;
+            Gizmos.DrawLine(origin, origin + _directionToPlayer * lineLength);
+        }
+
+        // Draw Direction Vectors
+        Gizmos.color = Color.red; // Your Top-Right
+        Gizmos.DrawLine(origin, origin + directionVector_Red * lineLength);
+
+        Gizmos.color = Color.blue; // Your Top-Left
+        Gizmos.DrawLine(origin, origin + directionVector_Blue * lineLength);
+
+        Gizmos.color = Color.green; // Your Bottom-Right
+        Gizmos.DrawLine(origin, origin + directionVector_Green * lineLength);
+
+        Gizmos.color = Color.yellow; // Your Bottom-Left
+        Gizmos.DrawLine(origin, origin + directionVector_Yellow * lineLength);
     }
 }

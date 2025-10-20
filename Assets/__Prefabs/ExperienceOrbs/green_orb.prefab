@@ -25,13 +25,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3817851261908867587}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.2297524, y: 0, z: 0, w: 0.9732491}
+  m_LocalRotation: {x: 0.23911765, y: 0.3696438, z: -0.09904577, w: 0.89239913}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 114305559472742935}
-  m_LocalEulerAnglesHint: {x: 26.565, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 30, y: 45, z: 0}
 --- !u!212 &7731825142610764712
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -76,7 +76,7 @@ SpriteRenderer:
   m_SortingLayerID: 580247611
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 98f7c04973ffc8048ba4363f337feec6, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 6a57ffd5d897c914d91c63bc3abb16ce, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -100,7 +100,7 @@ GameObject:
   - component: {fileID: 373153327874312386}
   - component: {fileID: 632534098338968811}
   m_Layer: 8
-  m_Name: blueorb_0
+  m_Name: green_orb
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -134,10 +134,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90bff61e563a52242941d960c462e178, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExperienceOrb
-  xpValue: 40
+  xpValue: 100
   smoothTime: 0.1
-  collectionDistance: 1
-  maxSpeed: 30
+  collectionDistance: 2
+  maxSpeed: 60
 --- !u!54 &373153327874312386
 Rigidbody:
   m_ObjectHideFlags: 0

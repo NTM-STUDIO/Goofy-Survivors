@@ -20,7 +20,7 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI weaponNameText;
     public Image weaponSpriteImage;
 
-    public void NewWeaponUi(WeaponData weaponData)
+    public void OpenNewWeaponPanel(WeaponData weaponData)
     {
         // Activate the panel
         newWeaponPanel.SetActive(true);
@@ -29,7 +29,7 @@ public class UIManager : MonoBehaviour
         weaponNameText.text = weaponData.weaponName;
         weaponSpriteImage.sprite = weaponData.icon;
         gameManager = FindObjectOfType<GameManager>();
-        gameManager.TogglePause();
+        gameManager.RequestPause();
 
     }
 
@@ -37,8 +37,8 @@ public class UIManager : MonoBehaviour
     {
         newWeaponPanel.SetActive(false);
         gameManager = FindObjectOfType<GameManager>();
-        gameManager.TogglePause();
-       
+        gameManager.RequestPause();
+
     }
 
     public void UpdateTimerText(float time)
@@ -85,18 +85,4 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void ShowUsernameInput()
-    {
-        if (usernamePanel != null)
-            usernamePanel.SetActive(true);
-    }
-
-    public void SubmitUsername()
-    {
-        if (!string.IsNullOrEmpty(usernameInput.text))
-        {
-            GameManager.Instance.SubmitUsername(usernameInput.text);
-            usernamePanel.SetActive(false);
-        }
-    }
 }

@@ -46,10 +46,5 @@ public class EnemyProjectileDamage3D : MonoBehaviour
 
             Destroy(gameObject);
         }
-        else if (!other.isTrigger) // Optional: Destroy if it hits a wall
-        {
-            Debug.Log($"[Projectile Debug] Collided with non-player object '{other.name}'. Destroying.", gameObject);
-            Destroy(gameObject);
-        }
     }
 }

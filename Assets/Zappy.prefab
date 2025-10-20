@@ -332,7 +332,7 @@ MonoBehaviour:
   baseDamage: 10
   moveSpeed: 12
   currentHealth: 0
-  chanceToDropNothing: 20
+  chanceToDropNothing: 0
   orbDrops: []
 --- !u!1 &4514065415740954002
 GameObject:

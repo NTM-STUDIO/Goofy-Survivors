@@ -29,7 +29,10 @@ public class ChestScript : MonoBehaviour
             int randomIndex = Random.Range(0, availableWeapons.Count);
             WeaponData newWeapon = availableWeapons[randomIndex];
             playerWeaponManager.AddWeapon(newWeapon);
-            uiManager.NewWeaponUi(newWeapon);
+
+            // *** THE ONLY FIX IS HERE ***
+            // The function in your UIManager is named "OpenNewWeaponPanel".
+            uiManager.OpenNewWeaponPanel(newWeapon);
         }
         else
         {
