@@ -29,7 +29,7 @@ public class EnemyProjectileDamage3D : MonoBehaviour
             // --- DEBUG ---
             Debug.Log($"[Projectile Debug] Collided with player: '{other.name}'", gameObject);
 
-            var playerStats = other.GetComponent<PlayerStats>();
+            var playerStats = other.GetComponentInParent<PlayerStats>();
 
             if (playerStats != null && CasterStats != null)
             {

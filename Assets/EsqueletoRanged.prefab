@@ -257,7 +257,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   projectilePrefab: {fileID: 6414582260825821178, guid: 866d1886075e0b241ab503c1839ade05, type: 3}
   firePoint: {fileID: 548238546038513927}
-  moveSpeed: 4
-  shootRange: 30
+  moveSpeed: 3
+  shootRange: 35
   sightRange: 999
   fireRate: 2

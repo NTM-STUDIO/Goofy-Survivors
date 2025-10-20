@@ -269,7 +269,7 @@ MonoBehaviour:
   m_RendererIndex: -1
   m_VolumeLayerMask:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 3
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
   m_RenderPostProcessing: 1
@@ -660,6 +660,7 @@ GameObject:
   - component: {fileID: 640670831}
   - component: {fileID: 640670830}
   - component: {fileID: 640670829}
+  - component: {fileID: 640670832}
   m_Layer: 0
   m_Name: Visuals
   m_TagString: Player
@@ -820,6 +821,23 @@ CapsuleCollider:
   m_Height: 5.544503
   m_Direction: 2
   m_Center: {x: -0.31592524, y: 3.5681722, z: 1.2883835}
+--- !u!114 &640670832
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 640670825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IsGlobal: 0
+  priority: 1
+  blendDistance: 0
+  weight: 1
+  sharedProfile: {fileID: 11400000, guid: 4f34d30a03600564b9fb18858b4dfb9c, type: 2}
 --- !u!1 &652298566
 GameObject:
   m_ObjectHideFlags: 0
@@ -1078,7 +1096,7 @@ MonoBehaviour:
   m_IsGlobal: 1
   priority: 0
   blendDistance: 0
-  weight: 0
+  weight: 0.5
   sharedProfile: {fileID: 11400000, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
 --- !u!4 &832575519
 Transform:
