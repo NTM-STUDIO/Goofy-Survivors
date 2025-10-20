@@ -9,7 +9,7 @@ public class OrbDropConfig
 }
 
 // The script now requires a 3D Rigidbody.
-[RequireComponent(typeof(Rigidbody))] 
+[RequireComponent(typeof(Rigidbody))]
 public class EnemyStats : MonoBehaviour
 {
     [Header("Base Stats")]
@@ -23,7 +23,7 @@ public class EnemyStats : MonoBehaviour
 
     // --- 3D Changes ---
     private Rigidbody rb; // Changed from Rigidbody2D
-    private Renderer enemyRenderer; // Generic Renderer for Sprite or Mesh
+    private SpriteRenderer enemyRenderer; // Generic Renderer for Sprite or Mesh
     private Color originalColor;
 
     private bool isKnockedBack = false;
@@ -36,14 +36,14 @@ public class EnemyStats : MonoBehaviour
     void Awake()
     {
         // Get the 3D Rigidbody component
-        rb = GetComponent<Rigidbody>(); 
+        rb = GetComponent<Rigidbody>();
 
         // Get the renderer (works for both 3D meshes and 2D sprites)
-        enemyRenderer = GetComponentInChildren<Renderer>();
+        enemyRenderer = GetComponentInChildren<SpriteRenderer>();
         if (enemyRenderer != null)
         {
             // Store the original material color to revert to after taking damage
-            originalColor = enemyRenderer.material.color;
+            originalColor = enemyRenderer.color;
         }
     }
 
@@ -67,7 +67,7 @@ public class EnemyStats : MonoBehaviour
             float damageMultiplier = GameManager.Instance.currentEnemyDamageMultiplier;
             return baseDamage * damageMultiplier;
         }
-        
+
         return baseDamage;
     }
 
@@ -80,7 +80,7 @@ public class EnemyStats : MonoBehaviour
         // Flash red using the cached renderer
         if (enemyRenderer != null)
         {
-            enemyRenderer.material.color = Color.red;
+            enemyRenderer.color = Color.red;
             Invoke("ResetColor", 0.2f);
         }
     }
@@ -90,7 +90,7 @@ public class EnemyStats : MonoBehaviour
         // Revert to the original color
         if (enemyRenderer != null)
         {
-            enemyRenderer.material.color = originalColor;
+            enemyRenderer.color = originalColor;
         }
     }
 
@@ -107,39 +107,40 @@ public class EnemyStats : MonoBehaviour
         {
             return;
         }
-        
+
         foreach (var orb in orbDrops)
         {
             if (Random.Range(0f, 100f) <= orb.dropChance)
             {
                 Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
-                return; 
+                return;
             }
         }
     }
 
-    // --- 3D Knockback Implementation ---
     public void ApplyKnockback(float knockbackForce, float duration, Vector3 direction)
     {
         if (knockbackForce <= 0 || isKnockedBack) return;
 
         isKnockedBack = true;
-        
-        // Ensure knockback is only on the XZ plane for isometric view
-        direction.y = 0; 
-        
-        rb.linearVelocity = Vector3.zero; // Use Vector3.zero
-        
-        // Use the 3D ForceMode.Impulse
+
+        direction.y = 0;
+
+        // FIX: The property is named 'velocity', not 'linearVelocity'.
+        rb.linearVelocity = Vector3.zero;
+
         rb.AddForce(direction.normalized * knockbackForce, ForceMode.Impulse);
-        
+
         StartCoroutine(KnockbackCoroutine(duration));
     }
 
     IEnumerator KnockbackCoroutine(float duration)
     {
         yield return new WaitForSeconds(duration);
-        rb.linearVelocity = Vector3.zero; // Use Vector3.zero to stop movement
+
+        // FIX: The property is named 'velocity', not 'linearVelocity'.
+        rb.linearVelocity = Vector3.zero;
+
         isKnockedBack = false;
     }
 }

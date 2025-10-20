@@ -1,60 +1,198 @@
 using UnityEngine;
 
-public class EnemyShooter : MonoBehaviour
+[RequireComponent(typeof(Rigidbody))] // Using the 3D Rigidbody
+[RequireComponent(typeof(EnemyStats))]
+public class EnemyCasterAI_2Point5D : MonoBehaviour
 {
-    public GameObject projectilePrefab;   // Prefab do projétil
-    public Transform firePoint;           // Ponto de disparo
-    public float fireRate = 2f;           // Tempo entre disparos (cooldown)
-    public float projectileSpeed = 8f;   // Velocidade do projétil
-    public float shootRange = 12f;        // Distância Maxima para disparar
+    // --- STATE MACHINE ---
+    private enum AIState { Idle, Chasing, Attacking }
+    private AIState currentState;
 
-    private float fireTimer;              // Temporizador para controlar o cooldown
-    private Transform player;             // Referência ao jogador
+    [Header("Component References")]
+    public GameObject projectilePrefab;
+    public Transform firePoint;
+
+    [Header("AI Parameters")]
+    public float moveSpeed = 4f;
+    public float shootRange = 10f;
+    public float sightRange = 20f;
+    public float fireRate = 2f;
+
+    // --- Private Variables ---
+    private Rigidbody rb;
+    private EnemyStats myStats;
+    private Transform player;
+    private float fireTimer;
+    private Vector3 moveDirection; // 3D vector for movement direction
+
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+        myStats = GetComponent<EnemyStats>();
+    }
 
     void Start()
     {
-        // Procura o jogador na cena pela tag "Player" e guarda a referência
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null)
+        {
             player = playerObj.transform;
+        }
+        else
+        {
+            // If the player isn't found, disable the AI.
+            this.enabled = false;
+            return;
+        }
+
+        SetState(AIState.Idle);
+        fireTimer = fireRate;
     }
 
     void Update()
     {
-        // Se não houver jogador, não faz nada
         if (player == null) return;
 
-        // Calcula a distância entre o inimigo e o jogador
-        float distance = Vector2.Distance(transform.position, player.position);
+        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
 
-        // Só dispara se o jogador estiver dentro do range definido
-        if (distance <= shootRange)
+        // --- STATE LOGIC (The Brain) ---
+        switch (currentState)
         {
-            fireTimer += Time.deltaTime; // Incrementa o temporizador
-            if (fireTimer >= fireRate)   // Se o cooldown terminou
-            {
-                ShootAtPlayer();         // Dispara
-                fireTimer = 0f;          // Reinicia o cooldown
-            }
-        }
-        else
-        {
-            fireTimer = fireRate; // Reseta cooldown se jogador sair do range
+            case AIState.Idle:
+                UpdateIdleState(distanceToPlayer);
+                break;
+            case AIState.Chasing:
+                UpdateChasingState(distanceToPlayer);
+                break;
+            case AIState.Attacking:
+                UpdateAttackingState(distanceToPlayer);
+                break;
         }
     }
 
-    // Função que instancia e dispara o projétil na direção do jogador
-    void ShootAtPlayer()
+    void FixedUpdate()
     {
-        // Calcula a direção normalizada do disparo
-        Vector2 direction = (player.position - firePoint.position).normalized;
-        // Instancia o projétil no ponto de disparo
-        GameObject projectile = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
-        // Aplica velocidade ao projétil se tiver Rigidbody2D
-        Rigidbody2D rb = projectile.GetComponent<Rigidbody2D>();
-        if (rb != null)
+        // --- PHYSICS (The Legs) ---
+        if (currentState == AIState.Chasing)
         {
-            rb.linearVelocity = direction * projectileSpeed;
+            rb.linearVelocity = moveDirection * moveSpeed;
         }
+        else
+        {
+            rb.linearVelocity = Vector3.zero;
+        }
+    }
+
+    private void SetState(AIState newState)
+    {
+        if (currentState == newState) return;
+        currentState = newState;
+    }
+
+    // --- STATE BEHAVIORS ---
+
+    private void UpdateIdleState(float distanceToPlayer)
+    {
+        if (distanceToPlayer <= sightRange)
+        {
+            SetState(AIState.Chasing);
+        }
+    }
+
+    private void UpdateChasingState(float distanceToPlayer)
+    {
+        if (distanceToPlayer <= shootRange)
+        {
+            SetState(AIState.Attacking);
+        }
+        else if (distanceToPlayer > sightRange)
+        {
+            SetState(AIState.Idle);
+        }
+        else
+        {
+            Vector3 direction = (player.position - transform.position).normalized;
+            direction.y = 0; // Keep the enemy's movement on a flat plane.
+            moveDirection = direction;
+        }
+    }
+
+    private void UpdateAttackingState(float distanceToPlayer)
+    {
+        if (distanceToPlayer > shootRange)
+        {
+            SetState(AIState.Chasing);
+            return;
+        }
+
+        // Manage attack cooldown
+        fireTimer += Time.deltaTime;
+        if (fireTimer >= fireRate)
+        {
+            fireTimer = 0f;
+            Shoot();
+        }
+    }
+
+    // --- MODIFIED METHOD ---
+    private void Shoot()
+    {
+        // 1. Calculate the projectile's movement direction in 3D world space.
+        Vector3 direction = (player.position - firePoint.position).normalized;
+
+        // --- FINAL WORLD-SPACE LOGIC ---
+        // This calculates the angle on the flat XZ ground plane.
+        float angle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+
+        // We negate the angle to make the rotation direction correct for Unity's system.
+        angle = -angle;
+
+        // *** THE FIX IS HERE: We add 180 degrees to flip the result. ***
+        angle += 180f;
+
+        Quaternion projectileRotation = Quaternion.Euler(0, 0, angle);
+        // --- END OF NEW LOGIC ---
+
+        // Instantiate the parent object with a neutral rotation
+        GameObject projectile = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+
+        // Set a 3-second lifetime for the projectile
+        Destroy(projectile, 3f);
+
+        // Find the "Visuals" child and apply the calculated rotation ONLY to it
+        Transform visualsChild = projectile.transform.Find("Visuals");
+        if (visualsChild != null)
+        {
+            visualsChild.rotation = projectileRotation;
+        }
+        else
+        {
+            projectile.transform.rotation = projectileRotation;
+        }
+
+        // Assign stats to the projectile's damage script
+        var projectileDamageScript = projectile.GetComponentInChildren<EnemyProjectileDamage3D>();
+        if (projectileDamageScript != null)
+        {
+            projectileDamageScript.CasterStats = myStats;
+        }
+
+        // Apply velocity to the projectile's rigidbody
+        Rigidbody projRb = projectile.GetComponent<Rigidbody>();
+        if (projRb != null)
+        {
+            float projectileSpeed = 15f;
+            projRb.linearVelocity = direction * projectileSpeed;
+        }
+    }
+
+    // --- DEBUG: VISUAL GIZMOS ---
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, sightRange); // Yellow for sight range
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, shootRange); // Red for attack range
     }
 }

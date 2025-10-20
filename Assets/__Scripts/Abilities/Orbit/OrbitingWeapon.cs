@@ -2,75 +2,104 @@ using UnityEngine;
 
 public class OrbitingWeapon : MonoBehaviour
 {
-    // --- Stats remain the same ---
+    // --- Stats ---
     public float damage;
     public float knockbackForce;
+
+    // --- Inner radius settings ---
+    [Range(0f, 1f)]
+    [Tooltip("Controls the size of the safe zone as a RATIO of the total radius. " +
+             "0 = No safe zone (hits everything inside). " +
+             "0.8 = Safe zone is 80% of the radius (hits enemies in the outer 20%). " +
+             "1 = Safe zone is 100% of the radius (hits nothing).")]
+    public float innerRadiusRatio = 0.8f;
 
     [HideInInspector] public float rotationSpeed;
     [HideInInspector] public float orbitRadius;
     [HideInInspector] public Transform orbitCenter;
-    
+
+    private float size;
+
     private float currentAngle;
     private float lifetime;
+    private float yOffset = 1.5f; // Store the height here for consistency
 
-    // --- Initialize method is already compatible ---
+    // --- Initialize the weapon ---
     public void Initialize(Transform center, float startAngle, float finalDamage, float finalSpeed, float finalDuration, float finalKnockback, float finalSize)
     {
-        this.orbitCenter = center;
-        this.currentAngle = startAngle;
-        
-        this.damage = finalDamage;
-        this.rotationSpeed = finalSpeed;
-        this.lifetime = finalDuration;
-        this.knockbackForce = finalKnockback;
-
-        this.orbitRadius = finalSize * 13f; // Adjust multiplier as needed for 3D space
+        orbitCenter = center;
+        currentAngle = startAngle;
+        damage = finalDamage;
+        rotationSpeed = finalSpeed;
+        lifetime = finalDuration;
+        knockbackForce = finalKnockback;
+        orbitRadius = finalSize * 16f;
         transform.localScale = Vector3.one * finalSize;
+        size = finalSize;
     }
 
     void Update()
     {
-        if (orbitCenter == null)
-        {
-            Destroy(gameObject);
-            return;
-        }
+        if (orbitCenter == null) { Destroy(gameObject); return; }
 
         lifetime -= Time.deltaTime;
-        if (lifetime <= 0f)
-        {
-            Destroy(gameObject);
-            return;
-        }
+        if (lifetime <= 0f) { Destroy(gameObject); return; }
 
         currentAngle += rotationSpeed * Time.deltaTime;
         if (currentAngle > 360f) currentAngle -= 360f;
 
-        // --- 3D Change: Orbit on the XZ plane instead of XY ---
+        // The weapon orbits in a perfect circle in the world at the correct height
         float x = Mathf.Cos(currentAngle * Mathf.Deg2Rad) * orbitRadius;
-        float z = Mathf.Sin(currentAngle * Mathf.Deg2Rad) * orbitRadius; // Changed y to z
-        transform.position = orbitCenter.position + new Vector3(x, 0, z); // Changed y component to 0
+        float z = Mathf.Sin(currentAngle * Mathf.Deg2Rad) * orbitRadius;
+        transform.position = orbitCenter.position + new Vector3(x, yOffset * size + 1.5f, z);
     }
 
-    // --- 3D Change: Use 3D Trigger Collider ---
+    // --- Trigger detection ---
     void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Enemy"))
+        if (!other.CompareTag("Enemy")) return;
+
+        // 1. Project to XZ plane for a 2D check
+        Vector3 enemyPos2D = new Vector3(other.transform.position.x, 0, other.transform.position.z);
+        Vector3 centerPos2D = new Vector3(orbitCenter.position.x, 0, orbitCenter.position.z);
+        float distanceToCenter = Vector3.Distance(enemyPos2D, centerPos2D);
+
+        // 2. Calculate the safe zone radius using the scalable RATIO
+        float effectiveInnerRadius = orbitRadius * innerRadiusRatio;
+
+        // 3. Only hit enemies outside the safe zone
+        if (distanceToCenter >= effectiveInnerRadius)
         {
-            var enemyStats = other.GetComponent<EnemyStats>();
+            EnemyStats enemyStats = other.GetComponentInParent<EnemyStats>();
             if (enemyStats != null)
             {
                 enemyStats.TakeDamage((int)damage);
-                Debug.Log($"Orbiting weapon hit {other.name} for {damage} damage.");
-
-                // --- 3D Change: Calculate knockback on the XZ plane ---
-                Vector3 knockbackDirection = (other.transform.position - orbitCenter.position);
-                knockbackDirection.y = 0; // Ensure knockback is horizontal
-                knockbackDirection.Normalize();
-                
-                // Assumes your EnemyStats.ApplyKnockback now takes a Vector3
-                enemyStats.ApplyKnockback(knockbackForce, 0.4f, knockbackDirection);
+                Vector3 knockbackDir = (other.transform.position - orbitCenter.position).normalized;
+                knockbackDir.y = 0;
+                enemyStats.ApplyKnockback(knockbackForce, 0.4f, knockbackDir);
             }
+        }
+    }
+    
+    // --- CORRECTED GIZMO ---
+    // Now draws the spheres at the same height as the weapon's orbit.
+    private void OnDrawGizmosSelected()
+    {
+        if (orbitCenter != null)
+        {
+            // Define the center point for the gizmos, including the correct height
+            Vector3 gizmoCenter = orbitCenter.position + new Vector3(0, yOffset, 0);
+
+            // Draw the outer orbit path (Red)
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(gizmoCenter, orbitRadius);
+
+            // Calculate the inner radius using the ratio
+            float effectiveInnerRadius = orbitRadius * innerRadiusRatio;
+
+            // Draw the inner "safe zone" (Yellow)
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(gizmoCenter, effectiveInnerRadius);
         }
     }
 }

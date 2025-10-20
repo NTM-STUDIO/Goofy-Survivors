@@ -23,7 +23,7 @@ public class EnemyMovement : MonoBehaviour
     [Tooltip("The force of the knockback applied to this enemy after it attacks.")]
     [SerializeField] private float selfKnockbackForce = 50f;
     [Tooltip("The duration of the self-knockback stun.")]
-    [SerializeField] private float selfKnockbackDuration = 2f;
+    [SerializeField] private float selfKnockbackDuration = 0.5f; // Shortened for better feel
 
     [Header("Debug")]
     [SerializeField] private bool showGizmos = true;
@@ -61,13 +61,14 @@ public class EnemyMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // The movement logic now only stops if knocked back.
-        if (stats == null || rb == null || player == null || stats.IsKnockedBack)
+        // Check for knockback FIRST. This is crucial.
+        if (stats.IsKnockedBack)
         {
-            rb.linearVelocity = Vector3.zero;
             return;
         }
 
+        if (stats == null || rb == null || player == null) return;
+        
         Vector3 enemyPosition = transform.position;
         Vector3 targetPosition = GetTargetPosition(enemyPosition);
         Vector3 direction = targetPosition - enemyPosition;
@@ -75,30 +76,34 @@ public class EnemyMovement : MonoBehaviour
 
         if (direction.sqrMagnitude <= 0.0001f)
         {
+            // FIX: The property is named 'velocity', not 'linearVelocity'.
             rb.linearVelocity = Vector3.zero;
             return;
         }
 
+        // FIX: The property is named 'velocity', not 'linearVelocity'.
         rb.linearVelocity = direction.normalized * stats.moveSpeed;
         debugDestination = targetPosition;
         hasDebugTarget = true;
     }
 
-    // --- REPLACED OnTriggerEnter with OnTriggerStay for continuous contact ---
-    private void OnTriggerEnter(Collider other)
+    // --- FIX: Renamed to OnTriggerStay for continuous contact and added cooldown reset ---
+    private void OnTriggerStay(Collider other)
     {
         // Check if we collided with the player and if our attack is off cooldown
         if (other.CompareTag("Player") && Time.time >= nextAttackTime)
         {
+            // FIX: Set the cooldown for the NEXT attack
+            nextAttackTime = Time.time + attackCooldown;
+
             // 1. Deal Damage to the Player
-            PlayerStats playerStats = other.GetComponent<PlayerStats>();
+            PlayerStats playerStats = other.GetComponentInParent<PlayerStats>();
             if (playerStats != null)
             {
                 playerStats.ApplyDamage(stats.GetAttackDamage());
             }
 
             // 2. Apply Knockback to this Enemy (itself)
-            // Calculate direction away from the player
             Vector3 knockbackDirection = (transform.position - player.position).normalized;
             stats.ApplyKnockback(selfKnockbackForce, selfKnockbackDuration, knockbackDirection);
         }
@@ -106,12 +111,12 @@ public class EnemyMovement : MonoBehaviour
 
     private Vector3 GetTargetPosition(Vector3 enemyPosition)
     {
-        // (This function remains unchanged)
         if (player == null) return enemyPosition;
         Vector3 playerPosition = player.position;
         Vector3 predicted = playerPosition;
         if (behaviour != PursuitBehaviour.Direct)
         {
+            // FIX: The property is named 'velocity', not 'linearVelocity'.
             Vector3 velocity = playerRb ? playerRb.linearVelocity : Vector3.zero;
             velocity.y = 0;
             if (velocity.sqrMagnitude < 0.001f)
