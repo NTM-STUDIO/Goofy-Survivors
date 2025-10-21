@@ -30,7 +30,7 @@ public class EnemyStats : MonoBehaviour
 
     // --- Private Components & State ---
     private Rigidbody rb;
-    private Renderer enemyRenderer; // Using Renderer to work with both Sprites and Meshes
+    private SpriteRenderer enemyRenderer; // Using Renderer to work with both Sprites and Meshes
     private Color originalColor;
     private Coroutine knockbackCoroutine;
 
@@ -39,11 +39,11 @@ public class EnemyStats : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         
         // Using GetComponentInChildren to find a renderer on this object or its children
-        enemyRenderer = GetComponentInChildren<Renderer>();
+        enemyRenderer = GetComponentInChildren<SpriteRenderer>();
         if (enemyRenderer != null)
         {
             // Store the original material color to revert to after taking damage
-            originalColor = enemyRenderer.material.color;
+            originalColor = enemyRenderer.color;
         }
     }
 
@@ -100,9 +100,9 @@ public class EnemyStats : MonoBehaviour
     // Coroutine for the damage flash effect
     private IEnumerator FlashColor()
     {
-        enemyRenderer.material.color = Color.red;
+        enemyRenderer.color = Color.red;
         yield return new WaitForSeconds(0.15f); // Duration of the flash
-        enemyRenderer.material.color = originalColor;
+        enemyRenderer.color = originalColor;
     }
     
     /// <summary>

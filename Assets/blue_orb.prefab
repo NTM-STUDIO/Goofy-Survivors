@@ -137,7 +137,7 @@ MonoBehaviour:
   xpValue: 40
   smoothTime: 0.1
   collectionDistance: 2
-  maxSpeed: 60
+  maxSpeed: 100
 --- !u!54 &373153327874312386
 Rigidbody:
   m_ObjectHideFlags: 0
