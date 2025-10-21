@@ -55,32 +55,38 @@ public class OrbitingWeapon : MonoBehaviour
     }
 
     // --- Trigger detection ---
-    void OnTriggerEnter(Collider other)
+void OnTriggerEnter(Collider other)
+{
+    // Return early if not an Enemy or Reaper
+    if (!other.CompareTag("Enemy") && !other.CompareTag("Reaper")) return;
+
+    // 1. Project to XZ plane for a 2D check
+    Vector3 enemyPos2D = new Vector3(other.transform.position.x, 0, other.transform.position.z);
+    Vector3 centerPos2D = new Vector3(orbitCenter.position.x, 0, orbitCenter.position.z);
+    float distanceToCenter = Vector3.Distance(enemyPos2D, centerPos2D);
+
+    // 2. Calculate the safe zone radius using the scalable RATIO
+    float effectiveInnerRadius = orbitRadius * innerRadiusRatio;
+
+    // 3. Only hit enemies outside the safe zone
+    if (distanceToCenter >= effectiveInnerRadius)
     {
-        if (!other.CompareTag("Enemy")) return;
-
-        // 1. Project to XZ plane for a 2D check
-        Vector3 enemyPos2D = new Vector3(other.transform.position.x, 0, other.transform.position.z);
-        Vector3 centerPos2D = new Vector3(orbitCenter.position.x, 0, orbitCenter.position.z);
-        float distanceToCenter = Vector3.Distance(enemyPos2D, centerPos2D);
-
-        // 2. Calculate the safe zone radius using the scalable RATIO
-        float effectiveInnerRadius = orbitRadius * innerRadiusRatio;
-
-        // 3. Only hit enemies outside the safe zone
-        if (distanceToCenter >= effectiveInnerRadius)
+        EnemyStats enemyStats = other.GetComponentInParent<EnemyStats>();
+        if (enemyStats != null)
         {
-            EnemyStats enemyStats = other.GetComponentInParent<EnemyStats>();
-            if (enemyStats != null)
+            enemyStats.TakeDamage((int)damage);
+
+            // Only apply knockback if NOT a Reaper
+            if (!other.CompareTag("Reaper"))
             {
-                enemyStats.TakeDamage((int)damage);
                 Vector3 knockbackDir = (other.transform.position - orbitCenter.position).normalized;
                 knockbackDir.y = 0;
                 enemyStats.ApplyKnockback(knockbackForce, 0.4f, knockbackDir);
             }
         }
     }
-    
+}
+
     // --- CORRECTED GIZMO ---
     // Now draws the spheres at the same height as the weapon's orbit.
     private void OnDrawGizmosSelected()
