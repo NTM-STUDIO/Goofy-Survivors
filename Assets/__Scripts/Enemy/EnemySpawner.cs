@@ -218,6 +218,18 @@ public class EnemySpawner : MonoBehaviour
         }
         return fallback;
     }
+
+    // --- NEW RESPAWN FUNCTION ---
+    public void RespawnEnemy(GameObject enemyToRespawn)
+    {
+        if (enemyToRespawn == null) return;
+
+        SpawnSide spawnSide = ChooseBalancedSpawnSide();
+        Vector3 spawnPos = GetSpawnPosition3D(spawnSide);
+
+        enemyToRespawn.transform.position = spawnPos;
+        enemyToRespawn.SetActive(true);
+    }
 }
 
 

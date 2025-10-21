@@ -10,6 +10,7 @@ public class GameManager : MonoBehaviour
     public UIManager uiManager;
     public Movement player;
     public EnemySpawner enemySpawner;
+    public EnemyDespawner enemyDespawner;
 
     public enum GameState { Playing, Paused, GameOver }
     public GameState currentState;
