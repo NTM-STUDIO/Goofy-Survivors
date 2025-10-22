@@ -5,11 +5,8 @@ public class UIManager : MonoBehaviour
 {
     public TextMeshProUGUI timerText;
     public GameObject pauseMenu;
-    public GameObject usernamePanel;
     public GameObject statsPanel;
     public GameObject playAgainButton;
-    public TMP_InputField usernameInput;
-
     public GameObject endGamePanel;
     public Slider xpSlider;
     public TMP_Text levelText;

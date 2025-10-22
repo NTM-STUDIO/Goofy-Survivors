@@ -43,19 +43,32 @@ public class GameManager : MonoBehaviour
     public float fireRateDecreasePerMinute = 0.1f;
     [Tooltip("The base sight range for casters at minute 0.")]
     public float baseSightRange = 999f;
-    
+
     // Public properties for other scripts to read the current scaled values
     public float currentProjectileSpeed { get; private set; }
     public float currentFireRate { get; private set; }
     public float currentSightRange { get; private set; }
-    
+
     private int lastMinuteMark = 0;
 
     [Header("Boss Settings")]
     public GameObject bossPrefab;
     public Transform bossSpawnPoint;
     private bool bossSpawned = false;
-    
+
+    public void PlayerDied()
+    {
+        if (currentState == GameState.GameOver) return; // Prevent multiple calls
+
+        currentState = GameState.GameOver;
+        isTimerRunning = false;
+        if (player != null) player.enabled = false;
+
+        // The GameManager tells the UIManager what to do.
+        // This is the line we added previously.
+        uiManager.ShowEndGamePanel(true);
+    }
+
     // --- Pause Management System ---
     private int _pauseRequesters = 0; // Counts how many sources are requesting a pause
 
@@ -103,7 +116,7 @@ public class GameManager : MonoBehaviour
         {
             uiManager.ShowStatsPanel(!uiManager.statsPanel.activeSelf);
         }
-        
+
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (currentState == GameState.Playing)
@@ -118,9 +131,9 @@ public class GameManager : MonoBehaviour
             }
         }
     }
-    
+
     #region Game Flow
-    
+
     public void StartGame()
     {
         currentState = GameState.Playing;
@@ -142,30 +155,21 @@ public class GameManager : MonoBehaviour
         if (player != null) player.enabled = true;
         if (enemySpawner != null) enemySpawner.StartSpawning();
     }
-    
+
     public void RestartGame()
     {
         // Important: Reset timescale before reloading scene in case game was paused
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
-    
+
     private void EndGame()
     {
         isTimerRunning = false;
         currentState = GameState.GameOver;
         Debug.Log("Time's up! Game Over.");
     }
-    
-    public void PlayerDied()
-    {
-        if (currentState == GameState.GameOver) return; // Prevent multiple calls
-        
-        currentState = GameState.GameOver;
-        isTimerRunning = false;
-        if (player != null) player.enabled = false;
-    }
-    
+
     #endregion
 
     #region Pause Management
@@ -208,7 +212,7 @@ public class GameManager : MonoBehaviour
             Debug.Log("Game Resumed. Requests: ".ToString() + _pauseRequesters);
         }
     }
-    
+
     #endregion
 
     #region Timers and Spawning
@@ -246,7 +250,7 @@ public class GameManager : MonoBehaviour
     }
 
     #endregion
-    
+
     #region Difficulty Scaling
 
     private void CheckForDifficultyIncrease()
@@ -276,18 +280,18 @@ public class GameManager : MonoBehaviour
                   $"Proj. Speed: {currentProjectileSpeed:F2}, " +
                   $"Fire Rate: {currentFireRate:F2}s");
     }
-    
+
     #endregion
-    
+
     #region Data and Scoring
-    
-    
+
+
     #endregion
-    
+
     #region Getters and Setters
 
     public float GetRemainingTime() { return currentTime; }
-    
+
     public void SetGameDuration(float newDuration)
     {
         totalGameTime = newDuration;
@@ -295,6 +299,6 @@ public class GameManager : MonoBehaviour
         bossSpawned = false;
         lastMinuteMark = 0;
     }
-    
+
     #endregion
 }

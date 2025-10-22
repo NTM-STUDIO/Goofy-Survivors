@@ -34,8 +34,8 @@ public class PlayerStats : MonoBehaviour
     [SerializeField] private float invincibilityDuration = 0.6f;
     [Tooltip("Whether the player is currently invincible (i-frames)")]
     [SerializeField] private bool invincible = false;
-    [Tooltip("Optional flash on damage")] [SerializeField] private SpriteRenderer spriteRenderer;
-    [ColorUsage(true,true)] [SerializeField] private Color hurtFlashColor = new Color(1f, 0.4f, 0.4f, 1f);
+    [Tooltip("Optional flash on damage")][SerializeField] private SpriteRenderer spriteRenderer;
+    [ColorUsage(true, true)][SerializeField] private Color hurtFlashColor = new Color(1f, 0.4f, 0.4f, 1f);
     [SerializeField] private float hurtFlashTime = 0.1f;
     private Color _originalColor;
 
@@ -161,7 +161,7 @@ public class PlayerStats : MonoBehaviour
         }
         OnDamaged?.Invoke();
         OnHealthChanged?.Invoke(currentHp, maxHp);
-        
+
         // Begin invincibility frames
         float iFrames = customIFrameDuration.HasValue ? Mathf.Max(0f, customIFrameDuration.Value) : invincibilityDuration;
         if (iFrames > 0f) BeginInvincibility(iFrames);
@@ -205,24 +205,25 @@ public class PlayerStats : MonoBehaviour
         Debug.Log("Player died.");
         OnDeath?.Invoke();
 
-        // Optionally disable movement/collisions here; GameManager can listen to OnDeath to handle game over
+        // Disable player movement and collisions
         var movement = GetComponent<Movement>();
         if (movement != null)
         {
             movement.enabled = false;
         }
 
-        // --- CORRECTION #2: Changed Collider2D to just Collider for 3D physics ---
         var colls = GetComponentsInChildren<Collider>();
         foreach (var c in colls) c.enabled = false;
 
-        UIManager uiManager = FindFirstObjectByType<UIManager>();
-        if (uiManager != null)
+        // --- RECOMMENDED CHANGE ---
+        // Tell the GameManager that the player has died.
+        // The GameManager will then handle showing the UI.
+        if (GameManager.Instance != null)
         {
-            uiManager.ShowEndGamePanel(true);
+            GameManager.Instance.PlayerDied();
         }
     }
-    
+
     // --- HEALTH REGENERATION ---
 
     /// <summary>

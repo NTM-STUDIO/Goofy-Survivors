@@ -5,6 +5,7 @@ using System.Collections;
 public class OrbDropConfig
 {
     public GameObject orbPrefab;
+    [Tooltip("The relative chance for this orb to drop compared to others in the list.")]
     [Range(0f, 100f)] public float dropChance;
 }
 
@@ -14,23 +15,23 @@ public class EnemyStats : MonoBehaviour
 {
     [Header("Base Stats")]
     [Tooltip("The enemy's health at the start of the game (minute 0).")]
-    public float baseHealth = 100; // Changed to float for consistency
+    public float baseHealth = 100;
     [Tooltip("The enemy's damage at the start of the game (minute 0).")]
-    public float baseDamage = 10; // Changed to float for consistency
+    public float baseDamage = 10;
     public float moveSpeed = 3f;
 
     // --- Public State ---
+    public float MaxHealth { get; private set; } // The enemy's maximum health for its lifetime
     public float CurrentHealth { get; private set; }
     public bool IsKnockedBack { get; private set; }
 
     [Header("Experience Drops")]
-    [Tooltip("The chance (out of 100) that this enemy will drop *any* orb.")]
-    [Range(0f, 100f)] public float chances = 75f;
+    [Tooltip("A list of potential orbs to drop. One will always be chosen based on relative drop chances.")]
     public OrbDropConfig[] orbDrops;
 
     // --- Private Components & State ---
     private Rigidbody rb;
-    private SpriteRenderer enemyRenderer; // Using Renderer to work with both Sprites and Meshes
+    private SpriteRenderer enemyRenderer;
     private Color originalColor;
     private Coroutine knockbackCoroutine;
 
@@ -49,16 +50,21 @@ public class EnemyStats : MonoBehaviour
 
     void Start()
     {
+        float finalHealth;
         // Scale health based on game time if GameManager is present
         if (GameManager.Instance != null)
         {
             float healthMultiplier = GameManager.Instance.currentEnemyHealthMultiplier;
-            CurrentHealth = baseHealth * healthMultiplier;
+            finalHealth = baseHealth * healthMultiplier;
         }
         else
         {
-            CurrentHealth = baseHealth;
+            finalHealth = baseHealth;
         }
+        
+        // Set both MaxHealth and CurrentHealth one time upon spawning for accurate tracking.
+        MaxHealth = finalHealth;
+        CurrentHealth = finalHealth;
     }
 
     /// <summary>
@@ -117,23 +123,44 @@ public class EnemyStats : MonoBehaviour
     }
 
     /// <summary>
-    /// Rolls for a chance to drop a configured experience orb.
+    /// **MODIFIED:** Guarantees one orb drop from the list based on weighted chances.
     /// </summary>
     public void TryDropOrb()
     {
-        // The first roll determines IF an orb drops at all
-        if (Random.Range(0f, 100f) > chances)
+        // Exit if there are no orbs configured to drop.
+        if (orbDrops == null || orbDrops.Length == 0)
         {
-            return; // Failed the initial drop chance
+            return;
         }
 
-        // If successful, iterate through possible orbs and roll for each one
+        // Calculate the sum of all drop chances to use as the total weight.
+        float totalChance = 0f;
         foreach (var orb in orbDrops)
         {
-            if (Random.Range(0f, 100f) <= orb.dropChance)
+            totalChance += orb.dropChance;
+        }
+
+        // If all drop chances are zero, do nothing.
+        if (totalChance <= 0)
+        {
+            return;
+        }
+
+        // Pick a random number within the range of the total weight.
+        float randomValue = Random.Range(0f, totalChance);
+
+        // Iterate through the orbs and "spend" their chance value from the random number.
+        // The first orb that the remaining randomValue falls into is the one that gets spawned.
+        foreach (var orb in orbDrops)
+        {
+            if (randomValue <= orb.dropChance)
             {
                 Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
-                return; // Drop the first one that succeeds and exit
+                return; // Drop this orb and exit the method.
+            }
+            else
+            {
+                randomValue -= orb.dropChance;
             }
         }
     }
