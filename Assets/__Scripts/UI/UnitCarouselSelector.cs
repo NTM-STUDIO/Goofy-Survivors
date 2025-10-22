@@ -37,7 +37,6 @@ public class UnitCarouselSelector : MonoBehaviour
         // --- Setup Button Listeners ---
         nextButton.onClick.AddListener(NextUnit);
         previousButton.onClick.AddListener(PreviousUnit);
-        selectButton.onClick.AddListener(ConfirmSelection);
 
         // --- Initial State ---
         // Check if we have any units to display
@@ -106,22 +105,4 @@ public class UnitCarouselSelector : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Called when the 'Select' button is pressed.
-    /// </summary>
-    public void ConfirmSelection()
-    {
-        if (gameInitializer != null)
-        {
-            // Get the currently selected prefab
-            GameObject selectedPrefab = unitPrefabs[currentIndex];
-            
-            // Tell the GameInitializer to start the game with this prefab
-            gameInitializer.StartGame(selectedPrefab);
-        }
-        else
-        {
-            Debug.LogError("Cannot start game - GameInitializer was not found.");
-        }
-    }
 }

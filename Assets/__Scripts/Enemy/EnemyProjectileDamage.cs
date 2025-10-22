@@ -3,8 +3,10 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class EnemyProjectileDamage3D : MonoBehaviour
 {
+    public float damage;
     private EnemyStats _casterStats;
     public EnemyStats CasterStats
+
     {
         get { return _casterStats; }
         set
@@ -22,6 +24,16 @@ public class EnemyProjectileDamage3D : MonoBehaviour
         }
     }
 
+    public void Start()
+    {
+        if (_casterStats == null)
+        {
+            Debug.LogWarning("[Projectile Debug] CasterStats have not been set on this projectile!", gameObject);
+        }
+
+        damage = _casterStats != null ? _casterStats.baseDamage : 0f;
+
+    }
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
@@ -34,7 +46,7 @@ public class EnemyProjectileDamage3D : MonoBehaviour
             if (playerStats != null && CasterStats != null)
             {
                 Debug.Log($"[Projectile Debug] Applying {CasterStats.baseDamage} damage to the player.", gameObject);
-                playerStats.ApplyDamage(CasterStats.baseDamage, transform.position, 0f);
+                playerStats.ApplyDamage(damage, transform.position, 0f);
             }
             else
             {

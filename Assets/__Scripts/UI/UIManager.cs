@@ -11,6 +11,11 @@ public class UIManager : MonoBehaviour
     public Slider xpSlider;
     public TMP_Text levelText;
     public Slider healthBar;
+    public GameObject painelPrincipal;
+    public GameObject multiplayerPanel;
+    public AdvancedCameraController advancedCameraController;
+    public GameObject Managers;
+    public GameObject unitSelectionUI;
 
     public GameManager gameManager;
     public GameObject newWeaponPanel;
@@ -81,5 +86,38 @@ public class UIManager : MonoBehaviour
             statsPanel.SetActive(show);
         }
     }
+
+    public void ShowMultiplayerPanel(bool show)
+    {
+        if (multiplayerPanel != null)
+        {
+            multiplayerPanel.SetActive(show);
+        }
+    }
+
+    public void ShowUnitSelectionUI(bool show)
+    {
+        Debug.Log("Toggling Unit Selection UI: " + show);
+        if (unitSelectionUI != null)
+        {
+            unitSelectionUI.SetActive(!show);
+            painelPrincipal.SetActive(show);
+        }
+    }
+
+
+    public void PlayButton()
+    {
+        painelPrincipal.SetActive(false);
+        unitSelectionUI.SetActive(false);
+        timerText.gameObject.SetActive(true);
+        xpSlider.gameObject.SetActive(true);
+        levelText.gameObject.SetActive(true);
+        healthBar.gameObject.SetActive(true);
+        advancedCameraController.enabled = true;
+        Managers.SetActive(true);
+        GameManager.Instance.StartGame();
+    }
+
 
 }

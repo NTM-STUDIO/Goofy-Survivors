@@ -202,10 +202,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 1.84
-  m_Height: 16.636175
+  m_Radius: 1.4993972
+  m_Height: 16.636173
   m_Direction: 2
-  m_Center: {x: -0.058990207, y: 10.01, z: 6.451638}
+  m_Center: {x: 0.14009516, y: 9.669424, z: 6.451648}
 --- !u!1 &7889685272071273777
 GameObject:
   m_ObjectHideFlags: 0
@@ -465,7 +465,6 @@ MonoBehaviour:
   baseHealth: 5000
   baseDamage: 500
   moveSpeed: 20
-  chances: 75
   orbDrops:
   - orbPrefab: {fileID: 8326750618715067698, guid: 3f0fbb90971ba4441913d7efaea77fca, type: 3}
     dropChance: 100

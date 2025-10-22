@@ -504,11 +504,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   unitPrefabs:
-  - {fileID: 129500042427896354, guid: c0c12ee2034a0c846a63fe9755452299, type: 3}
-  - {fileID: 8476348927198278900, guid: e8f36a094b10a4448bf4cf9cb5023e8b, type: 3}
-  - {fileID: 1723280764562794417, guid: 9d937b1d2b52e414b95ee6ffc9e9e5fb, type: 3}
-  - {fileID: 6497394531522397800, guid: e492e2e3c68c74142893e2c0c8984fdf, type: 3}
-  - {fileID: 262326077648569168, guid: 23dac1469c9ba584a8d7286832cd70cf, type: 3}
+  - {fileID: 5781343528486485951, guid: 909ee6a12a46ba543996bac26bc995f3, type: 3}
   unitDisplayImage: {fileID: 2433459428892557753}
   unitNameText: {fileID: 4890730243917389615}
   nextButton: {fileID: 626759018037056283}

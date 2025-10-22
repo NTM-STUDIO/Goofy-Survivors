@@ -37,31 +37,6 @@ public class GameInitializer : MonoBehaviour
             return; // Exit if no prefab to instantiate
         } 
 
-        if (gameManager != null)
-        {
-            gameManager.SetActive(true); // Enable the GameManager
-        }
-        else
-        {
-            Debug.LogError("GameManager reference is not assigned in GameInitializer.");
-        }
 
-        if (cinemachineCamera != null)
-        {
-            cinemachineCamera.SetActive(true); // Activate the Cinemachine camera
-        }
-        else
-        {
-            Debug.LogError("Cinemachine camera reference is not assigned in GameInitializer.");
-        }
-
-        if (unitSelectionUI != null)
-        {
-            unitSelectionUI.SetActive(false); // Hide the unit selection UI
-        }
-        else
-        {
-            Debug.LogError("Unit Selection UI reference is not assigned in GameInitializer.");
-        }
     }
 }

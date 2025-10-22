@@ -6,13 +6,16 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
+    public GameObject chosenPlayerPrefab;
+
     [Header("Core References")]
     public UIManager uiManager;
     public Movement player;
     public EnemySpawner enemySpawner;
     public EnemyDespawner enemyDespawner;
 
-    public enum GameState { Playing, Paused, GameOver }
+    // NEW: Added a PreGame state. This will be the default state when the scene loads.
+    public enum GameState { PreGame, Playing, Paused, GameOver }
     public GameState currentState;
 
     [Header("Timer Settings")]
@@ -65,12 +68,10 @@ public class GameManager : MonoBehaviour
         if (player != null) player.enabled = false;
 
         // The GameManager tells the UIManager what to do.
-        // This is the line we added previously.
         uiManager.ShowEndGamePanel(true);
     }
 
-    // --- Pause Management System ---
-    private int _pauseRequesters = 0; // Counts how many sources are requesting a pause
+    private int _pauseRequesters = 0;
 
     void Awake()
     {
@@ -97,13 +98,30 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // CHANGED: The Start method no longer starts the game automatically.
+    // It now sets up the "PreGame" state.
     void Start()
     {
-        StartGame();
+        currentState = GameState.PreGame;
+        Time.timeScale = 1f; // Ensure time is running for any pre-game animations
+
+        // Disable core gameplay components
+        if (player != null) player.enabled = false;
+        if (enemySpawner != null) enemySpawner.enabled = false; // Make sure the spawner doesn't run
+
+        // Initialize the timer display without starting it
+        currentTime = totalGameTime;
+        isTimerRunning = false;
+        uiManager.UpdateTimerText(currentTime);
+
+        // --- Optional, but recommended ---
+        // You should have a start menu panel in your UIManager that you show here.
+        // For example: uiManager.ShowStartPanel(true);
     }
 
     void Update()
     {
+        // The game's core logic now ONLY runs if the state is "Playing".
         if (currentState == GameState.Playing)
         {
             UpdateTimer();
@@ -111,7 +129,7 @@ public class GameManager : MonoBehaviour
             CheckForBossSpawn();
         }
 
-        // This can still be used for a non-pausing stats panel
+        // You can still check for these inputs regardless of the game state.
         if (Input.GetKeyDown(KeyCode.Tab))
         {
             uiManager.ShowStatsPanel(!uiManager.statsPanel.activeSelf);
@@ -133,32 +151,29 @@ public class GameManager : MonoBehaviour
     }
 
     #region Game Flow
-
     public void StartGame()
     {
+        // Add a guard to prevent starting the game if it's already running.
+        if (currentState != GameState.PreGame) return;
+
         currentState = GameState.Playing;
-        currentTime = totalGameTime;
         isTimerRunning = true;
         bossSpawned = false;
         lastMinuteMark = 0;
-        _pauseRequesters = 0; // Reset pause requests on new game
+        _pauseRequesters = 0;
 
-        // Reset all difficulty multipliers and stats to their base values
+        // Reset all difficulty multipliers
         currentEnemyHealthMultiplier = 1f;
         currentEnemyDamageMultiplier = 1f;
         currentProjectileSpeed = baseProjectileSpeed;
         currentFireRate = baseFireRate;
         currentSightRange = baseSightRange;
 
-        Time.timeScale = 1f;
-
-        if (player != null) player.enabled = true;
-        if (enemySpawner != null) enemySpawner.StartSpawning();
+        // Enable
     }
 
     public void RestartGame()
     {
-        // Important: Reset timescale before reloading scene in case game was paused
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
@@ -172,6 +187,8 @@ public class GameManager : MonoBehaviour
 
     #endregion
 
+    // ... The rest of your code (Pause Management, Timers, Difficulty, etc.) remains the same ...
+    // --- (I've removed the rest for brevity, but you should keep it in your script) ---
     #region Pause Management
 
     /// <summary>
