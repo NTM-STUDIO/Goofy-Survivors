@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2446264882209108868}
   - component: {fileID: 8884204196436631581}
+  - component: {fileID: 1940275635058141897}
   m_Layer: 0
   m_Name: Zappy (1)
   m_TagString: Enemy
@@ -87,6 +88,23 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &1940275635058141897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1648314707730850909}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77eb5254ffedf564e90f7da7a916e036, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  UpSprite: {fileID: 21300000, guid: 323f0081033218e4688f6ea5397168e1, type: 3}
+  DownSprite: {fileID: 21300000, guid: 323f0081033218e4688f6ea5397168e1, type: 3}
+  firePoint: {fileID: 0}
+  upDownThreshold: 0
+  showGizmos: 1
 --- !u!1 &4496776415297934645
 GameObject:
   m_ObjectHideFlags: 0
@@ -184,9 +202,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 853117fdcad11eb468dce0024d64eb22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseHealth: 50
+  baseHealth: 100
   baseDamage: 5
-  moveSpeed: 18
+  moveSpeed: 22
   chances: 100
   orbDrops:
   - orbPrefab: {fileID: 8326750618715067698, guid: b16da58f35868b846a58e1a345e542c0, type: 3}
@@ -203,6 +221,7 @@ GameObject:
   - component: {fileID: 4882705988473419733}
   - component: {fileID: 7944771917478177986}
   - component: {fileID: 1699042113148614376}
+  - component: {fileID: 6508889795191181717}
   m_Layer: 0
   m_Name: Zappy
   m_TagString: Enemy
@@ -327,3 +346,20 @@ CapsuleCollider:
   m_Height: 16.636175
   m_Direction: 2
   m_Center: {x: -0.058990207, y: 6.32, z: 6.451638}
+--- !u!114 &6508889795191181717
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4514065415740954002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77eb5254ffedf564e90f7da7a916e036, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  UpSprite: {fileID: 21300000, guid: 323f0081033218e4688f6ea5397168e1, type: 3}
+  DownSprite: {fileID: 21300000, guid: 323f0081033218e4688f6ea5397168e1, type: 3}
+  firePoint: {fileID: 0}
+  upDownThreshold: 0
+  showGizmos: 1

@@ -11,6 +11,9 @@ public class UpgradeChoiceUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI descriptionText;
     [SerializeField] private Button selectButton;
 
+    [SerializeField] private TextMeshProUGUI rarityText;
+
+
     private UpgradeManager.GeneratedUpgrade currentUpgrade;
     private UpgradeManager manager;
 
@@ -23,10 +26,11 @@ public class UpgradeChoiceUI : MonoBehaviour
         backgroundImage.color = upgrade.Rarity.backgroundColor;
         iconImage.sprite = upgrade.BaseData.icon;
         nameText.text = upgrade.BaseData.upgradeName;
+        rarityText.text = upgrade.Rarity.name;
 
         // Format the description to show the actual value
         string formattedValue = GetFormattedValue(upgrade.BaseData.statToUpgrade, upgrade.Value);
-        descriptionText.text = $"{upgrade.BaseData.upgradeDescription}\n<color=green>+{formattedValue}</color>";
+        descriptionText.text = $"{upgrade.BaseData.upgradeDescription}\n<color=white>+{formattedValue}</color>";
         
         // Set up the button
         selectButton.onClick.AddListener(OnSelect);

@@ -15,14 +15,19 @@ public class MapConsumable : MonoBehaviour
 
     private void Awake()
     {
+        // Esta lógica permanece a mesma.
         if (CompareTag("Chest"))
         {
             chestScript = GetComponent<ChestScript>();
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    // --- FUNÇÃO MODIFICADA PARA 3D ---
+    // Trocámos OnTriggerEnter2D por OnTriggerEnter e Collider2D por Collider.
+    private void OnTriggerEnter(Collider other)
     {
+        // O resto da lógica dentro da função é exatamente o mesmo,
+        // pois CompareTag funciona para colisores 2D e 3D.
         if (other.CompareTag("Player"))
         {
             if (CompareTag("Chest") && chestScript != null)
@@ -40,6 +45,7 @@ public class MapConsumable : MonoBehaviour
 
     public void DropRandomItem()
     {
+        // Esta lógica permanece a mesma.
         if (possibleDrops.Length == 0) return;
 
         float totalWeight = possibleDrops.Sum(drop => drop.weight);

@@ -30,7 +30,8 @@ public enum Rarity
     Epic,
     Legendary,
     Ultra,
-    OneIn100
+    Shadow,
+    Mythic
 }
 
 // MERGED CLASS: Includes fields from your script and the new blending logic.

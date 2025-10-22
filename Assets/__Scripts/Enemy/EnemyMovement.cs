@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class EnemyMovement : MonoBehaviour
 {
-    // ... (Your existing serialized fields remain the same)
+    // ... (Todos os seus campos e enums permanecem exatamente iguais)
     private enum PursuitBehaviour { Direct, Predictive, PredictiveFlank }
     [Header("Behaviour")]
     [SerializeField] private PursuitBehaviour behaviour = PursuitBehaviour.Direct;
@@ -16,14 +16,13 @@ public class EnemyMovement : MonoBehaviour
     [SerializeField] private float flankOffset = 2f;
     [SerializeField] private float flankFalloffDistance = 2f;
 
-    // --- NEW ATTACK AND KNOCKBACK FIELDS ---
     [Header("Attack")]
     [Tooltip("How often the enemy can deal damage while touching the player (seconds).")]
     [SerializeField] private float attackCooldown = 1.5f;
     [Tooltip("The force of the knockback applied to this enemy after it attacks.")]
     [SerializeField] private float selfKnockbackForce = 50f;
     [Tooltip("The duration of the self-knockback stun.")]
-    [SerializeField] private float selfKnockbackDuration = 0.5f; // Shortened for better feel
+    [SerializeField] private float selfKnockbackDuration = 0.5f;
 
     [Header("Debug")]
     [SerializeField] private bool showGizmos = true;
@@ -34,16 +33,16 @@ public class EnemyMovement : MonoBehaviour
     private Rigidbody rb;
     private EnemyStats stats;
     private float flankSign = 1f;
-    private float nextAttackTime = 0f; // Cooldown timer for attacks
+    private float nextAttackTime = 0f;
     
-    // (Debug variables remain the same)
+    // Debug variables
     private Vector3 debugIntercept;
     private Vector3 debugDestination;
     private bool hasDebugTarget;
 
     private void Awake()
     {
-        // (Awake logic is unchanged and still correct)
+        // (NENHUMA ALTERAÇÃO AQUI)
         rb = GetComponent<Rigidbody>();
         stats = GetComponent<EnemyStats>();
         GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
@@ -59,9 +58,9 @@ public class EnemyMovement : MonoBehaviour
         rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
     }
 
+    // --- MÉTODO MODIFICADO ---
     private void FixedUpdate()
     {
-        // Check for knockback FIRST. This is crucial.
         if (stats.IsKnockedBack)
         {
             return;
@@ -71,39 +70,51 @@ public class EnemyMovement : MonoBehaviour
         
         Vector3 enemyPosition = transform.position;
         Vector3 targetPosition = GetTargetPosition(enemyPosition);
+        
+        // A direção pura do movimento, equivalente ao 'moveInput' do jogador
         Vector3 direction = targetPosition - enemyPosition;
         direction.y = 0;
 
         if (direction.sqrMagnitude <= 0.0001f)
         {
-            // FIX: The property is named 'velocity', not 'linearVelocity'.
             rb.linearVelocity = Vector3.zero;
             return;
         }
 
-        // FIX: The property is named 'velocity', not 'linearVelocity'.
-        rb.linearVelocity = direction.normalized * stats.moveSpeed;
+        // --- INÍCIO DA LÓGICA PORTADA DO JOGADOR ---
+
+        // PASSO 1: CALCULAR A COMPENSAÇÃO DIAGONAL
+        // Usamos a direção do inimigo da mesma forma que o input do jogador é usado.
+        float diagonalCompensation = 1f;
+        // Se o movimento tem um componente horizontal E vertical significativos, aplica o nerf.
+        if (Mathf.Abs(direction.x) > 0.1f && Mathf.Abs(direction.z) > 0.1f)
+        {
+            // O valor é 1 / sqrt(2), o mesmo que no seu script de jogador.
+            diagonalCompensation = 0.70710678f; 
+        }
+
+        // PASSO 2: APLICAR A VELOCIDADE FINAL COM A COMPENSAÇÃO
+        // A velocidade base é multiplicada pela compensação, exatamente como no seu código.
+        rb.linearVelocity = direction.normalized * stats.moveSpeed * diagonalCompensation;
+        
+        // --- FIM DA LÓGICA PORTADA ---
+
         debugDestination = targetPosition;
         hasDebugTarget = true;
     }
 
-    // --- FIX: Renamed to OnTriggerStay for continuous contact and added cooldown reset ---
+    // (O resto do seu script, incluindo OnTriggerStay, GetTargetPosition, etc., permanece inalterado)
+
     private void OnTriggerStay(Collider other)
     {
-        // Check if we collided with the player and if our attack is off cooldown
         if (other.CompareTag("Player") && Time.time >= nextAttackTime)
         {
-            // FIX: Set the cooldown for the NEXT attack
             nextAttackTime = Time.time + attackCooldown;
-
-            // 1. Deal Damage to the Player
             PlayerStats playerStats = other.GetComponentInParent<PlayerStats>();
             if (playerStats != null)
             {
                 playerStats.ApplyDamage(stats.GetAttackDamage());
             }
-
-            // 2. Apply Knockback to this Enemy (itself)
             Vector3 knockbackDirection = (transform.position - player.position).normalized;
             stats.ApplyKnockback(selfKnockbackForce, selfKnockbackDuration, knockbackDirection);
         }
@@ -116,7 +127,6 @@ public class EnemyMovement : MonoBehaviour
         Vector3 predicted = playerPosition;
         if (behaviour != PursuitBehaviour.Direct)
         {
-            // FIX: The property is named 'velocity', not 'linearVelocity'.
             Vector3 velocity = playerRb ? playerRb.linearVelocity : Vector3.zero;
             velocity.y = 0;
             if (velocity.sqrMagnitude < 0.001f)
@@ -140,7 +150,6 @@ public class EnemyMovement : MonoBehaviour
 
     private void RandomiseBehaviour()
     {
-        // (This function remains unchanged)
         float roll = Random.value;
         float flankThreshold = Mathf.Clamp01(flankChance);
         float predictiveThreshold = Mathf.Clamp01(flankThreshold + predictiveChance);
@@ -152,7 +161,6 @@ public class EnemyMovement : MonoBehaviour
     #if UNITY_EDITOR
     private void OnDrawGizmos()
     {
-        // (This function remains unchanged)
         if (!showGizmos || !Application.isPlaying || !hasDebugTarget) return;
         Gizmos.color = Color.cyan;
         Gizmos.DrawSphere(debugIntercept, 0.12f);

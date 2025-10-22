@@ -44,6 +44,7 @@ public class WeaponController : MonoBehaviour
         currentCooldown = 0f;
     }
 
+    // --- MÉTODO MODIFICADO ---
     void Update()
     {
         if (playerStats == null || weaponData == null || firePoint == null) return;
@@ -52,10 +53,23 @@ public class WeaponController : MonoBehaviour
 
         if (currentCooldown <= 0f)
         {
+            // Dispara a arma
             Attack();
 
+            // --- INÍCIO DA NOVA LÓGICA DE COOLDOWN ---
+
+            // 1. Calcula o cooldown com base apenas no Attack Speed do jogador.
             float finalAttackSpeed = playerStats.attackSpeedMultiplier;
-            currentCooldown = weaponData.cooldown / Mathf.Max(0.01f, finalAttackSpeed);
+            float cooldownBasedOnSpeed = weaponData.cooldown / Mathf.Max(0.01f, finalAttackSpeed);
+
+            // 2. Calcula a duração final da arma.
+            float finalDuration = weaponData.duration * playerStats.durationMultiplier;
+
+            // 3. O cooldown final é o MAIOR valor entre o cooldown por velocidade e a duração.
+            //    Isso garante que o cooldown nunca seja menor que a duração.
+            currentCooldown = Mathf.Max(cooldownBasedOnSpeed, finalDuration);
+            
+            // --- FIM DA NOVA LÓGICA DE COOLDOWN ---
         }
     }
 
@@ -147,7 +161,6 @@ public class WeaponController : MonoBehaviour
 
         if (projectile != null)
         {
-            // You will need to make sure your ProjectileWeapon's Initialize method also accepts a Vector3
             projectile.Initialize(target, direction, finalDamage, finalSpeed, finalDuration, finalKnockback, finalPierce, finalSize);
         }
     }
@@ -161,11 +174,7 @@ public class WeaponController : MonoBehaviour
         float finalDuration = weaponData.duration * playerStats.durationMultiplier;
         float finalKnockback = weaponData.knockback * playerStats.knockbackMultiplier;
 
-        // --- THIS IS THE FIXED LINE ---
-        // The WeaponController's game object is parented to the "weaponParent" transform,
-        // so we can access it using transform.parent.
         Transform orbitCenter = transform.parent;
-        // -----------------------------
 
         float angleStep = 360f / finalAmount;
         float randomGroupRotation = Random.Range(0f, 360f);

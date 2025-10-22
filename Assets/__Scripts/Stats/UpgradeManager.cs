@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems; // --- IMPORTANTE: ADICIONE ESTA LINHA ---
 using System.Collections.Generic;
 using System.Linq;
 
@@ -160,10 +161,27 @@ public class UpgradeManager : MonoBehaviour
     
     private void DisplayUpgradeChoices(List<GeneratedUpgrade> choices)
     {
+        // --- LÓGICA MODIFICADA ---
+        GameObject firstChoice = null; // Guarda uma referência ao primeiro botão a ser criado
+
         foreach (var choice in choices)
         {
             UpgradeChoiceUI uiInstance = Instantiate(upgradeChoicePrefab, choicesContainer);
             uiInstance.Setup(choice, this);
+
+            // Se for o primeiro botão, salvamos a referência dele
+            if (firstChoice == null)
+            {
+                firstChoice = uiInstance.gameObject;
+            }
+        }
+
+        // --- NOVA LINHA ---
+        // Diz ao Event System para selecionar o primeiro botão automaticamente.
+        // A partir daqui, W/S, setas e controle já funcionam.
+        if (firstChoice != null)
+        {
+            EventSystem.current.SetSelectedGameObject(firstChoice);
         }
     }
 
@@ -235,6 +253,11 @@ public class UpgradeManager : MonoBehaviour
             }
             upgradePanel.SetActive(false);
             Time.timeScale = 1f;
+
+            // --- NOVA LINHA ---
+            // Limpa o foco da UI para que o jogador recupere o controle total.
+            // Evita que um botão "fantasma" continue selecionado.
+            EventSystem.current.SetSelectedGameObject(null);
         }
     }
 }
