@@ -77,7 +77,7 @@ SpriteRenderer:
   m_SortingLayerID: -1557186393
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 96c456af18e84eb49b0b36992c1c0f16, type: 3}
+  m_Sprite: {fileID: -3638269243578002030, guid: d1ab5ae35c98a31499dd1bb26f0df89c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -123,7 +123,7 @@ GameObject:
   - component: {fileID: 4206929815901151918}
   - component: {fileID: 3750778801767423170}
   m_Layer: 0
-  m_Name: Pedra
+  m_Name: FlippingFlopping
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

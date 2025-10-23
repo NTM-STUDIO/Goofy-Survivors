@@ -16,17 +16,18 @@ MonoBehaviour:
   weaponName: FlipFlop
   description: Fllipping floppig
   icon: {fileID: -3638269243578002030, guid: d1ab5ae35c98a31499dd1bb26f0df89c, type: 3}
-  weaponPrefab: {fileID: 3341698084558261502, guid: 22fdd37f9bf80a4418599ea85df93742, type: 3}
+  weaponPrefab: {fileID: 3341698084558261502, guid: 2ce0198a4cc68df4b8ec6ab45326a245, type: 3}
   archetype: 0
+  targetingStyle: 0
+  groupingRange: 5
   damage: 7
-  cooldown: 2.5
+  cooldown: 1
   area: 1
   amount: 1
-  speed: 10
+  speed: 20
   duration: 10
   criticalChance: 0
   criticalMultiplier: 1.5
   pierce: 1
   pierceCount: 1
-  knockback: 0
-  maxLevel: 8
+  knockback: 20

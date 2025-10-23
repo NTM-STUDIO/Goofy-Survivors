@@ -36,7 +36,5 @@ public class GameInitializer : MonoBehaviour
             Debug.LogError("Selected prefab is null in GameInitializer.");
             return; // Exit if no prefab to instantiate
         } 
-
-
     }
 }

@@ -242,8 +242,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseHealth: 100
   baseDamage: 10
-  moveSpeed: 6
-  chances: 100
+  moveSpeed: 5
   orbDrops:
   - orbPrefab: {fileID: 8326750618715067698, guid: 3f0fbb90971ba4441913d7efaea77fca, type: 3}
     dropChance: 75

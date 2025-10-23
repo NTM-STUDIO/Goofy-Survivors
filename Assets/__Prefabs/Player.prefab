@@ -340,7 +340,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weapons:
   - {fileID: 11400000, guid: 71f30611e4b0a0b4a808ab2598cd8ca4, type: 2}
-  possibleWeapons: []
+  possibleWeapons:
+  - {fileID: 11400000, guid: f51291457a043f446aa1e7da7b62d70a, type: 2}
+  - {fileID: 11400000, guid: 41187a610982a014189c762ebb0ed72f, type: 2}
   weaponParent: {fileID: 8274304304770015266}
 --- !u!114 &8654451083147522726
 MonoBehaviour:
@@ -406,6 +408,9 @@ MonoBehaviour:
   currentLevel: 0
   currentXP: 0
   xpToNextLevel: 100
-  xpIncreaseFactor: 1.2
+  earlyLevelXpBonus: 75
+  midGameScalingFactor: 1.2
+  lateGameScalingFactor: 1.1
+  endGameScalingFactor: 1.01
   upgradeManager: {fileID: 0}
   uiManager: {fileID: 0}
