@@ -4,68 +4,84 @@ using TMPro;
 
 public class UIManager : MonoBehaviour
 {
-    [Header("UI References")]
-    public TextMeshProUGUI timerText;
-    public GameObject pauseMenu;
-    public GameObject statsPanel;
-    public GameObject playAgainButton;
-    public GameObject endGamePanel;
-    public Slider xpSlider;
-    public TMP_Text levelText;
-    public Slider healthBar;
-    public GameObject painelPrincipal;
-    public GameObject multiplayerPanel;
-    public GameObject unitSelectionUI;
-    public GameObject Managers;
+    [Header("Core UI Panels")]
+    [SerializeField] private GameObject pauseMenu;
+    [SerializeField] private GameObject statsPanel;
+    [SerializeField] private GameObject endGamePanel;
+    [SerializeField] private GameObject painelPrincipal; // This is your Main Menu Panel
+    [SerializeField] private GameObject multiplayerPanel;
+    [SerializeField] private GameObject unitSelectionUI; // This is your Character Select Panel
 
-    [Header("New Weapon Panel")]
-    public GameObject newWeaponPanel;
-    public TextMeshProUGUI weaponNameText;
-    public Image weaponSpriteImage;
+    [Header("In-Game HUD")]
+    [SerializeField] private TextMeshProUGUI timerText;
+    [SerializeField] private Slider xpSlider;
+    [SerializeField] private TMP_Text levelText;
+    [SerializeField] private Slider healthBar;
     
-    [Header("Component References")]
-    public AdvancedCameraController advancedCameraController;
+    [Header("New Weapon Panel")]
+    [SerializeField] private GameObject newWeaponPanel;
+    [SerializeField] private TextMeshProUGUI weaponNameText;
+    [SerializeField] private Image weaponSpriteImage;
+    
+    [Header("System References")]
+    [SerializeField] private AdvancedCameraController advancedCameraController;
+    [SerializeField] private GameObject Managers;
 
-    // Cached reference to the GameManager
     private GameManager gameManager;
 
-    // It's good practice to get references in Awake()
     void Awake()
     {
-        // Cache the GameManager instance to avoid repeated, slow calls to FindObjectOfType
         gameManager = GameManager.Instance; 
         if (gameManager == null)
         {
-            // Fallback if the singleton instance isn't set yet
-            gameManager = FindObjectOfType<GameManager>();
+            Debug.LogError("FATAL ERROR: UIManager woke up but could not find the GameManager.Instance!");
         }
+    }
+
+    /// <summary>
+    /// This method is called by the MAIN MENU Play button.
+    /// Its only job is to hide the main menu and show the character selection screen.
+    /// </summary>
+    public void PlayButton()
+    {
+        if (painelPrincipal != null) painelPrincipal.SetActive(false);
+        if (unitSelectionUI != null) unitSelectionUI.SetActive(true);
+        
+        // It no longer tries to start the game or activate the HUD.
+    }
+
+    /// <summary>
+    /// This method will be called by the UnitCarouselSelector AFTER the game has started,
+    /// to activate all the necessary in-game UI and components.
+    /// </summary>
+    public void OnGameStart()
+    {
+        // Now we activate the HUD and other game systems
+        SetInGameHudVisibility(true);
+        if(advancedCameraController != null) advancedCameraController.enabled = true;
+        if(Managers != null) Managers.SetActive(true);
+    }
+
+    public void SetInGameHudVisibility(bool isVisible)
+    {
+        if (xpSlider != null) xpSlider.gameObject.SetActive(isVisible);
+        if (timerText != null) timerText.gameObject.SetActive(isVisible);
+        if (healthBar != null) healthBar.gameObject.SetActive(isVisible);
+        if (levelText != null) levelText.gameObject.SetActive(isVisible);
     }
 
     public void OpenNewWeaponPanel(WeaponData weaponData)
     {
-        // Activate the panel
         newWeaponPanel.SetActive(true);
-
-        // Set the weapon name and sprite
         weaponNameText.text = weaponData.weaponName;
         weaponSpriteImage.sprite = weaponData.icon;
-
-        // Use the cached reference to request a pause
-        if (gameManager != null)
-        {
-            gameManager.RequestPause();
-        }
+        if (gameManager != null) gameManager.RequestPause();
     }
 
     public void CloseNewWeaponPanel()
     {
         newWeaponPanel.SetActive(false);
-        
-        // Use the cached reference to request a resume
-        if (gameManager != null)
-        {
-            gameManager.RequestResume(); // CORRECTED METHOD
-        }
+        if (gameManager != null) gameManager.RequestResume();
     }
 
     public void UpdateTimerText(float time)
@@ -77,11 +93,6 @@ public class UIManager : MonoBehaviour
 
     public void UpdateHealthBar(float currentHealth, float maxHealth)
     {
-        if (healthBar == null)
-        {
-            // Using GameObject.Find is also slow; consider assigning this in the inspector
-            healthBar = GameObject.Find("HP BAR").GetComponent<Slider>();
-        }
         if (healthBar != null)
         {
             healthBar.maxValue = maxHealth;
@@ -91,65 +102,40 @@ public class UIManager : MonoBehaviour
 
     public void ShowEndGamePanel(bool show)
     {
-        if (endGamePanel != null)
-            endGamePanel.SetActive(show);
+        if (endGamePanel != null) endGamePanel.SetActive(show);
     }
 
     public void PlayAgainButton()
     {
-        // Use the cached reference
-        if (gameManager != null)
-        {
-            gameManager.RestartGame();
-        }
-    }
-    public void ShowPauseMenu(bool show)
-    {
-        if (pauseMenu != null)
-            pauseMenu.SetActive(show);
+        if (gameManager != null) gameManager.RestartGame();
     }
 
-    public void ShowStatsPanel(bool show)
+
+
+    public void ShowPauseMenu(bool show)
+    {
+        if (pauseMenu != null) pauseMenu.SetActive(show);
+    }
+
+    public void ToggleStatsPanel()
     {
         if (statsPanel != null)
         {
-            statsPanel.SetActive(show);
+            statsPanel.SetActive(!statsPanel.activeSelf);
         }
     }
 
     public void ShowMultiplayerPanel(bool show)
     {
-        if (multiplayerPanel != null)
-        {
-            multiplayerPanel.SetActive(show);
-        }
+        if (multiplayerPanel != null) multiplayerPanel.SetActive(show);
     }
 
     public void ShowUnitSelectionUI(bool show)
     {
-        Debug.Log("Toggling Unit Selection UI: " + show);
         if (unitSelectionUI != null)
         {
             unitSelectionUI.SetActive(!show);
             painelPrincipal.SetActive(show);
-        }
-    }
-
-    public void PlayButton()
-    {
-        painelPrincipal.SetActive(false);
-        unitSelectionUI.SetActive(false);
-        timerText.gameObject.SetActive(true);
-        xpSlider.gameObject.SetActive(true);
-        levelText.gameObject.SetActive(true);
-        healthBar.gameObject.SetActive(true);
-        advancedCameraController.enabled = true;
-        Managers.SetActive(true);
-        
-        // Use the cached reference
-        if (gameManager != null)
-        {
-            gameManager.StartGame();
         }
     }
 }

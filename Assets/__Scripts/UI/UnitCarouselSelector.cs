@@ -3,7 +3,6 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
 
-// Attach this script to your "UnitSelectionManager" GameObject.
 public class UnitCarouselSelector : MonoBehaviour
 {
     [Header("List of Units")]
@@ -23,38 +22,71 @@ public class UnitCarouselSelector : MonoBehaviour
     public Button selectButton;
 
     private int currentIndex = 0;
-    private GameInitializer gameInitializer;
+    private GameManager gameManager;
+    private UIManager uiManager;
 
     void Start()
     {
-        // Find the GameInitializer in the scene
-        gameInitializer = FindFirstObjectByType<GameInitializer>();
-        if (gameInitializer == null)
+        // Get reliable singleton instances
+        gameManager = GameManager.Instance;
+        if (gameManager == null)
         {
-            Debug.LogError("GameInitializer not found in the scene! The 'Select' button will not work.");
+            Debug.LogError("GameManager.Instance not found! The 'Select' button will not work.");
         }
 
-        // --- Setup Button Listeners ---
+        uiManager = FindFirstObjectByType<UIManager>(); // This is acceptable for a one-time find of another UI manager
+        if (uiManager == null)
+        {
+            Debug.LogError("UIManager not found in the scene! The carousel cannot activate the HUD.");
+        }
+
+        // Setup Button Listeners
         nextButton.onClick.AddListener(NextUnit);
         previousButton.onClick.AddListener(PreviousUnit);
+        selectButton.onClick.AddListener(SelectAndStartGame);
 
-        // --- Initial State ---
-        // Check if we have any units to display
         if (unitPrefabs == null || unitPrefabs.Count == 0)
         {
             Debug.LogError("Unit Prefabs list is empty! The selector cannot function.");
-            // Disable the UI to prevent errors
             gameObject.SetActive(false);
             return;
         }
 
-        // Display the first unit in the list
         UpdateDisplay();
+    }
+
+    /// <summary>
+    /// This is the definitive "start game" button action for the player.
+    /// </summary>
+    public void SelectAndStartGame()
+    {
+        if (gameManager == null)
+        {
+            Debug.LogError("Cannot start game, GameManager reference is missing!");
+            return;
+        }
+
+        // 1. Get the currently selected prefab
+        GameObject selectedPrefab = unitPrefabs[currentIndex];
+
+        // 2. Send the prefab to the GameManager
+        gameManager.SetChosenPlayerPrefab(selectedPrefab);
+
+        // 3. Tell the GameManager to start the core game logic
+        gameManager.StartGame();
+
+        // 4. Tell the UIManager to activate the in-game HUD
+        if (uiManager != null)
+        {
+            uiManager.OnGameStart();
+        }
+
+        // 5. Hide the unit selection UI itself
+        gameObject.SetActive(false); 
     }
 
     public void NextUnit()
     {
-        Debug.Log("Next Unit button clicked.");
         currentIndex++;
         if (currentIndex >= unitPrefabs.Count)
         {
@@ -66,17 +98,13 @@ public class UnitCarouselSelector : MonoBehaviour
     public void PreviousUnit()
     {
         currentIndex--;
-        // If we go before the beginning of the list, loop to the end
         if (currentIndex < 0)
         {
             currentIndex = unitPrefabs.Count - 1;
         }
         UpdateDisplay();
     }
-
-    /// <summary>
-    /// Updates the central image and text to match the currently selected unit.
-    /// </summary>
+    
     private void UpdateDisplay()
     {
         GameObject currentUnit = unitPrefabs[currentIndex];
@@ -91,18 +119,11 @@ public class UnitCarouselSelector : MonoBehaviour
             else
             {
                 Debug.LogWarning($"SpriteRenderer not found on {currentUnit.name}. Cannot update display image.");
-                unitDisplayImage.sprite = null; // Clear the image if no sprite found
+                unitDisplayImage.sprite = null;
             }
 
             // Update the name text
             unitNameText.text = currentUnit.name;
         }
-        else
-        {
-            Debug.LogWarning("Current unit prefab is null. Cannot update display.");
-            unitDisplayImage.sprite = null;
-            unitNameText.text = "Unknown Unit";
-        }
     }
-
 }

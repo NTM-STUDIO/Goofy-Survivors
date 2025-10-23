@@ -4,44 +4,46 @@ using System.Collections;
 public class EnemyDespawner : MonoBehaviour
 {
     [Header("Despawn Settings")]
-    [Tooltip("O raio à volta do jogador. Inimigos fora deste raio serão removidos.")]
-    public float despawnRadius = 50f;
-
-    [Tooltip("Com que frequência (em segundos) verificar se há inimigos a remover.")]
-    public float checkInterval = 2f;
+    [Tooltip("The radius around the player. Enemies outside this radius will be removed.")]
+    [SerializeField] private float despawnRadius = 50f;
+    [Tooltip("How often (in seconds) to check for enemies to remove.")]
+    [SerializeField] private float checkInterval = 2f;
 
     [Header("Gizmo Settings")]
-    [Tooltip("Mostrar o raio de despawn no editor?")]
-    public bool showGizmo = true;
+    [SerializeField] private bool showGizmo = true;
 
-    private Transform playerTransform;
-    private EnemySpawner enemySpawner; // Referência para o spawner
+    // Internal References
+    private Transform playerTransform; // This will be given to us by the GameManager
+    private EnemySpawner enemySpawner;
 
-    void Start()
+    /// <summary>
+    /// The GameManager calls this and provides the newly spawned player object.
+    /// </summary>
+    public void Initialize(GameObject playerObject)
     {
-        // Encontrar o jogador
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
+        if (playerObject != null)
         {
-            playerTransform = player.transform;
+            playerTransform = playerObject.transform;
         }
         else
         {
-            Debug.LogError("EnemyDespawner: Jogador não encontrado! Certifique-se de que o objeto do jogador tem a tag 'Player'.");
+            Debug.LogError("FATAL ERROR: EnemyDespawner received a null player object! Despawner will not work.", this);
             enabled = false;
             return;
         }
 
-        // Encontrar o EnemySpawner na cena
+        // It's safe to find this now, as it's part of the same initialization sequence.
         enemySpawner = FindObjectOfType<EnemySpawner>();
         if (enemySpawner == null)
         {
-            Debug.LogError("EnemyDespawner: EnemySpawner não encontrado na cena!");
+            Debug.LogError("FATAL ERROR: EnemyDespawner could not find the EnemySpawner in the scene!", this);
             enabled = false;
             return;
         }
 
+        // Only start the core logic after a successful initialization.
         StartCoroutine(DespawnEnemiesCoroutine());
+        Debug.Log("EnemyDespawner Initialized successfully.");
     }
 
     IEnumerator DespawnEnemiesCoroutine()
@@ -58,21 +60,12 @@ public class EnemyDespawner : MonoBehaviour
         if (playerTransform == null || enemySpawner == null) return;
 
         EnemyStats[] allEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
-        int respawnedCount = 0;
-
         foreach (EnemyStats enemy in allEnemies)
         {
             if (Vector3.Distance(playerTransform.position, enemy.transform.position) > despawnRadius)
             {
-                // Em vez de destruir, chama a função de respawn
                 enemySpawner.RespawnEnemy(enemy.gameObject);
-                respawnedCount++;
             }
-        }
-
-        if (respawnedCount > 0)
-        {
-            //Debug.Log($"EnemyDespawner: Reposicionados {respawnedCount} inimigos por estarem fora do raio de {despawnRadius} unidades.");
         }
     }
 
@@ -80,7 +73,7 @@ public class EnemyDespawner : MonoBehaviour
     {
         if (!showGizmo) return;
 
-        // Tenta encontrar o jogador no editor para desenhar o gizmo mesmo sem o jogo a correr
+        // Try to find the player in the editor for gizmo drawing, even without the game running.
         if (playerTransform == null)
         {
              GameObject player = GameObject.FindGameObjectWithTag("Player");

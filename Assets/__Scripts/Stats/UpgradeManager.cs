@@ -1,16 +1,15 @@
 using UnityEngine;
-using UnityEngine.EventSystems; // --- IMPORTANTE: ADICIONE ESTA LINHA ---
+using UnityEngine.EventSystems;
 using System.Collections.Generic;
 using System.Linq;
 
 public class UpgradeManager : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private PlayerStats playerStats;
+    [Header("UI References")]
     [SerializeField] private GameObject upgradePanel;
     [SerializeField] private UpgradeChoiceUI upgradeChoicePrefab;
     [SerializeField] private Transform choicesContainer;
-
+    
     [Header("Upgrade Pool")]
     [SerializeField] private List<StatUpgradeData> availableUpgrades;
 
@@ -18,6 +17,10 @@ public class UpgradeManager : MonoBehaviour
     [SerializeField] private List<RarityTier> rarityTiers;
     [Tooltip("The luck value at which rarities will have their 'Max Luck Weight'.")]
     [SerializeField] private float maxLuckForRarity = 100f;
+
+    // Internal References
+    private GameManager gameManager;
+    private PlayerStats playerStats; // This will be given to us by the GameManager
 
     public class GeneratedUpgrade
     {
@@ -31,22 +34,34 @@ public class UpgradeManager : MonoBehaviour
 
     void Awake()
     {
+        gameManager = GameManager.Instance;
+    }
+
+    /// <summary>
+    /// The GameManager calls this and provides the newly spawned player object.
+    /// </summary>
+    public void Initialize(GameObject playerObject)
+    {
+        if (playerObject != null)
+        {
+            playerStats = playerObject.GetComponent<PlayerStats>();
+        }
+
         if (playerStats == null)
         {
-            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-            if (playerObject != null)
-            {
-                playerStats = playerObject.GetComponent<PlayerStats>();
-            }
-            else
-            {
-                Debug.LogError("UpgradeManager Error: Player with tag 'Player' not found! Make sure your player is tagged correctly.");
-            }
+            Debug.LogError("FATAL ERROR: UpgradeManager could not find PlayerStats on the spawned player object! Leveling up will fail.", this);
+            enabled = false;
+        }
+        else
+        {
+            Debug.Log("UpgradeManager Initialized successfully.");
         }
     }
 
     public void AddLevelUpToQueue()
     {
+        if (playerStats == null) return;
+        
         levelUpQueue.Enqueue(1);
         if (!isUpgradeInProgress)
         {
@@ -80,7 +95,7 @@ public class UpgradeManager : MonoBehaviour
         DisplayUpgradeChoices(choices);
         
         upgradePanel.SetActive(true);
-        Time.timeScale = 0f;
+        gameManager.RequestPause();
     }
     
     private int GetNumberOfChoices(float currentLuck)
@@ -113,9 +128,7 @@ public class UpgradeManager : MonoBehaviour
             float luckAdjustedMin = chosenData.baseValueMin + boostAmount;
             
             float effectiveMin = Mathf.Min(luckAdjustedMin, chosenData.baseValueMax);
-            
             float baseValue = Random.Range(effectiveMin, chosenData.baseValueMax);
-            
             generatedUpgrade.Value = baseValue * generatedUpgrade.Rarity.valueMultiplier;
 
             generatedChoices.Add(generatedUpgrade);
@@ -128,7 +141,6 @@ public class UpgradeManager : MonoBehaviour
         if (rarityTiers == null || rarityTiers.Count == 0) return null;
 
         float blendFactor = Mathf.Clamp01(currentLuck / maxLuckForRarity);
-
         var modifiedWeights = new List<float>();
         float totalWeight = 0;
 
@@ -161,84 +173,37 @@ public class UpgradeManager : MonoBehaviour
     
     private void DisplayUpgradeChoices(List<GeneratedUpgrade> choices)
     {
-        // --- LÓGICA MODIFICADA ---
-        GameObject firstChoice = null; // Guarda uma referência ao primeiro botão a ser criado
-
+        GameObject firstChoice = null; 
         foreach (var choice in choices)
         {
             UpgradeChoiceUI uiInstance = Instantiate(upgradeChoicePrefab, choicesContainer);
             uiInstance.Setup(choice, this);
-
-            // Se for o primeiro botão, salvamos a referência dele
-            if (firstChoice == null)
-            {
-                firstChoice = uiInstance.gameObject;
-            }
+            if (firstChoice == null) firstChoice = uiInstance.gameObject;
         }
-
-        // --- NOVA LINHA ---
-        // Diz ao Event System para selecionar o primeiro botão automaticamente.
-        // A partir daqui, W/S, setas e controle já funcionam.
-        if (firstChoice != null)
-        {
-            EventSystem.current.SetSelectedGameObject(firstChoice);
-        }
+        if (firstChoice != null) EventSystem.current.SetSelectedGameObject(firstChoice);
     }
 
     public void ApplyUpgrade(GeneratedUpgrade upgrade)
     {
         float value = upgrade.Value;
-
         switch (upgrade.BaseData.statToUpgrade)
         {
-            case StatType.MaxHP:
-                playerStats.IncreaseMaxHP(Mathf.RoundToInt(value));
-                break;
-            case StatType.HPRegen:
-                playerStats.IncreaseHPRegen(value);
-                break;
-            case StatType.DamageMultiplier:
-                playerStats.IncreaseDamageMultiplier(value / 100f);
-                break;
-            case StatType.CritChance:
-                playerStats.IncreaseCritChance(value / 100f);
-                break;
-            case StatType.CritDamageMultiplier:
-                playerStats.IncreaseCritDamageMultiplier(value / 100f);
-                break;
-            case StatType.AttackSpeedMultiplier:
-                playerStats.IncreaseAttackSpeedMultiplier(value / 100f);
-                break;
-            case StatType.ProjectileCount:
-                playerStats.IncreaseProjectileCount(Mathf.RoundToInt(value));
-                break;
-            case StatType.ProjectileSizeMultiplier:
-                playerStats.IncreaseProjectileSizeMultiplier(value / 100f);
-                break;
-            case StatType.ProjectileSpeedMultiplier:
-                playerStats.IncreaseProjectileSpeedMultiplier(value / 100f);
-                break;
-            case StatType.DurationMultiplier:
-                playerStats.IncreaseDurationMultiplier(value / 100f);
-                break;
-            case StatType.KnockbackMultiplier:
-                playerStats.IncreaseKnockbackMultiplier(value / 100f);
-                break;
-            case StatType.MovementSpeed:
-                playerStats.IncreaseMovementSpeed(value / 100f * playerStats.movementSpeed);
-                break;
-            case StatType.Luck:
-                playerStats.IncreaseLuck(value);
-                break;
-            case StatType.PickupRange:
-                playerStats.IncreasePickupRange(value * playerStats.pickupRange - playerStats.pickupRange);
-                break;
-            case StatType.XPGainMultiplier:
-                playerStats.IncreaseXPGainMultiplier(value / 100f);
-                break;
+            case StatType.MaxHP: playerStats.IncreaseMaxHP(Mathf.RoundToInt(value)); break;
+            case StatType.HPRegen: playerStats.IncreaseHPRegen(value); break;
+            case StatType.DamageMultiplier: playerStats.IncreaseDamageMultiplier(value / 100f); break;
+            case StatType.CritChance: playerStats.IncreaseCritChance(value / 100f); break;
+            case StatType.CritDamageMultiplier: playerStats.IncreaseCritDamageMultiplier(value / 100f); break;
+            case StatType.AttackSpeedMultiplier: playerStats.IncreaseAttackSpeedMultiplier(value / 100f); break;
+            case StatType.ProjectileCount: playerStats.IncreaseProjectileCount(Mathf.RoundToInt(value)); break;
+            case StatType.ProjectileSizeMultiplier: playerStats.IncreaseProjectileSizeMultiplier(value / 100f); break;
+            case StatType.ProjectileSpeedMultiplier: playerStats.IncreaseProjectileSpeedMultiplier(value / 100f); break;
+            case StatType.DurationMultiplier: playerStats.IncreaseDurationMultiplier(value / 100f); break;
+            case StatType.KnockbackMultiplier: playerStats.IncreaseKnockbackMultiplier(value / 100f); break;
+            case StatType.MovementSpeed: playerStats.IncreaseMovementSpeed(value / 100f * playerStats.movementSpeed); break;
+            case StatType.Luck: playerStats.IncreaseLuck(value); break;
+            case StatType.PickupRange: playerStats.IncreasePickupRange(value * playerStats.pickupRange - playerStats.pickupRange); break;
+            case StatType.XPGainMultiplier: playerStats.IncreaseXPGainMultiplier(value / 100f); break;
         }
-
-        Debug.Log($"Applied Upgrade: {upgrade.BaseData.statToUpgrade} +{value} ({upgrade.Rarity.rarity})");
         
         if (levelUpQueue.Count > 0)
         {
@@ -247,17 +212,13 @@ public class UpgradeManager : MonoBehaviour
         else
         {
             isUpgradeInProgress = false;
-            foreach (Transform child in choicesContainer)
-            {
-                Destroy(child.gameObject);
-            }
+            foreach (Transform child in choicesContainer) Destroy(child.gameObject);
             upgradePanel.SetActive(false);
-            Time.timeScale = 1f;
-
-            // --- NOVA LINHA ---
-            // Limpa o foco da UI para que o jogador recupere o controle total.
-            // Evita que um botão "fantasma" continue selecionado.
+            gameManager.RequestResume();
             EventSystem.current.SetSelectedGameObject(null);
         }
     }
+    
+    public List<StatUpgradeData> GetAvailableUpgrades() { return availableUpgrades; }
+    public List<RarityTier> GetRarityTiers() { return rarityTiers; }
 }

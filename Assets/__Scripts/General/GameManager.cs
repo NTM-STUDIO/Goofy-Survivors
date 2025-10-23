@@ -1,185 +1,163 @@
 using UnityEngine;
-using System.Collections;
 using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    public GameObject chosenPlayerPrefab;
+    [Header("Core Manager References")]
+    [Tooltip("CRITICAL: Drag the UIManager object here.")]
+    [SerializeField] private UIManager uiManager;
+    [Tooltip("CRITICAL: Drag the EnemySpawner object here.")]
+    [SerializeField] private EnemySpawner enemySpawner;
+    [Tooltip("CRITICAL: Drag the EnemyDespawner object here.")]
+    [SerializeField] private EnemyDespawner enemyDespawner;
+    [Tooltip("CRITICAL: Drag the UpgradeManager object here.")]
+    [SerializeField] private UpgradeManager upgradeManager;
+    [Tooltip("CRITICAL: Drag the PlayerExperience object from your scene here.")]
+    [SerializeField] private PlayerExperience playerExperience;
 
-    [Header("Core References")]
-    public UIManager uiManager;
-    public Movement player;
-    public EnemySpawner enemySpawner;
-    public EnemyDespawner enemyDespawner;
+    [Header("Player References (Internal)")]
+    private Movement player; // Found on the spawned player
+    private GameObject chosenPlayerPrefab; // Set by the Unit Carousel
 
-    // NEW: Added a PreGame state. This will be the default state when the scene loads.
+    [Header("Prefabs & Spawn Points")]
+    [Tooltip("CRITICAL: The Transform where the player will be spawned.")]
+    [SerializeField] private Transform playerSpawnPoint;
+    [SerializeField] private GameObject bossPrefab;
+    [SerializeField] private Transform bossSpawnPoint;
+
     public enum GameState { PreGame, Playing, Paused, GameOver }
-    public GameState currentState;
+    public GameState CurrentState { get; private set; }
 
     [Header("Timer Settings")]
-    public float totalGameTime = 900f; // 15 minutes in seconds
+    [SerializeField] private float totalGameTime = 900f;
     private float currentTime;
     private bool isTimerRunning = false;
 
     [Header("General Difficulty Settings")]
-    [Tooltip("The multiplier for enemy health.")]
-    public float currentEnemyHealthMultiplier = 1f;
-    [Tooltip("The multiplier for enemy damage.")]
-    public float currentEnemyDamageMultiplier = 1f;
-
+    public float currentEnemyHealthMultiplier { get; private set; } = 1f;
+    public float currentEnemyDamageMultiplier { get; private set; } = 1f;
     [Space]
-    [Tooltip("How much the health multiplier increases each minute.")]
-    public float healthIncreasePerMinute = 5f;
-    [Tooltip("How much the damage multiplier increases each minute.")]
-    public float damageIncreasePerMinute = 2f;
+    [SerializeField] private float healthIncreasePerMinute = 5f;
+    [SerializeField] private float damageIncreasePerMinute = 2f;
 
     [Header("Difficulty Scaling - Caster")]
-    [Tooltip("The base speed of caster projectiles at minute 0.")]
-    public float baseProjectileSpeed = 15f;
-    [Tooltip("How much faster projectiles get each minute.")]
-    public float projectileSpeedIncreasePerMinute = 1.5f;
-    [Tooltip("The base time between shots for casters at minute 0.")]
-    public float baseFireRate = 2f;
-    [Tooltip("How much the time between shots decreases each minute (faster shooting).")]
-    public float fireRateDecreasePerMinute = 0.1f;
-    [Tooltip("The base sight range for casters at minute 0.")]
-    public float baseSightRange = 999f;
-
-    // Public properties for other scripts to read the current scaled values
     public float currentProjectileSpeed { get; private set; }
     public float currentFireRate { get; private set; }
     public float currentSightRange { get; private set; }
+    [Space]
+    [SerializeField] private float baseProjectileSpeed = 15f;
+    [SerializeField] private float projectileSpeedIncreasePerMinute = 1.5f;
+    [SerializeField] private float baseFireRate = 2f;
+    [SerializeField] private float fireRateDecreasePerMinute = 0.1f;
+    [SerializeField] private float baseSightRange = 999f;
 
-    private int lastMinuteMark = 0;
-
-    [Header("Boss Settings")]
-    public GameObject bossPrefab;
-    public Transform bossSpawnPoint;
+    public EnemyStats reaperStats { get; private set; }
     private bool bossSpawned = false;
-
-    public void PlayerDied()
-    {
-
-        if (currentState == GameState.GameOver) return; // Prevent multiple calls
-
-        currentState = GameState.GameOver;
-        isTimerRunning = false;
-        if (player != null) player.enabled = false;
-
-        // The GameManager tells the UIManager what to do.
-        uiManager.ShowEndGamePanel(true);
-    }
-
+    private int lastMinuteMark = 0;
     private int _pauseRequesters = 0;
 
     void Awake()
     {
-
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            Instance = this;
-        }
-
-        if (player == null)
-        {
-            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-            if (playerObject != null)
-            {
-                player = playerObject.GetComponent<Movement>();
-            }
-            else
-            {
-                Debug.LogError("GameManager Error: Player with tag 'Player' not found!");
-            }
-        }
+        if (Instance != null && Instance != this) Destroy(gameObject);
+        else Instance = this;
     }
 
+    void Start()
+    {
+        CurrentState = GameState.PreGame;
+        currentTime = totalGameTime;
+        currentProjectileSpeed = baseProjectileSpeed;
+        currentFireRate = baseFireRate;
+        currentSightRange = baseSightRange;
+    }
 
     void Update()
     {
-        // The game's core logic now ONLY runs if the state is "Playing".
-        if (currentState == GameState.Playing)
+        if (CurrentState == GameState.Playing)
         {
             UpdateTimer();
             CheckForDifficultyIncrease();
             CheckForBossSpawn();
         }
-
-        // You can still check for these inputs regardless of the game state.
         if (Input.GetKeyDown(KeyCode.Tab))
         {
-            uiManager.ShowStatsPanel(!uiManager.statsPanel.activeSelf);
+            if (uiManager != null) uiManager.ToggleStatsPanel();
         }
-
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (currentState == GameState.Playing)
+            if (CurrentState == GameState.Playing)
             {
                 RequestPause();
-                uiManager.ShowPauseMenu(true);
+                if (uiManager != null) uiManager.ShowPauseMenu(true);
             }
-            else if (currentState == GameState.Paused)
+            else if (CurrentState == GameState.Paused)
             {
                 RequestResume();
-                uiManager.ShowPauseMenu(false);
+                if (uiManager != null) uiManager.ShowPauseMenu(false);
             }
         }
     }
     
-    public void Start()
-    {
-        currentState = GameState.PreGame;
-        currentTime = totalGameTime;
-
-        // Initialize caster-specific values
-        currentProjectileSpeed = baseProjectileSpeed;
-        currentFireRate = baseFireRate;
-        currentSightRange = baseSightRange;
-
-        // Ensure the EnemySpawner reference is set
-        if (enemySpawner == null)
-        {
-            Debug.LogError("GameManager: EnemySpawner reference is not set in the Inspector!");
-        }
-        
-        StartGame();
-    }
     #region Game Flow
+    public void SetChosenPlayerPrefab(GameObject playerPrefab)
+    {
+        chosenPlayerPrefab = playerPrefab;
+    }
+
     public void StartGame()
     {
+        if (CurrentState == GameState.Playing) return;
+
+        if (chosenPlayerPrefab == null)
+        {
+            Debug.LogError("FATAL: StartGame was called, but no player prefab was chosen! Call SetChosenPlayerPrefab() first.", this);
+            return;
+        }
+
+        GameObject playerObject = null;
+        if (playerSpawnPoint != null)
+        {
+            playerObject = Instantiate(chosenPlayerPrefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
+            player = playerObject.GetComponent<Movement>();
+        }
+        else
+        {
+            Debug.LogError("FATAL: Cannot start game! The 'Player Spawn Point' is not assigned in the GameManager Inspector.", this);
+            return;
+        }
+
+        if (player == null)
+        {
+            Debug.LogError("FATAL: Player prefab was spawned but is missing a Movement script! Aborting start.", this);
+            return;
+        }
+
+        CurrentState = GameState.Playing;
+        Debug.Log("Game Started! Initializing all managers...");
         
-        Debug.Log("Game Started!");
-        currentState = GameState.Playing;
-        bossSpawnPoint = GameObject.FindGameObjectWithTag("BossSpawn")?.transform;
-        Debug.Log("Boss Spawn Point: " + (bossSpawnPoint != null ? bossSpawnPoint.position.ToString() : "Not Found"));
+        // Initialize all managers, passing the newly created player object to those who need it.
+        if (playerExperience != null) playerExperience.Initialize();
+        else Debug.LogWarning("GameManager is missing reference to the PlayerExperience manager object in the scene.");
+
+        if (upgradeManager != null) upgradeManager.Initialize(playerObject);
+        else Debug.LogWarning("GameManager is missing reference to UpgradeManager.");
+        
+        if (enemyDespawner != null) enemyDespawner.Initialize(playerObject);
+        else Debug.LogWarning("GameManager is missing reference to EnemyDespawner.");
+        
+        if (enemySpawner != null) enemySpawner.StartSpawning();
+        else Debug.LogError("GameManager: EnemySpawner reference is not set in the Inspector!");
+        
+        if (bossSpawnPoint == null) bossSpawnPoint = GameObject.FindGameObjectWithTag("BossSpawn")?.transform;
+        
         isTimerRunning = true;
         bossSpawned = false;
         lastMinuteMark = 0;
         _pauseRequesters = 0;
-
-        // Reset all difficulty multipliers
         currentEnemyHealthMultiplier = 1f;
         currentEnemyDamageMultiplier = 1f;
-        currentProjectileSpeed = baseProjectileSpeed;
-        currentFireRate = baseFireRate;
-        currentSightRange = baseSightRange;
-
-        // --- ADD THIS LINE ---
-        // Tell the EnemySpawner to begin its wave coroutine.
-        if (enemySpawner != null)
-        {
-            enemySpawner.StartSpawning();
-        }
-        else
-        {
-            Debug.LogError("GameManager: EnemySpawner reference is not set in the Inspector!");
-        }
     }
 
     public void RestartGame()
@@ -187,67 +165,59 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
+    
+    public void PlayerDied()
+    {
+        if (CurrentState == GameState.GameOver) return;
+        CurrentState = GameState.GameOver;
+        isTimerRunning = false;
+        if (player != null) player.enabled = false;
+        if (uiManager != null)
+        {
+            uiManager.ShowEndGamePanel(true);
+            uiManager.SetInGameHudVisibility(false);
+        }
+    }
 
     private void EndGame()
     {
         isTimerRunning = false;
-        currentState = GameState.GameOver;
+        CurrentState = GameState.GameOver;
         Debug.Log("Time's up! Game Over.");
-        uiManager.ShowEndGamePanel(true);
-        uiManager.xpSlider.gameObject.SetActive(false);
-        uiManager.timerText.gameObject.SetActive(false);
-        uiManager.healthBar.gameObject.SetActive(false);
+        if (uiManager != null)
+        {
+            uiManager.ShowEndGamePanel(true);
+            uiManager.SetInGameHudVisibility(false);
+        }
     }
-
     #endregion
 
-    // ... The rest of your code (Pause Management, Timers, Difficulty, etc.) remains the same ...
-    // --- (I've removed the rest for brevity, but you should keep it in your script) ---
     #region Pause Management
-
-    /// <summary>
-    /// A UI panel or system calls this to request a game pause.
-    /// The game will only pause if it's the first request.
-    /// </summary>
     public void RequestPause()
     {
         _pauseRequesters++;
-
-        // If this is the first pause request, and we are currently playing, pause the game
-        if (_pauseRequesters == 1 && currentState == GameState.Playing)
+        if (_pauseRequesters == 1 && CurrentState == GameState.Playing)
         {
-            currentState = GameState.Paused;
+            CurrentState = GameState.Paused;
             Time.timeScale = 0f;
             if (player != null) player.enabled = false;
-            Debug.Log("Game Paused. Requests: " + _pauseRequesters);
         }
     }
 
-    /// <summary>
-    /// A UI panel or system calls this when it no longer needs the game to be paused.
-    /// The game will only resume if all requests have been lifted.
-    /// </summary>
     public void RequestResume()
     {
         _pauseRequesters--;
-
-        // Ensure the count doesn't go below zero
         if (_pauseRequesters < 0) _pauseRequesters = 0;
-
-        // If this was the last pause request, and the game is currently paused, resume it
-        if (_pauseRequesters == 0 && currentState == GameState.Paused)
+        if (_pauseRequesters == 0 && CurrentState == GameState.Paused)
         {
-            currentState = GameState.Playing;
+            CurrentState = GameState.Playing;
             Time.timeScale = 1f;
             if (player != null) player.enabled = true;
-            Debug.Log("Game Resumed. Requests: ".ToString() + _pauseRequesters);
         }
     }
-
     #endregion
 
     #region Timers and Spawning
-
     private void UpdateTimer()
     {
         if (isTimerRunning)
@@ -258,16 +228,14 @@ public class GameManager : MonoBehaviour
                 currentTime = 0;
                 EndGame();
             }
-            uiManager.UpdateTimerText(currentTime);
+            if (uiManager != null) uiManager.UpdateTimerText(currentTime);
         }
     }
 
     private void CheckForBossSpawn()
     {
-
         if (!bossSpawned && currentTime <= 10.0f)
         {
-            Debug.Log("Spawning Boss...");
             SpawnBoss();
             bossSpawned = true;
         }
@@ -275,21 +243,16 @@ public class GameManager : MonoBehaviour
 
     private void SpawnBoss()
     {
-        Debug.Log("Attempting to spawn boss...");
-        Debug.Log("Boss Prefab: " + (bossPrefab != null ? bossPrefab.name : "Not Assigned"));
-        Debug.Log("Boss Spawn Point: " + (bossSpawnPoint != null ? bossSpawnPoint.position.ToString() : "Not Assigned"));
         if (bossPrefab != null && bossSpawnPoint != null)
         {
-            
-            Instantiate(bossPrefab, bossSpawnPoint.position + Vector3.up * 10f, bossSpawnPoint.rotation);
+            GameObject bossObject = Instantiate(bossPrefab, bossSpawnPoint.position + Vector3.up * 10f, bossSpawnPoint.rotation);
+            reaperStats = bossObject.GetComponent<EnemyStats>();
             Debug.Log("The Final Boss has appeared!");
         }
     }
-
     #endregion
 
     #region Difficulty Scaling
-
     private void CheckForDifficultyIncrease()
     {
         int currentMinute = Mathf.FloorToInt((totalGameTime - currentTime) / 60);
@@ -302,40 +265,21 @@ public class GameManager : MonoBehaviour
 
     private void IncreaseDifficulty()
     {
-        // General scaling
         currentEnemyHealthMultiplier += healthIncreasePerMinute;
         currentEnemyDamageMultiplier += damageIncreasePerMinute;
-
-        // Caster-specific scaling
         currentProjectileSpeed += projectileSpeedIncreasePerMinute;
-        // Ensure fire rate doesn't become impossibly fast
         currentFireRate = Mathf.Max(0.2f, baseFireRate - (fireRateDecreasePerMinute * lastMinuteMark));
-
-        Debug.Log($"DIFFICULTY INCREASED! Minute {lastMinuteMark}. " +
-                  $"Health: {currentEnemyHealthMultiplier:F2}x, " +
-                  $"Damage: {currentEnemyDamageMultiplier:F2}x, " +
-                  $"Proj. Speed: {currentProjectileSpeed:F2}, " +
-                  $"Fire Rate: {currentFireRate:F2}s");
     }
-
     #endregion
-
-    #region Data and Scoring
-
-
-    #endregion
-
+    
     #region Getters and Setters
-
     public float GetRemainingTime() { return currentTime; }
+    public float GetTotalGameTime() { return totalGameTime; }
 
     public void SetGameDuration(float newDuration)
     {
         totalGameTime = newDuration;
         currentTime = newDuration;
-        bossSpawned = false;
-        lastMinuteMark = 0;
     }
-
     #endregion
 }

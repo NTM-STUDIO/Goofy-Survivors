@@ -54,7 +54,7 @@ public class ExperienceOrb : MonoBehaviour
     private void CollectOrb()
     {
         // GetComponentInParent works the same way in 3D, searching up the hierarchy.
-        PlayerExperience playerExperience = attractionTarget.GetComponentInParent<PlayerExperience>();
+        PlayerExperience playerExperience = FindFirstObjectByType<PlayerExperience>();
         PlayerStats playerStats = attractionTarget.GetComponentInParent<PlayerStats>();
 
         if (playerExperience != null && playerStats != null)
