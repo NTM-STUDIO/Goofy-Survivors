@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "126814740455",
+    "project_id": "reapersdayoffthegame",
+    "storage_bucket": "reapersdayoffthegame.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:126814740455:android:1176033d3cc8e05fe62742",
+        "android_client_info": {
+          "package_name": "com.game.firebaseapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcEmDK50FX5CAt1rI0Z9SnE0gdW269Nws"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
