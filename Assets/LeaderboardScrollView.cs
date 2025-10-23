@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq; // for sorting
+using Firebase.Database;
 
 public class LeaderboardScrollView : MonoBehaviour
 {
@@ -9,7 +10,7 @@ public class LeaderboardScrollView : MonoBehaviour
     public class LeaderboardEntryData
     {
         public string playerName;
-        public int score;
+        public int damage;
     }
 
     [Header("UI References")]
@@ -18,26 +19,62 @@ public class LeaderboardScrollView : MonoBehaviour
     [SerializeField] private ScrollRect scrollRect;    // The Scroll View component
 
     private readonly List<GameObject> spawnedEntries = new List<GameObject>();
+    private db database;
 
-    private void Start()
+    private void Awake()
     {
-        // Example data
-        List<LeaderboardEntryData> sampleData = new List<LeaderboardEntryData>()
+        database = FindFirstObjectByType<db>();
+        if (database == null)
         {
-            new LeaderboardEntryData(){ playerName="Alice", score=1200 },
-            new LeaderboardEntryData(){ playerName="Bob", score=1100 },
-            new LeaderboardEntryData(){ playerName="Cathy", score=950 },
-            new LeaderboardEntryData(){ playerName="David", score=800 },
-            new LeaderboardEntryData(){ playerName="Eve", score=700 },
-        };
+            Debug.LogError("db script not found in the scene!");
+        }
+    }
 
-        Populate(sampleData);
+    private async void Start()
+    {
+        if (database == null)
+        {
+            // Fallback to sample data if database is not found
+            List<LeaderboardEntryData> sampleData = new List<LeaderboardEntryData>()
+            {
+                new LeaderboardEntryData(){ playerName="No Connection", damage=6969 },
+            };
+            Populate(sampleData);
+            return;
+        }
+
+        var task = database.GetGoofersDataAsync();
+        await task;
+
+        if (task.IsFaulted)
+        {
+            Debug.LogError("Failed to get leaderboard data: " + task.Exception);
+            return;
+        }
+
+        if (task.IsCompleted)
+        {
+            DataSnapshot snapshot = task.Result;
+            List<LeaderboardEntryData> leaderboardData = new List<LeaderboardEntryData>();
+
+            foreach (DataSnapshot userSnapshot in snapshot.Children)
+            {
+                var userDict = (IDictionary<string, object>)userSnapshot.Value;
+                leaderboardData.Add(new LeaderboardEntryData()
+                {
+                    playerName = userDict["username"].ToString(),
+                    damage = System.Convert.ToInt32(userDict["damage"])
+                });
+            }
+            
+            Populate(leaderboardData);
+        }
     }
 
     public void Populate(List<LeaderboardEntryData> entries)
     {
-        // Sort entries by score (highest first)
-        entries = entries.OrderByDescending(e => e.score).ToList();
+        // Sort entries by damage (highest first)
+        entries = entries.OrderByDescending(e => e.damage).ToList();
 
         // Clear existing
         foreach (var go in spawnedEntries)
@@ -57,7 +94,7 @@ public class LeaderboardScrollView : MonoBehaviour
             LeaderboardEntryUI entryUI = newEntry.GetComponent<LeaderboardEntryUI>();
             if (entryUI != null)
             {
-                entryUI.SetData(rank, entry.playerName, entry.score);
+                entryUI.SetData(rank, entry.playerName, entry.damage);
             }
 
             spawnedEntries.Add(newEntry);

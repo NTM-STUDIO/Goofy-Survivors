@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "126814740455",
+    "firebase_url": "https://reapersdayoffthegame-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "reapersdayoffthegame",
     "storage_bucket": "reapersdayoffthegame.firebasestorage.app"
   },

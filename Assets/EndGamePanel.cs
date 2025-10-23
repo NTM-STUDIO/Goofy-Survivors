@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro; // Make sure to import TextMeshPro for UI elements
+using UnityEngine.UI;
 
 /// <summary>
 /// Manages the end game UI panel, displaying final stats like time survived
@@ -14,6 +15,27 @@ public class EndGamePanel : MonoBehaviour
     [Tooltip("The TextMeshPro UI element to display the total damage dealt to the Reaper.")]
     [SerializeField] private TextMeshProUGUI reaperDamageText;
 
+    [Tooltip("The InputField for the player to enter their name.")]
+    [SerializeField] private TMP_InputField usernameInput;
+
+    [Tooltip("The button to save the score.")]
+    [SerializeField] private Button saveButton;
+
+    private db database;
+    private float damageDone;
+    private float timeLasted;
+
+    void Start()
+    {
+        database = FindFirstObjectByType<db>();
+        if (database == null)
+        {
+            Debug.LogError("db script not found in the scene!");
+        }
+
+        saveButton.onClick.AddListener(SaveScore);
+    }
+
     /// <summary>
     /// This function is called when the GameObject becomes enabled and active.
     /// It automatically updates the UI with the final game stats.
@@ -21,6 +43,24 @@ public class EndGamePanel : MonoBehaviour
     void OnEnable()
     {
         UpdateEndGameStats();
+    }
+
+    public void SaveScore()
+    {
+        Debug.Log("Attempting to save score...");
+        string username = usernameInput.text;
+        if (string.IsNullOrEmpty(username))
+        {
+            Debug.LogError("Username is empty!");
+            return;
+        }
+
+        if (database != null)
+        {
+            database.WriteNewScore(username, (int)damageDone);
+            Debug.Log("Score saved!");
+            saveButton.interactable = false; // Disable button after saving
+        }
     }
 
     /// <summary>
@@ -34,7 +74,7 @@ public class EndGamePanel : MonoBehaviour
         {
             float totalTime = GameManager.Instance.totalGameTime;
             float remainingTime = GameManager.Instance.GetRemainingTime();
-            float timeLasted = totalTime - remainingTime;
+            timeLasted = totalTime - remainingTime;
 
             // Format the time from seconds into a more readable MM:SS format.
             int minutes = Mathf.FloorToInt(timeLasted / 60);
@@ -67,7 +107,7 @@ public class EndGamePanel : MonoBehaviour
                 float reaperCurrentHealth = reaperStats.CurrentHealth;
 
                 // Damage done is the difference between its starting health and its current health.
-                float damageDone = reaperMaxHealth - reaperCurrentHealth;
+                damageDone = reaperMaxHealth - reaperCurrentHealth;
 
                 // Display the calculated damage, formatted as a whole number.
                 reaperDamageText.text = $"Damage to Reaper: {damageDone:F0}";
