@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq; // for sorting
 using Firebase.Database;
@@ -36,8 +37,30 @@ public class LeaderboardScrollView : MonoBehaviour
             return;
         }
 
-        // Subscribe to the ValueChanged event
+        // Use a coroutine to wait for the database to be ready
+        StartCoroutine(WaitForDbAndSubscribe());
+    }
+
+    private IEnumerator WaitForDbAndSubscribe()
+    {
+        // Wait until MDatabase is initialized
+        yield return new WaitUntil(() => database.MDatabase != null);
+
+        // Now it's safe to subscribe
         database.MDatabase.Child("goofers").ValueChanged += HandleLeaderboardUpdated;
+        
+        // Also, trigger an initial data load
+        var task = database.MDatabase.Child("goofers").GetValueAsync();
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        if (task.IsFaulted)
+        {
+            Debug.LogError("Failed to get initial leaderboard data: " + task.Exception);
+        }
+        else if (task.IsCompleted)
+        {
+            ProcessSnapshot(task.Result);
+        }
     }
 
     private void OnDisable()
@@ -56,10 +79,13 @@ public class LeaderboardScrollView : MonoBehaviour
             Debug.LogError(args.DatabaseError.Message);
             return;
         }
+        ProcessSnapshot(args.Snapshot);
+    }
 
-        if (args.Snapshot != null && args.Snapshot.Exists)
+    private void ProcessSnapshot(DataSnapshot snapshot)
+    {
+        if (snapshot != null && snapshot.Exists)
         {
-            DataSnapshot snapshot = args.Snapshot;
             List<LeaderboardEntryData> leaderboardData = new List<LeaderboardEntryData>();
 
             foreach (DataSnapshot userSnapshot in snapshot.Children)
