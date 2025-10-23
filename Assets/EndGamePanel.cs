@@ -2,6 +2,8 @@ using UnityEngine;
 using TMPro; // Make sure to import TextMeshPro for UI elements
 using UnityEngine.UI;
 using JetBrains.Annotations;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Manages the end game UI panel, displaying final stats like time survived
@@ -25,8 +27,9 @@ public class EndGamePanel : MonoBehaviour
     private db database;
     private float damageDone;
     private float timeLasted;
+    private string userId;
 
-    void Start()
+    private async void Awake()
     {
         database = FindFirstObjectByType<db>();
         if (database == null)
@@ -34,34 +37,100 @@ public class EndGamePanel : MonoBehaviour
             Debug.LogError("db script not found in the scene!");
         }
 
-        saveButton.onClick.AddListener(SaveScore);
+        // Check for saved player data
+        if (PlayerPrefs.HasKey("PlayerId"))
+        {
+            userId = PlayerPrefs.GetString("PlayerId");
+            usernameInput.text = PlayerPrefs.GetString("PlayerUsername");
+            usernameInput.interactable = false;
+            saveButton.gameObject.SetActive(false); // Hide save button for existing users
+        }
+        else
+        {
+            userId = null;
+            usernameInput.interactable = true;
+            saveButton.gameObject.SetActive(true); // Show save button for new users
+            saveButton.onClick.AddListener(SaveScore);
+        }
+    }
+
+    void Start()
+    {
+        // The original content of Start() is moved to Awake()
+        // to ensure it runs before OnEnable().
     }
 
     /// <summary>
     /// This function is called when the GameObject becomes enabled and active.
-    /// It automatically updates the UI with the final game stats.
+    /// It automatically updates the UI with the final game stats and handles auto-saving.
     /// </summary>
-    void OnEnable()
+    async void OnEnable()
     {
         UpdateEndGameStats();
+
+        // Auto-save for existing users
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await AutoSaveScore();
+        }
+    }
+
+    private async Task AutoSaveScore()
+    {
+        if (database != null)
+        {
+            var userSnapshot = await database.GetUserAsync(userId);
+            if (userSnapshot.Exists)
+            {
+                var userDict = (IDictionary<string, object>)userSnapshot.Value;
+                int existingScore = System.Convert.ToInt32(userDict["score"]);
+
+                if (timeLasted > existingScore)
+                {
+                    database.NewGoofer(userId, PlayerPrefs.GetString("PlayerUsername"), (int)timeLasted, (int)damageDone);
+                    Debug.Log("Score updated automatically!");
+                }
+                else
+                {
+                    Debug.Log("New score is not higher. Not updating.");
+                }
+            }
+            else
+            {
+                // User in prefs but not DB, save new score
+                database.NewGoofer(userId, PlayerPrefs.GetString("PlayerUsername"), (int)timeLasted, (int)damageDone);
+                Debug.Log("User in prefs but not DB. New score saved!");
+            }
+        }
     }
 
     public void SaveScore()
     {
         Debug.Log("Attempting to save score...");
         string username = usernameInput.text;
-        string userId = System.Guid.NewGuid().ToString();
+
         if (string.IsNullOrEmpty(username))
         {
             Debug.LogError("Username is empty!");
             return;
         }
 
-        if (database != null)
+        // This part is now only for the first-time save
+        if (string.IsNullOrEmpty(userId))
         {
-            database.NewGoofer(userId, username, (int)damageDone);
-            Debug.Log("Score saved!");
-            saveButton.interactable = false; // Disable button after saving
+            userId = System.Guid.NewGuid().ToString();
+            PlayerPrefs.SetString("PlayerId", userId);
+            PlayerPrefs.SetString("PlayerUsername", username);
+            PlayerPrefs.Save();
+            Debug.Log($"New player created. ID: {userId}, Username: {username}");
+
+            if (database != null)
+            {
+                database.NewGoofer(userId, username, (int)timeLasted, (int)damageDone);
+                Debug.Log("New score saved!");
+            }
+            saveButton.gameObject.SetActive(false); // Hide button after first save
+            usernameInput.interactable = false;
         }
     }
 

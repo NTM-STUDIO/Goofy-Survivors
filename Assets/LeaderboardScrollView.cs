@@ -21,40 +21,45 @@ public class LeaderboardScrollView : MonoBehaviour
     private readonly List<GameObject> spawnedEntries = new List<GameObject>();
     private db database;
 
-    private void Awake()
+    private void OnEnable()
     {
         database = FindFirstObjectByType<db>();
         if (database == null)
         {
             Debug.LogError("db script not found in the scene!");
-        }
-    }
-
-    private async void Start()
-    {
-        if (database == null)
-        {
             // Fallback to sample data if database is not found
             List<LeaderboardEntryData> sampleData = new List<LeaderboardEntryData>()
             {
-                new LeaderboardEntryData(){ playerName="No Connection", damage=6969 },
+                new LeaderboardEntryData(){ playerName="Alice", damage=1200 },
             };
             Populate(sampleData);
             return;
         }
 
-        var task = database.GetGoofersDataAsync();
-        await task;
+        // Subscribe to the ValueChanged event
+        database.MDatabase.Child("goofers").ValueChanged += HandleLeaderboardUpdated;
+    }
 
-        if (task.IsFaulted)
+    private void OnDisable()
+    {
+        if (database != null)
         {
-            Debug.LogError("Failed to get leaderboard data: " + task.Exception);
+            // Unsubscribe to prevent memory leaks
+            database.MDatabase.Child("goofers").ValueChanged -= HandleLeaderboardUpdated;
+        }
+    }
+
+    private void HandleLeaderboardUpdated(object sender, ValueChangedEventArgs args)
+    {
+        if (args.DatabaseError != null)
+        {
+            Debug.LogError(args.DatabaseError.Message);
             return;
         }
 
-        if (task.IsCompleted)
+        if (args.Snapshot != null && args.Snapshot.Exists)
         {
-            DataSnapshot snapshot = task.Result;
+            DataSnapshot snapshot = args.Snapshot;
             List<LeaderboardEntryData> leaderboardData = new List<LeaderboardEntryData>();
 
             foreach (DataSnapshot userSnapshot in snapshot.Children)
@@ -66,9 +71,14 @@ public class LeaderboardScrollView : MonoBehaviour
                     damage = System.Convert.ToInt32(userDict["damage"])
                 });
             }
-            
+
             Populate(leaderboardData);
         }
+    }
+
+    private void Start()
+    {
+        // The logic is now handled by OnEnable and the ValueChanged event
     }
 
     public void Populate(List<LeaderboardEntryData> entries)
