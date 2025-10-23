@@ -153,8 +153,11 @@ public class GameManager : MonoBehaviour
     #region Game Flow
     public void StartGame()
     {
+        
         Debug.Log("Game Started!");
         currentState = GameState.Playing;
+        bossSpawnPoint = GameObject.FindGameObjectWithTag("BossSpawn")?.transform;
+        Debug.Log("Boss Spawn Point: " + (bossSpawnPoint != null ? bossSpawnPoint.position.ToString() : "Not Found"));
         isTimerRunning = true;
         bossSpawned = false;
         lastMinuteMark = 0;
@@ -190,6 +193,10 @@ public class GameManager : MonoBehaviour
         isTimerRunning = false;
         currentState = GameState.GameOver;
         Debug.Log("Time's up! Game Over.");
+        uiManager.ShowEndGamePanel(true);
+        uiManager.xpSlider.gameObject.SetActive(false);
+        uiManager.timerText.gameObject.SetActive(false);
+        uiManager.healthBar.gameObject.SetActive(false);
     }
 
     #endregion
@@ -257,8 +264,10 @@ public class GameManager : MonoBehaviour
 
     private void CheckForBossSpawn()
     {
+
         if (!bossSpawned && currentTime <= 10.0f)
         {
+            Debug.Log("Spawning Boss...");
             SpawnBoss();
             bossSpawned = true;
         }
@@ -266,9 +275,13 @@ public class GameManager : MonoBehaviour
 
     private void SpawnBoss()
     {
+        Debug.Log("Attempting to spawn boss...");
+        Debug.Log("Boss Prefab: " + (bossPrefab != null ? bossPrefab.name : "Not Assigned"));
+        Debug.Log("Boss Spawn Point: " + (bossSpawnPoint != null ? bossSpawnPoint.position.ToString() : "Not Assigned"));
         if (bossPrefab != null && bossSpawnPoint != null)
         {
-            Instantiate(bossPrefab, bossSpawnPoint.position + Vector3.up * 3.5f, bossSpawnPoint.rotation);
+            
+            Instantiate(bossPrefab, bossSpawnPoint.position + Vector3.up * 10f, bossSpawnPoint.rotation);
             Debug.Log("The Final Boss has appeared!");
         }
     }

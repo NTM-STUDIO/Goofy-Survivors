@@ -62,9 +62,5 @@ public class LeaderboardScrollView : MonoBehaviour
 
             spawnedEntries.Add(newEntry);
         }
-
-        // Scroll to top
-        Canvas.ForceUpdateCanvases();
-        scrollRect.verticalNormalizedPosition = 1f;
     }
 }
