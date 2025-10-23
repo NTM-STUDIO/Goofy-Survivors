@@ -61,6 +61,7 @@ public class GameManager : MonoBehaviour
 
     public void PlayerDied()
     {
+
         if (currentState == GameState.GameOver) return; // Prevent multiple calls
 
         currentState = GameState.GameOver;
@@ -75,6 +76,7 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
+
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -98,26 +100,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // CHANGED: The Start method no longer starts the game automatically.
-    // It now sets up the "PreGame" state.
-    void Start()
-    {
-        currentState = GameState.PreGame;
-        Time.timeScale = 1f; // Ensure time is running for any pre-game animations
-
-        // Disable core gameplay components
-        if (player != null) player.enabled = false;
-        if (enemySpawner != null) enemySpawner.enabled = false; // Make sure the spawner doesn't run
-
-        // Initialize the timer display without starting it
-        currentTime = totalGameTime;
-        isTimerRunning = false;
-        uiManager.UpdateTimerText(currentTime);
-
-        // --- Optional, but recommended ---
-        // You should have a start menu panel in your UIManager that you show here.
-        // For example: uiManager.ShowStartPanel(true);
-    }
 
     void Update()
     {
@@ -149,13 +131,29 @@ public class GameManager : MonoBehaviour
             }
         }
     }
+    
+    public void Start()
+    {
+        currentState = GameState.PreGame;
+        currentTime = totalGameTime;
 
+        // Initialize caster-specific values
+        currentProjectileSpeed = baseProjectileSpeed;
+        currentFireRate = baseFireRate;
+        currentSightRange = baseSightRange;
+
+        // Ensure the EnemySpawner reference is set
+        if (enemySpawner == null)
+        {
+            Debug.LogError("GameManager: EnemySpawner reference is not set in the Inspector!");
+        }
+        
+        StartGame();
+    }
     #region Game Flow
     public void StartGame()
     {
-        // Add a guard to prevent starting the game if it's already running.
-        if (currentState != GameState.PreGame) return;
-
+        Debug.Log("Game Started!");
         currentState = GameState.Playing;
         isTimerRunning = true;
         bossSpawned = false;
@@ -169,7 +167,16 @@ public class GameManager : MonoBehaviour
         currentFireRate = baseFireRate;
         currentSightRange = baseSightRange;
 
-        // Enable
+        // --- ADD THIS LINE ---
+        // Tell the EnemySpawner to begin its wave coroutine.
+        if (enemySpawner != null)
+        {
+            enemySpawner.StartSpawning();
+        }
+        else
+        {
+            Debug.LogError("GameManager: EnemySpawner reference is not set in the Inspector!");
+        }
     }
 
     public void RestartGame()

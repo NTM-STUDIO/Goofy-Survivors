@@ -1,4 +1,4 @@
-using UnityEngine;
+    using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -21,8 +21,9 @@ public class EnemySpawner : MonoBehaviour
 
     private Camera mainCamera;
 
-    void Awake()
+    void Start()
     {
+
         mainCamera = Camera.main;
         if (mainCamera == null)
         {
@@ -32,6 +33,7 @@ public class EnemySpawner : MonoBehaviour
 
     public void StartSpawning()
     {
+        Debug.Log("EnemySpawner: Starting wave spawning.");
         if (waves != null && waves.Count > 0)
             StartCoroutine(SpawnWaves());
         else
@@ -40,6 +42,7 @@ public class EnemySpawner : MonoBehaviour
 
     IEnumerator SpawnWaves()
     {
+        Debug.Log("EnemySpawner: Beginning wave spawning.");
         yield return null; // Espera um frame para garantir que tudo foi inicializado
         while (waveIndex < waves.Count)
         {
@@ -95,6 +98,7 @@ public class EnemySpawner : MonoBehaviour
     // --- FUNÇÃO DE POSIÇÃO DE SPAWN TOTALMENTE REESCRITA E CORRIGIDA ---
     Vector3 GetSpawnPosition3D(SpawnSide side)
     {
+        Debug.Log("Calculating spawn position for side: " + side.ToString());
         if (mainCamera == null) return Vector3.zero;
 
         // Cria um plano infinito na altura do chão.
@@ -150,6 +154,7 @@ public class EnemySpawner : MonoBehaviour
     // Função auxiliar para encontrar pontos de interseção de forma robusta
     Vector3 GetWorldPointOnPlane(Vector2 viewportCoord, Plane plane)
     {
+        Debug.Log("EnemySpawner: Getting world point on plane for viewport coord: " + viewportCoord);
         Ray ray = mainCamera.ViewportPointToRay(viewportCoord);
         if (plane.Raycast(ray, out float distance))
         {
@@ -165,6 +170,7 @@ public class EnemySpawner : MonoBehaviour
     // Esta função permanece inalterada
     SpawnSide ChooseBalancedSpawnSide()
     {
+        Debug.Log("EnemySpawner: Choosing balanced spawn side.");
         SpawnSide fallback = (SpawnSide)Random.Range(0, 4);
         if (mainCamera == null) return fallback;
         EnemyStats[] activeEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);

@@ -1,8 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+
 public class UIManager : MonoBehaviour
 {
+    [Header("UI References")]
     public TextMeshProUGUI timerText;
     public GameObject pauseMenu;
     public GameObject statsPanel;
@@ -13,14 +15,31 @@ public class UIManager : MonoBehaviour
     public Slider healthBar;
     public GameObject painelPrincipal;
     public GameObject multiplayerPanel;
-    public AdvancedCameraController advancedCameraController;
-    public GameObject Managers;
     public GameObject unitSelectionUI;
+    public GameObject Managers;
 
-    public GameManager gameManager;
+    [Header("New Weapon Panel")]
     public GameObject newWeaponPanel;
     public TextMeshProUGUI weaponNameText;
     public Image weaponSpriteImage;
+    
+    [Header("Component References")]
+    public AdvancedCameraController advancedCameraController;
+
+    // Cached reference to the GameManager
+    private GameManager gameManager;
+
+    // It's good practice to get references in Awake()
+    void Awake()
+    {
+        // Cache the GameManager instance to avoid repeated, slow calls to FindObjectOfType
+        gameManager = GameManager.Instance; 
+        if (gameManager == null)
+        {
+            // Fallback if the singleton instance isn't set yet
+            gameManager = FindObjectOfType<GameManager>();
+        }
+    }
 
     public void OpenNewWeaponPanel(WeaponData weaponData)
     {
@@ -30,17 +49,23 @@ public class UIManager : MonoBehaviour
         // Set the weapon name and sprite
         weaponNameText.text = weaponData.weaponName;
         weaponSpriteImage.sprite = weaponData.icon;
-        gameManager = FindObjectOfType<GameManager>();
-        gameManager.RequestPause();
 
+        // Use the cached reference to request a pause
+        if (gameManager != null)
+        {
+            gameManager.RequestPause();
+        }
     }
 
     public void CloseNewWeaponPanel()
     {
         newWeaponPanel.SetActive(false);
-        gameManager = FindObjectOfType<GameManager>();
-        gameManager.RequestPause();
-
+        
+        // Use the cached reference to request a resume
+        if (gameManager != null)
+        {
+            gameManager.RequestResume(); // CORRECTED METHOD
+        }
     }
 
     public void UpdateTimerText(float time)
@@ -54,6 +79,7 @@ public class UIManager : MonoBehaviour
     {
         if (healthBar == null)
         {
+            // Using GameObject.Find is also slow; consider assigning this in the inspector
             healthBar = GameObject.Find("HP BAR").GetComponent<Slider>();
         }
         if (healthBar != null)
@@ -71,7 +97,11 @@ public class UIManager : MonoBehaviour
 
     public void PlayAgainButton()
     {
-        GameManager.Instance.RestartGame();
+        // Use the cached reference
+        if (gameManager != null)
+        {
+            gameManager.RestartGame();
+        }
     }
     public void ShowPauseMenu(bool show)
     {
@@ -105,7 +135,6 @@ public class UIManager : MonoBehaviour
         }
     }
 
-
     public void PlayButton()
     {
         painelPrincipal.SetActive(false);
@@ -116,8 +145,11 @@ public class UIManager : MonoBehaviour
         healthBar.gameObject.SetActive(true);
         advancedCameraController.enabled = true;
         Managers.SetActive(true);
-        GameManager.Instance.StartGame();
+        
+        // Use the cached reference
+        if (gameManager != null)
+        {
+            gameManager.StartGame();
+        }
     }
-
-
 }
