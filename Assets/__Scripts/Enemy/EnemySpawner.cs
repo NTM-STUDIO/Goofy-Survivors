@@ -98,7 +98,7 @@ public class EnemySpawner : MonoBehaviour
     // --- FUNÇÃO DE POSIÇÃO DE SPAWN TOTALMENTE REESCRITA E CORRIGIDA ---
     Vector3 GetSpawnPosition3D(SpawnSide side)
     {
-        Debug.Log("Calculating spawn position for side: " + side.ToString());
+        //Debug.Log("Calculating spawn position for side: " + side.ToString());
         if (mainCamera == null) return Vector3.zero;
 
         // Cria um plano infinito na altura do chão.
@@ -154,7 +154,7 @@ public class EnemySpawner : MonoBehaviour
     // Função auxiliar para encontrar pontos de interseção de forma robusta
     Vector3 GetWorldPointOnPlane(Vector2 viewportCoord, Plane plane)
     {
-        Debug.Log("EnemySpawner: Getting world point on plane for viewport coord: " + viewportCoord);
+        //Debug.Log("EnemySpawner: Getting world point on plane for viewport coord: " + viewportCoord);
         Ray ray = mainCamera.ViewportPointToRay(viewportCoord);
         if (plane.Raycast(ray, out float distance))
         {
@@ -170,7 +170,7 @@ public class EnemySpawner : MonoBehaviour
     // Esta função permanece inalterada
     SpawnSide ChooseBalancedSpawnSide()
     {
-        Debug.Log("EnemySpawner: Choosing balanced spawn side.");
+        //Debug.Log("EnemySpawner: Choosing balanced spawn side.");
         SpawnSide fallback = (SpawnSide)Random.Range(0, 4);
         if (mainCamera == null) return fallback;
         EnemyStats[] activeEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);

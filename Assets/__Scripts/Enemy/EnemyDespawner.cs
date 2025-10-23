@@ -72,7 +72,7 @@ public class EnemyDespawner : MonoBehaviour
 
         if (respawnedCount > 0)
         {
-            Debug.Log($"EnemyDespawner: Reposicionados {respawnedCount} inimigos por estarem fora do raio de {despawnRadius} unidades.");
+            //Debug.Log($"EnemyDespawner: Reposicionados {respawnedCount} inimigos por estarem fora do raio de {despawnRadius} unidades.");
         }
     }
 

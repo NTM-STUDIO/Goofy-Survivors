@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro; // Make sure to import TextMeshPro for UI elements
 using UnityEngine.UI;
+using JetBrains.Annotations;
 
 /// <summary>
 /// Manages the end game UI panel, displaying final stats like time survived
@@ -49,6 +50,7 @@ public class EndGamePanel : MonoBehaviour
     {
         Debug.Log("Attempting to save score...");
         string username = usernameInput.text;
+        string userId = System.Guid.NewGuid().ToString();
         if (string.IsNullOrEmpty(username))
         {
             Debug.LogError("Username is empty!");
@@ -57,7 +59,7 @@ public class EndGamePanel : MonoBehaviour
 
         if (database != null)
         {
-            database.WriteNewScore(username, (int)damageDone);
+            database.NewGoofer(userId, username, (int)damageDone);
             Debug.Log("Score saved!");
             saveButton.interactable = false; // Disable button after saving
         }
