@@ -2145,14 +2145,14 @@ MonoBehaviour:
   enemySpawner: {fileID: 1700906640}
   enemyDespawner: {fileID: 1492454150}
   currentState: 1
-  totalGameTime: 20
+  totalGameTime: 600
   currentEnemyHealthMultiplier: 1
   currentEnemyDamageMultiplier: 1
   healthIncreasePerMinute: 2
   damageIncreasePerMinute: 1.5
-  baseProjectileSpeed: 25
+  baseProjectileSpeed: 30
   projectileSpeedIncreasePerMinute: 1.2
-  baseFireRate: 1
+  baseFireRate: 1.5
   fireRateDecreasePerMinute: 0.1
   baseSightRange: 20
   bossPrefab: {fileID: 3436535658513195518, guid: 5cb7a38816e0cad4c92375cb991fce1f, type: 3}
@@ -4137,22 +4137,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   waves:
+  - waveName: Wave Inicial (Perfect)
+    enemies:
+    - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
+      enemyCount: 120
+    timeUntilNextWave: 0
+    spawnInterval: 0.5
   - waveName: XD
     enemies:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
-      enemyCount: 1
+      enemyCount: 2
     - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
       enemyCount: 150
     timeUntilNextWave: 0
     spawnInterval: 0.3
   - waveName: XD
     enemies:
-    - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
-      enemyCount: 4
     - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
-      enemyCount: 300
+      enemyCount: 200
     - enemyPrefab: {fileID: 4496776415297934645, guid: 28ba9582f3e390c4dbc1cf3917ba07b9, type: 3}
-      enemyCount: 6
+      enemyCount: 1
     timeUntilNextWave: 0
     spawnInterval: 0.1
   - waveName: XD

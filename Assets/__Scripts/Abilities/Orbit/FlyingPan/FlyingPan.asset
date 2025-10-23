@@ -20,11 +20,11 @@ MonoBehaviour:
   archetype: 3
   targetingStyle: 1
   groupingRange: 5
-  damage: 20
+  damage: 15
   cooldown: 10
   area: 0.45
   amount: 1
-  speed: 120
+  speed: 100
   duration: 5
   criticalChance: 0
   criticalMultiplier: 1.5

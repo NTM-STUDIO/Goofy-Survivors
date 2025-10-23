@@ -10,6 +10,7 @@ public class db : MonoBehaviour
 
     void Awake()
     {
+        Debug.Log("Firebase DB Initialized");
         MDatabase = FirebaseDatabase.DefaultInstance.RootReference;
     }
 

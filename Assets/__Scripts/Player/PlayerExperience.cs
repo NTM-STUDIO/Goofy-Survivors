@@ -17,11 +17,11 @@ public class PlayerExperience : MonoBehaviour
     // Estas novas variáveis substituem o antigo 'xpIncreaseFactor'
     [Header("XP Curve Settings")]
     [Tooltip("XP fixo adicionado por nível para os níveis iniciais.")]
-    public float earlyLevelXpBonus = 75f;
+    public float earlyLevelXpBonus = 60f;
     [Tooltip("Fator de escala para os níveis 11-25.")]
-    public float midGameScalingFactor = 1.2f;
+    public float midGameScalingFactor = 1.15f;
     [Tooltip("Fator de escala para os níveis 26-35.")]
-    public float lateGameScalingFactor = 1.1f;
+    public float lateGameScalingFactor = 1.01f;
     [Tooltip("Fator de escala para os níveis 36+.")]
     public float endGameScalingFactor = 1.01f;
 
