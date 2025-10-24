@@ -34,9 +34,9 @@ public class db : MonoBehaviour
         MDatabase = FirebaseDatabase.DefaultInstance.RootReference;
     }
 
-    public void NewGoofer(string userId, string username, int score, int damage)
+    public void NewGoofer(string userId, string username, int damage)
     {
-        User newUser = new User(username, score, damage);
+        User newUser = new User(username, damage);
         string json = JsonUtility.ToJson(newUser);
 
         MDatabase.Child("goofers").Child(userId).SetRawJsonValueAsync(json);
@@ -63,13 +63,11 @@ public class db : MonoBehaviour
 public class User
 {
     public string username;
-    public int score;
     public int damage;
 
-    public User(string username, int score, int damage)
+    public User(string username, int damage)
     {
         this.username = username;
-        this.score = score;
         this.damage = damage;
     }
 }

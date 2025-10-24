@@ -62,16 +62,16 @@ public class EndGamePanel : MonoBehaviour
         if (userSnapshot.Exists)
         {
             var userDict = (IDictionary<string, object>)userSnapshot.Value;
-            int existingScore = System.Convert.ToInt32(userDict["score"]);
+            int existingDamage = System.Convert.ToInt32(userDict["damage"]);
 
-            if (timeLasted > existingScore)
+            if (damageDone > existingDamage)
             {
-                database.NewGoofer(userId, PlayerPrefs.GetString("PlayerUsername"), (int)timeLasted, (int)damageDone);
+                database.NewGoofer(userId, PlayerPrefs.GetString("PlayerUsername"), (int)damageDone);
             }
         }
         else
         {
-            database.NewGoofer(userId, PlayerPrefs.GetString("PlayerUsername"), (int)timeLasted, (int)damageDone);
+            database.NewGoofer(userId, PlayerPrefs.GetString("PlayerUsername"), (int)damageDone);
         }
     }
 
@@ -80,18 +80,21 @@ public class EndGamePanel : MonoBehaviour
         string username = usernameInput.text;
         if (string.IsNullOrEmpty(username)) return;
 
+        // Gerar novo userId se for a primeira vez
         if (string.IsNullOrEmpty(userId))
         {
             userId = System.Guid.NewGuid().ToString();
             PlayerPrefs.SetString("PlayerId", userId);
             PlayerPrefs.SetString("PlayerUsername", username);
             PlayerPrefs.Save();
-            
-            database.NewGoofer(userId, username, (int)timeLasted, (int)damageDone);
-            
-            saveButton.gameObject.SetActive(false);
-            usernameInput.interactable = false;
         }
+
+        // Guardar os dados diretamente
+        database.NewGoofer(userId, username, (int)damageDone);
+
+        // Desativar interação após guardar
+        saveButton.gameObject.SetActive(false);
+        usernameInput.interactable = false;
     }
 
     public void UpdateEndGameStats()
