@@ -5,13 +5,10 @@ using TMPro;
 public class PlayerExperience : MonoBehaviour
 {
     [Header("UI References")]
-    [Tooltip("CRITICAL: Drag the XP Slider UI element here.")]
     [SerializeField] private Slider xpSlider;
-    [Tooltip("CRITICAL: Drag the Level Text UI element here.")]
     [SerializeField] private TMP_Text levelText;
 
     [Header("System References")]
-    [Tooltip("CRITICAL: Drag the UpgradeManager object here.")]
     [SerializeField] private UpgradeManager upgradeManager;
 
     [Header("Experience State")]
@@ -25,19 +22,27 @@ public class PlayerExperience : MonoBehaviour
     [SerializeField] private float lateGameScalingFactor = 1.01f;
     [SerializeField] private float endGameScalingFactor = 1.01f;
 
-    // This script now has no references to set in Start() or Awake(). It waits.
-    void Start()
-    {
-    }
+    // --- NEW: Add a variable to hold the reference to the player's stats ---
+    private PlayerStats playerStats;
 
     /// <summary>
     /// The GameManager calls this and GIVES it the spawned player.
     /// </summary>
-    public void Initialize()
+    // --- MODIFIED: The Initialize method now accepts the player object ---
+    public void Initialize(GameObject playerObject)
     {
         if (upgradeManager == null || xpSlider == null || levelText == null)
         {
             Debug.LogError("FATAL ERROR on PlayerExperience: One or more CRITICAL REFERENCES are NOT ASSIGNED in the Inspector! Leveling up will fail.", this);
+            enabled = false;
+            return;
+        }
+
+        // --- NEW: Get the PlayerStats component from the provided player object ---
+        playerStats = playerObject.GetComponent<PlayerStats>();
+        if (playerStats == null)
+        {
+            Debug.LogError("PlayerExperience could not find a PlayerStats component on the spawned player!", this);
             enabled = false;
             return;
         }
@@ -49,7 +54,10 @@ public class PlayerExperience : MonoBehaviour
     public void AddXP(float xp)
     {
         if (enabled == false) return;
-        currentXP += xp;
+        
+        // --- MODIFIED: Use the player's XP gain multiplier ---
+        currentXP += xp * (playerStats != null ? playerStats.xpGainMultiplier : 1f);
+
         while (currentXP >= xpToNextLevel)
         {
             LevelUp();
@@ -62,6 +70,13 @@ public class PlayerExperience : MonoBehaviour
         currentXP -= xpToNextLevel;
         currentLevel++;
         
+        // --- NEW: Tell the PlayerStats component to apply its scaling bonuses ---
+        if (playerStats != null)
+        {
+            playerStats.ApplyLevelUpScaling();
+        }
+        // --- End of new code ---
+
         if (currentLevel <= 10)
         {
             xpToNextLevel += earlyLevelXpBonus;

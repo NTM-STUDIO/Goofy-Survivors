@@ -30,7 +30,7 @@ public class AdvancedCameraController : MonoBehaviour
     {
         // --- Set the default starting state ---
         cam.orthographic = true;
-        cam.orthographicSize = orthoMaxSize; // Default ortho zoom is 20
+        cam.orthographicSize = 20; // Default ortho zoom is 20
 
         if (target == null)
         {
@@ -48,8 +48,6 @@ public class AdvancedCameraController : MonoBehaviour
 
     void Update()
     {
-        // Handle toggling between camera modes
-        HandleModeToggle();
 
         // Handle zooming with the scroll wheel (for direct mouse polling)
         HandleScrollZoom();
@@ -64,28 +62,6 @@ public class AdvancedCameraController : MonoBehaviour
         transform.position = target.position + offset;
     }
 
-    // --- NEW: Function to toggle between Perspective and Orthographic ---
-    private void HandleModeToggle()
-    {
-        // Use the new Input System to check for the middle mouse button press this frame
-        if (Mouse.current != null && Mouse.current.middleButton.wasPressedThisFrame)
-        {
-            // Flip the camera's projection mode
-            cam.orthographic = !cam.orthographic;
-
-            // After toggling, reset the zoom to the default for the new mode
-            if (cam.orthographic)
-            {
-                cam.orthographicSize = orthoMaxSize; // Reset to 20
-            }
-            else
-            {
-                cam.fieldOfView = perspMaxFov; // Reset to 60
-            }
-        }
-    }
-
-    // --- UPDATED: This function is called by the PlayerInput component via Unity Events ---
     public void OnCameraZoom(InputAction.CallbackContext context)
     {
         // Read the raw scroll value from the Input Action

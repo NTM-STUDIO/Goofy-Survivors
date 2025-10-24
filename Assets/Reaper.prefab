@@ -340,8 +340,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 853117fdcad11eb468dce0024d64eb22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseHealth: 99999
+  baseHealth: 1e+11
   baseDamage: 0
   moveSpeed: 0
-  chances: 75
   orbDrops: []

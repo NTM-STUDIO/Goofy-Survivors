@@ -17,6 +17,7 @@ public class Movement : MonoBehaviour
         playerStats = GetComponent<PlayerStats>();
         rb.useGravity = false;
         rb.constraints = RigidbodyConstraints.FreezeRotation;
+        rb.constraints |= RigidbodyConstraints.FreezePositionY;
     }
 
     void Update()

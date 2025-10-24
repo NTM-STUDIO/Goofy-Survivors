@@ -1,6 +1,6 @@
 using UnityEngine;
 using System;
-using System.Collections; // Required for Coroutines
+using System.Collections;
 
 public class PlayerStats : MonoBehaviour
 {
@@ -23,7 +23,6 @@ public class PlayerStats : MonoBehaviour
     [HideInInspector] public float luck;
     [HideInInspector] public float pickupRange;
     [HideInInspector] public float xpGainMultiplier;
-
     [HideInInspector] public int pierceCount;
 
     [Header("Health & Invincibility")]
@@ -50,43 +49,122 @@ public class PlayerStats : MonoBehaviour
 
     private void Awake()
     {
-        if (characterData != null)
-        {
-            maxHp = characterData.maxHp;
-            hpRegen = characterData.hpRegen;
-            damageMultiplier = characterData.damageMultiplier;
-            critChance = characterData.critChance;
-            critDamageMultiplier = characterData.critDamageMultiplier;
-            attackSpeedMultiplier = characterData.attackSpeedMultiplier;
-            projectileCount = characterData.projectileCount;
-            projectileSizeMultiplier = characterData.projectileSizeMultiplier;
-            projectileSpeedMultiplier = characterData.projectileSpeedMultiplier;
-            durationMultiplier = characterData.durationMultiplier;
-            knockbackMultiplier = characterData.knockbackMultiplier;
-            movementSpeed = characterData.movementSpeed;
-            luck = characterData.luck;
-            pickupRange = characterData.pickupRange;
-            xpGainMultiplier = characterData.xpGainMultiplier;
-            pierceCount = (int)characterData.pierceCount;
-        }
-
-        // Initialize health and visuals
-        currentHp = Mathf.Max(0, maxHp);
-        if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-        if (spriteRenderer != null) _originalColor = spriteRenderer.color;
-
-        // Raise initial health event
-        OnHealthChanged?.Invoke(currentHp, maxHp);
+        InitializeStats();
     }
 
     private void Start()
     {
-        // Start the health regeneration coroutine. It will run in the background.
         StartCoroutine(HealthRegenRoutine());
     }
 
-    // --- Public Methods to INCREASE Stats ---
-    public void IncreaseMaxHP(int amount) { maxHp += amount; currentHp += amount; UIManager uiManager = FindFirstObjectByType<UIManager>(); if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp); }
+    private void InitializeStats()
+    {
+        if (characterData == null)
+        {
+            Debug.LogError("CRITICAL: PlayerCharacterData is not assigned in the PlayerStats component!", this);
+            return;
+        }
+
+        maxHp = characterData.maxHp;
+        hpRegen = characterData.hpRegen;
+        damageMultiplier = characterData.damageMultiplier;
+        critChance = characterData.critChance;
+        critDamageMultiplier = characterData.critDamageMultiplier;
+        attackSpeedMultiplier = characterData.attackSpeedMultiplier;
+        projectileCount = characterData.projectileCount;
+        projectileSizeMultiplier = characterData.projectileSizeMultiplier;
+        projectileSpeedMultiplier = characterData.projectileSpeedMultiplier;
+        durationMultiplier = characterData.durationMultiplier;
+        knockbackMultiplier = characterData.knockbackMultiplier;
+        movementSpeed = characterData.movementSpeed;
+        luck = characterData.luck;
+        pickupRange = characterData.pickupRange;
+        xpGainMultiplier = characterData.xpGainMultiplier;
+        pierceCount = (int)characterData.pierceCount;
+
+        foreach (var bonus in characterData.startingBonuses)
+        {
+            ApplyStatBonus(bonus);
+        }
+
+        currentHp = maxHp;
+        if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        if (spriteRenderer != null) _originalColor = spriteRenderer.color;
+
+        // This initial call ensures the UI is correct when the game starts.
+        OnHealthChanged?.Invoke(currentHp, maxHp);
+        var uiManager = FindFirstObjectByType<UIManager>();
+        if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp);
+    }
+
+    public void ApplyLevelUpScaling()
+    {
+        if (characterData == null) return;
+        foreach (var bonus in characterData.scalingBonusesPerLevel)
+        {
+            ApplyStatBonus(bonus);
+        }
+        Debug.Log("Applied level up scaling bonuses.");
+    }
+
+    private void ApplyStatBonus(StatBonus bonus)
+    {
+        switch (bonus.stat)
+        {
+            case StatType.MaxHP:
+                maxHp += (int)bonus.value;
+                Heal((int)bonus.value);
+                break;
+            case StatType.HPRegen:
+                hpRegen += bonus.value;
+                break;
+            case StatType.DamageMultiplier:
+                damageMultiplier += bonus.value;
+                break;
+            case StatType.CritChance:
+                critChance = Mathf.Clamp01(critChance + bonus.value);
+                break;
+            case StatType.CritDamageMultiplier:
+                critDamageMultiplier += bonus.value;
+                break;
+            case StatType.AttackSpeedMultiplier:
+                attackSpeedMultiplier += bonus.value;
+                break;
+            case StatType.ProjectileCount:
+                projectileCount += (int)bonus.value;
+                break;
+            case StatType.ProjectileSizeMultiplier:
+                projectileSizeMultiplier += bonus.value;
+                break;
+            case StatType.ProjectileSpeedMultiplier:
+                projectileSpeedMultiplier += bonus.value;
+                break;
+            case StatType.DurationMultiplier:
+                durationMultiplier += bonus.value;
+                break;
+            case StatType.KnockbackMultiplier:
+                knockbackMultiplier += bonus.value;
+                break;
+            case StatType.MovementSpeed:
+                movementSpeed += bonus.value;
+                break;
+            case StatType.Luck:
+                luck += bonus.value;
+                break;
+            case StatType.PickupRange:
+                pickupRange += (int)bonus.value;
+                break;
+            case StatType.XPGainMultiplier:
+                xpGainMultiplier += bonus.value;
+                break;
+            default:
+                 Debug.LogWarning($"Stat bonus for {bonus.stat} not implemented in ApplyStatBonus method.");
+                 break;
+        }
+    }
+
+    #region Public Stat Modifiers
+    public void IncreaseMaxHP(int amount) { maxHp += amount; currentHp += amount; var uiManager = FindFirstObjectByType<UIManager>(); if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp); OnHealthChanged?.Invoke(currentHp, maxHp); }
     public void IncreaseHPRegen(float amount) { hpRegen += amount; }
     public void IncreaseDamageMultiplier(float amount) { damageMultiplier += amount; }
     public void IncreaseCritChance(float amount) { critChance += amount; }
@@ -101,8 +179,6 @@ public class PlayerStats : MonoBehaviour
     public void IncreaseLuck(float amount) { luck += amount; }
     public void IncreasePickupRange(float amount) { pickupRange += amount; }
     public void IncreaseXPGainMultiplier(float amount) { xpGainMultiplier += amount; }
-
-    // --- Public Methods to DECREASE Stats (Essential for removing buffs) ---
     public void DecreaseMaxHP(int amount) { maxHp -= amount; }
     public void DecreaseHPRegen(float amount) { hpRegen -= amount; }
     public void DecreaseDamageMultiplier(float amount) { damageMultiplier -= amount; }
@@ -118,8 +194,9 @@ public class PlayerStats : MonoBehaviour
     public void DecreaseLuck(float amount) { luck -= amount; }
     public void DecreasePickupRange(float amount) { pickupRange -= amount; }
     public void DecreaseXPGainMultiplier(float amount) { xpGainMultiplier -= amount; }
+    #endregion
 
-
+    #region Core Gameplay Logic
     public void PrintStats()
     {
         Debug.Log("Stats Initialized from Character Data");
@@ -130,7 +207,7 @@ public class PlayerStats : MonoBehaviour
         Debug.Log($"Luck: {luck}, PickupRange: {pickupRange}, XPGainMultiplier: {xpGainMultiplier}");
     }
 
-    // --- Health API ---
+    // --- THIS IS THE MODIFIED METHOD ---
     public void Heal(int amount)
     {
         if (amount <= 0 || currentHp <= 0) return;
@@ -140,20 +217,23 @@ public class PlayerStats : MonoBehaviour
         {
             OnHealed?.Invoke();
             OnHealthChanged?.Invoke(currentHp, maxHp);
+
+            // --- FIX ADDED HERE ---
+            // This line was missing, causing the UI to not update on regen or max HP increases from bonuses.
+            var uiManager = FindFirstObjectByType<UIManager>();
+            if (uiManager != null)
+            {
+                uiManager.UpdateHealthBar(currentHp, maxHp);
+            }
         }
     }
 
-    // --- CORRECTION #1: Changed Vector2? to Vector3? ---
     public void ApplyDamage(float amount, Vector3? hitFromWorldPos = null, float? customIFrameDuration = null)
     {
-        if (amount <= 0f) return;
-        if (invincible) return;
-        if (currentHp <= 0) return;
-
+        if (amount <= 0f || invincible || currentHp <= 0) return;
         int damageInt = Mathf.CeilToInt(amount);
         currentHp = Mathf.Clamp(currentHp - damageInt, 0, maxHp);
 
-        // Feedback
         if (spriteRenderer != null)
         {
             StopCoroutine(nameof(FlashRoutine));
@@ -162,9 +242,8 @@ public class PlayerStats : MonoBehaviour
         OnDamaged?.Invoke();
         OnHealthChanged?.Invoke(currentHp, maxHp);
 
-        // Begin invincibility frames
         float iFrames = customIFrameDuration.HasValue ? Mathf.Max(0f, customIFrameDuration.Value) : invincibilityDuration;
-        if (iFrames > 0f) BeginInvincibility(iFrames);
+        if (iFrames > 0f) StartCoroutine(InvincibilityRoutine(iFrames));
 
         if (currentHp <= 0)
         {
@@ -190,8 +269,6 @@ public class PlayerStats : MonoBehaviour
         invincible = false;
     }
 
-
-
     private IEnumerator FlashRoutine()
     {
         if (spriteRenderer == null) yield break;
@@ -205,56 +282,32 @@ public class PlayerStats : MonoBehaviour
         Debug.Log("Player died.");
         OnDeath?.Invoke();
 
-        // Disable player movement and collisions
         var movement = GetComponent<Movement>();
-        if (movement != null)
-        {
-            movement.enabled = false;
-        }
-
+        if (movement != null) movement.enabled = false;
         var colls = GetComponentsInChildren<Collider>();
         foreach (var c in colls) c.enabled = false;
 
-        // --- RECOMMENDED CHANGE ---
-        // Tell the GameManager that the player has died.
-        // The GameManager will then handle showing the UI.
         if (GameManager.Instance != null)
         {
             GameManager.Instance.PlayerDied();
         }
     }
 
-    // --- HEALTH REGENERATION ---
-
-    /// <summary>
-    /// Coroutine that applies health regeneration once per second.
-    /// </summary>
     private IEnumerator HealthRegenRoutine()
     {
-        // This creates an infinite loop that runs as long as the script is active
         while (true)
         {
-            // Wait for one second before continuing
             yield return new WaitForSeconds(1f);
-
-            // After waiting, apply the regeneration logic
             ApplyHealthRegen();
         }
     }
 
-    /// <summary>
-    /// Checks conditions and applies health regeneration.
-    /// </summary>
     private void ApplyHealthRegen()
     {
         if (hpRegen > 0f && currentHp > 0 && currentHp < maxHp)
         {
-            // Since this runs every second, we can use hpRegen directly.
-            // No need for Time.deltaTime anymore.
             Heal(Mathf.CeilToInt(hpRegen));
-            UIManager uiManager = FindFirstObjectByType<UIManager>();
-            if (uiManager != null)
-                uiManager.UpdateHealthBar(currentHp, maxHp);
         }
     }
+    #endregion
 }

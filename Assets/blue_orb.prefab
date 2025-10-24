@@ -134,7 +134,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90bff61e563a52242941d960c462e178, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExperienceOrb
-  xpValue: 40
+  xpValue: 33
   smoothTime: 0.1
   collectionDistance: 2
   maxSpeed: 100
@@ -180,7 +180,7 @@ SphereCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3

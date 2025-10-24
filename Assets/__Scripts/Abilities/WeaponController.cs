@@ -1,5 +1,5 @@
 using UnityEngine;
-using System.Linq; // Used for the 'OrderByDescending' method.
+using System.Linq;
 
 public class WeaponController : MonoBehaviour
 {
@@ -7,8 +7,8 @@ public class WeaponController : MonoBehaviour
 
     private float currentCooldown;
     private PlayerStats playerStats;
-    private Transform firePoint; // Used for projectiles
-    private Transform playerTransform; // Used as the center for orbiting weapons
+    private Transform firePoint;
+    private Transform playerTransform;
 
     void Start()
     {
@@ -24,18 +24,26 @@ public class WeaponController : MonoBehaviour
             if (firePoint == null) firePoint = playerTransform;
         }
         currentCooldown = 0f;
+        
+        if (weaponData.archetype == WeaponArchetype.Aura)
+        {
+            ActivateAura();
+        }
     }
 
     void Update()
     {
         if (playerStats == null || weaponData == null || playerTransform == null) return;
+        
+        if (weaponData.archetype == WeaponArchetype.Aura)
+        {
+            return;
+        }
 
         currentCooldown -= Time.deltaTime;
-
         if (currentCooldown <= 0f)
         {
             Attack();
-
             float finalAttackSpeed = playerStats.attackSpeedMultiplier;
             float cooldownBasedOnSpeed = weaponData.cooldown / Mathf.Max(0.01f, finalAttackSpeed);
             float finalDuration = weaponData.duration * playerStats.durationMultiplier;
@@ -50,14 +58,31 @@ public class WeaponController : MonoBehaviour
             case WeaponArchetype.Projectile:
                 FireProjectile();
                 break;
-
             case WeaponArchetype.Orbit:
                 ActivateOrbitingWeapon();
                 break;
-                // Add other archetypes here as you create them (Whip, Aura, etc.)
         }
     }
 
+    // --- METHOD CORRECTED ---
+    private void ActivateAura()
+    {
+        // Use this.transform as the parent. The WeaponController should be on a child
+        // object of the player, so making the aura a child of it will ensure it follows.
+        GameObject auraObj = Instantiate(weaponData.weaponPrefab, transform.position, Quaternion.identity, this.transform);
+        AuraWeapon aura = auraObj.GetComponent<AuraWeapon>();
+
+        if (aura != null)
+        {
+            aura.Initialize(playerStats, weaponData);
+        }
+        else
+        {
+            Debug.LogWarning("Aura weapon prefab is missing the AuraWeapon script!");
+        }
+    }
+
+    #region Other Attack Methods
     private void ActivateOrbitingWeapon()
     {
         float finalDamage = weaponData.damage * playerStats.damageMultiplier;
@@ -73,10 +98,8 @@ public class WeaponController : MonoBehaviour
         for (int i = 0; i < finalAmount; i++)
         {
             float startingAngle = i * angleStep;
-
             GameObject orbitingWeaponObj = Instantiate(weaponData.weaponPrefab, orbitCenter.position, Quaternion.identity, orbitCenter);
             OrbitingWeapon orbiter = orbitingWeaponObj.GetComponent<OrbitingWeapon>();
-
             if (orbiter != null)
             {
                 orbiter.Initialize(orbitCenter, startingAngle, finalDamage, finalSpeed, finalDuration, finalKnockback, finalSize);
@@ -118,24 +141,20 @@ public class WeaponController : MonoBehaviour
     private Transform[] GetTargets(GameObject[] enemies, int amount)
     {
         Transform[] targets = new Transform[amount];
-
         switch (weaponData.targetingStyle)
         {
             case TargetingStyle.Random:
                 for (int i = 0; i < amount; i++) targets[i] = null;
                 return targets;
-
             case TargetingStyle.Closest:
                 System.Array.Sort(enemies, (a, b) => Vector3.Distance(firePoint.position, a.transform.position).CompareTo(Vector3.Distance(firePoint.position, b.transform.position)));
                 for (int i = 0; i < amount; i++) targets[i] = (i < enemies.Length) ? enemies[i].transform : null;
                 return targets;
-
             case TargetingStyle.Strongest:
                 IOrderedEnumerable<GameObject> sortedByHealth = enemies.OrderByDescending(e => e.GetComponent<EnemyStats>()?.CurrentHealth ?? 0);
                 GameObject[] strongestEnemies = sortedByHealth.ToArray();
                 for (int i = 0; i < amount; i++) targets[i] = (i < strongestEnemies.Length) ? strongestEnemies[i].transform : null;
                 return targets;
-
             case TargetingStyle.MostGrouped:
                 Transform bestTarget = null;
                 int maxGroupCount = -1;
@@ -158,7 +177,6 @@ public class WeaponController : MonoBehaviour
                 }
                 for (int i = 0; i < amount; i++) targets[i] = bestTarget;
                 return targets;
-
             case TargetingStyle.Mixed:
                 System.Array.Sort(enemies, (a, b) => Vector3.Distance(firePoint.position, a.transform.position).CompareTo(Vector3.Distance(firePoint.position, b.transform.position)));
                 for (int i = 0; i < amount; i++) targets[i] = (i < enemies.Length) ? enemies[i].transform : null;
@@ -176,4 +194,5 @@ public class WeaponController : MonoBehaviour
             projectile.Initialize(target, direction, damage, speed, duration, knockback, size);
         }
     }
+    #endregion
 }

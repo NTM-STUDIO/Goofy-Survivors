@@ -1,34 +1,49 @@
-/*using UnityEngine;
+using UnityEngine;
 using System.Linq;
+using System.Collections; // Required for Coroutines
 
 public class SpecialUpgradeGiver : MonoBehaviour
 {
-    [Header("UI References")]
-    [Tooltip("CRITICAL: Drag your Special Upgrade UI Panel here.")]
-    [SerializeField] private SpecialUpgradeUI specialUpgradePanel;
-
-    [Header("Upgrade Generation")]
-    [Tooltip("CRITICAL: Drag your UpgradeManager object here.")]
-    [SerializeField] private UpgradeManager upgradeManager;
-    [Tooltip("CRITICAL: Drag your Player object here.")]
-    [SerializeField] private PlayerStats playerStats;
-
     [Header("Rarity Settings")]
     [Tooltip("The chance (out of 100) to get a Mythic upgrade. The rest is the chance for Shadow.")]
     [Range(0, 100)]
     [SerializeField] private float mythicalChance = 50f;
 
-    private UpgradeManager.GeneratedUpgrade generatedUpgrade;
+    // Internal References
+    private SpecialUpgradeUI specialUpgradePanel;
+    private UpgradeManager upgradeManager;
+    private GameManager gameManager;
 
-    // --- THIS IS THE PART WE FIXED ---
-    // We removed the unreliable FindObjectOfType calls.
-    // Now it just checks if YOU have assigned the objects in the Inspector.
-    void Awake()
+    private UpgradeManager.GeneratedUpgrade generatedUpgrade;
+    private PlayerStats triggeredPlayerStats; 
+    
+    // --- THIS IS THE KEY CHANGE ---
+    // We now use a coroutine to ensure all other managers are ready before we try to find them.
+    IEnumerator Start()
     {
-        if (upgradeManager == null || specialUpgradePanel == null || playerStats == null)
+        // 1. Disable the collider immediately to prevent the player from triggering it too early.
+        GetComponent<Collider>().enabled = false;
+
+        // 2. Wait for the end of the first frame.
+        // By this point, all Awake() and Start() methods on other scripts have run.
+        yield return new WaitForEndOfFrame();
+
+        // 3. Now, it is safe to find our dependencies.
+        gameManager = GameManager.Instance;
+        upgradeManager = FindObjectOfType<UpgradeManager>();
+        specialUpgradePanel = FindObjectOfType<SpecialUpgradeUI>();
+
+        // 4. Critical check to ensure the script can function.
+        if (gameManager == null || upgradeManager == null || specialUpgradePanel == null)
         {
-            Debug.LogError("FATAL ERROR on SpecialUpgradeGiver: One or more critical references are NOT ASSIGNED in the Inspector! Disabling this object.", this);
-            gameObject.SetActive(false); // Disable to prevent further errors
+            Debug.LogError("FATAL ERROR on SpecialUpgradeGiver: Could not find GameManager, UpgradeManager, or SpecialUpgradeUI in the scene! Destroying this object.", this);
+            Destroy(gameObject); // Destroy self if the scene is not set up correctly.
+        }
+        else
+        {
+            // 5. If everything was found, re-enable the collider so the player can pick it up.
+            GetComponent<Collider>().enabled = true;
+            Debug.Log("SpecialUpgradeGiver initialized successfully and is ready.", this);
         }
     }
 
@@ -36,8 +51,13 @@ public class SpecialUpgradeGiver : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            GenerateAndShowSpecialUpgrade();
-            GetComponent<Collider>().enabled = false;
+            PlayerStats player = other.GetComponent<PlayerStats>();
+            if (player != null)
+            {
+                this.triggeredPlayerStats = player; 
+                GenerateAndShowSpecialUpgrade();
+                GetComponent<Collider>().enabled = false;
+            }
         }
     }
 
@@ -69,41 +89,46 @@ public class SpecialUpgradeGiver : MonoBehaviour
         };
 
         specialUpgradePanel.Show(generatedUpgrade, this);
-        Time.timeScale = 0f;
+        gameManager.RequestPause();
     }
     
     public void ApplyUpgradeAndDestroy()
     {
-        if (generatedUpgrade == null) return;
+        if (generatedUpgrade == null || triggeredPlayerStats == null)
+        {
+            Debug.LogError("ApplyUpgradeAndDestroy was called, but the upgrade or player reference was missing!");
+            gameManager.RequestResume();
+            Destroy(gameObject);
+            return;
+        }
         
-        ApplyStatToPlayer(generatedUpgrade.BaseData.statToUpgrade, generatedUpgrade.Value);
+        ApplyStatToPlayer(triggeredPlayerStats, generatedUpgrade.BaseData.statToUpgrade, generatedUpgrade.Value);
         
         Debug.Log($"Applied Special Upgrade: {generatedUpgrade.BaseData.statToUpgrade} +{generatedUpgrade.Value} ({generatedUpgrade.Rarity.rarity})");
 
-        Time.timeScale = 1f;
+        gameManager.RequestResume();
         Destroy(gameObject);
     }
     
-    // NOTE: This part must contain all the stats from your main UpgradeManager's ApplyUpgrade method
-    private void ApplyStatToPlayer(StatType stat, float value)
+    private void ApplyStatToPlayer(PlayerStats player, StatType stat, float value)
     {
         switch (stat)
         {
-            case StatType.MaxHP: playerStats.IncreaseMaxHP(Mathf.RoundToInt(value)); break;
-            case StatType.HPRegen: playerStats.IncreaseHPRegen(value); break;
-            case StatType.DamageMultiplier: playerStats.IncreaseDamageMultiplier(value / 100f); break;
-            case StatType.CritChance: playerStats.IncreaseCritChance(value / 100f); break;
-            case StatType.CritDamageMultiplier: playerStats.IncreaseCritDamageMultiplier(value / 100f); break;
-            case StatType.AttackSpeedMultiplier: playerStats.IncreaseAttackSpeedMultiplier(value / 100f); break;
-            case StatType.ProjectileCount: playerStats.IncreaseProjectileCount(Mathf.RoundToInt(value)); break;
-            case StatType.ProjectileSizeMultiplier: playerStats.IncreaseProjectileSizeMultiplier(value / 100f); break;
-            case StatType.ProjectileSpeedMultiplier: playerStats.IncreaseProjectileSpeedMultiplier(value / 100f); break;
-            case StatType.DurationMultiplier: playerStats.IncreaseDurationMultiplier(value / 100f); break;
-            case StatType.KnockbackMultiplier: playerStats.IncreaseKnockbackMultiplier(value / 100f); break;
-            case StatType.MovementSpeed: playerStats.IncreaseMovementSpeed(value / 100f * playerStats.movementSpeed); break;
-            case StatType.Luck: playerStats.IncreaseLuck(value); break;
-            case StatType.PickupRange: playerStats.IncreasePickupRange(value * playerStats.pickupRange - playerStats.pickupRange); break;
-            case StatType.XPGainMultiplier: playerStats.IncreaseXPGainMultiplier(value / 100f); break;
+            case StatType.MaxHP: player.IncreaseMaxHP(Mathf.RoundToInt(value)); break;
+            case StatType.HPRegen: player.IncreaseHPRegen(value); break;
+            case StatType.DamageMultiplier: player.IncreaseDamageMultiplier(value / 100f); break;
+            case StatType.CritChance: player.IncreaseCritChance(value / 100f); break;
+            case StatType.CritDamageMultiplier: player.IncreaseCritDamageMultiplier(value / 100f); break;
+            case StatType.AttackSpeedMultiplier: player.IncreaseAttackSpeedMultiplier(value / 100f); break;
+            case StatType.ProjectileCount: player.IncreaseProjectileCount(Mathf.RoundToInt(value)); break;
+            case StatType.ProjectileSizeMultiplier: player.IncreaseProjectileSizeMultiplier(value / 100f); break;
+            case StatType.ProjectileSpeedMultiplier: player.IncreaseProjectileSpeedMultiplier(value / 100f); break;
+            case StatType.DurationMultiplier: player.IncreaseDurationMultiplier(value / 100f); break;
+            case StatType.KnockbackMultiplier: player.IncreaseKnockbackMultiplier(value / 100f); break;
+            case StatType.MovementSpeed: player.IncreaseMovementSpeed(value / 100f * player.movementSpeed); break;
+            case StatType.Luck: player.IncreaseLuck(value); break;
+            case StatType.PickupRange: player.IncreasePickupRange(value * player.pickupRange - player.pickupRange); break;
+            case StatType.XPGainMultiplier: player.IncreaseXPGainMultiplier(value / 100f); break;
         }
     }
-}*/
+}

@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a235ba29a21fe3c4194c1d40bc43f19b, type: 3}
+  m_Name: Blade Vortex
+  m_EditorClassIdentifier: 
+  weaponID: Blade Vortex
+  weaponName: Blade Vortex
+  description: Blade Vortex
+  icon: {fileID: 21300000, guid: faf84e49c98521145a76b341e2380079, type: 3}
+  weaponPrefab: {fileID: 6260151671241025186, guid: ea8b81df5ec569849bb4c70c39fb7d74, type: 3}
+  archetype: 2
+  targetingStyle: 0
+  groupingRange: 5
+  damage: 5
+  cooldown: 1
+  area: 0.6
+  amount: 1
+  speed: 1
+  duration: 1
+  criticalChance: 0
+  criticalMultiplier: 1.5
+  pierce: 0
+  pierceCount: 1
+  knockback: 2

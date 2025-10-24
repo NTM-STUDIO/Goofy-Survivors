@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d45509b40da44f54f88ad5db161600e7, type: 3}
-  m_Name: StatsBonecos
+  m_Name: PatoStats
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCharacterData
   characterName: Pato
   playerPrefab: {fileID: 4343297250839089127, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
@@ -26,8 +26,12 @@ MonoBehaviour:
   projectileSpeedMultiplier: 1
   durationMultiplier: 1
   knockbackMultiplier: 1
-  movementSpeed: 17
+  movementSpeed: 16
   luck: 1
   pickupRange: 5
   xpGainMultiplier: 1
   pierceCount: 1
+  startingBonuses: []
+  scalingBonusesPerLevel:
+  - stat: 12
+    value: 0.5

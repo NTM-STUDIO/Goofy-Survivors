@@ -35,27 +35,33 @@ public class GameManager : MonoBehaviour
     private float currentTime;
     private bool isTimerRunning = false;
 
+    // --- MODIFIED: New Difficulty Scaling Settings ---
     [Header("General Difficulty Settings")]
     public float currentEnemyHealthMultiplier { get; private set; } = 1f;
     public float currentEnemyDamageMultiplier { get; private set; } = 1f;
     [Space]
-    [SerializeField] private float healthIncreasePerMinute = 5f;
-    [SerializeField] private float damageIncreasePerMinute = 2f;
+    [Tooltip("How often (in seconds) the difficulty will increase.")]
+    [SerializeField] private float difficultyIncreaseInterval = 30f;
+    [Tooltip("Multiplier for enemy health and damage every interval.")]
+    [SerializeField] private float generalStrengthMultiplier = 1.1f;
 
     [Header("Difficulty Scaling - Caster")]
     public float currentProjectileSpeed { get; private set; }
     public float currentFireRate { get; private set; }
     public float currentSightRange { get; private set; }
     [Space]
-    [SerializeField] private float baseProjectileSpeed = 15f;
-    [SerializeField] private float projectileSpeedIncreasePerMinute = 1.5f;
+    [SerializeField] private float baseProjectileSpeed = 10f;
     [SerializeField] private float baseFireRate = 2f;
-    [SerializeField] private float fireRateDecreasePerMinute = 0.1f;
     [SerializeField] private float baseSightRange = 999f;
+    [Tooltip("Multiplier for enemy projectile speed every interval.")]
+    [SerializeField] private float speedMultiplier = 1.05f;
+    [Tooltip("Multiplier for enemy fire rate every interval. A value > 1 means faster firing.")]
+    [SerializeField] private float fireRateMultiplier = 1.05f;
+    // --- End of Modifications ---
 
     public EnemyStats reaperStats { get; private set; }
     private bool bossSpawned = false;
-    private int lastMinuteMark = 0;
+    private int lastDifficultyIncreaseMark = 0;
     private int _pauseRequesters = 0;
 
     void Awake()
@@ -68,9 +74,6 @@ public class GameManager : MonoBehaviour
     {
         CurrentState = GameState.PreGame;
         currentTime = totalGameTime;
-        currentProjectileSpeed = baseProjectileSpeed;
-        currentFireRate = baseFireRate;
-        currentSightRange = baseSightRange;
     }
 
     void Update()
@@ -137,8 +140,9 @@ public class GameManager : MonoBehaviour
         CurrentState = GameState.Playing;
         Debug.Log("Game Started! Initializing all managers...");
         
-        // Initialize all managers, passing the newly created player object to those who need it.
-        if (playerExperience != null) playerExperience.Initialize();
+        // --- THIS IS THE ONLY CHANGE ---
+        // Pass the newly created 'playerObject' to the PlayerExperience manager so it knows which player to track.
+        if (playerExperience != null) playerExperience.Initialize(playerObject);
         else Debug.LogWarning("GameManager is missing reference to the PlayerExperience manager object in the scene.");
 
         if (upgradeManager != null) upgradeManager.Initialize(playerObject);
@@ -154,10 +158,14 @@ public class GameManager : MonoBehaviour
         
         isTimerRunning = true;
         bossSpawned = false;
-        lastMinuteMark = 0;
         _pauseRequesters = 0;
+
+        lastDifficultyIncreaseMark = 0;
         currentEnemyHealthMultiplier = 1f;
         currentEnemyDamageMultiplier = 1f;
+        currentProjectileSpeed = baseProjectileSpeed;
+        currentFireRate = baseFireRate;
+        currentSightRange = baseSightRange;
     }
 
     public void RestartGame()
@@ -255,20 +263,25 @@ public class GameManager : MonoBehaviour
     #region Difficulty Scaling
     private void CheckForDifficultyIncrease()
     {
-        int currentMinute = Mathf.FloorToInt((totalGameTime - currentTime) / 60);
-        if (currentMinute > lastMinuteMark)
+        int currentInterval = Mathf.FloorToInt((totalGameTime - currentTime) / difficultyIncreaseInterval);
+
+        if (currentInterval > lastDifficultyIncreaseMark)
         {
-            lastMinuteMark = currentMinute;
+            lastDifficultyIncreaseMark = currentInterval;
             IncreaseDifficulty();
         }
     }
 
     private void IncreaseDifficulty()
     {
-        currentEnemyHealthMultiplier += healthIncreasePerMinute;
-        currentEnemyDamageMultiplier += damageIncreasePerMinute;
-        currentProjectileSpeed += projectileSpeedIncreasePerMinute;
-        currentFireRate = Mathf.Max(0.2f, baseFireRate - (fireRateDecreasePerMinute * lastMinuteMark));
+        currentEnemyHealthMultiplier *= generalStrengthMultiplier;
+        currentEnemyDamageMultiplier *= generalStrengthMultiplier;
+        currentProjectileSpeed *= speedMultiplier;
+
+        currentFireRate /= fireRateMultiplier;
+        currentFireRate = Mathf.Max(0.2f, currentFireRate);
+        
+        Debug.Log($"Difficulty Increased at interval {lastDifficultyIncreaseMark}! New Health Multiplier: {currentEnemyHealthMultiplier:F2}");
     }
     #endregion
     
