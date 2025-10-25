@@ -10,7 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 3969889304750525775}
   - component: {fileID: 6402429685783564294}
-  m_Layer: 3
+  - component: {fileID: 537219055301139913}
+  - component: {fileID: 6690811049137084971}
+  m_Layer: 0
   m_Name: ArbustoVisual
   m_TagString: Untagged
   m_Icon: {fileID: 0}
