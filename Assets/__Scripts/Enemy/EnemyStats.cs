@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using System.Collections;
 
 [System.Serializable]
@@ -14,26 +15,21 @@ public enum MutationType { None, Health, Damage, Speed }
 [RequireComponent(typeof(Rigidbody))]
 public class EnemyStats : MonoBehaviour
 {
+    public static event Action<EnemyStats> OnEnemyDamaged;
+
     [Header("Visuals & Effects")]
-    [Tooltip("Assign the Damage Popup prefab here.")]
     [SerializeField] private GameObject damagePopupPrefab;
-    [Tooltip("The specific point where damage popups should spawn. If empty, it will spawn at the enemy's center.")]
     [SerializeField] private Transform popupSpawnPoint;
 
     [Header("Base Stats")]
-    [Tooltip("The enemy's health at the start of the game (minute 0).")]
     public float baseHealth = 100;
-    [Tooltip("The enemy's damage at the start of the game (minute 0).")]
     public float baseDamage = 10;
     public float moveSpeed = 3f;
     
     [Header("Mutations")]
-    [Tooltip("Chance for this enemy to spawn with a random mutation (0 = never, 1 = always).")]
     [Range(0f, 1f)]
     [SerializeField] private float mutationChance = 0.1f;
-    [Tooltip("The minimum bonus a mutation can grant (e.g., 0.2 for +20%).")]
     [SerializeField] private float minMutationBonus = 0.2f;
-    [Tooltip("The maximum bonus a mutation can grant (e.g., 0.5 for +50%).")]
     [SerializeField] private float maxMutationBonus = 0.5f;
 
     [Header("Mutation Colors")]
@@ -42,18 +38,13 @@ public class EnemyStats : MonoBehaviour
     [SerializeField] private Color speedMutationColor = Color.blue;
 
     [Header("Knockback Settings")]
-    [Tooltip("If checked, this enemy can never be knocked back.")]
     [SerializeField] private bool isUnknockable = false;
-    [Tooltip("Base knockback resistance. 0 = no resistance, 1 = full resistance (100%).")]
     [Range(0f, 1f)]
     [SerializeField] private float knockbackResistance = 0f;
-    [Tooltip("How much resistance is gained each time the enemy is knocked back. 0.1 = +10% resistance.")]
     [SerializeField] private float resistanceIncreasePerHit = 0.1f;
-    [Tooltip("The maximum resistance the enemy can gain through stacking. 1 = 100%.")]
     [Range(0f, 1f)]
     [SerializeField] private float maxResistance = 0.8f;
 
-    // --- Public State ---
     public float MaxHealth { get; private set; }
     public float CurrentHealth { get; private set; }
     public bool IsKnockedBack { get; private set; }
@@ -62,12 +53,14 @@ public class EnemyStats : MonoBehaviour
     [Header("Experience Drops")]
     public OrbDropConfig[] orbDrops;
 
-    // --- Private Components & State ---
     private Rigidbody rb;
     private SpriteRenderer enemyRenderer;
-    private Color originalColor;
+    private Color originalColor; // This is the true original color set once in Awake
     private Coroutine knockbackCoroutine;
     private float currentKnockbackResistance;
+    private float originalBaseHealth;
+    private float originalBaseDamage;
+    private float originalMoveSpeed;
 
     void Awake()
     {
@@ -75,10 +68,14 @@ public class EnemyStats : MonoBehaviour
         enemyRenderer = GetComponentInChildren<SpriteRenderer>();
         if (enemyRenderer != null)
         {
+            // Store the original material color to revert to after taking damage
             originalColor = enemyRenderer.color;
         }
         currentKnockbackResistance = knockbackResistance;
         
+        originalBaseHealth = baseHealth;
+        originalBaseDamage = baseDamage;
+        originalMoveSpeed = moveSpeed;
         ApplyMutation();
 
         if (popupSpawnPoint == null)
@@ -92,40 +89,30 @@ public class EnemyStats : MonoBehaviour
         float finalHealth;
         if (GameManager.Instance != null)
         {
-            float healthMultiplier = GameManager.Instance.currentEnemyHealthMultiplier;
-            finalHealth = baseHealth * healthMultiplier;
+            finalHealth = baseHealth * GameManager.Instance.currentEnemyHealthMultiplier;
         }
         else
         {
             finalHealth = baseHealth;
         }
-        
         MaxHealth = finalHealth;
         CurrentHealth = finalHealth;
     }
 
-    // --- METHOD MODIFIED ---
-    /// <summary>
-    /// Applies damage to the enemy, triggers visual effects, and spawns a damage popup.
-    /// This version now accepts a boolean to handle critical strike visuals.
-    /// </summary>
-    /// <param name="damage">The amount of damage to take.</param>
-    /// <param name="isCritical">Was this hit a critical strike?</param>
     public void TakeDamage(float damage, bool isCritical)
     {
         if (CurrentHealth <= 0) return;
 
+        OnEnemyDamaged?.Invoke(this);
+
         CurrentHealth -= damage;
 
-        // Spawn the damage popup and tell it whether the hit was critical.
         if (damagePopupPrefab != null)
         {
             GameObject popupGO = Instantiate(damagePopupPrefab, popupSpawnPoint.position, Quaternion.identity);
-            // Call the Setup method that accepts the isCritical boolean
             popupGO.GetComponent<DamagePopup>().Setup(Mathf.RoundToInt(damage), isCritical);
         }
 
-        // Trigger damage flash
         if (enemyRenderer != null)
         {
             StopCoroutine("FlashColor"); 
@@ -137,25 +124,34 @@ public class EnemyStats : MonoBehaviour
             Die();
         }
     }
+
+    public MutationType StealMutation()
+    {
+        if (CurrentMutation == MutationType.None) return MutationType.None;
+        MutationType stolenType = CurrentMutation;
+        baseHealth = originalBaseHealth;
+        baseDamage = originalBaseDamage;
+        moveSpeed = originalMoveSpeed;
+        if (enemyRenderer != null)
+        {
+            // Revert to the true original color
+            enemyRenderer.color = originalColor;
+        }
+        CurrentMutation = MutationType.None;
+        return stolenType;
+    }
     
     private void ApplyMutation()
     {
-        if (Random.value > mutationChance) return;
-        int mutationChoice = Random.Range(0, 3);
-        float bonusMultiplier = Random.Range(minMutationBonus, maxMutationBonus);
-        Color chosenMutationColor = originalColor;
+        if (UnityEngine.Random.value > mutationChance) return;
+        int mutationChoice = UnityEngine.Random.Range(0, 3);
+        float bonusMultiplier = UnityEngine.Random.Range(minMutationBonus, maxMutationBonus);
 
         switch (mutationChoice)
         {
-            case 0: CurrentMutation = MutationType.Health; baseHealth *= (1 + bonusMultiplier); chosenMutationColor = healthMutationColor; break;
-            case 1: CurrentMutation = MutationType.Damage; baseDamage *= (1 + bonusMultiplier); chosenMutationColor = damageMutationColor; break;
-            case 2: CurrentMutation = MutationType.Speed; moveSpeed *= (1 + bonusMultiplier); chosenMutationColor = speedMutationColor; break;
-        }
-
-        if (enemyRenderer != null && CurrentMutation != MutationType.None)
-        {
-            enemyRenderer.color = chosenMutationColor;
-            originalColor = chosenMutationColor; 
+            case 0: CurrentMutation = MutationType.Health; baseHealth *= (1 + bonusMultiplier); if (enemyRenderer != null) enemyRenderer.color = healthMutationColor; break;
+            case 1: CurrentMutation = MutationType.Damage; baseDamage *= (1 + bonusMultiplier); if (enemyRenderer != null) enemyRenderer.color = damageMutationColor; break;
+            case 2: CurrentMutation = MutationType.Speed; moveSpeed *= (1 + bonusMultiplier); if (enemyRenderer != null) enemyRenderer.color = speedMutationColor; break;
         }
     }
 
@@ -165,11 +161,28 @@ public class EnemyStats : MonoBehaviour
         return baseDamage;
     }
 
+    // --- YOUR ORIGINAL COROUTINE RESTORED ---
     private IEnumerator FlashColor()
     {
-        enemyRenderer.color = Color.red; 
-        yield return new WaitForSeconds(0.15f);
-        enemyRenderer.color = originalColor;
+        enemyRenderer.color = Color.red;
+        yield return new WaitForSeconds(0.15f); // Duration of the flash
+        
+        // This is the key difference: it checks the mutation status AFTER the flash.
+        if (CurrentMutation != MutationType.None)
+        {
+            // If it's still mutated, revert to the correct mutation color.
+            switch (CurrentMutation)
+            {
+                case MutationType.Health: enemyRenderer.color = healthMutationColor; break;
+                case MutationType.Damage: enemyRenderer.color = damageMutationColor; break;
+                case MutationType.Speed: enemyRenderer.color = speedMutationColor; break;
+            }
+        }
+        else
+        {
+            // If it's not mutated (or was just stolen), revert to the true original color.
+            enemyRenderer.color = originalColor;
+        }
     }
     
     public void Die()
@@ -185,7 +198,7 @@ public class EnemyStats : MonoBehaviour
         float totalChance = 0f;
         foreach (var orb in orbDrops) { totalChance += orb.dropChance; }
         if (totalChance <= 0) return;
-        float randomValue = Random.Range(0f, totalChance);
+        float randomValue = UnityEngine.Random.Range(0f, totalChance);
         foreach (var orb in orbDrops)
         {
             if (randomValue <= orb.dropChance) { Instantiate(orb.orbPrefab, transform.position, Quaternion.identity); return; }

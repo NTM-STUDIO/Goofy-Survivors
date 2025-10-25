@@ -12,11 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a235ba29a21fe3c4194c1d40bc43f19b, type: 3}
   m_Name: Cinto do Poe
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  weaponID: Cinto do POE
   weaponName: Cinto do POE
-  description: 
+  description: Cinto do POE
   icon: {fileID: 7299482299069153243, guid: fc9b99a2377b0ac4a8c452a490082eb3, type: 3}
   weaponPrefab: {fileID: 3514391754032089312, guid: 46953767f50a1674a840e9653e7aa11e, type: 3}
   archetype: 5
+  targetingStyle: 0
+  groupingRange: 5
   damage: 0
   cooldown: 0
   area: 0
@@ -28,4 +31,3 @@ MonoBehaviour:
   pierce: 0
   pierceCount: 0
   knockback: 0
-  maxLevel: 1

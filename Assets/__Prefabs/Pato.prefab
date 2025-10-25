@@ -310,7 +310,6 @@ GameObject:
   - component: {fileID: 2876931317350191461}
   - component: {fileID: 8654451083147522726}
   - component: {fileID: 7629850890781329749}
-  - component: {fileID: 8775885680113912159}
   m_Layer: 0
   m_Name: Pato
   m_TagString: Player
@@ -381,6 +380,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f51291457a043f446aa1e7da7b62d70a, type: 2}
   - {fileID: 11400000, guid: 7f82ddfef3f925449a966956605fc32b, type: 2}
   - {fileID: 11400000, guid: 951390051091ba1489ce516a02921df1, type: 2}
+  - {fileID: 11400000, guid: bc2683209e691594c90546de1a8df9f1, type: 2}
   weaponParent: {fileID: 8274304304770015266}
 --- !u!114 &8654451083147522726
 MonoBehaviour:
@@ -394,6 +394,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51ab94343354c7045a23e17c3b9d997b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hasBeltBuffItem: 0
+  stolenBuffDuration: 10
+  beltHealthBonus: 0.2
+  beltDamageBonus: 0.2
+  beltSpeedBonus: 1
   characterData: {fileID: 11400000, guid: 8e9db71e7d319214cb4ee66e6c773470, type: 2}
   maxHp: 0
   hpRegen: 0
@@ -427,17 +432,5 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3c2cc7d1792009f41b6f113745324217, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &8775885680113912159
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5781343528486485951}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 166bd53976add3b47bcd44c35fcd4777, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

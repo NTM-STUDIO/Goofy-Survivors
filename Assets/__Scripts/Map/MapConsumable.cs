@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Linq;
 
+[RequireComponent(typeof(Collider))]
 public class MapConsumable : MonoBehaviour
 {
     [System.Serializable]
@@ -15,50 +16,49 @@ public class MapConsumable : MonoBehaviour
 
     private void Awake()
     {
-        // Esta lógica permanece a mesma.
+        // If this object is a chest, cache its ChestScript.
         if (CompareTag("Chest"))
         {
             chestScript = GetComponent<ChestScript>();
         }
     }
 
-    // --- FUNÇÃO MODIFICADA PARA 3D ---
-    // Trocámos OnTriggerEnter2D por OnTriggerEnter e Collider2D por Collider.
     private void OnTriggerEnter(Collider other)
     {
-        // O resto da lógica dentro da função é exatamente o mesmo,
-        // pois CompareTag funciona para colisores 2D e 3D.
-        if (other.CompareTag("Player"))
+        if (!other.CompareTag("Player")) return;
+
+        // If it’s a chest, open it — otherwise drop a consumable.
+        if (CompareTag("Chest") && chestScript != null)
         {
-            if (CompareTag("Chest") && chestScript != null)
-            {
-                chestScript.OpenChest();
-            }
-            else
-            {
-                DropRandomItem();
-            }
-            
-            Destroy(gameObject);
+            chestScript.OpenChest();
         }
+        else
+        {
+            DropRandomItem();
+        }
+
+        Destroy(gameObject);
     }
 
     public void DropRandomItem()
     {
-        // Esta lógica permanece a mesma.
-        if (possibleDrops.Length == 0) return;
+        if (possibleDrops == null || possibleDrops.Length == 0)
+            return;
 
-        float totalWeight = possibleDrops.Sum(drop => drop.weight);
-        float randomNumber = Random.Range(0f, totalWeight);
+        float totalWeight = possibleDrops.Sum(d => d.weight);
+        float random = Random.Range(0f, totalWeight);
 
         foreach (var drop in possibleDrops)
         {
-            if (randomNumber <= drop.weight)
+            if (random <= drop.weight)
             {
-                Instantiate(drop.itemPrefab, transform.position, Quaternion.identity);
+                if (drop.itemPrefab != null)
+                {
+                    Instantiate(drop.itemPrefab, transform.position, Quaternion.identity);
+                }
                 return;
             }
-            randomNumber -= drop.weight;
+            random -= drop.weight;
         }
     }
 }

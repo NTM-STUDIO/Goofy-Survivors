@@ -280,7 +280,9 @@ MonoBehaviour:
   mutationChance: 0.1
   minMutationBonus: 0.2
   maxMutationBonus: 0.5
-  mutationColor: {r: 1, g: 0, b: 1, a: 1}
+  healthMutationColor: {r: 0, g: 1, b: 0, a: 1}
+  damageMutationColor: {r: 1, g: 0, b: 0, a: 1}
+  speedMutationColor: {r: 0, g: 0, b: 1, a: 1}
   isUnknockable: 0
   knockbackResistance: 0
   resistanceIncreasePerHit: 0.1
@@ -304,6 +306,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   projectilePrefab: {fileID: 6414582260825821178, guid: 866d1886075e0b241ab503c1839ade05, type: 3}
   firePoint: {fileID: 548238546038513927}
-  shootRange: 25
-  idealRange: 25
-  retreatDistance: 14
+  shootRange: 35
+  idealRange: 30
+  retreatDistance: 17

@@ -20,7 +20,7 @@ public class UpgradeManager : MonoBehaviour
 
     // Internal References
     private GameManager gameManager;
-    private PlayerStats playerStats; // This will be given to us by the GameManager
+    private PlayerStats playerStats; 
 
     public class GeneratedUpgrade
     {
@@ -38,7 +38,7 @@ public class UpgradeManager : MonoBehaviour
     }
 
     /// <summary>
-    /// The GameManager calls this and provides the newly spawned player object.
+    /// Called by GameManager after the player is spawned.
     /// </summary>
     public void Initialize(GameObject playerObject)
     {
@@ -58,15 +58,27 @@ public class UpgradeManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Enqueue a single level-up
+    /// </summary>
     public void AddLevelUpToQueue()
     {
-        if (playerStats == null) return;
-        
-        levelUpQueue.Enqueue(1);
+        EnqueueMultipleLevelUps(1);
+    }
+
+    /// <summary>
+    /// Enqueue multiple level-ups at once (corrects pause issue)
+    /// </summary>
+    public void EnqueueMultipleLevelUps(int amount)
+    {
+        if (playerStats == null || amount <= 0) return;
+
+        for (int i = 0; i < amount; i++)
+            levelUpQueue.Enqueue(1);
+
+        // Process the queue if not already in progress
         if (!isUpgradeInProgress)
-        {
             ProcessNextUpgrade();
-        }
     }
 
     private void ProcessNextUpgrade()
@@ -79,25 +91,29 @@ public class UpgradeManager : MonoBehaviour
         }
         else
         {
+            // All upgrades processed
             isUpgradeInProgress = false;
+            upgradePanel.SetActive(false);
+            foreach (Transform child in choicesContainer) Destroy(child.gameObject);
+            gameManager.RequestResume(); // resume only once
+            EventSystem.current.SetSelectedGameObject(null);
         }
     }
     
     private void ShowUpgradeChoices()
     {
+        // Clear previous choices
         foreach (Transform child in choicesContainer)
-        {
             Destroy(child.gameObject);
-        }
 
         int choicesCount = GetNumberOfChoices(playerStats.luck);
         List<GeneratedUpgrade> choices = GenerateUpgradeChoices(choicesCount);
         DisplayUpgradeChoices(choices);
-        
+
         upgradePanel.SetActive(true);
-        gameManager.RequestPause();
+        gameManager.RequestPause(); // pause only once at start of this panel
     }
-    
+
     private int GetNumberOfChoices(float currentLuck)
     {
         if (Random.Range(0f, 100f) < currentLuck / 2f) return 5;
@@ -121,18 +137,19 @@ public class UpgradeManager : MonoBehaviour
             var generatedUpgrade = new GeneratedUpgrade();
             generatedUpgrade.BaseData = chosenData;
             generatedUpgrade.Rarity = DetermineRarity(playerStats.luck);
-            
+
             float luckAsPercentage = playerStats.luck / 100f;
             float rangeDifference = chosenData.baseValueMax - chosenData.baseValueMin;
             float boostAmount = rangeDifference * luckAsPercentage;
             float luckAdjustedMin = chosenData.baseValueMin + boostAmount;
-            
+
             float effectiveMin = Mathf.Min(luckAdjustedMin, chosenData.baseValueMax);
             float baseValue = Random.Range(effectiveMin, chosenData.baseValueMax);
             generatedUpgrade.Value = baseValue * generatedUpgrade.Rarity.valueMultiplier;
 
             generatedChoices.Add(generatedUpgrade);
         }
+
         return generatedChoices;
     }
 
@@ -151,7 +168,9 @@ public class UpgradeManager : MonoBehaviour
             {
                 modifiedWeights.Add(currentWeight);
                 totalWeight += currentWeight;
-            } else {
+            } 
+            else 
+            {
                 modifiedWeights.Add(0);
             }
         }
@@ -180,7 +199,9 @@ public class UpgradeManager : MonoBehaviour
             uiInstance.Setup(choice, this);
             if (firstChoice == null) firstChoice = uiInstance.gameObject;
         }
-        if (firstChoice != null) EventSystem.current.SetSelectedGameObject(firstChoice);
+
+        if (firstChoice != null)
+            EventSystem.current.SetSelectedGameObject(firstChoice);
     }
 
     public void ApplyUpgrade(GeneratedUpgrade upgrade)
@@ -205,20 +226,9 @@ public class UpgradeManager : MonoBehaviour
             case StatType.XPGainMultiplier: playerStats.IncreaseXPGainMultiplier(value / 100f); break;
         }
         
-        if (levelUpQueue.Count > 0)
-        {
-            ProcessNextUpgrade();
-        }
-        else
-        {
-            isUpgradeInProgress = false;
-            foreach (Transform child in choicesContainer) Destroy(child.gameObject);
-            upgradePanel.SetActive(false);
-            gameManager.RequestResume();
-            EventSystem.current.SetSelectedGameObject(null);
-        }
+        ProcessNextUpgrade(); // chama próximo painel ou fecha todos
     }
-    
+
     public List<StatUpgradeData> GetAvailableUpgrades() { return availableUpgrades; }
     public List<RarityTier> GetRarityTiers() { return rarityTiers; }
 }

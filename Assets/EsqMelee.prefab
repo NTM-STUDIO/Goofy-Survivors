@@ -316,9 +316,9 @@ MonoBehaviour:
   baseHealth: 15
   baseDamage: 10
   moveSpeed: 8
-  mutationChance: 0.2
-  minMutationBonus: 1
-  maxMutationBonus: 2
+  mutationChance: 0.15
+  minMutationBonus: 0.5
+  maxMutationBonus: 1
   healthMutationColor: {r: 0, g: 1, b: 0, a: 1}
   damageMutationColor: {r: 1, g: 0, b: 0, a: 1}
   speedMutationColor: {r: 0, g: 0, b: 1, a: 1}

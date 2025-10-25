@@ -4,8 +4,13 @@ using System.Collections.Generic;
 
 public class ChestScript : MonoBehaviour
 {
+    private bool hasOpened = false;
+
     public void OpenChest()
     {
+        if (hasOpened) return; // ✅ Prevent double-trigger
+        hasOpened = true;
+
         PlayerWeaponManager playerWeaponManager = FindObjectOfType<PlayerWeaponManager>();
         if (playerWeaponManager == null)
         {
@@ -30,8 +35,6 @@ public class ChestScript : MonoBehaviour
             WeaponData newWeapon = availableWeapons[randomIndex];
             playerWeaponManager.AddWeapon(newWeapon);
 
-            // *** THE ONLY FIX IS HERE ***
-            // The function in your UIManager is named "OpenNewWeaponPanel".
             uiManager.OpenNewWeaponPanel(newWeapon);
         }
         else

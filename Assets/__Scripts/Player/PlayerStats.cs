@@ -1,6 +1,8 @@
 using UnityEngine;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 // A struct to hold the result of a damage calculation, including the final damage and whether it was a critical hit.
 public struct DamageResult
@@ -9,12 +11,38 @@ public struct DamageResult
     public bool isCritical;
 }
 
+// A simple class to keep track of a temporary buff and its timer.
+public class ActiveBuff
+{
+    public MutationType type;
+    public float timer;
+}
+
 public class PlayerStats : MonoBehaviour
 {
+    // --- NEW SECTION: BELT BUFFS (STACKING) ---
+    [Header("Item Effects: Belt Buffs")]
+    [Tooltip("Set to true by your UpgradeManager when the player acquires the belt item.")]
+    public bool hasBeltBuffItem = false;
+
+    [Tooltip("The duration of a single stolen buff stack in seconds.")]
+    [SerializeField] private float stolenBuffDuration = 10f;
+    
+    [Header("Stolen Buff Bonuses (Per Stack)")]
+    [Tooltip("The percentage bonus to max health when a Health buff is stolen (0.2 = +20%).")]
+    [SerializeField] private float beltHealthBonus = 0.2f;
+    [Tooltip("The percentage bonus to damage when a Damage buff is stolen (0.2 = +20%).")]
+    [SerializeField] private float beltDamageBonus = 0.2f;
+    [Tooltip("The additive bonus to move speed when a Speed buff is stolen.")]
+    [SerializeField] private float beltSpeedBonus = 1.0f;
+
+    // This list will now hold every individual stack of a buff.
+    private List<ActiveBuff> activeBuffs = new List<ActiveBuff>();
+    // --- END OF NEW SECTION ---
+
     [Header("Character Data")]
     public PlayerCharacterData characterData;
 
-    // --- Your Original Stat Fields ---
     [HideInInspector] public int maxHp;
     [HideInInspector] public float hpRegen;
     [HideInInspector] public float damageMultiplier;
@@ -33,20 +61,15 @@ public class PlayerStats : MonoBehaviour
     [HideInInspector] public int pierceCount;
 
     [Header("Health & Invincibility")]
-    [Tooltip("Current HP of the player (clamped to [0, maxHp])")]
     [SerializeField] private int currentHp;
-    [Tooltip("Duration of invincibility frames after taking a hit (seconds)")]
-    [Min(0f)]
     [SerializeField] private float invincibilityDuration = 0.6f;
-    [Tooltip("Whether the player is currently invincible (i-frames)")]
     [SerializeField] private bool invincible = false;
-    [Tooltip("Optional flash on damage")][SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private SpriteRenderer spriteRenderer;
     [ColorUsage(true, true)][SerializeField] private Color hurtFlashColor = new Color(1f, 0.4f, 0.4f, 1f);
     [SerializeField] private float hurtFlashTime = 0.1f;
     private Color _originalColor;
 
-    // Events for UI and gameplay hooks
-    public event Action<int, int> OnHealthChanged; // (current, max)
+    public event Action<int, int> OnHealthChanged;
     public event Action OnDamaged;
     public event Action OnHealed;
     public event Action OnDeath;
@@ -64,36 +87,79 @@ public class PlayerStats : MonoBehaviour
         StartCoroutine(HealthRegenRoutine());
     }
 
-    /// <summary>
-    /// Calculates final damage based on player stats, including a check for critical strikes.
-    /// This is the central point for all outgoing player damage.
-    /// </summary>
-    /// <param name="baseDamage">The base damage of the weapon dealing the hit.</param>
-    /// <returns>A DamageResult containing the final damage and a bool indicating if it was a crit.</returns>
+    // --- NEW: UPDATE METHOD TO HANDLE BUFF TIMERS ---
+    void Update()
+    {
+        HandleBuffExpiration();
+    }
+
+    // --- NEW: METHODS FOR THE STACKING BUFF SYSTEM ---
+    public void AddTemporaryBuff(MutationType type)
+    {
+        if (type == MutationType.None) return;
+
+        // Immediately apply the stat bonus for this new stack.
+        ApplyBuffEffect(type, true);
+
+        // Create a new ActiveBuff object representing this single stack.
+        ActiveBuff newBuffStack = new ActiveBuff { type = type, timer = stolenBuffDuration };
+
+        // Add the new stack to our list of active buffs.
+        activeBuffs.Add(newBuffStack);
+
+        int stackCount = activeBuffs.Count(b => b.type == type);
+        Debug.Log($"Gained {type} buff! Now at {stackCount} stacks.");
+    }
+
+    private void HandleBuffExpiration()
+    {
+        for (int i = activeBuffs.Count - 1; i >= 0; i--)
+        {
+            activeBuffs[i].timer -= Time.deltaTime;
+            if (activeBuffs[i].timer <= 0)
+            {
+                Debug.Log($"A {activeBuffs[i].type} buff stack has expired.");
+                ApplyBuffEffect(activeBuffs[i].type, false);
+                activeBuffs.RemoveAt(i);
+            }
+        }
+    }
+
+    private void ApplyBuffEffect(MutationType type, bool apply)
+    {
+        int sign = apply ? 1 : -1;
+        switch (type)
+        {
+            case MutationType.Health:
+                int healthChange = Mathf.RoundToInt(characterData.maxHp * beltHealthBonus * sign);
+                IncreaseMaxHP(healthChange);
+                break;
+            case MutationType.Damage:
+                damageMultiplier += beltDamageBonus * sign;
+                break;
+            case MutationType.Speed:
+                movementSpeed += beltSpeedBonus * sign;
+                break;
+        }
+    }
+    // --- END OF NEW METHODS ---
+
     public DamageResult CalculateDamage(float baseDamage)
     {
         float finalDamage = baseDamage * this.damageMultiplier;
         bool isCritical = false;
-
-        // Roll for a critical strike using the player's current crit chance.
         if (UnityEngine.Random.value <= this.critChance)
         {
             isCritical = true;
             finalDamage *= this.critDamageMultiplier;
         }
-
         return new DamageResult { damage = finalDamage, isCritical = isCritical };
     }
 
     #region Initialization and Stat Modifiers
     private void InitializeStats()
     {
-        if (characterData == null)
-        {
-            Debug.LogError("CRITICAL: PlayerCharacterData is not assigned in the PlayerStats component!", this);
-            return;
-        }
-
+        if (characterData == null) { Debug.LogError("CRITICAL: PlayerCharacterData is not assigned!", this); return; }
         maxHp = characterData.maxHp;
         hpRegen = characterData.hpRegen;
         damageMultiplier = characterData.damageMultiplier;
@@ -110,16 +176,10 @@ public class PlayerStats : MonoBehaviour
         pickupRange = characterData.pickupRange;
         xpGainMultiplier = characterData.xpGainMultiplier;
         pierceCount = (int)characterData.pierceCount;
-
-        foreach (var bonus in characterData.startingBonuses)
-        {
-            ApplyStatBonus(bonus);
-        }
-
+        foreach (var bonus in characterData.startingBonuses) { ApplyStatBonus(bonus); }
         currentHp = maxHp;
         if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         if (spriteRenderer != null) _originalColor = spriteRenderer.color;
-
         OnHealthChanged?.Invoke(currentHp, maxHp);
         var uiManager = FindFirstObjectByType<UIManager>();
         if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp);
@@ -128,10 +188,7 @@ public class PlayerStats : MonoBehaviour
     public void ApplyLevelUpScaling()
     {
         if (characterData == null) return;
-        foreach (var bonus in characterData.scalingBonusesPerLevel)
-        {
-            ApplyStatBonus(bonus);
-        }
+        foreach (var bonus in characterData.scalingBonusesPerLevel) { ApplyStatBonus(bonus); }
         Debug.Log("Applied level up scaling bonuses.");
     }
 
@@ -139,56 +196,22 @@ public class PlayerStats : MonoBehaviour
     {
         switch (bonus.stat)
         {
-            case StatType.MaxHP:
-                maxHp += (int)bonus.value;
-                Heal((int)bonus.value);
-                break;
-            case StatType.HPRegen:
-                hpRegen += bonus.value;
-                break;
-            case StatType.DamageMultiplier:
-                damageMultiplier += bonus.value;
-                break;
-            case StatType.CritChance:
-                critChance = Mathf.Clamp01(critChance + bonus.value);
-                break;
-            case StatType.CritDamageMultiplier:
-                critDamageMultiplier += bonus.value;
-                break;
-            case StatType.AttackSpeedMultiplier:
-                attackSpeedMultiplier += bonus.value;
-                break;
-            case StatType.ProjectileCount:
-                projectileCount += (int)bonus.value;
-                break;
-            case StatType.ProjectileSizeMultiplier:
-                projectileSizeMultiplier += bonus.value;
-                break;
-            case StatType.ProjectileSpeedMultiplier:
-                projectileSpeedMultiplier += bonus.value;
-                break;
-            case StatType.DurationMultiplier:
-                durationMultiplier += bonus.value;
-                break;
-            case StatType.KnockbackMultiplier:
-                knockbackMultiplier += bonus.value;
-                break;
-            case StatType.MovementSpeed:
-                movementSpeed += bonus.value;
-                break;
-            case StatType.Luck:
-                luck += bonus.value;
-                break;
-            case StatType.PickupRange:
-                pickupRange += (int)bonus.value;
-                break;
-            case StatType.XPGainMultiplier:
-                xpGainMultiplier += bonus.value;
-                break;
-            // NOTE: Remember to add a case for PierceCount if it's in your StatType enum
-            default:
-                 Debug.LogWarning($"Stat bonus for {bonus.stat} not implemented in ApplyStatBonus method.");
-                 break;
+            case StatType.MaxHP: maxHp += (int)bonus.value; Heal((int)bonus.value); break;
+            case StatType.HPRegen: hpRegen += bonus.value; break;
+            case StatType.DamageMultiplier: damageMultiplier += bonus.value; break;
+            case StatType.CritChance: critChance = Mathf.Clamp01(critChance + bonus.value); break;
+            case StatType.CritDamageMultiplier: critDamageMultiplier += bonus.value; break;
+            case StatType.AttackSpeedMultiplier: attackSpeedMultiplier += bonus.value; break;
+            case StatType.ProjectileCount: projectileCount += (int)bonus.value; break;
+            case StatType.ProjectileSizeMultiplier: projectileSizeMultiplier += bonus.value; break;
+            case StatType.ProjectileSpeedMultiplier: projectileSpeedMultiplier += bonus.value; break;
+            case StatType.DurationMultiplier: durationMultiplier += bonus.value; break;
+            case StatType.KnockbackMultiplier: knockbackMultiplier += bonus.value; break;
+            case StatType.MovementSpeed: movementSpeed += bonus.value; break;
+            case StatType.Luck: luck += bonus.value; break;
+            case StatType.PickupRange: pickupRange += (int)bonus.value; break;
+            case StatType.XPGainMultiplier: xpGainMultiplier += bonus.value; break;
+            default: Debug.LogWarning($"Stat bonus for {bonus.stat} not implemented."); break;
         }
     }
 
@@ -225,117 +248,14 @@ public class PlayerStats : MonoBehaviour
     #endregion
 
     #region Core Gameplay Logic
-    public void PrintStats()
-    {
-        Debug.Log("Stats Initialized from Character Data");
-        Debug.Log($"MaxHP: {maxHp}, HPRegen: {hpRegen}, DamageMultiplier: {damageMultiplier}");
-        Debug.Log($"CritChance: {critChance}, CritDamageMultiplier: {critDamageMultiplier}, AttackSpeedMultiplier: {attackSpeedMultiplier}");
-        Debug.Log($"ProjectileCount: {projectileCount}, ProjectileSizeMultiplier: {projectileSizeMultiplier}, ProjectileSpeedMultiplier: {projectileSpeedMultiplier}");
-        Debug.Log($"DurationMultiplier: {durationMultiplier}, KnockbackMultiplier: {knockbackMultiplier}, MovementSpeed: {movementSpeed}");
-        Debug.Log($"Luck: {luck}, PickupRange: {pickupRange}, XPGainMultiplier: {xpGainMultiplier}");
-    }
-    
-    public void Heal(int amount)
-    {
-        if (amount <= 0 || currentHp <= 0) return;
-        int prev = currentHp;
-        currentHp = Mathf.Clamp(currentHp + amount, 0, maxHp);
-        if (currentHp != prev)
-        {
-            OnHealed?.Invoke();
-            OnHealthChanged?.Invoke(currentHp, maxHp);
-            var uiManager = FindFirstObjectByType<UIManager>();
-            if (uiManager != null)
-            {
-                uiManager.UpdateHealthBar(currentHp, maxHp);
-            }
-        }
-    }
-
-    public void ApplyDamage(float amount, Vector3? hitFromWorldPos = null, float? customIFrameDuration = null)
-    {
-        if (amount <= 0f || invincible || currentHp <= 0) return;
-        int damageInt = Mathf.CeilToInt(amount);
-        currentHp = Mathf.Clamp(currentHp - damageInt, 0, maxHp);
-
-        if (spriteRenderer != null)
-        {
-            StopCoroutine(nameof(FlashRoutine));
-            StartCoroutine(FlashRoutine());
-        }
-        OnDamaged?.Invoke();
-        OnHealthChanged?.Invoke(currentHp, maxHp);
-
-        float iFrames = customIFrameDuration.HasValue ? Mathf.Max(0f, customIFrameDuration.Value) : invincibilityDuration;
-        if (iFrames > 0f) StartCoroutine(InvincibilityRoutine(iFrames));
-
-        if (currentHp <= 0)
-        {
-            HandleDeath();
-        }
-
-        var uiManager = FindFirstObjectByType<UIManager>();
-        if (uiManager != null)
-            uiManager.UpdateHealthBar(currentHp, maxHp);
-    }
-
-    public void BeginInvincibility(float duration)
-    {
-        if (duration <= 0f) return;
-        StopCoroutine(nameof(InvincibilityRoutine));
-        StartCoroutine(InvincibilityRoutine(duration));
-    }
-
-    private IEnumerator InvincibilityRoutine(float duration)
-    {
-        invincible = true;
-        yield return new WaitForSeconds(duration);
-        invincible = false;
-    }
-
-    private IEnumerator FlashRoutine()
-    {
-        if (spriteRenderer == null) yield break;
-        spriteRenderer.color = hurtFlashColor;
-        yield return new WaitForSeconds(hurtFlashTime);
-        spriteRenderer.color = _originalColor;
-    }
-
-    private void HandleDeath()
-    {
-        Debug.Log("Player died.");
-        OnDeath?.Invoke();
-
-        var movement = GetComponent<Movement>();
-        if (movement != null)
-        {
-            movement.enabled = false;
-        }
-
-        var colls = GetComponentsInChildren<Collider>();
-        foreach (var c in colls) c.enabled = false;
-
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.PlayerDied();
-        }
-    }
-
-    private IEnumerator HealthRegenRoutine()
-    {
-        while (true)
-        {
-            yield return new WaitForSeconds(1f);
-            ApplyHealthRegen();
-        }
-    }
-
-    private void ApplyHealthRegen()
-    {
-        if (hpRegen > 0f && currentHp > 0 && currentHp < maxHp)
-        {
-            Heal(Mathf.CeilToInt(hpRegen));
-        }
-    }
+    public void PrintStats() { /* ... */ }
+    public void Heal(int amount) { if (amount <= 0 || currentHp <= 0) return; int prev = currentHp; currentHp = Mathf.Clamp(currentHp + amount, 0, maxHp); if (currentHp != prev) { OnHealed?.Invoke(); OnHealthChanged?.Invoke(currentHp, maxHp); var uiManager = FindFirstObjectByType<UIManager>(); if (uiManager != null) { uiManager.UpdateHealthBar(currentHp, maxHp); } } }
+    public void ApplyDamage(float amount, Vector3? hitFromWorldPos = null, float? customIFrameDuration = null) { if (amount <= 0f || invincible || currentHp <= 0) return; int damageInt = Mathf.CeilToInt(amount); currentHp = Mathf.Clamp(currentHp - damageInt, 0, maxHp); if (spriteRenderer != null) { StopCoroutine(nameof(FlashRoutine)); StartCoroutine(FlashRoutine()); } OnDamaged?.Invoke(); OnHealthChanged?.Invoke(currentHp, maxHp); float iFrames = customIFrameDuration.HasValue ? Mathf.Max(0f, customIFrameDuration.Value) : invincibilityDuration; if (iFrames > 0f) StartCoroutine(InvincibilityRoutine(iFrames)); if (currentHp <= 0) { HandleDeath(); } var uiManager = FindFirstObjectByType<UIManager>(); if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp); }
+    public void BeginInvincibility(float duration) { if (duration <= 0f) return; StopCoroutine(nameof(InvincibilityRoutine)); StartCoroutine(InvincibilityRoutine(duration)); }
+    private IEnumerator InvincibilityRoutine(float duration) { invincible = true; yield return new WaitForSeconds(duration); invincible = false; }
+    private IEnumerator FlashRoutine() { if (spriteRenderer == null) yield break; spriteRenderer.color = hurtFlashColor; yield return new WaitForSeconds(hurtFlashTime); spriteRenderer.color = _originalColor; }
+    private void HandleDeath() { Debug.Log("Player died."); OnDeath?.Invoke(); var movement = GetComponent<Movement>(); if (movement != null) { movement.enabled = false; } var colls = GetComponentsInChildren<Collider>(); foreach (var c in colls) c.enabled = false; if (GameManager.Instance != null) { GameManager.Instance.PlayerDied(); } }
+    private IEnumerator HealthRegenRoutine() { while (true) { yield return new WaitForSeconds(1f); ApplyHealthRegen(); } }
+    private void ApplyHealthRegen() { if (hpRegen > 0f && currentHp > 0 && currentHp < maxHp) { Heal(Mathf.CeilToInt(hpRegen)); } }
     #endregion
 }

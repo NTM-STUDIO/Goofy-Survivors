@@ -10,6 +10,8 @@ public class WeaponController : MonoBehaviour
     private Transform firePoint;
     private Transform playerTransform;
 
+    private ShieldWeapon activeShield;
+
     void Start()
     {
         transform.localPosition = Vector3.zero;
@@ -24,18 +26,28 @@ public class WeaponController : MonoBehaviour
             if (firePoint == null) firePoint = playerTransform;
         }
         currentCooldown = 0f;
-        
-        if (weaponData.archetype == WeaponArchetype.Aura)
+
+        if (weaponData.archetype == WeaponArchetype.Aura) { ActivateAura(); }
+        else if (weaponData.archetype == WeaponArchetype.Shield)
         {
-            ActivateAura();
+            SpawnPermanentShield();
+            EnemyStats.OnEnemyDamaged += HandleEnemyDamagedForShield;
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (weaponData.archetype == WeaponArchetype.Shield)
+        {
+            EnemyStats.OnEnemyDamaged -= HandleEnemyDamagedForShield;
         }
     }
 
     void Update()
     {
         if (playerStats == null || weaponData == null || playerTransform == null) return;
-        
-        if (weaponData.archetype == WeaponArchetype.Aura)
+
+        if (weaponData.archetype == WeaponArchetype.Aura || weaponData.archetype == WeaponArchetype.Shield)
         {
             return;
         }
@@ -46,8 +58,30 @@ public class WeaponController : MonoBehaviour
             Attack();
             float finalAttackSpeed = playerStats.attackSpeedMultiplier;
             float cooldownBasedOnSpeed = weaponData.cooldown / Mathf.Max(0.01f, finalAttackSpeed);
-            float finalDuration = weaponData.duration * playerStats.durationMultiplier;
-            currentCooldown = Mathf.Max(cooldownBasedOnSpeed, finalDuration);
+            currentCooldown = cooldownBasedOnSpeed;
+        }
+    }
+
+    private void HandleEnemyDamagedForShield(EnemyStats damagedEnemy)
+    {
+        // If the shield doesn't exist or the player stats aren't found, do nothing.
+        if (activeShield == null || playerStats == null) return;
+
+        if (damagedEnemy.CurrentMutation != MutationType.None)
+        {
+            MutationType stolenType = damagedEnemy.StealMutation();
+            if (stolenType != MutationType.None)
+            {
+                // The duration for the visual effect
+                float finalDuration = weaponData.duration * playerStats.durationMultiplier;
+
+                // --- DO BOTH ACTIONS ---
+                // 1. Tell the PlayerStats to add the temporary stat bonus.
+                playerStats.AddTemporaryBuff(stolenType);
+
+                // 2. Tell our active shield to start its visual color change.
+                activeShield.AbsorbBuff(stolenType, finalDuration);
+            }
         }
     }
 
@@ -55,12 +89,19 @@ public class WeaponController : MonoBehaviour
     {
         switch (weaponData.archetype)
         {
-            case WeaponArchetype.Projectile:
-                FireProjectile();
-                break;
-            case WeaponArchetype.Orbit:
-                ActivateOrbitingWeapon();
-                break;
+            case WeaponArchetype.Projectile: FireProjectile(); break;
+            case WeaponArchetype.Orbit: ActivateOrbitingWeapon(); break;
+        }
+    }
+
+    private void SpawnPermanentShield()
+    {
+        GameObject shieldObj = Instantiate(weaponData.weaponPrefab, transform.position, Quaternion.identity, transform);
+        activeShield = shieldObj.GetComponentInChildren<ShieldWeapon>();
+
+        if (activeShield == null)
+        {
+            Debug.LogWarning($"Shield prefab for {weaponData.weaponName} is missing the ShieldWeapon script!");
         }
     }
 
@@ -75,7 +116,6 @@ public class WeaponController : MonoBehaviour
     }
 
     #region Other Attack Methods
-    // --- METHOD MODIFIED ---
     private void ActivateOrbitingWeapon()
     {
         int finalAmount = weaponData.amount + playerStats.projectileCount;
@@ -89,14 +129,11 @@ public class WeaponController : MonoBehaviour
 
         for (int i = 0; i < finalAmount; i++)
         {
-            // Damage is no longer calculated here.
-
             float startingAngle = i * angleStep;
             GameObject orbitingWeaponObj = Instantiate(weaponData.weaponPrefab, orbitCenter.position, Quaternion.identity, orbitCenter);
             OrbitingWeapon orbiter = orbitingWeaponObj.GetComponent<OrbitingWeapon>();
             if (orbiter != null)
             {
-                // Give the orbiter the references it needs to calculate its own damage on hit.
                 orbiter.Initialize(orbitCenter, startingAngle, playerStats, weaponData, finalSpeed, finalDuration, finalKnockback, finalSize);
             }
         }
@@ -117,7 +154,6 @@ public class WeaponController : MonoBehaviour
 
         foreach (Transform target in targets)
         {
-            // Calculate damage separately for each projectile so they have individual crit chances
             DamageResult damageResult = playerStats.CalculateDamage(weaponData.damage);
 
             Vector3 direction;
@@ -128,7 +164,7 @@ public class WeaponController : MonoBehaviour
             }
             else
             {
-                Vector2 randomCircleDir = Random.insideUnitCircle.normalized;
+                Vector2 randomCircleDir = UnityEngine.Random.insideUnitCircle.normalized;
                 direction = new Vector3(randomCircleDir.x, 0, randomCircleDir.y);
             }
             SpawnAndInitializeProjectile(target, direction, damageResult.damage, damageResult.isCritical, finalSpeed, finalDuration, finalKnockback, finalSize);
