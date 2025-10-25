@@ -64,28 +64,20 @@ public class WeaponController : MonoBehaviour
         }
     }
 
-    // --- METHOD CORRECTED ---
     private void ActivateAura()
     {
-        // Use this.transform as the parent. The WeaponController should be on a child
-        // object of the player, so making the aura a child of it will ensure it follows.
         GameObject auraObj = Instantiate(weaponData.weaponPrefab, transform.position, Quaternion.identity, this.transform);
         AuraWeapon aura = auraObj.GetComponent<AuraWeapon>();
-
         if (aura != null)
         {
             aura.Initialize(playerStats, weaponData);
         }
-        else
-        {
-            Debug.LogWarning("Aura weapon prefab is missing the AuraWeapon script!");
-        }
     }
 
     #region Other Attack Methods
+    // --- METHOD MODIFIED ---
     private void ActivateOrbitingWeapon()
     {
-        float finalDamage = weaponData.damage * playerStats.damageMultiplier;
         int finalAmount = weaponData.amount + playerStats.projectileCount;
         float finalSize = weaponData.area * playerStats.projectileSizeMultiplier;
         float finalSpeed = weaponData.speed * playerStats.projectileSpeedMultiplier;
@@ -97,19 +89,21 @@ public class WeaponController : MonoBehaviour
 
         for (int i = 0; i < finalAmount; i++)
         {
+            // Damage is no longer calculated here.
+
             float startingAngle = i * angleStep;
             GameObject orbitingWeaponObj = Instantiate(weaponData.weaponPrefab, orbitCenter.position, Quaternion.identity, orbitCenter);
             OrbitingWeapon orbiter = orbitingWeaponObj.GetComponent<OrbitingWeapon>();
             if (orbiter != null)
             {
-                orbiter.Initialize(orbitCenter, startingAngle, finalDamage, finalSpeed, finalDuration, finalKnockback, finalSize);
+                // Give the orbiter the references it needs to calculate its own damage on hit.
+                orbiter.Initialize(orbitCenter, startingAngle, playerStats, weaponData, finalSpeed, finalDuration, finalKnockback, finalSize);
             }
         }
     }
 
     private void FireProjectile()
     {
-        float finalDamage = weaponData.damage * playerStats.damageMultiplier;
         int finalAmount = weaponData.amount + playerStats.projectileCount;
         float finalSize = weaponData.area * playerStats.projectileSizeMultiplier;
         float finalSpeed = weaponData.speed * playerStats.projectileSpeedMultiplier;
@@ -123,6 +117,9 @@ public class WeaponController : MonoBehaviour
 
         foreach (Transform target in targets)
         {
+            // Calculate damage separately for each projectile so they have individual crit chances
+            DamageResult damageResult = playerStats.CalculateDamage(weaponData.damage);
+
             Vector3 direction;
             if (target != null)
             {
@@ -134,7 +131,7 @@ public class WeaponController : MonoBehaviour
                 Vector2 randomCircleDir = Random.insideUnitCircle.normalized;
                 direction = new Vector3(randomCircleDir.x, 0, randomCircleDir.y);
             }
-            SpawnAndInitializeProjectile(target, direction, finalDamage, finalSpeed, finalDuration, finalKnockback, finalSize);
+            SpawnAndInitializeProjectile(target, direction, damageResult.damage, damageResult.isCritical, finalSpeed, finalDuration, finalKnockback, finalSize);
         }
     }
 
@@ -155,43 +152,18 @@ public class WeaponController : MonoBehaviour
                 GameObject[] strongestEnemies = sortedByHealth.ToArray();
                 for (int i = 0; i < amount; i++) targets[i] = (i < strongestEnemies.Length) ? strongestEnemies[i].transform : null;
                 return targets;
-            case TargetingStyle.MostGrouped:
-                Transform bestTarget = null;
-                int maxGroupCount = -1;
-                foreach (GameObject potentialTarget in enemies)
-                {
-                    int currentGroupCount = 0;
-                    foreach (GameObject otherEnemy in enemies)
-                    {
-                        if (potentialTarget == otherEnemy) continue;
-                        if (Vector3.Distance(potentialTarget.transform.position, otherEnemy.transform.position) <= weaponData.groupingRange)
-                        {
-                            currentGroupCount++;
-                        }
-                    }
-                    if (currentGroupCount > maxGroupCount)
-                    {
-                        maxGroupCount = currentGroupCount;
-                        bestTarget = potentialTarget.transform;
-                    }
-                }
-                for (int i = 0; i < amount; i++) targets[i] = bestTarget;
-                return targets;
-            case TargetingStyle.Mixed:
-                System.Array.Sort(enemies, (a, b) => Vector3.Distance(firePoint.position, a.transform.position).CompareTo(Vector3.Distance(firePoint.position, b.transform.position)));
-                for (int i = 0; i < amount; i++) targets[i] = (i < enemies.Length) ? enemies[i].transform : null;
+            default:
                 return targets;
         }
-        return targets;
     }
 
-    private void SpawnAndInitializeProjectile(Transform target, Vector3 direction, float damage, float speed, float duration, float knockback, float size)
+    private void SpawnAndInitializeProjectile(Transform target, Vector3 direction, float damage, bool isCritical, float speed, float duration, float knockback, float size)
     {
         GameObject projectileObj = Instantiate(weaponData.weaponPrefab, firePoint.position, Quaternion.identity);
         ProjectileWeapon projectile = projectileObj.GetComponent<ProjectileWeapon>();
         if (projectile != null)
         {
-            projectile.Initialize(target, direction, damage, speed, duration, knockback, size);
+            projectile.Initialize(target, direction, damage, isCritical, speed, duration, knockback, size);
         }
     }
     #endregion

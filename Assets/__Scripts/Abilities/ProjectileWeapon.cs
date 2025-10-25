@@ -4,6 +4,7 @@ using UnityEngine;
 public class ProjectileWeapon : MonoBehaviour
 {
     private float damage;
+    private bool wasCritical; // NEW: Stores whether this instance is a critical hit
     private float speed;
     private float knockbackForce;
 
@@ -19,12 +20,14 @@ public class ProjectileWeapon : MonoBehaviour
         }
     }
 
-    public void Initialize(Transform targetEnemy, Vector3 initialDirection, float finalDamage, float finalSpeed, float finalDuration, float finalKnockback, float finalSize)
+    // --- MODIFIED: Initialize method now accepts the isCritical flag ---
+    public void Initialize(Transform targetEnemy, Vector3 initialDirection, float finalDamage, bool isCritical, float finalSpeed, float finalDuration, float finalKnockback, float finalSize)
     {
         this.damage = finalDamage;
+        this.wasCritical = isCritical; // Store the crit status
         this.speed = finalSpeed;
         this.knockbackForce = finalKnockback;
-        this.lifetime = 5f;
+        this.lifetime = 4f; // Or you could use finalDuration
         transform.localScale *= finalSize;
 
         if (rb != null)
@@ -42,6 +45,7 @@ public class ProjectileWeapon : MonoBehaviour
         }
     }
 
+    // --- MODIFIED: Trigger detection now passes the crit status ---
     void OnTriggerEnter(Collider other)
     {
         // Check if the collided object is tagged as "Enemy" or "Reaper".
@@ -51,8 +55,8 @@ public class ProjectileWeapon : MonoBehaviour
             EnemyStats enemyStats = other.GetComponentInParent<EnemyStats>();
             if (enemyStats != null)
             {
-                // Apply damage.
-                enemyStats.TakeDamage((int)damage);
+                // Apply damage, passing along the stored critical hit status.
+                enemyStats.TakeDamage(damage, wasCritical);
 
                 // Only apply knockback if the target is NOT a Reaper.
                 if (!other.CompareTag("Reaper"))
@@ -63,6 +67,8 @@ public class ProjectileWeapon : MonoBehaviour
                 }
 
                 // Destroy the projectile after impact.
+                // You might want to add a pierce mechanic here in the future,
+                // which would prevent the projectile from being destroyed immediately.
                 Destroy(gameObject);
             }
         }

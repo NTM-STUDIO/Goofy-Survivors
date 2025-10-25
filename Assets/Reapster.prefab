@@ -97,9 +97,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 853117fdcad11eb468dce0024d64eb22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseHealth: 10000
+  baseHealth: 1e+9
   baseDamage: 0
   moveSpeed: 0
+  isUnknockable: 0
+  knockbackResistance: 0
+  resistanceIncreasePerHit: 0.1
+  maxResistance: 0.8
   orbDrops: []
 --- !u!1 &6109077659730342302
 GameObject:

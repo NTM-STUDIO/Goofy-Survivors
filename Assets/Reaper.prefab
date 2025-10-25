@@ -343,4 +343,8 @@ MonoBehaviour:
   baseHealth: 1e+11
   baseDamage: 0
   moveSpeed: 0
+  isUnknockable: 1
+  knockbackResistance: 0
+  resistanceIncreasePerHit: 0.1
+  maxResistance: 0.8
   orbDrops: []

@@ -49,6 +49,8 @@ MonoBehaviour:
   possibleDrops:
   - itemPrefab: {fileID: 8326750618715067698, guid: b16da58f35868b846a58e1a345e542c0, type: 3}
     weight: 1
+  - itemPrefab: {fileID: 8326750618715067698, guid: cf8c502583dc846429ef24883c06c64e, type: 3}
+    weight: 0.1
   chestScript: {fileID: 3960085511560259287}
 --- !u!114 &3960085511560259287
 MonoBehaviour:
