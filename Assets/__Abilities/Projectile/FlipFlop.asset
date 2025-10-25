@@ -30,4 +30,4 @@ MonoBehaviour:
   criticalMultiplier: 1.5
   pierce: 1
   pierceCount: 1
-  knockback: 20
+  knockback: 25

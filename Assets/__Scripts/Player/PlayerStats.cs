@@ -2,6 +2,13 @@ using UnityEngine;
 using System;
 using System.Collections;
 
+// A struct to hold the result of a damage calculation, including the final damage and whether it was a critical hit.
+public struct DamageResult
+{
+    public float damage;
+    public bool isCritical;
+}
+
 public class PlayerStats : MonoBehaviour
 {
     [Header("Character Data")]
@@ -57,6 +64,28 @@ public class PlayerStats : MonoBehaviour
         StartCoroutine(HealthRegenRoutine());
     }
 
+    /// <summary>
+    /// Calculates final damage based on player stats, including a check for critical strikes.
+    /// This is the central point for all outgoing player damage.
+    /// </summary>
+    /// <param name="baseDamage">The base damage of the weapon dealing the hit.</param>
+    /// <returns>A DamageResult containing the final damage and a bool indicating if it was a crit.</returns>
+    public DamageResult CalculateDamage(float baseDamage)
+    {
+        float finalDamage = baseDamage * this.damageMultiplier;
+        bool isCritical = false;
+
+        // Roll for a critical strike using the player's current crit chance.
+        if (UnityEngine.Random.value <= this.critChance)
+        {
+            isCritical = true;
+            finalDamage *= this.critDamageMultiplier;
+        }
+
+        return new DamageResult { damage = finalDamage, isCritical = isCritical };
+    }
+
+    #region Initialization and Stat Modifiers
     private void InitializeStats()
     {
         if (characterData == null)
@@ -91,7 +120,6 @@ public class PlayerStats : MonoBehaviour
         if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         if (spriteRenderer != null) _originalColor = spriteRenderer.color;
 
-        // This initial call ensures the UI is correct when the game starts.
         OnHealthChanged?.Invoke(currentHp, maxHp);
         var uiManager = FindFirstObjectByType<UIManager>();
         if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp);
@@ -157,13 +185,13 @@ public class PlayerStats : MonoBehaviour
             case StatType.XPGainMultiplier:
                 xpGainMultiplier += bonus.value;
                 break;
+            // NOTE: Remember to add a case for PierceCount if it's in your StatType enum
             default:
                  Debug.LogWarning($"Stat bonus for {bonus.stat} not implemented in ApplyStatBonus method.");
                  break;
         }
     }
 
-    #region Public Stat Modifiers
     public void IncreaseMaxHP(int amount) { maxHp += amount; currentHp += amount; var uiManager = FindFirstObjectByType<UIManager>(); if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp); OnHealthChanged?.Invoke(currentHp, maxHp); }
     public void IncreaseHPRegen(float amount) { hpRegen += amount; }
     public void IncreaseDamageMultiplier(float amount) { damageMultiplier += amount; }
@@ -206,8 +234,7 @@ public class PlayerStats : MonoBehaviour
         Debug.Log($"DurationMultiplier: {durationMultiplier}, KnockbackMultiplier: {knockbackMultiplier}, MovementSpeed: {movementSpeed}");
         Debug.Log($"Luck: {luck}, PickupRange: {pickupRange}, XPGainMultiplier: {xpGainMultiplier}");
     }
-
-    // --- THIS IS THE MODIFIED METHOD ---
+    
     public void Heal(int amount)
     {
         if (amount <= 0 || currentHp <= 0) return;
@@ -217,9 +244,6 @@ public class PlayerStats : MonoBehaviour
         {
             OnHealed?.Invoke();
             OnHealthChanged?.Invoke(currentHp, maxHp);
-
-            // --- FIX ADDED HERE ---
-            // This line was missing, causing the UI to not update on regen or max HP increases from bonuses.
             var uiManager = FindFirstObjectByType<UIManager>();
             if (uiManager != null)
             {
@@ -283,7 +307,11 @@ public class PlayerStats : MonoBehaviour
         OnDeath?.Invoke();
 
         var movement = GetComponent<Movement>();
-        if (movement != null) movement.enabled = false;
+        if (movement != null)
+        {
+            movement.enabled = false;
+        }
+
         var colls = GetComponentsInChildren<Collider>();
         foreach (var c in colls) c.enabled = false;
 

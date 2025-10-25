@@ -9,6 +9,7 @@ TagManager:
   - Reaper
   - Chest
   - BossSpawn
+  - Collector
   layers:
   - Default
   - TransparentFX
@@ -60,6 +61,9 @@ TagManager:
     locked: 0
   - name: VFX
     uniqueID: 1781815235
+    locked: 0
+  - name: DMG
+    uniqueID: 2513145723
     locked: 0
   m_RenderingLayers:
   - Default

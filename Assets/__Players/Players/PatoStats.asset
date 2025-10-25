@@ -28,7 +28,7 @@ MonoBehaviour:
   knockbackMultiplier: 1
   movementSpeed: 16
   luck: 1
-  pickupRange: 5
+  pickupRange: 12
   xpGainMultiplier: 1
   pierceCount: 1
   startingBonuses: []

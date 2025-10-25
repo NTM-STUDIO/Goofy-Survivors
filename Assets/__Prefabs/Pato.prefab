@@ -210,6 +210,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4006856703547272465}
   - component: {fileID: 8626652468273857528}
+  - component: {fileID: 1372644893416335777}
   m_Layer: 0
   m_Name: OrbCollector
   m_TagString: Items
@@ -253,6 +254,18 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 12.01
   m_Center: {x: 0, y: 2.76, z: 0}
+--- !u!114 &1372644893416335777
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2495185030629852636}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 181802f090fffa74184177cc9b697ce2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &3059994948318495243
 GameObject:
   m_ObjectHideFlags: 0
@@ -366,7 +379,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 71f30611e4b0a0b4a808ab2598cd8ca4, type: 2}
   possibleWeapons:
   - {fileID: 11400000, guid: f51291457a043f446aa1e7da7b62d70a, type: 2}
-  - {fileID: 11400000, guid: 41187a610982a014189c762ebb0ed72f, type: 2}
+  - {fileID: 11400000, guid: 7f82ddfef3f925449a966956605fc32b, type: 2}
   - {fileID: 11400000, guid: 951390051091ba1489ce516a02921df1, type: 2}
   weaponParent: {fileID: 8274304304770015266}
 --- !u!114 &8654451083147522726

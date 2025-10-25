@@ -51,11 +51,11 @@ public class AuraWeapon : MonoBehaviour
 
     /// <summary>
     /// Applies damage to all enemies currently within the aura's trigger.
+    /// This method now includes critical strike calculations for each enemy hit.
     /// </summary>
     private void ApplyDamageToEnemies()
     {
-        // Calculate the final damage at the moment of the tick.
-        float finalDamage = weaponData.damage * playerStats.damageMultiplier;
+        // Calculate the knockback once, as it will be the same for all enemies this tick.
         float finalKnockback = weaponData.knockback * playerStats.knockbackMultiplier;
 
         // Iterate backwards through the list. This is safer if an enemy is destroyed and removed.
@@ -64,7 +64,13 @@ public class AuraWeapon : MonoBehaviour
             EnemyStats enemy = enemiesInRange[i];
             if (enemy != null)
             {
-                enemy.TakeDamage((int)finalDamage);
+                // --- CRITICAL STRIKE CALCULATION ---
+                // For each enemy in range, perform a new, independent damage calculation.
+                // This gives each enemy its own chance to be critically hit on this tick.
+                DamageResult damageResult = playerStats.CalculateDamage(weaponData.damage);
+                
+                // Pass the final damage and the crit status to the enemy.
+                enemy.TakeDamage(damageResult.damage, damageResult.isCritical);
 
                 if (finalKnockback > 0 && !enemy.CompareTag("Reaper"))
                 {

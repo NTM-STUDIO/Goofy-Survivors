@@ -466,8 +466,12 @@ MonoBehaviour:
   baseHealth: 5000
   baseDamage: 500
   moveSpeed: 20
+  isUnknockable: 0
+  knockbackResistance: 0.3
+  resistanceIncreasePerHit: 0.1
+  maxResistance: 0.9
   orbDrops:
-  - orbPrefab: {fileID: 8326750618715067698, guid: 3f0fbb90971ba4441913d7efaea77fca, type: 3}
+  - orbPrefab: {fileID: 8326750618715067698, guid: cf8c502583dc846429ef24883c06c64e, type: 3}
     dropChance: 100
 --- !u!114 &63635398346227256
 MonoBehaviour:

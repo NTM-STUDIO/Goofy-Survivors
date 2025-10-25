@@ -9,24 +9,57 @@ public class OrbDropConfig
     [Range(0f, 100f)] public float dropChance;
 }
 
-// The script now requires a 3D Rigidbody.
+public enum MutationType { None, Health, Damage, Speed }
+
 [RequireComponent(typeof(Rigidbody))]
 public class EnemyStats : MonoBehaviour
 {
+    [Header("Visuals & Effects")]
+    [Tooltip("Assign the Damage Popup prefab here.")]
+    [SerializeField] private GameObject damagePopupPrefab;
+    [Tooltip("The specific point where damage popups should spawn. If empty, it will spawn at the enemy's center.")]
+    [SerializeField] private Transform popupSpawnPoint;
+
     [Header("Base Stats")]
     [Tooltip("The enemy's health at the start of the game (minute 0).")]
     public float baseHealth = 100;
     [Tooltip("The enemy's damage at the start of the game (minute 0).")]
     public float baseDamage = 10;
     public float moveSpeed = 3f;
+    
+    [Header("Mutations")]
+    [Tooltip("Chance for this enemy to spawn with a random mutation (0 = never, 1 = always).")]
+    [Range(0f, 1f)]
+    [SerializeField] private float mutationChance = 0.1f;
+    [Tooltip("The minimum bonus a mutation can grant (e.g., 0.2 for +20%).")]
+    [SerializeField] private float minMutationBonus = 0.2f;
+    [Tooltip("The maximum bonus a mutation can grant (e.g., 0.5 for +50%).")]
+    [SerializeField] private float maxMutationBonus = 0.5f;
+
+    [Header("Mutation Colors")]
+    [SerializeField] private Color healthMutationColor = Color.green;
+    [SerializeField] private Color damageMutationColor = Color.red;
+    [SerializeField] private Color speedMutationColor = Color.blue;
+
+    [Header("Knockback Settings")]
+    [Tooltip("If checked, this enemy can never be knocked back.")]
+    [SerializeField] private bool isUnknockable = false;
+    [Tooltip("Base knockback resistance. 0 = no resistance, 1 = full resistance (100%).")]
+    [Range(0f, 1f)]
+    [SerializeField] private float knockbackResistance = 0f;
+    [Tooltip("How much resistance is gained each time the enemy is knocked back. 0.1 = +10% resistance.")]
+    [SerializeField] private float resistanceIncreasePerHit = 0.1f;
+    [Tooltip("The maximum resistance the enemy can gain through stacking. 1 = 100%.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float maxResistance = 0.8f;
 
     // --- Public State ---
-    public float MaxHealth { get; private set; } // The enemy's maximum health for its lifetime
+    public float MaxHealth { get; private set; }
     public float CurrentHealth { get; private set; }
     public bool IsKnockedBack { get; private set; }
+    public MutationType CurrentMutation { get; private set; } = MutationType.None;
 
     [Header("Experience Drops")]
-    [Tooltip("A list of potential orbs to drop. One will always be chosen based on relative drop chances.")]
     public OrbDropConfig[] orbDrops;
 
     // --- Private Components & State ---
@@ -34,24 +67,29 @@ public class EnemyStats : MonoBehaviour
     private SpriteRenderer enemyRenderer;
     private Color originalColor;
     private Coroutine knockbackCoroutine;
+    private float currentKnockbackResistance;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        
-        // Using GetComponentInChildren to find a renderer on this object or its children
         enemyRenderer = GetComponentInChildren<SpriteRenderer>();
         if (enemyRenderer != null)
         {
-            // Store the original material color to revert to after taking damage
             originalColor = enemyRenderer.color;
+        }
+        currentKnockbackResistance = knockbackResistance;
+        
+        ApplyMutation();
+
+        if (popupSpawnPoint == null)
+        {
+            popupSpawnPoint = this.transform;
         }
     }
 
     void Start()
     {
         float finalHealth;
-        // Scale health based on game time if GameManager is present
         if (GameManager.Instance != null)
         {
             float healthMultiplier = GameManager.Instance.currentEnemyHealthMultiplier;
@@ -62,37 +100,34 @@ public class EnemyStats : MonoBehaviour
             finalHealth = baseHealth;
         }
         
-        // Set both MaxHealth and CurrentHealth one time upon spawning for accurate tracking.
         MaxHealth = finalHealth;
         CurrentHealth = finalHealth;
     }
 
+    // --- METHOD MODIFIED ---
     /// <summary>
-    /// Calculates the enemy's current attack damage, scaled by the GameManager.
+    /// Applies damage to the enemy, triggers visual effects, and spawns a damage popup.
+    /// This version now accepts a boolean to handle critical strike visuals.
     /// </summary>
-    public float GetAttackDamage()
+    /// <param name="damage">The amount of damage to take.</param>
+    /// <param name="isCritical">Was this hit a critical strike?</param>
+    public void TakeDamage(float damage, bool isCritical)
     {
-        if (GameManager.Instance != null)
-        {
-            float damageMultiplier = GameManager.Instance.currentEnemyDamageMultiplier;
-            return baseDamage * damageMultiplier;
-        }
-        return baseDamage;
-    }
-
-    /// <summary>
-    /// Applies damage to the enemy, triggers a visual effect, and checks for death.
-    /// </summary>
-    public void TakeDamage(float damage)
-    {
-        if (CurrentHealth <= 0) return; // Already dead
+        if (CurrentHealth <= 0) return;
 
         CurrentHealth -= damage;
 
-        // Trigger damage flash effect
+        // Spawn the damage popup and tell it whether the hit was critical.
+        if (damagePopupPrefab != null)
+        {
+            GameObject popupGO = Instantiate(damagePopupPrefab, popupSpawnPoint.position, Quaternion.identity);
+            // Call the Setup method that accepts the isCritical boolean
+            popupGO.GetComponent<DamagePopup>().Setup(Mathf.RoundToInt(damage), isCritical);
+        }
+
+        // Trigger damage flash
         if (enemyRenderer != null)
         {
-            // Stop any previous flash to reset its timer
             StopCoroutine("FlashColor"); 
             StartCoroutine("FlashColor");
         }
@@ -102,101 +137,86 @@ public class EnemyStats : MonoBehaviour
             Die();
         }
     }
+    
+    private void ApplyMutation()
+    {
+        if (Random.value > mutationChance) return;
+        int mutationChoice = Random.Range(0, 3);
+        float bonusMultiplier = Random.Range(minMutationBonus, maxMutationBonus);
+        Color chosenMutationColor = originalColor;
 
-    // Coroutine for the damage flash effect
+        switch (mutationChoice)
+        {
+            case 0: CurrentMutation = MutationType.Health; baseHealth *= (1 + bonusMultiplier); chosenMutationColor = healthMutationColor; break;
+            case 1: CurrentMutation = MutationType.Damage; baseDamage *= (1 + bonusMultiplier); chosenMutationColor = damageMutationColor; break;
+            case 2: CurrentMutation = MutationType.Speed; moveSpeed *= (1 + bonusMultiplier); chosenMutationColor = speedMutationColor; break;
+        }
+
+        if (enemyRenderer != null && CurrentMutation != MutationType.None)
+        {
+            enemyRenderer.color = chosenMutationColor;
+            originalColor = chosenMutationColor; 
+        }
+    }
+
+    public float GetAttackDamage()
+    {
+        if (GameManager.Instance != null) { return baseDamage * GameManager.Instance.currentEnemyDamageMultiplier; }
+        return baseDamage;
+    }
+
     private IEnumerator FlashColor()
     {
-        enemyRenderer.color = Color.red;
-        yield return new WaitForSeconds(0.15f); // Duration of the flash
+        enemyRenderer.color = Color.red; 
+        yield return new WaitForSeconds(0.15f);
         enemyRenderer.color = originalColor;
     }
     
-    /// <summary>
-    /// Handles the enemy's death, dropping orbs and destroying the GameObject.
-    /// </summary>
     public void Die()
     {
-        if (!gameObject.activeSelf) return; // Prevent multiple deaths
-
+        if (!gameObject.activeSelf) return;
         TryDropOrb();
         Destroy(gameObject);
     }
 
-    /// <summary>
-    /// **MODIFIED:** Guarantees one orb drop from the list based on weighted chances.
-    /// </summary>
     public void TryDropOrb()
     {
-        // Exit if there are no orbs configured to drop.
-        if (orbDrops == null || orbDrops.Length == 0)
-        {
-            return;
-        }
-
-        // Calculate the sum of all drop chances to use as the total weight.
+        if (orbDrops == null || orbDrops.Length == 0) return;
         float totalChance = 0f;
-        foreach (var orb in orbDrops)
-        {
-            totalChance += orb.dropChance;
-        }
-
-        // If all drop chances are zero, do nothing.
-        if (totalChance <= 0)
-        {
-            return;
-        }
-
-        // Pick a random number within the range of the total weight.
+        foreach (var orb in orbDrops) { totalChance += orb.dropChance; }
+        if (totalChance <= 0) return;
         float randomValue = Random.Range(0f, totalChance);
-
-        // Iterate through the orbs and "spend" their chance value from the random number.
-        // The first orb that the remaining randomValue falls into is the one that gets spawned.
         foreach (var orb in orbDrops)
         {
-            if (randomValue <= orb.dropChance)
-            {
-                Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
-                return; // Drop this orb and exit the method.
-            }
-            else
-            {
-                randomValue -= orb.dropChance;
-            }
+            if (randomValue <= orb.dropChance) { Instantiate(orb.orbPrefab, transform.position, Quaternion.identity); return; }
+            else { randomValue -= orb.dropChance; }
         }
     }
     
-    /// <summary>
-    /// Applies a knockback force to the enemy, interrupting its current state.
-    /// </summary>
     public void ApplyKnockback(float knockbackForce, float duration, Vector3 direction)
     {
-        if (knockbackForce <= 0) return;
-
-        // Stop the previous knockback coroutine if it exists, allowing a new one to take over
-        if (knockbackCoroutine != null)
+        if (isUnknockable || IsKnockedBack || knockbackForce <= 0) return;
+        float resistanceMultiplier = 1f - currentKnockbackResistance;
+        float effectiveForce = knockbackForce * resistanceMultiplier;
+        float effectiveDuration = duration * resistanceMultiplier;
+        if (effectiveDuration <= 0.01f) return;
+        if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
+        knockbackCoroutine = StartCoroutine(KnockbackRoutine(effectiveForce, effectiveDuration, direction));
+        if (resistanceIncreasePerHit > 0)
         {
-            StopCoroutine(knockbackCoroutine);
+            currentKnockbackResistance += resistanceIncreasePerHit;
+            currentKnockbackResistance = Mathf.Min(currentKnockbackResistance, maxResistance);
         }
-
-        knockbackCoroutine = StartCoroutine(KnockbackRoutine(knockbackForce, duration, direction));
     }
 
     private IEnumerator KnockbackRoutine(float force, float duration, Vector3 direction)
     {
         IsKnockedBack = true;
-
-        // Ensure knockback is purely horizontal
         direction.y = 0; 
-
-        // Apply the force
-        rb.linearVelocity = Vector3.zero; // Stop current movement
+        rb.linearVelocity = Vector3.zero;
         rb.AddForce(direction.normalized * force, ForceMode.Impulse);
-
-        // Wait for the stun duration
         yield return new WaitForSeconds(duration);
-
-        // Reset state after knockback ends
-        rb.linearVelocity = Vector3.zero; // Stop the knockback movement
+        rb.linearVelocity = Vector3.zero;
         IsKnockedBack = false;
         knockbackCoroutine = null;
     }

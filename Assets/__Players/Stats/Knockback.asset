@@ -16,5 +16,5 @@ MonoBehaviour:
   upgradeName: Knockback
   upgradeDescription: 
   icon: {fileID: 5833268262561435299, guid: f26dd79de955ddc418b1a9ef8434f0a7, type: 3}
-  baseValueMin: 10
-  baseValueMax: 15
+  baseValueMin: 25
+  baseValueMax: 55
