@@ -34,11 +34,20 @@ public class EnemyMovement : MonoBehaviour
     private EnemyStats stats;
     private float flankSign = 1f;
     private float nextAttackTime = 0f;
+
+    // Direction that can be set externally by pathfinding
+    private Vector3 targetDirection = Vector3.zero;
+    public Vector3 TargetDirection
+    {
+        get => targetDirection;
+        set => targetDirection = value;
+    }
     
     // Debug variables
     private Vector3 debugIntercept;
     private Vector3 debugDestination;
     private bool hasDebugTarget;
+    private EnemyPathfinding pathfindingComponent; // Add this line
 
     private void Awake()
     {
@@ -56,6 +65,7 @@ public class EnemyMovement : MonoBehaviour
         flankSign = Random.value < 0.5f ? -1f : 1f;
         rb.useGravity = false;
         rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
+        pathfindingComponent = GetComponent<EnemyPathfinding>(); // Add this line
     }
 
     // --- MÉTODO MODIFICADO ---
@@ -66,13 +76,26 @@ public class EnemyMovement : MonoBehaviour
             return;
         }
 
-        if (stats == null || rb == null || player == null) return;
+        if (stats == null || rb == null) return;
         
-        Vector3 enemyPosition = transform.position;
-        Vector3 targetPosition = GetTargetPosition(enemyPosition);
-        
-        // A direção pura do movimento, equivalente ao 'moveInput' do jogador
-        Vector3 direction = targetPosition - enemyPosition;
+        Vector3 direction;
+
+        // Check if we have a direction from pathfinding
+        if (targetDirection != Vector3.zero)
+        {
+            direction = targetDirection;
+            targetDirection = Vector3.zero; // Reset after using
+        }
+        else
+        {
+            // Use normal pursuit behavior if no pathfinding direction
+            if (player == null) return;
+            Vector3 enemyPosition = transform.position;
+            Vector3 targetPosition = GetTargetPosition(enemyPosition);
+            direction = targetPosition - enemyPosition;
+        }
+
+        // Ensure we're moving only in the XZ plane
         direction.y = 0;
 
         if (direction.sqrMagnitude <= 0.0001f)
@@ -81,25 +104,24 @@ public class EnemyMovement : MonoBehaviour
             return;
         }
 
-        // --- INÍCIO DA LÓGICA PORTADA DO JOGADOR ---
+        // --- LÓGICA DE MOVIMENTO ---
 
         // PASSO 1: CALCULAR A COMPENSAÇÃO DIAGONAL
-        // Usamos a direção do inimigo da mesma forma que o input do jogador é usado.
-        float diagonalCompensation = 1f;
         // Se o movimento tem um componente horizontal E vertical significativos, aplica o nerf.
+        float diagonalCompensation = 1f;
         if (Mathf.Abs(direction.x) > 0.1f && Mathf.Abs(direction.z) > 0.1f)
         {
-            // O valor é 1 / sqrt(2), o mesmo que no seu script de jogador.
+            // O valor é 1 / sqrt(2), o mesmo que no script de jogador.
             diagonalCompensation = 0.70710678f; 
         }
 
         // PASSO 2: APLICAR A VELOCIDADE FINAL COM A COMPENSAÇÃO
-        // A velocidade base é multiplicada pela compensação, exatamente como no seu código.
-        rb.linearVelocity = direction.normalized * stats.moveSpeed * diagonalCompensation;
+        Vector3 velocity = direction.normalized * stats.moveSpeed * diagonalCompensation;
+        rb.linearVelocity = velocity;
         
-        // --- FIM DA LÓGICA PORTADA ---
-
-        debugDestination = targetPosition;
+        // --- FIM DA LÓGICA DE MOVIMENTO ---
+        
+        debugDestination = transform.position + direction;
         hasDebugTarget = true;
     }
 

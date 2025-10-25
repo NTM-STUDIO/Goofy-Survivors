@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 495033315148591382}
   - component: {fileID: -5438787712312096949}
   - component: {fileID: 3960085511560259287}
-  m_Layer: 7
+  m_Layer: 3
   m_Name: Chest
   m_TagString: Chest
   m_Icon: {fileID: 0}
@@ -75,7 +75,7 @@ GameObject:
   - component: {fileID: 8561615044871465376}
   - component: {fileID: 1045103857582845667}
   - component: {fileID: 4704480463698377230}
-  m_Layer: 7
+  m_Layer: 3
   m_Name: ChestSprite
   m_TagString: Chest
   m_Icon: {fileID: 0}

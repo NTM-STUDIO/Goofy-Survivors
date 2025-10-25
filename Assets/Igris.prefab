@@ -376,6 +376,7 @@ GameObject:
   - component: {fileID: 3902742526642890872}
   - component: {fileID: 6562184088800466058}
   - component: {fileID: 6297376134751599430}
+  - component: {fileID: 63635398346227256}
   m_Layer: 0
   m_Name: Igris
   m_TagString: Enemy
@@ -422,7 +423,7 @@ MonoBehaviour:
   attackCooldown: 2
   selfKnockbackForce: 20
   selfKnockbackDuration: 1
-  showGizmos: 0
+  showGizmos: 1
 --- !u!54 &6562184088800466058
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -448,7 +449,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 36
   m_CollisionDetection: 0
 --- !u!114 &6297376134751599430
 MonoBehaviour:
@@ -468,3 +469,17 @@ MonoBehaviour:
   orbDrops:
   - orbPrefab: {fileID: 8326750618715067698, guid: 3f0fbb90971ba4441913d7efaea77fca, type: 3}
     dropChance: 100
+--- !u!114 &63635398346227256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9116392235869641759}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 557741b8d3a2fa541ac0f84cae5c9b65, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pathUpdateRate: 0.5
+  waypointReachedDistance: 1

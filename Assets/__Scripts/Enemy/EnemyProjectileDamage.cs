@@ -15,11 +15,11 @@ public class EnemyProjectileDamage3D : MonoBehaviour
             // --- DEBUG ---
             if (_casterStats != null)
             {
-                Debug.Log($"[Projectile Debug] Stats received from caster: '{_casterStats.gameObject.name}'. Damage set to: {_casterStats.baseDamage}", gameObject);
+                //Debug.Log($"[Projectile Debug] Stats received from caster: '{_casterStats.gameObject.name}'. Damage set to: {_casterStats.baseDamage}", gameObject);
             }
             else
             {
-                Debug.LogError("[Projectile Debug] CRITICAL: CasterStats were set to NULL!", gameObject);
+                //Debug.LogError("[Projectile Debug] CRITICAL: CasterStats were set to NULL!", gameObject);
             }
         }
     }
@@ -28,7 +28,7 @@ public class EnemyProjectileDamage3D : MonoBehaviour
     {
         if (_casterStats == null)
         {
-            Debug.LogWarning("[Projectile Debug] CasterStats have not been set on this projectile!", gameObject);
+            //Debug.LogWarning("[Projectile Debug] CasterStats have not been set on this projectile!", gameObject);
         }
 
         damage = _casterStats != null ? _casterStats.baseDamage : 0f;
