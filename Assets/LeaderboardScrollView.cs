@@ -65,11 +65,18 @@ public class LeaderboardScrollView : MonoBehaviour
 
     private void OnDisable()
     {
-        if (database != null)
+        if (database != null && database.MDatabase != null)
         {
             // Unsubscribe to prevent memory leaks
             database.MDatabase.Child("goofers").ValueChanged -= HandleLeaderboardUpdated;
         }
+
+        // Clear existing entries when the object is disabled/destroyed
+        foreach (var go in spawnedEntries)
+        {
+            Destroy(go);
+        }
+        spawnedEntries.Clear();
     }
 
     private void HandleLeaderboardUpdated(object sender, ValueChangedEventArgs args)
