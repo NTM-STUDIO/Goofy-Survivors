@@ -4546,11 +4546,6 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 661295163}
-  - component: {fileID: 661295162}
-  - component: {fileID: 661295161}
-  m_Layer: 0
-  m_Name: Pathfinding
   - component: {fileID: 685141707}
   - component: {fileID: 685141706}
   - component: {fileID: 685141705}
@@ -4561,39 +4556,12 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &661295161
 --- !u!114 &685141705
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 661295160}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9843045251c3570469d8f7042479b4e3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &661295162
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 661295160}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2e774db4cf12e0b45a8c0ce30e9eb777, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gridWorldSizeX: 3000
-  gridWorldSizeZ: 3000
-  nodeRadius: 0.5
-  unwalkableMask:
-    serializedVersion: 2
-    m_Bits: 8
---- !u!4 &661295163
-Transform:
   m_GameObject: {fileID: 685141704}
   m_Enabled: 1
   m_EditorHideFlags: 0
@@ -4685,8 +4653,6 @@ CanvasRenderer:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 661295160}
-  serializedVersion: 2
   m_GameObject: {fileID: 685141704}
   m_CullTransparentMesh: 1
 --- !u!224 &685141707
@@ -4701,8 +4667,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Father: {fileID: 1936847646}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -11879,7 +11843,6 @@ SceneRoots:
   - {fileID: 991131516}
   - {fileID: 1410124310}
   - {fileID: 788642270}
-  - {fileID: 661295163}
   - {fileID: 898990412}
   - {fileID: 1723493365}
   - {fileID: 1801736575}
