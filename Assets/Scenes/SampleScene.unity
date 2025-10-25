@@ -982,6 +982,69 @@ MonoBehaviour:
   baseSightRange: 20
   speedMultiplier: 1.3
   fireRateMultiplier: 1.1
+--- !u!1 &661295160
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 661295163}
+  - component: {fileID: 661295162}
+  - component: {fileID: 661295161}
+  m_Layer: 0
+  m_Name: Pathfinding
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &661295161
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 661295160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9843045251c3570469d8f7042479b4e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &661295162
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 661295160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e774db4cf12e0b45a8c0ce30e9eb777, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gridWorldSizeX: 3000
+  gridWorldSizeZ: 3000
+  nodeRadius: 0.5
+  unwalkableMask:
+    serializedVersion: 2
+    m_Bits: 8
+--- !u!4 &661295163
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 661295160}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &729974980
 GameObject:
   m_ObjectHideFlags: 0
@@ -1351,36 +1414,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1658659465785175810, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
       insertIndex: -1
       addedObject: {fileID: 199610596}
-    - targetCorrespondingSourceObject: {fileID: 2735084362315252736, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 106130253}
-    - targetCorrespondingSourceObject: {fileID: 2735084362315252736, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 165348602}
-    - targetCorrespondingSourceObject: {fileID: 2735084362315252736, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1698200600}
-    - targetCorrespondingSourceObject: {fileID: 2735084362315252736, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 491310092}
-    - targetCorrespondingSourceObject: {fileID: 2735084362315252736, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1010665474}
-    - targetCorrespondingSourceObject: {fileID: 2735084362315252736, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2117749248}
-    - targetCorrespondingSourceObject: {fileID: 2735084362315252736, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 695393819}
-    - targetCorrespondingSourceObject: {fileID: 2735084362315252736, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1137922283}
-    - targetCorrespondingSourceObject: {fileID: 2735084362315252736, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 898620644}
-    - targetCorrespondingSourceObject: {fileID: 2735084362315252736, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 944097442}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
 --- !u!224 &991131517 stripped
@@ -1834,3 +1867,4 @@ SceneRoots:
   - {fileID: 991131516}
   - {fileID: 1410124310}
   - {fileID: 788642270}
+  - {fileID: 661295163}
