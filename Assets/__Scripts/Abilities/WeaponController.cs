@@ -119,8 +119,8 @@ void Update()
         }
 
         // --- LÓGICA DE SPAWN COM VALORES FIXOS (HARDCODED) ---
-        float minSpawnRadius = 20f; // Distância mínima do jogador
-        float maxSpawnRadius = 80f; // Distância máxima do jogador
+        float minSpawnRadius = 10f; // Distância mínima do jogador
+        float maxSpawnRadius = 40f; // Distância máxima do jogador
 
         // 1. Pega uma direção 2D aleatória e a normaliza.
         Vector2 randomDirection2D = Random.insideUnitCircle.normalized;
@@ -133,7 +133,7 @@ void Update()
         Vector3 spawnPosition = playerTransform.position + randomDirection * randomDistance;
         // --- FIM DA LÓGICA DE SPAWN ---
 
-        GameObject cloneObj = Instantiate(weaponData.weaponPrefab, spawnPosition, playerTransform.rotation);
+        GameObject cloneObj = Instantiate(weaponData.weaponPrefab, spawnPosition, Quaternion.identity);
         ShadowClone cloneScript = cloneObj.GetComponent<ShadowClone>();
 
         if (cloneScript != null)

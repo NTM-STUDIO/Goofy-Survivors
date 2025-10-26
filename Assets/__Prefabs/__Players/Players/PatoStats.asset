@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d45509b40da44f54f88ad5db161600e7, type: 3}
+  m_Name: PatoStats
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCharacterData
+  characterName: Pato
+  playerPrefab: {fileID: 4343297250839089127, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+  defaultWeaponPrefab: {fileID: 6969291154112545986, guid: 29845c9427df0d94780766f2d257512a, type: 3}
+  maxHp: 70
+  hpRegen: 0
+  damageMultiplier: 1
+  critChance: 0.1
+  critDamageMultiplier: 2
+  attackSpeedMultiplier: 1
+  projectileCount: 0
+  projectileSizeMultiplier: 1
+  projectileSpeedMultiplier: 1
+  durationMultiplier: 1
+  knockbackMultiplier: 1
+  movementSpeed: 16
+  luck: 1
+  pickupRange: 10
+  xpGainMultiplier: 1
+  pierceCount: 1
+  startingBonuses: []
+  scalingBonusesPerLevel:
+  - stat: 12
+    value: 0.5

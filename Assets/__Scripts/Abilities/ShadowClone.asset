@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: ShadowClone
   m_EditorClassIdentifier: 
   weaponID: 
-  weaponName: 
-  description: 
-  icon: {fileID: 0}
+  weaponName: Shadow Clone
+  description: Shadow Clone
+  icon: {fileID: 21300000, guid: 512c4a08604afe048a21179e7adf5412, type: 3}
   weaponPrefab: {fileID: 1815106188694731433, guid: 69aea229dd87cce49a671c0812091b65, type: 3}
   archetype: 6
   targetingStyle: 0
