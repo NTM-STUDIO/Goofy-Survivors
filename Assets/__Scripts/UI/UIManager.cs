@@ -114,7 +114,9 @@ public class UIManager : MonoBehaviour
 
     public void ShowPauseMenu(bool show)
     {
-        if (pauseMenu != null) pauseMenu.SetActive(show);
+
+
+        pauseMenu.SetActive(show);
     }
 
     public void ToggleStatsPanel()

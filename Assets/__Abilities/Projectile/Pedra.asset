@@ -22,7 +22,7 @@ MonoBehaviour:
   groupingRange: 5
   damage: 75
   cooldown: 3
-  area: 0.7
+  area: 0.8
   amount: 1
   speed: 20
   duration: 1

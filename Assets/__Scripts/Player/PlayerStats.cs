@@ -27,7 +27,7 @@ public class PlayerStats : MonoBehaviour
 
     [Tooltip("The duration of a single stolen buff stack in seconds.")]
     [SerializeField] private float stolenBuffDuration = 10f;
-    
+
     [Header("Stolen Buff Bonuses (Per Stack)")]
     [Tooltip("The percentage bonus to max health when a Health buff is stolen (0.2 = +20%).")]
     [SerializeField] private float beltHealthBonus = 0.2f;
@@ -98,15 +98,20 @@ public class PlayerStats : MonoBehaviour
     {
         if (type == MutationType.None) return;
 
-        // Immediately apply the stat bonus for this new stack.
+        // --- NOVA LÓGICA: Lida com a Mutação de Vida como uma cura permanente ---
+        if (type == MutationType.Health)
+        {
+            int healAmount = 20;
+            Heal(healAmount);
+            Debug.Log($"Stole Health Mutation! Healed for {healAmount} HP permanently.");
+            return; // IMPORTANTE: Sai do método para não ser tratado como um buff temporário.
+        }
+        // --- FIM DA NOVA LÓGICA ---
+
+        // A lógica original para os buffs de Dano e Velocidade continua a mesma.
         ApplyBuffEffect(type, true);
-
-        // Create a new ActiveBuff object representing this single stack.
         ActiveBuff newBuffStack = new ActiveBuff { type = type, timer = stolenBuffDuration };
-
-        // Add the new stack to our list of active buffs.
         activeBuffs.Add(newBuffStack);
-
         int stackCount = activeBuffs.Count(b => b.type == type);
         Debug.Log($"Gained {type} buff! Now at {stackCount} stacks.");
     }

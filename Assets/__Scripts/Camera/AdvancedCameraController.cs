@@ -32,7 +32,7 @@ public class AdvancedCameraController : MonoBehaviour
         cam.orthographic = true;
         cam.orthographicSize = 20; // Default ortho zoom is 20
 
-        if (target == null)
+      /*  if (target == null)
         {
             if (!TryAssignTargetByTag())
             {
@@ -43,7 +43,7 @@ public class AdvancedCameraController : MonoBehaviour
         else
         {
             offset = transform.position - target.position;
-        }
+        }*/
     }
 
     void Update()

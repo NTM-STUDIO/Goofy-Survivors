@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Linq;
+using System.Collections.Generic;
 
 public class WeaponController : MonoBehaviour
 {
@@ -43,24 +44,44 @@ public class WeaponController : MonoBehaviour
         }
     }
 
-    void Update()
+// Substitua o seu método Update() inteiro por este no WeaponController.cs
+void Update()
+{
+    if (playerStats == null || weaponData == null || playerTransform == null) return;
+
+    // A lógica para Auras e Escudos não muda.
+    if (weaponData.archetype == WeaponArchetype.Aura || weaponData.archetype == WeaponArchetype.Shield)
     {
-        if (playerStats == null || weaponData == null || playerTransform == null) return;
+        return;
+    }
 
-        if (weaponData.archetype == WeaponArchetype.Aura || weaponData.archetype == WeaponArchetype.Shield)
+    currentCooldown -= Time.deltaTime;
+    if (currentCooldown <= 0f)
+    {
+        Attack();
+
+        float finalAttackSpeed = playerStats.attackSpeedMultiplier;
+        float cooldownBasedOnSpeed = weaponData.cooldown / Mathf.Max(0.01f, finalAttackSpeed);
+
+        // --- NOVA LÓGICA PARA LIMITAR A RECARGA PELA DURAÇÃO ---
+        // Verifica se a arma é do tipo Orbital.
+        if (weaponData.archetype == WeaponArchetype.Orbit)
         {
-            return;
+            // Calcula a duração final da habilidade.
+            float durationCooldown = weaponData.duration * playerStats.durationMultiplier;
+
+            // Define a recarga como o MAIOR valor entre a recarga baseada na velocidade e a duração.
+            // Isso "limita" a velocidade de ataque à duração da habilidade.
+            currentCooldown = Mathf.Max(cooldownBasedOnSpeed, durationCooldown);
         }
-
-        currentCooldown -= Time.deltaTime;
-        if (currentCooldown <= 0f)
+        else
         {
-            Attack();
-            float finalAttackSpeed = playerStats.attackSpeedMultiplier;
-            float cooldownBasedOnSpeed = weaponData.cooldown / Mathf.Max(0.01f, finalAttackSpeed);
+            // Para todos os outros tipos de arma (Projéteis, etc.), a lógica continua a mesma.
             currentCooldown = cooldownBasedOnSpeed;
         }
+        // --- FIM DA NOVA LÓGICA ---
     }
+}
 
     private void HandleEnemyDamagedForShield(EnemyStats damagedEnemy)
     {
@@ -85,12 +106,71 @@ public class WeaponController : MonoBehaviour
         }
     }
 
+    // Adicione este método inteiro dentro da sua classe WeaponController
+    // Substitua o método inteiro no seu WeaponController.cs
+    // Substitua o método inteiro no seu WeaponController.cs
+    private void SpawnShadowClone()
+    {
+        // O prefab do clone é o "weaponPrefab" nos dados desta arma
+        if (weaponData.weaponPrefab == null)
+        {
+            Debug.LogError("O prefab do Shadow Clone não está atribuído no WeaponData!");
+            return;
+        }
+
+        // --- LÓGICA DE SPAWN COM VALORES FIXOS (HARDCODED) ---
+        float minSpawnRadius = 20f; // Distância mínima do jogador
+        float maxSpawnRadius = 80f; // Distância máxima do jogador
+
+        // 1. Pega uma direção 2D aleatória e a normaliza.
+        Vector2 randomDirection2D = Random.insideUnitCircle.normalized;
+        Vector3 randomDirection = new Vector3(randomDirection2D.x, 0, randomDirection2D.y);
+
+        // 2. Pega uma distância aleatória entre os valores fixos.
+        float randomDistance = Random.Range(minSpawnRadius, maxSpawnRadius);
+
+        // 3. Calcula a posição final de spawn.
+        Vector3 spawnPosition = playerTransform.position + randomDirection * randomDistance;
+        // --- FIM DA LÓGICA DE SPAWN ---
+
+        GameObject cloneObj = Instantiate(weaponData.weaponPrefab, spawnPosition, playerTransform.rotation);
+        ShadowClone cloneScript = cloneObj.GetComponent<ShadowClone>();
+
+        if (cloneScript != null)
+        {
+            // O resto do método continua o mesmo
+            PlayerStats player = GetComponentInParent<PlayerStats>();
+            if (player == null)
+            {
+                Debug.LogError("WeaponController não conseguiu encontrar o PlayerStats nos seus pais!", this);
+                Destroy(cloneObj); // Destroi o clone se o jogador não for encontrado
+                return;
+            }
+
+            WeaponController[] playerWeaponControllers = player.GetComponentsInChildren<WeaponController>();
+            List<WeaponData> activeWeapons = new List<WeaponData>();
+
+            foreach (var wc in playerWeaponControllers)
+            {
+                if (wc.weaponData.archetype != WeaponArchetype.ShadowCloneJutsu)
+                {
+                    activeWeapons.Add(wc.weaponData);
+                }
+            }
+
+            cloneScript.Initialize(activeWeapons);
+        }
+    }
+
+
+
     private void Attack()
     {
         switch (weaponData.archetype)
         {
             case WeaponArchetype.Projectile: FireProjectile(); break;
             case WeaponArchetype.Orbit: ActivateOrbitingWeapon(); break;
+            case WeaponArchetype.ShadowCloneJutsu: SpawnShadowClone(); break;
         }
     }
 

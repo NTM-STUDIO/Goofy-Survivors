@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections;
+using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
@@ -72,9 +74,13 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        if (uiManager == null)
+            uiManager = FindObjectOfType<UIManager>();
+
         CurrentState = GameState.PreGame;
         currentTime = totalGameTime;
     }
+
 
     void Update()
     {
@@ -91,18 +97,13 @@ public class GameManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (CurrentState == GameState.Playing)
-            {
-                RequestPause();
-                if (uiManager != null) uiManager.ShowPauseMenu(true);
-            }
+
+                RequestPause(true);
             else if (CurrentState == GameState.Paused)
-            {
                 RequestResume();
-                if (uiManager != null) uiManager.ShowPauseMenu(false);
-            }
         }
     }
-    
+
     #region Game Flow
     public void SetChosenPlayerPrefab(GameObject playerPrefab)
     {
@@ -139,7 +140,7 @@ public class GameManager : MonoBehaviour
 
         CurrentState = GameState.Playing;
         Debug.Log("Game Started! Initializing all managers...");
-        
+
         // --- THIS IS THE ONLY CHANGE ---
         // Pass the newly created 'playerObject' to the PlayerExperience manager so it knows which player to track.
         if (playerExperience != null) playerExperience.Initialize(playerObject);
@@ -147,15 +148,15 @@ public class GameManager : MonoBehaviour
 
         if (upgradeManager != null) upgradeManager.Initialize(playerObject);
         else Debug.LogWarning("GameManager is missing reference to UpgradeManager.");
-        
+
         if (enemyDespawner != null) enemyDespawner.Initialize(playerObject);
         else Debug.LogWarning("GameManager is missing reference to EnemyDespawner.");
-        
+
         if (enemySpawner != null) enemySpawner.StartSpawning();
         else Debug.LogError("GameManager: EnemySpawner reference is not set in the Inspector!");
-        
+
         if (bossSpawnPoint == null) bossSpawnPoint = GameObject.FindGameObjectWithTag("BossSpawn")?.transform;
-        
+
         isTimerRunning = true;
         bossSpawned = false;
         _pauseRequesters = 0;
@@ -173,7 +174,7 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
-    
+
     public void PlayerDied()
     {
         if (CurrentState == GameState.GameOver) return;
@@ -201,28 +202,45 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region Pause Management
-    public void RequestPause()
+    public void RequestPause(bool showMenu = false)
     {
-        _pauseRequesters++;
-        if (_pauseRequesters == 1 && CurrentState == GameState.Playing)
+        if (CurrentState != GameState.Paused)
         {
             CurrentState = GameState.Paused;
             Time.timeScale = 0f;
             if (player != null) player.enabled = false;
+            _pauseRequesters = 1;
+
+            // Só mostra o menu se foi uma pausa de jogador
+            if (showMenu)
+                StartCoroutine(ShowPauseMenuNextFrame());
         }
     }
 
+
+    private IEnumerator ShowPauseMenuNextFrame()
+    {
+        yield return null; // espera 1 frame
+        if (uiManager != null)
+            uiManager.ShowPauseMenu(true);
+    }
+
+
+
     public void RequestResume()
     {
-        _pauseRequesters--;
-        if (_pauseRequesters < 0) _pauseRequesters = 0;
-        if (_pauseRequesters == 0 && CurrentState == GameState.Paused)
+        if (CurrentState == GameState.Paused)
         {
             CurrentState = GameState.Playing;
             Time.timeScale = 1f;
             if (player != null) player.enabled = true;
+            _pauseRequesters = 0;
+
+            if (uiManager != null)
+                uiManager.ShowPauseMenu(false);
         }
     }
+
     #endregion
 
     #region Timers and Spawning
@@ -280,11 +298,11 @@ public class GameManager : MonoBehaviour
 
         currentFireRate /= fireRateMultiplier;
         currentFireRate = Mathf.Max(0.2f, currentFireRate);
-        
+
         Debug.Log($"Difficulty Increased at interval {lastDifficultyIncreaseMark}! New Health Multiplier: {currentEnemyHealthMultiplier:F2}");
     }
     #endregion
-    
+
     #region Getters and Setters
     public float GetRemainingTime() { return currentTime; }
     public float GetTotalGameTime() { return totalGameTime; }

@@ -19,9 +19,6 @@ public class SettingsManager : MonoBehaviour
 
     void Start()
     {
-        // Ensure the panel is closed on start
-        settingsPanel.SetActive(false);
-
         // Populate the UI with available system settings
         PopulateMonitorDropdown();
         PopulateFpsDropdown();

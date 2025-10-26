@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a235ba29a21fe3c4194c1d40bc43f19b, type: 3}
-  m_Name: Blade Vortex
+  m_Name: ShadowClone
   m_EditorClassIdentifier: 
-  weaponID: Blade Vortex
-  weaponName: Blade Vortex
-  description: Blade Vortex
-  icon: {fileID: 21300000, guid: faf84e49c98521145a76b341e2380079, type: 3}
-  weaponPrefab: {fileID: 6260151671241025186, guid: ea8b81df5ec569849bb4c70c39fb7d74, type: 3}
-  archetype: 2
+  weaponID: 
+  weaponName: 
+  description: 
+  icon: {fileID: 0}
+  weaponPrefab: {fileID: 1815106188694731433, guid: 69aea229dd87cce49a671c0812091b65, type: 3}
+  archetype: 6
   targetingStyle: 0
   groupingRange: 5
-  damage: 7
-  cooldown: 0.3
-  area: 0.9
+  damage: 10
+  cooldown: 30
+  area: 1
   amount: 1
   speed: 1
   duration: 1
@@ -30,4 +30,4 @@ MonoBehaviour:
   criticalMultiplier: 1.5
   pierce: 0
   pierceCount: 1
-  knockback: 1
+  knockback: 0

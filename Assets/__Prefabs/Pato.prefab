@@ -377,10 +377,11 @@ MonoBehaviour:
   weapons:
   - {fileID: 11400000, guid: 71f30611e4b0a0b4a808ab2598cd8ca4, type: 2}
   possibleWeapons:
-  - {fileID: 11400000, guid: f51291457a043f446aa1e7da7b62d70a, type: 2}
-  - {fileID: 11400000, guid: 7f82ddfef3f925449a966956605fc32b, type: 2}
-  - {fileID: 11400000, guid: 951390051091ba1489ce516a02921df1, type: 2}
   - {fileID: 11400000, guid: bc2683209e691594c90546de1a8df9f1, type: 2}
+  - {fileID: 11400000, guid: 951390051091ba1489ce516a02921df1, type: 2}
+  - {fileID: 11400000, guid: f51291457a043f446aa1e7da7b62d70a, type: 2}
+  - {fileID: 11400000, guid: aa51887ce722fc54d86aa2bd9eb5bf4e, type: 2}
+  - {fileID: 11400000, guid: 7f82ddfef3f925449a966956605fc32b, type: 2}
   weaponParent: {fileID: 8274304304770015266}
 --- !u!114 &8654451083147522726
 MonoBehaviour:
@@ -397,8 +398,8 @@ MonoBehaviour:
   hasBeltBuffItem: 0
   stolenBuffDuration: 10
   beltHealthBonus: 0.2
-  beltDamageBonus: 0.2
-  beltSpeedBonus: 1
+  beltDamageBonus: 0.15
+  beltSpeedBonus: 1.5
   characterData: {fileID: 11400000, guid: 8e9db71e7d319214cb4ee66e6c773470, type: 2}
   maxHp: 0
   hpRegen: 0

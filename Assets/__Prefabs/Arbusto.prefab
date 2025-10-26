@@ -103,8 +103,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   possibleDrops:
   - itemPrefab: {fileID: 8326750618715067698, guid: 3f0fbb90971ba4441913d7efaea77fca, type: 3}
-    weight: 5
-  - itemPrefab: {fileID: 8326750618715067698, guid: 4bda2674e362ef44687d23c2a36d07b4, type: 3}
     weight: 15
   - itemPrefab: {fileID: 8860354166154523215, guid: c60a9333f1a4d5a4b8879ce6995f0c06, type: 3}
     weight: 3

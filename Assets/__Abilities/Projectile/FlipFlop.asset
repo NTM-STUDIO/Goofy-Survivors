@@ -21,8 +21,8 @@ MonoBehaviour:
   targetingStyle: 0
   groupingRange: 5
   damage: 1
-  cooldown: 1.2
-  area: 1
+  cooldown: 1.5
+  area: 0.9
   amount: 1
   speed: 20
   duration: 10
