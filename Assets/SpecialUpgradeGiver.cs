@@ -1,115 +1,131 @@
 using UnityEngine;
 using System.Linq;
-using System.Collections; // Required for Coroutines
+using System.Collections;
 
+[RequireComponent(typeof(Collider))]
 public class SpecialUpgradeGiver : MonoBehaviour
 {
     [Header("Rarity Settings")]
-    [Tooltip("The chance (out of 100) to get a Mythic upgrade. The rest is the chance for Shadow.")]
+    [Tooltip("Chance (in %) to get a Mythic upgrade; remaining chance goes to Shadow.")]
     [Range(0, 100)]
     [SerializeField] private float mythicalChance = 50f;
 
-    // Internal References
+    // Cached references
     private SpecialUpgradeUI specialUpgradePanel;
     private UpgradeManager upgradeManager;
     private GameManager gameManager;
+    private Collider triggerCollider;
 
+    // Internal data
     private UpgradeManager.GeneratedUpgrade generatedUpgrade;
-    private PlayerStats triggeredPlayerStats; 
-    
-    // --- THIS IS THE KEY CHANGE ---
-    // We now use a coroutine to ensure all other managers are ready before we try to find them.
-    IEnumerator Start()
-    {
-        // 1. Disable the collider immediately to prevent the player from triggering it too early.
-        GetComponent<Collider>().enabled = false;
+    private PlayerStats triggeredPlayerStats;
+    private bool initialized = false;
 
-        // 2. Wait for the end of the first frame.
-        // By this point, all Awake() and Start() methods on other scripts have run.
+    private IEnumerator Start()
+    {
+        triggerCollider = GetComponent<Collider>();
+        triggerCollider.enabled = false; // prevent premature activation
+
+        // Wait a frame to ensure all singletons are initialized
         yield return new WaitForEndOfFrame();
 
-        // 3. Now, it is safe to find our dependencies.
+        // Get cached instances or find them once if not assigned
         gameManager = GameManager.Instance;
-        upgradeManager = FindObjectOfType<UpgradeManager>();
-        specialUpgradePanel = FindObjectOfType<SpecialUpgradeUI>();
+        upgradeManager = UpgradeManager.Instance ?? FindObjectOfType<UpgradeManager>();
+        specialUpgradePanel = SpecialUpgradeUI.Instance ?? FindObjectOfType<SpecialUpgradeUI>();
 
-        // 4. Critical check to ensure the script can function.
         if (gameManager == null || upgradeManager == null || specialUpgradePanel == null)
         {
-            Debug.LogError("FATAL ERROR on SpecialUpgradeGiver: Could not find GameManager, UpgradeManager, or SpecialUpgradeUI in the scene! Destroying this object.", this);
-            Destroy(gameObject); // Destroy self if the scene is not set up correctly.
+            Debug.LogError(
+                $"❌ [SpecialUpgradeGiver] Missing dependencies!\n" +
+                $"GameManager: {(gameManager != null)}, " +
+                $"UpgradeManager: {(upgradeManager != null)}, " +
+                $"SpecialUpgradeUI: {(specialUpgradePanel != null)}",
+                this
+            );
+            Destroy(gameObject);
+            yield break;
         }
-        else
-        {
-            // 5. If everything was found, re-enable the collider so the player can pick it up.
-            GetComponent<Collider>().enabled = true;
-            Debug.Log("SpecialUpgradeGiver initialized successfully and is ready.", this);
-        }
+
+        initialized = true;
+        triggerCollider.enabled = true;
+        Debug.Log("✅ SpecialUpgradeGiver initialized successfully.", this);
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
-        {
-            PlayerStats player = other.GetComponent<PlayerStats>();
-            if (player != null)
-            {
-                this.triggeredPlayerStats = player; 
-                GenerateAndShowSpecialUpgrade();
-                GetComponent<Collider>().enabled = false;
-            }
-        }
+        if (!initialized || !other.CompareTag("Player")) return;
+
+        PlayerStats player = other.GetComponent<PlayerStats>();
+        if (player == null) return;
+
+        triggeredPlayerStats = player;
+        triggerCollider.enabled = false;
+
+        GenerateAndShowSpecialUpgrade();
     }
 
     private void GenerateAndShowSpecialUpgrade()
     {
-        Rarity chosenRarityEnum = Random.Range(0f, 100f) < mythicalChance ? Rarity.Mythic : Rarity.Shadow;
-        
-        RarityTier chosenRarityTier = upgradeManager.GetRarityTiers().FirstOrDefault(tier => tier.rarity == chosenRarityEnum);
-        if (chosenRarityTier == null)
+        // Decide rarity
+        bool isMythic = Random.Range(0f, 100f) < mythicalChance;
+        Rarity rarityType = isMythic ? Rarity.Mythic : Rarity.Shadow;
+
+        // Get tier info safely
+        RarityTier rarityTier = upgradeManager.GetRarityTiers()
+            .FirstOrDefault(t => t.rarity == rarityType);
+
+        if (rarityTier == null)
         {
-            Debug.LogError($"Could not find RarityTier data for {chosenRarityEnum}.", this);
+            Debug.LogError($"❌ No RarityTier found for {rarityType}.", this);
             Destroy(gameObject);
             return;
         }
 
-        var availableUpgrades = upgradeManager.GetAvailableUpgrades();
-        if (availableUpgrades.Count == 0)
+        var upgrades = upgradeManager.GetAvailableUpgrades();
+        if (upgrades == null || upgrades.Count == 0)
         {
+            Debug.LogWarning("⚠️ No upgrades available to choose from.", this);
             Destroy(gameObject);
             return;
         }
-        StatUpgradeData chosenStatData = availableUpgrades[Random.Range(0, availableUpgrades.Count)];
+
+        // Pick upgrade
+        StatUpgradeData chosenData = upgrades[Random.Range(0, upgrades.Count)];
+        float randomValue = Random.Range(chosenData.baseValueMin, chosenData.baseValueMax);
+        float finalValue = randomValue * rarityTier.valueMultiplier;
 
         generatedUpgrade = new UpgradeManager.GeneratedUpgrade
         {
-            BaseData = chosenStatData,
-            Rarity = chosenRarityTier,
-            Value = Random.Range(chosenStatData.baseValueMin, chosenStatData.baseValueMax) * chosenRarityTier.valueMultiplier
+            BaseData = chosenData,
+            Rarity = rarityTier,
+            Value = finalValue
         };
 
+        // Display panel
         specialUpgradePanel.Show(generatedUpgrade, this);
         gameManager.RequestPause();
+
+        Debug.Log($"✨ Generated {rarityType} upgrade: {chosenData.statToUpgrade} +{finalValue}", this);
     }
-    
+
     public void ApplyUpgradeAndDestroy()
     {
         if (generatedUpgrade == null || triggeredPlayerStats == null)
         {
-            Debug.LogError("ApplyUpgradeAndDestroy was called, but the upgrade or player reference was missing!");
+            Debug.LogError("❌ Missing upgrade or player reference in ApplyUpgradeAndDestroy!", this);
             gameManager.RequestResume();
             Destroy(gameObject);
             return;
         }
-        
+
         ApplyStatToPlayer(triggeredPlayerStats, generatedUpgrade.BaseData.statToUpgrade, generatedUpgrade.Value);
-        
-        Debug.Log($"Applied Special Upgrade: {generatedUpgrade.BaseData.statToUpgrade} +{generatedUpgrade.Value} ({generatedUpgrade.Rarity.rarity})");
+        Debug.Log($"✅ Applied {generatedUpgrade.Rarity.rarity} upgrade: {generatedUpgrade.BaseData.statToUpgrade} +{generatedUpgrade.Value}", this);
 
         gameManager.RequestResume();
         Destroy(gameObject);
     }
-    
+
     private void ApplyStatToPlayer(PlayerStats player, StatType stat, float value)
     {
         switch (stat)

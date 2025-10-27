@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 3394193308120317800}
   - component: {fileID: 1880927956876971757}
   - component: {fileID: 4719598060223026307}
-  - component: {fileID: 1207094162622104654}
   - component: {fileID: 4993268136660888013}
   m_Layer: 0
   m_Name: Visuals
@@ -136,29 +135,6 @@ CapsuleCollider:
   m_Height: 16.636177
   m_Direction: 2
   m_Center: {x: -0.01953181, y: 3.369981, z: 6.4516397}
---- !u!136 &1207094162622104654
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2260676395805754897}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 1.05
-  m_Height: 16.636175
-  m_Direction: 2
-  m_Center: {x: 0.08778152, y: 1.7099917, z: 6.4516387}
 --- !u!136 &4993268136660888013
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -313,12 +289,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   damagePopupPrefab: {fileID: 1151078973031816182, guid: 48036a6b9a0774c408db15d75147741d, type: 3}
   popupSpawnPoint: {fileID: 3257514570938149199}
-  baseHealth: 15
-  baseDamage: 10
-  moveSpeed: 8
-  mutationChance: 0.15
-  minMutationBonus: 0.5
-  maxMutationBonus: 1
+  baseHealth: 12
+  baseDamage: 8
+  moveSpeed: 8.5
+  mutationChance: 0.1
+  minMutationBonus: 1
+  maxMutationBonus: 1.5
   healthMutationColor: {r: 0, g: 1, b: 0, a: 1}
   damageMutationColor: {r: 1, g: 0, b: 0, a: 1}
   speedMutationColor: {r: 0, g: 0, b: 1, a: 1}
@@ -328,6 +304,6 @@ MonoBehaviour:
   maxResistance: 0.8
   orbDrops:
   - orbPrefab: {fileID: 8326750618715067698, guid: 3f0fbb90971ba4441913d7efaea77fca, type: 3}
-    dropChance: 0
+    dropChance: 10
   - orbPrefab: {fileID: 8326750618715067698, guid: 4bda2674e362ef44687d23c2a36d07b4, type: 3}
-    dropChance: 100
+    dropChance: 90

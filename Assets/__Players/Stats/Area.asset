@@ -16,5 +16,5 @@ MonoBehaviour:
   upgradeName: Abilities Size
   upgradeDescription: 
   icon: {fileID: -1653481489409541476, guid: 145b25089ff599b4aa79108556f80e83, type: 3}
-  baseValueMin: 10
-  baseValueMax: 15
+  baseValueMin: 9
+  baseValueMax: 16

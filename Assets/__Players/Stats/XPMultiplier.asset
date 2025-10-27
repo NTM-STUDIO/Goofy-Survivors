@@ -16,5 +16,5 @@ MonoBehaviour:
   upgradeName: XP Gain
   upgradeDescription: 
   icon: {fileID: 7653998179898489512, guid: 3bdd946736cafb045a5a46612f3067d6, type: 3}
-  baseValueMin: 25
-  baseValueMax: 50
+  baseValueMin: 30
+  baseValueMax: 45

@@ -1,63 +1,66 @@
 using UnityEngine;
 using System.Linq;
 
-// Requer um Collider 3D em vez de 2D
-[RequireComponent(typeof(Collider))] 
+[RequireComponent(typeof(Collider))]
 public class GuaranteedRarityGiver : MonoBehaviour
 {
     [Header("Configuração da Recompensa")]
     [Tooltip("Marque esta caixa para dar a raridade Mítica ('Godly'). Desmarque para dar a raridade Sombra ('Shadow').")]
     [SerializeField] private bool giveMythicalRarity = false;
 
-    [Header("Referências")]
-    [Tooltip("Se deixado em branco, tentará encontrar o UpgradeManager na cena.")]
-    [SerializeField] private UpgradeManager upgradeManager;
-
+    private UpgradeManager upgradeManager;
     private RarityTier shadowRarity;
     private RarityTier mythicRarity;
     private bool hasBeenTriggered = false;
 
-    void Start()
+    private void Awake()
     {
-        // Esta parte do código é a mesma e funciona em 3D
-        if (upgradeManager == null)
-        {
-            upgradeManager = FindObjectOfType<UpgradeManager>();
-        }
+        // Use singleton instead of FindObjectOfType
+        upgradeManager = UpgradeManager.Instance;
 
         if (upgradeManager == null)
         {
-            Debug.LogError("ERRO: O GuaranteedRarityGiver não conseguiu encontrar o UpgradeManager na cena!", this);
+            Debug.LogError("❌ GuaranteedRarityGiver: Não foi possível encontrar UpgradeManager.Instance! Certifique-se de que o UpgradeManager existe na cena.", this);
+            enabled = false;
+            return;
+        }
+    }
+
+    private void Start()
+    {
+        // Pull rarities once from the UpgradeManager
+        var allRarities = upgradeManager.GetRarityTiers();
+
+        shadowRarity = allRarities.FirstOrDefault(r => r.name == "Shadow");
+        mythicRarity = allRarities.FirstOrDefault(r => r.name == "Godly");
+
+        if (shadowRarity == null || mythicRarity == null)
+        {
+            Debug.LogError("❌ GuaranteedRarityGiver: Não foi possível encontrar as raridades 'Shadow' ou 'Godly'. Verifique os nomes no UpgradeManager.", this);
             enabled = false;
             return;
         }
 
-        var allRarities = upgradeManager.GetRarityTiers();
-        shadowRarity = allRarities.FirstOrDefault(r => r.name == "Shadow");
-        mythicRarity = allRarities.FirstOrDefault(r => r.name == "Godly"); 
-
-        if (shadowRarity == null || mythicRarity == null)
-        {
-            Debug.LogError("ERRO: Não foi possível encontrar as raridades 'Shadow' ou 'Godly' na lista do UpgradeManager. Verifique os nomes no Inspector.", this);
-            enabled = false;
-        }
+        Debug.Log($"✅ GuaranteedRarityGiver pronto. Dará {(giveMythicalRarity ? "Godly" : "Shadow")} upgrades.", this);
     }
 
-    // Usa OnTriggerEnter para física 3D, com um Collider 3D
     private void OnTriggerEnter(Collider other)
     {
-        // A lógica interna é idêntica
-        if (!hasBeenTriggered && other.CompareTag("Player"))
+        if (hasBeenTriggered || !other.CompareTag("Player")) return;
+
+        hasBeenTriggered = true;
+
+        RarityTier rarityToGive = giveMythicalRarity ? mythicRarity : shadowRarity;
+
+        if (rarityToGive == null)
         {
-            hasBeenTriggered = true; 
-
-            RarityTier rarityToGive = giveMythicalRarity ? mythicRarity : shadowRarity;
-
-            upgradeManager.PresentGuaranteedRarityChoices(rarityToGive);
-            
-            // Opcional: Desativa o objeto do NPC para que ele não possa ser usado novamente
-            // gameObject.SetActive(false); 
-            Destroy(gameObject); // Ou destrói o objeto
+            Debug.LogError("GuaranteedRarityGiver: raridade não encontrada ao tentar dar upgrade!", this);
+            return;
         }
+
+        upgradeManager.PresentGuaranteedRarityChoices(rarityToGive);
+
+        // Destroy the giver after use
+        Destroy(gameObject);
     }
 }
