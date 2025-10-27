@@ -4,13 +4,18 @@ using TMPro;
 
 public class SpecialUpgradeUI : MonoBehaviour
 {
+    public static SpecialUpgradeUI Instance { get; private set; }
+
     [Header("UI Elements")]
     [Tooltip("The background panel that will change color.")]
     [SerializeField] private Image panelBackground;
+
     [Tooltip("The image for the upgrade's icon.")]
     [SerializeField] private Image upgradeIcon;
+
     [Tooltip("The text that will show the stat name and its value.")]
-    [SerializeField] private TextMeshProUGUI valueText; // Changed from upgradeNameText for clarity
+    [SerializeField] private TextMeshProUGUI valueText;
+
     [Tooltip("The button to claim the upgrade.")]
     [SerializeField] private Button claimButton;
 
@@ -18,8 +23,24 @@ public class SpecialUpgradeUI : MonoBehaviour
 
     private void Awake()
     {
+        // Singleton setup (scene-local)
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning($"Duplicate SpecialUpgradeUI found in scene. Destroying {gameObject.name}.", this);
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+
         claimButton.onClick.AddListener(OnClaimButtonPressed);
         gameObject.SetActive(false); // Start hidden
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     /// <summary>
@@ -27,18 +48,26 @@ public class SpecialUpgradeUI : MonoBehaviour
     /// </summary>
     public void Show(UpgradeManager.GeneratedUpgrade upgrade, SpecialUpgradeGiver giver)
     {
-        this.currentGiver = giver;
+        if (upgrade == null || giver == null)
+        {
+            Debug.LogError("SpecialUpgradeUI.Show called with invalid parameters.", this);
+            return;
+        }
+
+        currentGiver = giver;
 
         // 1. Change panel color based on rarity
-        panelBackground.color = upgrade.Rarity.backgroundColor;
+        if (panelBackground != null)
+            panelBackground.color = upgrade.Rarity.backgroundColor;
 
         // 2. Set the icon
-        upgradeIcon.sprite = upgrade.BaseData.icon;
+        if (upgradeIcon != null)
+            upgradeIcon.sprite = upgrade.BaseData.icon;
 
-        // 3. Set the text to the stat name and the final value
-        // Example output: "Max HP\n+25.0"
-        valueText.text = $"{upgrade.BaseData.upgradeName}\n+{upgrade.Value.ToString("F1")}";
-        
+        // 3. Set the text (e.g., "Max HP\n+25.0")
+        if (valueText != null)
+            valueText.text = $"{upgrade.BaseData.upgradeName}\n+{upgrade.Value:F1}";
+
         // Show the panel
         gameObject.SetActive(true);
     }
@@ -52,9 +81,8 @@ public class SpecialUpgradeUI : MonoBehaviour
     private void OnClaimButtonPressed()
     {
         if (currentGiver != null)
-        {
             currentGiver.ApplyUpgradeAndDestroy();
-        }
+
         Hide();
     }
 }

@@ -21,13 +21,13 @@ MonoBehaviour:
   targetingStyle: 1
   groupingRange: 5
   damage: 15
-  cooldown: 11
-  area: 0.45
+  cooldown: 12
+  area: 0.5
   amount: 1
-  speed: 133
+  speed: 145
   duration: 6
   criticalChance: 0
   criticalMultiplier: 1.5
   pierce: 0
   pierceCount: 1
-  knockback: 3
+  knockback: 9

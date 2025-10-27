@@ -227,12 +227,12 @@ public class PlayerStats : MonoBehaviour
     public void IncreaseCritDamageMultiplier(float amount) { critDamageMultiplier += amount; }
     public void IncreaseAttackSpeedMultiplier(float amount) { attackSpeedMultiplier += amount; }
     public void IncreaseProjectileCount(int amount) { projectileCount += amount; }
-    public void IncreaseProjectileSizeMultiplier(float amount) { projectileSizeMultiplier += amount; }
+    public void IncreaseProjectileSizeMultiplier(float amount) { projectileSizeMultiplier += amount; if (projectileSizeMultiplier > 4f) projectileSizeMultiplier = 4f; Debug.Log($"Projectile Size Multiplier increased to {projectileSizeMultiplier}"); }
     public void IncreaseProjectileSpeedMultiplier(float amount) { projectileSpeedMultiplier += amount; }
     public void IncreaseDurationMultiplier(float amount) { durationMultiplier += amount; }
     public void IncreaseKnockbackMultiplier(float amount) { knockbackMultiplier += amount; }
     public void IncreaseMovementSpeed(float amount) { movementSpeed += amount; }
-    public void IncreaseLuck(float amount) { luck += amount; }
+    public void IncreaseLuck(float amount) {  luck += amount; if (luck > 500) luck = 500; }
     public void IncreasePickupRange(float amount) { pickupRange += amount; }
     public void IncreaseXPGainMultiplier(float amount) { xpGainMultiplier += amount; }
     public void DecreaseMaxHP(int amount) { maxHp -= amount; }

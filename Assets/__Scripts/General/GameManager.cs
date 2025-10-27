@@ -1,30 +1,23 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
-using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
     [Header("Core Manager References")]
-    [Tooltip("CRITICAL: Drag the UIManager object here.")]
     [SerializeField] private UIManager uiManager;
-    [Tooltip("CRITICAL: Drag the EnemySpawner object here.")]
     [SerializeField] private EnemySpawner enemySpawner;
-    [Tooltip("CRITICAL: Drag the EnemyDespawner object here.")]
     [SerializeField] private EnemyDespawner enemyDespawner;
-    [Tooltip("CRITICAL: Drag the UpgradeManager object here.")]
     [SerializeField] private UpgradeManager upgradeManager;
-    [Tooltip("CRITICAL: Drag the PlayerExperience object from your scene here.")]
     [SerializeField] private PlayerExperience playerExperience;
 
     [Header("Player References (Internal)")]
-    private Movement player; // Found on the spawned player
-    private GameObject chosenPlayerPrefab; // Set by the Unit Carousel
+    private Movement player;
+    private GameObject chosenPlayerPrefab;
 
     [Header("Prefabs & Spawn Points")]
-    [Tooltip("CRITICAL: The Transform where the player will be spawned.")]
     [SerializeField] private Transform playerSpawnPoint;
     [SerializeField] private GameObject bossPrefab;
     [SerializeField] private Transform bossSpawnPoint;
@@ -36,30 +29,23 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float totalGameTime = 900f;
     private float currentTime;
     private bool isTimerRunning = false;
+    private float timerUIAccumulator = 0f; // prevents UI update every frame
 
-    // --- MODIFIED: New Difficulty Scaling Settings ---
     [Header("General Difficulty Settings")]
     public float currentEnemyHealthMultiplier { get; private set; } = 1f;
     public float currentEnemyDamageMultiplier { get; private set; } = 1f;
-    [Space]
-    [Tooltip("How often (in seconds) the difficulty will increase.")]
     [SerializeField] private float difficultyIncreaseInterval = 30f;
-    [Tooltip("Multiplier for enemy health and damage every interval.")]
     [SerializeField] private float generalStrengthMultiplier = 1.1f;
 
     [Header("Difficulty Scaling - Caster")]
     public float currentProjectileSpeed { get; private set; }
     public float currentFireRate { get; private set; }
     public float currentSightRange { get; private set; }
-    [Space]
     [SerializeField] private float baseProjectileSpeed = 10f;
     [SerializeField] private float baseFireRate = 2f;
     [SerializeField] private float baseSightRange = 999f;
-    [Tooltip("Multiplier for enemy projectile speed every interval.")]
     [SerializeField] private float speedMultiplier = 1.05f;
-    [Tooltip("Multiplier for enemy fire rate every interval. A value > 1 means faster firing.")]
     [SerializeField] private float fireRateMultiplier = 1.05f;
-    // --- End of Modifications ---
 
     public EnemyStats reaperStats { get; private set; }
     private bool bossSpawned = false;
@@ -81,7 +67,6 @@ public class GameManager : MonoBehaviour
         currentTime = totalGameTime;
     }
 
-
     void Update()
     {
         if (CurrentState == GameState.Playing)
@@ -90,14 +75,18 @@ public class GameManager : MonoBehaviour
             CheckForDifficultyIncrease();
             CheckForBossSpawn();
         }
+
+        HandleInput();
+    }
+
+    private void HandleInput()
+    {
         if (Input.GetKeyDown(KeyCode.Tab))
-        {
-            if (uiManager != null) uiManager.ToggleStatsPanel();
-        }
+            uiManager?.ToggleStatsPanel();
+
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (CurrentState == GameState.Playing)
-
                 RequestPause(true);
             else if (CurrentState == GameState.Paused)
                 RequestResume();
@@ -116,57 +105,49 @@ public class GameManager : MonoBehaviour
 
         if (chosenPlayerPrefab == null)
         {
-            Debug.LogError("FATAL: StartGame was called, but no player prefab was chosen! Call SetChosenPlayerPrefab() first.", this);
+            Debug.LogError("StartGame called but no player prefab chosen! Call SetChosenPlayerPrefab() first.", this);
             return;
         }
 
-        GameObject playerObject = null;
-        if (playerSpawnPoint != null)
+        if (playerSpawnPoint == null)
         {
-            playerObject = Instantiate(chosenPlayerPrefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
-            player = playerObject.GetComponent<Movement>();
-        }
-        else
-        {
-            Debug.LogError("FATAL: Cannot start game! The 'Player Spawn Point' is not assigned in the GameManager Inspector.", this);
+            Debug.LogError("Cannot start game: Player Spawn Point not assigned in GameManager.", this);
             return;
         }
+
+        // --- Player spawn ---
+        GameObject playerObject = Instantiate(chosenPlayerPrefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
+        player = playerObject.GetComponent<Movement>();
 
         if (player == null)
         {
-            Debug.LogError("FATAL: Player prefab was spawned but is missing a Movement script! Aborting start.", this);
+            Debug.LogError("Spawned player prefab missing Movement component.", this);
             return;
         }
 
+        // --- Initialize all managers ---
+        playerExperience?.Initialize(playerObject);
+        upgradeManager?.Initialize(playerObject);
+        enemyDespawner?.Initialize(playerObject);
+        enemySpawner?.StartSpawning();
+
+        if (bossSpawnPoint == null)
+            bossSpawnPoint = GameObject.FindGameObjectWithTag("BossSpawn")?.transform;
+
         CurrentState = GameState.Playing;
-        Debug.Log("Game Started! Initializing all managers...");
-
-        // --- THIS IS THE ONLY CHANGE ---
-        // Pass the newly created 'playerObject' to the PlayerExperience manager so it knows which player to track.
-        if (playerExperience != null) playerExperience.Initialize(playerObject);
-        else Debug.LogWarning("GameManager is missing reference to the PlayerExperience manager object in the scene.");
-
-        if (upgradeManager != null) upgradeManager.Initialize(playerObject);
-        else Debug.LogWarning("GameManager is missing reference to UpgradeManager.");
-
-        if (enemyDespawner != null) enemyDespawner.Initialize(playerObject);
-        else Debug.LogWarning("GameManager is missing reference to EnemyDespawner.");
-
-        if (enemySpawner != null) enemySpawner.StartSpawning();
-        else Debug.LogError("GameManager: EnemySpawner reference is not set in the Inspector!");
-
-        if (bossSpawnPoint == null) bossSpawnPoint = GameObject.FindGameObjectWithTag("BossSpawn")?.transform;
-
         isTimerRunning = true;
         bossSpawned = false;
         _pauseRequesters = 0;
-
         lastDifficultyIncreaseMark = 0;
+
+        // Reset difficulty
         currentEnemyHealthMultiplier = 1f;
         currentEnemyDamageMultiplier = 1f;
         currentProjectileSpeed = baseProjectileSpeed;
         currentFireRate = baseFireRate;
         currentSightRange = baseSightRange;
+
+        Debug.Log("Game Started! All systems initialized.");
     }
 
     public void RestartGame()
@@ -178,9 +159,13 @@ public class GameManager : MonoBehaviour
     public void PlayerDied()
     {
         if (CurrentState == GameState.GameOver) return;
+
         CurrentState = GameState.GameOver;
         isTimerRunning = false;
-        if (player != null) player.enabled = false;
+
+        if (player != null)
+            player.enabled = false;
+
         if (uiManager != null)
         {
             uiManager.ShowEndGamePanel(true);
@@ -193,6 +178,7 @@ public class GameManager : MonoBehaviour
         isTimerRunning = false;
         CurrentState = GameState.GameOver;
         Debug.Log("Time's up! Game Over.");
+
         if (uiManager != null)
         {
             uiManager.ShowEndGamePanel(true);
@@ -204,57 +190,55 @@ public class GameManager : MonoBehaviour
     #region Pause Management
     public void RequestPause(bool showMenu = false)
     {
-        if (CurrentState != GameState.Paused)
-        {
-            CurrentState = GameState.Paused;
-            Time.timeScale = 0f;
-            if (player != null) player.enabled = false;
-            _pauseRequesters = 1;
+        if (CurrentState == GameState.Paused) return;
 
-            // Só mostra o menu se foi uma pausa de jogador
-            if (showMenu)
-                StartCoroutine(ShowPauseMenuNextFrame());
-        }
+        CurrentState = GameState.Paused;
+        Time.timeScale = 0f;
+        if (player != null) player.enabled = false;
+        _pauseRequesters = 1;
+
+        if (showMenu)
+            StartCoroutine(ShowPauseMenuNextFrame());
     }
-
 
     private IEnumerator ShowPauseMenuNextFrame()
     {
-        yield return null; // espera 1 frame
-        if (uiManager != null)
-            uiManager.ShowPauseMenu(true);
+        yield return null;
+        uiManager?.ShowPauseMenu(true);
     }
-
-
 
     public void RequestResume()
     {
-        if (CurrentState == GameState.Paused)
-        {
-            CurrentState = GameState.Playing;
-            Time.timeScale = 1f;
-            if (player != null) player.enabled = true;
-            _pauseRequesters = 0;
+        if (CurrentState != GameState.Paused) return;
 
-            if (uiManager != null)
-                uiManager.ShowPauseMenu(false);
-        }
+        CurrentState = GameState.Playing;
+        Time.timeScale = 1f;
+        if (player != null) player.enabled = true;
+        _pauseRequesters = 0;
+
+        uiManager?.ShowPauseMenu(false);
     }
-
     #endregion
 
     #region Timers and Spawning
     private void UpdateTimer()
     {
-        if (isTimerRunning)
+        if (!isTimerRunning) return;
+
+        currentTime -= Time.deltaTime;
+        timerUIAccumulator += Time.deltaTime;
+
+        // Only update the UI every 1 second to reduce text mesh updates
+        if (timerUIAccumulator >= 1f)
         {
-            currentTime -= Time.deltaTime;
-            if (currentTime <= 0)
-            {
-                currentTime = 0;
-                EndGame();
-            }
-            if (uiManager != null) uiManager.UpdateTimerText(currentTime);
+            timerUIAccumulator = 0f;
+            uiManager?.UpdateTimerText(currentTime);
+        }
+
+        if (currentTime <= 0)
+        {
+            currentTime = 0;
+            EndGame();
         }
     }
 
@@ -269,12 +253,11 @@ public class GameManager : MonoBehaviour
 
     private void SpawnBoss()
     {
-        if (bossPrefab != null && bossSpawnPoint != null)
-        {
-            GameObject bossObject = Instantiate(bossPrefab, bossSpawnPoint.position + Vector3.up * 10f, bossSpawnPoint.rotation);
-            reaperStats = bossObject.GetComponent<EnemyStats>();
-            Debug.Log("The Final Boss has appeared!");
-        }
+        if (bossPrefab == null || bossSpawnPoint == null) return;
+
+        GameObject bossObject = Instantiate(bossPrefab, bossSpawnPoint.position + Vector3.up * 10f, bossSpawnPoint.rotation);
+        reaperStats = bossObject.GetComponent<EnemyStats>();
+        Debug.Log("The Final Boss has appeared!");
     }
     #endregion
 
@@ -299,13 +282,13 @@ public class GameManager : MonoBehaviour
         currentFireRate /= fireRateMultiplier;
         currentFireRate = Mathf.Max(0.2f, currentFireRate);
 
-        Debug.Log($"Difficulty Increased at interval {lastDifficultyIncreaseMark}! New Health Multiplier: {currentEnemyHealthMultiplier:F2}");
+        Debug.Log($"Difficulty Increased (x{lastDifficultyIncreaseMark}) | HP×{currentEnemyHealthMultiplier:F2}, DMG×{currentEnemyDamageMultiplier:F2}");
     }
     #endregion
 
-    #region Getters and Setters
-    public float GetRemainingTime() { return currentTime; }
-    public float GetTotalGameTime() { return totalGameTime; }
+    #region Getters / Setters
+    public float GetRemainingTime() => currentTime;
+    public float GetTotalGameTime() => totalGameTime;
 
     public void SetGameDuration(float newDuration)
     {

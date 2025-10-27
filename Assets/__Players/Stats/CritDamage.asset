@@ -16,5 +16,5 @@ MonoBehaviour:
   upgradeName: Crit Damage
   upgradeDescription: 
   icon: {fileID: 1205185987351238900, guid: 06a9555075908a64c94dace2960b94c8, type: 3}
-  baseValueMin: 20
-  baseValueMax: 30
+  baseValueMin: 15
+  baseValueMax: 25
