@@ -72,9 +72,21 @@ public class LeaderboardScrollView : MonoBehaviour
         }
 
         // Clear existing entries when the object is disabled/destroyed
+        ClearAllEntries();
+    }
+
+    private void OnDestroy()
+    {
+        // Ensure cleanup on destroy as well
+        ClearAllEntries();
+    }
+
+    private void ClearAllEntries()
+    {
         foreach (var go in spawnedEntries)
         {
-            Destroy(go);
+            if (go != null)
+                Destroy(go);
         }
         spawnedEntries.Clear();
     }
@@ -119,10 +131,21 @@ public class LeaderboardScrollView : MonoBehaviour
         // Sort entries by damage (highest first)
         entries = entries.OrderByDescending(e => e.damage).ToList();
 
-        // Clear existing
-        foreach (var go in spawnedEntries)
-            Destroy(go);
-        spawnedEntries.Clear();
+        // Clear existing entries first
+        ClearAllEntries();
+
+        // Validate references before creating entries
+        if (entryPrefab == null)
+        {
+            Debug.LogError("LeaderboardScrollView: entryPrefab is not assigned!");
+            return;
+        }
+
+        if (contentParent == null)
+        {
+            Debug.LogError("LeaderboardScrollView: contentParent is not assigned!");
+            return;
+        }
 
         // Create new entries
         for (int i = 0; i < entries.Count; i++)
@@ -131,6 +154,13 @@ public class LeaderboardScrollView : MonoBehaviour
             int rank = i + 1; // rank starts at 1
 
             GameObject newEntry = Instantiate(entryPrefab, contentParent);
+            
+            // CRITICAL: Mark as runtime-only to prevent saving to scene
+            newEntry.hideFlags = HideFlags.DontSave;
+            
+            // Reset transform to ensure proper positioning within parent
+            newEntry.transform.localPosition = Vector3.zero;
+            newEntry.transform.localRotation = Quaternion.identity;
             newEntry.transform.localScale = Vector3.one;
 
             // Fill in the data
@@ -138,6 +168,10 @@ public class LeaderboardScrollView : MonoBehaviour
             if (entryUI != null)
             {
                 entryUI.SetData(rank, entry.playerName, entry.damage);
+            }
+            else
+            {
+                Debug.LogWarning($"LeaderboardScrollView: Entry at rank {rank} is missing LeaderboardEntryUI component!");
             }
 
             spawnedEntries.Add(newEntry);
