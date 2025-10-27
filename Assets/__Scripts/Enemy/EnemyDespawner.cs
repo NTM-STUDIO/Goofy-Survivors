@@ -14,7 +14,7 @@ public class EnemyDespawner : MonoBehaviour
 
     // Internal References
     private Transform playerTransform; // This will be given to us by the GameManager
-    private EnemySpawner enemySpawner;
+    [SerializeField] private EnemySpawner enemySpawner;
 
     /// <summary>
     /// The GameManager calls this and provides the newly spawned player object.
@@ -32,8 +32,7 @@ public class EnemyDespawner : MonoBehaviour
             return;
         }
 
-        // It's safe to find this now, as it's part of the same initialization sequence.
-        enemySpawner = FindObjectOfType<EnemySpawner>();
+
         if (enemySpawner == null)
         {
             Debug.LogError("FATAL ERROR: EnemyDespawner could not find the EnemySpawner in the scene!", this);

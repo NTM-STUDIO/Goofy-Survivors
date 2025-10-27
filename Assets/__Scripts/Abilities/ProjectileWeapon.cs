@@ -27,7 +27,7 @@ public class ProjectileWeapon : MonoBehaviour
         this.wasCritical = isCritical; // Store the crit status
         this.speed = finalSpeed;
         this.knockbackForce = finalKnockback;
-        this.lifetime = 4f; // Or you could use finalDuration
+        this.lifetime = 3f; // Or you could use finalDuration
         transform.localScale *= finalSize;
 
         if (rb != null)
