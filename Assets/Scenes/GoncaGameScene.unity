@@ -1392,6 +1392,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1230226604644644242, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1230226604644644242, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: PlayButton
+      objectReference: {fileID: 0}
     - target: {fileID: 1350592396174642261, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
