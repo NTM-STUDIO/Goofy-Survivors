@@ -739,7 +739,7 @@ MonoBehaviour:
   m_MaxConnectAttempts: 60
   m_DisconnectTimeoutMS: 30000
   ConnectionData:
-    Address: 127.0.0.1
+    Address: 26.84.156.46
     Port: 7777
     ServerListenAddress: 127.0.0.1
   DebugSimulator:
@@ -891,8 +891,8 @@ MonoBehaviour:
     weight: 0.16
   - assetPrefab: {fileID: 485895516535105435, guid: 5922ebbfd4d78944e8dc01825f225fe0, type: 3}
     weight: 0.004
-  mapWidth: 3000
-  mapHeight: 3000
+  mapWidth: 10
+  mapHeight: 10
   assetDensity: 0.006
 --- !u!4 &729974982
 Transform:

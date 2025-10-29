@@ -26,7 +26,7 @@ public class Movement : NetworkBehaviour
     {
         // ALTERAÇÃO: A verificação de "propriedade"
         // Este é o passo mais importante. Se este não for o meu jogador, não faço nada.
-       // if (!IsOwner) return;
+        if (!IsOwner) return;
 
         // O resto do Update só corre se eu for o dono deste jogador.
         moveInput.x = Input.GetAxisRaw("Horizontal");
@@ -36,12 +36,12 @@ public class Movement : NetworkBehaviour
     void FixedUpdate()
     {
         // ALTERAÇÃO: Repetir a verificação aqui para a lógica de física.
-       /* if (!IsOwner)
+        if (!IsOwner)
         {
             // Se não sou o dono, não devo controlar a física. 
             // O NetworkTransform irá tratar de sincronizar a posição.
             return;
-        }*/
+        }
 
         // Se não houver input, parar.
         if (moveInput.sqrMagnitude < 0.0001f)
