@@ -23,12 +23,12 @@ public class EndGamePanel : MonoBehaviour
 
     private void Awake()
     {
-        database = db.Instance;
+        database = new db();
         gameManager = GameManager.Instance;
         
-        if (database == null || gameManager == null)
+        if (gameManager == null)
         {
-            Debug.LogError("FATAL ERROR: EndGamePanel could not find db.Instance or GameManager.Instance!");
+            Debug.LogError("FATAL ERROR: EndGamePanel could not find GameManager.Instance!");
             return;
         }
 
