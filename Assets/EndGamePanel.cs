@@ -62,6 +62,9 @@ public class EndGamePanel : MonoBehaviour
             }
         }
         
+        // Limit username input to 14 characters
+        usernameInput.characterLimit = 14;
+
         saveButton.onClick.AddListener(SaveScore);
     }
 
