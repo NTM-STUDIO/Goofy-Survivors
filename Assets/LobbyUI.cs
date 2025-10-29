@@ -2,30 +2,35 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using System.Linq; // Necessário para a função .Contains()
 
 public class LobbyUI : MonoBehaviour
 {
-    [Header("References")]
+    [Header("Referências da UI (Arrastar no Prefab)")]
     public Transform playerSlotsParent;
     public TextMeshProUGUI ipDisplayText;
     public Button copyIpButton;
     public Button startGameButton;
     
     [Header("Prefabs")]
-    public GameObject playerSlotPrefab; // O prefab do slot UI (SEM NetworkObject!)
+    public GameObject playerSlotPrefab; // O prefab do slot individual de um jogador
 
     private LobbyManagerP2P manager;
-    // Dicionário para guardar os slots visuais locais
     private Dictionary<ulong, LobbyPlayerSlot> localSlots = new Dictionary<ulong, LobbyPlayerSlot>();
 
+    /// <summary>
+    /// Método de inicialização chamado pelo LobbyManagerP2P.
+    /// </summary>
     public void Initialize(LobbyManagerP2P manager, bool isHost, string ip)
     {
         this.manager = manager;
         ipDisplayText.text = $"IP: {ip}";
         startGameButton.gameObject.SetActive(isHost);
 
+        // Configura os listeners dos botões para comunicarem de volta com o "cérebro" (o manager)
         copyIpButton.onClick.AddListener(() => {
-            GUIUtility.systemCopyBuffer = ip.Replace("IP: ", "");
+            GUIUtility.systemCopyBuffer = ip;
+            Debug.Log($"IP Copiado: {ip}");
         });
 
         startGameButton.onClick.AddListener(() => {
@@ -33,40 +38,58 @@ public class LobbyUI : MonoBehaviour
         });
     }
 
-    public void AddPlayerSlot(ulong clientId, string playerName, bool isLocal, int initialSelection, List<GameObject> unitPrefabs)
+    /// <summary>
+    /// Adiciona um novo slot de jogador se ele não existir, ou atualiza um existente.
+    /// Chamado pelo LobbyManagerP2P.
+    /// </summary>
+    public void AddOrUpdatePlayerSlot(ulong clientId, string playerName, bool isLocal, int selection, List<GameObject> unitPrefabs)
     {
-        if (localSlots.ContainsKey(clientId)) return;
+        // Tenta encontrar um slot já existente para este jogador
+        if (localSlots.TryGetValue(clientId, out LobbyPlayerSlot existingSlot))
+        {
+            // O slot já existe, então apenas atualizamos a sua seleção de unidade
+            existingSlot.UpdateSelection(selection);
+        }
+        else
+        {
+            // O slot não existe, então criamos um novo
+            GameObject slotObj = Instantiate(playerSlotPrefab, playerSlotsParent);
+            LobbyPlayerSlot newSlotScript = slotObj.GetComponent<LobbyPlayerSlot>();
+            
+            newSlotScript.Initialize(manager, clientId, playerName, isLocal, unitPrefabs, selection);
+            
+            // Adiciona o novo slot ao nosso dicionário para referência futura
+            localSlots.Add(clientId, newSlotScript);
+        }
+    }
 
-        GameObject slotObj = Instantiate(playerSlotPrefab, playerSlotsParent);
-        LobbyPlayerSlot slotScript = slotObj.GetComponent<LobbyPlayerSlot>();
-        slotScript.Initialize(manager, clientId, playerName, isLocal, unitPrefabs, initialSelection);
+    /// <summary>
+    /// Remove da UI os slots de jogadores que se desconectaram.
+    /// Chamado pelo LobbyManagerP2P.
+    /// </summary>
+    public void RemoveDisconnectedPlayers(List<ulong> connectedIds)
+    {
+        // Criamos uma lista de jogadores a remover para evitar modificar o dicionário enquanto o percorremos
+        List<ulong> playersToRemove = new List<ulong>();
         
-        localSlots.Add(clientId, slotScript);
-    }
-
-    public void RemovePlayerSlot(ulong clientId)
-    {
-        if (localSlots.TryGetValue(clientId, out LobbyPlayerSlot slot))
+        foreach (ulong existingClientId in localSlots.Keys)
         {
-            Destroy(slot.gameObject);
-            localSlots.Remove(clientId);
+            // Se um jogador que temos na nossa UI não está na lista de jogadores conectados do servidor...
+            if (!connectedIds.Contains(existingClientId))
+            {
+                // ... adicionamo-lo à lista de remoção.
+                playersToRemove.Add(existingClientId);
+            }
         }
-    }
 
-    public void UpdatePlayerSelection(ulong clientId, int newIndex)
-    {
-        if (localSlots.TryGetValue(clientId, out LobbyPlayerSlot slot))
+        // Agora, percorremos a lista de remoção e destruímos os objetos
+        foreach (ulong clientIdToRemove in playersToRemove)
         {
-            slot.UpdateSelection(newIndex);
+            if (localSlots.TryGetValue(clientIdToRemove, out LobbyPlayerSlot slotToRemove))
+            {
+                Destroy(slotToRemove.gameObject);
+                localSlots.Remove(clientIdToRemove);
+            }
         }
-    }
-
-    public int GetPlayerSelection(ulong clientId)
-    {
-        if (localSlots.TryGetValue(clientId, out LobbyPlayerSlot slot))
-        {
-            return slot.GetCurrentIndex();
-        }
-        return 0;
     }
 }

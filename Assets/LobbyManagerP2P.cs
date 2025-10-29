@@ -1,27 +1,24 @@
 using UnityEngine;
 using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
 using System.Collections.Generic;
 
 public class LobbyManagerP2P : NetworkBehaviour
 {
     [Header("UI Prefab")]
-    [Tooltip("O prefab visual da UI (NÃO DEVE ter NetworkObject)")]
+    [Tooltip("O prefab VISUAL da UI do lobby (NÃO DEVE ter NetworkObject)")]
     public GameObject lobbyUiPrefab;
     
     [Header("Game Data")]
-    public List<GameObject> unitPrefabs; // Lista central de unidades possíveis
+    public List<GameObject> unitPrefabs;
 
-    // Referência para a UI local instanciada
     private LobbyUI localUI;
-
-    // Dicionário para o Host saber as seleções atuais de todos
     private Dictionary<ulong, int> serverPlayerSelections = new Dictionary<ulong, int>();
 
     public override void OnNetworkSpawn()
     {
         DontDestroyOnLoad(gameObject);
 
-        // 1. Encontrar o Canvas
         Canvas mainCanvas = FindObjectOfType<Canvas>();
         if (mainCanvas == null)
         {
@@ -29,98 +26,97 @@ public class LobbyManagerP2P : NetworkBehaviour
             return;
         }
 
-        // 2. Instanciar a UI localmente dentro do Canvas
         GameObject uiObj = Instantiate(lobbyUiPrefab, mainCanvas.transform);
         localUI = uiObj.GetComponent<LobbyUI>();
         
-        // 3. Inicializar a UI
-        localUI.Initialize(this, IsHost, GetLocalIPAddress());
+        string ipToShow;
+        if (IsHost)
+        {
+            ipToShow = NetworkManager.Singleton.GetComponent<UnityTransport>().ConnectionData.Address;
+        }
+        else
+        {
+            ipToShow = NetworkManager.Singleton.GetComponent<UnityTransport>().ConnectionData.Address;
+        }
+        
+        localUI.Initialize(this, IsHost, ipToShow);
 
-        // 4. Configurar eventos de rede
         if (IsServer)
         {
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
-            
-            // Adiciona o Host imediatamente
             OnClientConnected(NetworkManager.Singleton.LocalClientId);
         }
     }
 
-    // --- Lógica do SERVIDOR ---
-
     private void OnClientConnected(ulong clientId)
     {
+        if (!IsServer) return;
+        
         if (!serverPlayerSelections.ContainsKey(clientId))
         {
-            serverPlayerSelections.Add(clientId, 0); // Seleção inicial 0
+            serverPlayerSelections.Add(clientId, 0);
         }
-
-        // Atualiza TODOS os clientes sobre o novo jogador e vice-versa
-        RefreshLobbyForAllClientRpc();
+        RefreshLobbyStateForAll();
     }
 
     private void OnClientDisconnected(ulong clientId)
     {
+        if (!IsServer) return;
+
         if (serverPlayerSelections.ContainsKey(clientId))
         {
             serverPlayerSelections.Remove(clientId);
         }
-        RefreshLobbyForAllClientRpc();
+        RefreshLobbyStateForAll();
     }
-
-    [ClientRpc]
-    private void RefreshLobbyForAllClientRpc()
+    
+    private void RefreshLobbyStateForAll()
     {
-        // Este método é um pouco "bruto", mas garante sincronia. 
-        // O servidor manda todos atualizarem a lista completa.
-        if (!IsServer) return; // Só o servidor comanda esta atualização
+        if (!IsServer) return;
 
-        // Prepara os dados para enviar (quem está conectado e o que selecionou)
-        ulong[] ids = new ulong[serverPlayerSelections.Count];
-        int[] selections = new int[serverPlayerSelections.Count];
-        int i = 0;
+        List<ulong> ids = new List<ulong>();
+        List<int> selections = new List<int>();
         foreach(var kvp in serverPlayerSelections)
         {
-            ids[i] = kvp.Key;
-            selections[i] = kvp.Value;
-            i++;
+            ids.Add(kvp.Key);
+            selections.Add(kvp.Value);
         }
-
-        // Envia os dados para os clientes renderizarem
-        SyncLobbyStateClientRpc(ids, selections);
+        
+        SyncLobbyStateClientRpc(ids.ToArray(), selections.ToArray());
     }
 
     [ClientRpc]
     private void SyncLobbyStateClientRpc(ulong[] connectedIds, int[] currentSelections)
     {
-        // Limpa slots antigos (simplificação para garantir sincronia)
-        // Numa implementação mais avançada, faríamos diffs, mas isto funciona.
-        // NOTA: Se isto causar "piscar" na UI, precisamos de uma lógica de "diff" melhor.
-        // Por agora, vamos assumir que o LobbyUI sabe lidar com duplicados no AddPlayerSlot.
+        if (localUI == null) return;
         
-        // Para simplificar, vamos só adicionar quem falta e atualizar seleções.
+        localUI.RemoveDisconnectedPlayers(new List<ulong>(connectedIds));
+
         for (int i = 0; i < connectedIds.Length; i++)
         {
             ulong uid = connectedIds[i];
             int sel = currentSelections[i];
-            string pName = uid == NetworkManager.Singleton.LocalClientId ? "You" : $"Player {uid}";
+            
+            string pName;
+
+            // =======================================================================
+            // ## A CORREÇÃO ESTÁ AQUI ##
+            // =======================================================================
+            if (uid == NetworkManager.Singleton.LocalClientId && IsHost) pName = "Host (You)";
+            else if (uid == NetworkManager.Singleton.LocalClientId) pName = "You";
+            // Errado: else if (uid == NetworkManager.Singleton.ServerClientId) pName = "Host";
+            // Correto:
+            else if (uid == NetworkManager.ServerClientId) pName = "Host"; 
+            else pName = $"Player {uid}";
+            
             bool isLocal = uid == NetworkManager.Singleton.LocalClientId;
-
-            // Tenta adicionar (o UI ignora se já existir)
-            localUI.AddPlayerSlot(uid, pName, isLocal, sel, unitPrefabs);
-            // Atualiza a seleção
-            localUI.UpdatePlayerSelection(uid, sel);
+            localUI.AddOrUpdatePlayerSlot(uid, pName, isLocal, sel, unitPrefabs);
         }
-
-        // (Opcional) Lógica para remover jogadores que desconectaram da UI local seria adicionada aqui
     }
-
-    // --- Comunicação UI -> Servidor ---
 
     public void LocalPlayerChangedSelection(int newIndex)
     {
-        // Chamado pela UI local quando o jogador clica Next/Prev
         SubmitSelectionServerRpc(newIndex);
     }
 
@@ -131,14 +127,14 @@ public class LobbyManagerP2P : NetworkBehaviour
         if (serverPlayerSelections.ContainsKey(senderId))
         {
             serverPlayerSelections[senderId] = newIndex;
-            // Informa todos da mudança
-            RefreshLobbyForAllClientRpc();
+            RefreshLobbyStateForAll();
         }
     }
 
     public void OnStartGameClicked()
     {
-        // Recolhe os prefabs finais
+        if (!IsHost) return;
+        
         Dictionary<ulong, GameObject> finalSelections = new Dictionary<ulong, GameObject>();
         foreach(var kvp in serverPlayerSelections)
         {
@@ -152,17 +148,19 @@ public class LobbyManagerP2P : NetworkBehaviour
     [ClientRpc]
     private void StartGameClientRpc()
     {
-        if (localUI != null) Destroy(localUI.gameObject); // Destroi a UI
+        if (localUI != null) Destroy(localUI.gameObject);
         GameManager.Instance.StartGame();
-        gameObject.SetActive(false); // Desativa este manager
+        Destroy(gameObject);
     }
     
-    // --- Helpers ---
-    private string GetLocalIPAddress() { /* (O seu código de IP aqui) */ return "127.0.0.1"; }
-
     public override void OnNetworkDespawn()
     {
         if (localUI != null) Destroy(localUI.gameObject);
+        if (IsServer && NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+        }
         base.OnNetworkDespawn();
     }
 }
