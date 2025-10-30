@@ -21,6 +21,14 @@ public class EnemyDespawner : MonoBehaviour
     /// </summary>
     public void Initialize(GameObject playerObject)
     {
+        // If running under Netcode and the network is active, only the server should run despawner logic.
+        if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening && !Unity.Netcode.NetworkManager.Singleton.IsServer)
+        {
+            // disable this component on clients to avoid local-only despawning.
+            enabled = false;
+            return;
+        }
+
         if (playerObject != null)
         {
             playerTransform = playerObject.transform;

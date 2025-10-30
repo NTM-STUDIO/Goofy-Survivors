@@ -1,7 +1,8 @@
 using UnityEngine;
+using Unity.Netcode;
 
 [RequireComponent(typeof(Rigidbody))]
-public class EnemyMovement : MonoBehaviour
+public class EnemyMovement : NetworkBehaviour
 {
     private enum PursuitBehaviour { Direct, Predictive, PredictiveFlank }
 
@@ -74,6 +75,9 @@ public class EnemyMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
+    // Only the server should simulate enemy movement. Clients receive position updates via NetworkTransform or custom sync.
+    if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
+
         if (stats.IsKnockedBack || player == null)
         {
             rb.linearVelocity = Vector3.zero; // Ensure no movement during knockback
@@ -125,6 +129,9 @@ public class EnemyMovement : MonoBehaviour
 
     private void OnTriggerStay(Collider other)
     {
+    // Only server should handle attack hits to remain authoritative.
+    if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
+
         if (other.CompareTag("Player") && Time.time >= nextAttackTime)
         {
             nextAttackTime = Time.time + attackCooldown;

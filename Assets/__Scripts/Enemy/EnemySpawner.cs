@@ -1,4 +1,5 @@
     using UnityEngine;
+using Unity.Netcode;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -79,7 +80,22 @@ public class EnemySpawner : MonoBehaviour
                         SpawnSide spawnSide = ChooseBalancedSpawnSide();
                         Vector3 spawnPos = GetSpawnPosition3D(spawnSide);
                         
-                        Instantiate(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
+                        // If we're running a networked game and we're the server, spawn as a NetworkObject.
+                        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+                        {
+                            GameObject spawned = Instantiate(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
+                            var netObj = spawned.GetComponent<NetworkObject>();
+                            if (netObj != null)
+                            {
+                                // Server spawns the network object so it is replicated to clients.
+                                netObj.Spawn();
+                            }
+                        }
+                        else
+                        {
+                            // Single-player or no network: classic instantiate.
+                            Instantiate(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
+                        }
 
                         remainingCounts[enemyIndex]--;
                         totalEnemiesToSpawn--;
@@ -240,8 +256,17 @@ public class EnemySpawner : MonoBehaviour
         if (enemyToRespawn == null) return;
         SpawnSide spawnSide = ChooseBalancedSpawnSide();
         Vector3 spawnPos = GetSpawnPosition3D(spawnSide);
-        enemyToRespawn.transform.position = spawnPos;
-        enemyToRespawn.SetActive(true);
+        // If networked and we're server, just reposition and reactivate; state should already be synchronized via NetworkVariables.
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            enemyToRespawn.transform.position = spawnPos;
+            enemyToRespawn.SetActive(true);
+        }
+        else
+        {
+            enemyToRespawn.transform.position = spawnPos;
+            enemyToRespawn.SetActive(true);
+        }
     }
 }
 
