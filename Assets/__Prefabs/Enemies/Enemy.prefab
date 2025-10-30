@@ -98,12 +98,23 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+<<<<<<< Updated upstream:Assets/__Prefabs/Enemies/Enemy.prefab
   - component: {fileID: 8447512138796128300}
   - component: {fileID: -4432557400096275119}
   - component: {fileID: 4284822525752983333}
   - component: {fileID: -4036624671072493463}
   - component: {fileID: 4602663416659819679}
   - component: {fileID: 7945774641016657705}
+=======
+  - component: {fileID: 515978112563117300}
+  - component: {fileID: 3474508115685643033}
+  - component: {fileID: 7308325972389886591}
+  - component: {fileID: 2324441286661468994}
+  - component: {fileID: 7658861091701694378}
+  - component: {fileID: 8854732301817894830}
+  - component: {fileID: 4378061898078270874}
+  - component: {fileID: 478203051827444350}
+>>>>>>> Stashed changes:Assets/Zappy.prefab
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Enemy
@@ -238,6 +249,7 @@ MonoBehaviour:
   currentHealth: 0
   chanceToDropNothing: 0
   orbDrops:
+<<<<<<< Updated upstream:Assets/__Prefabs/Enemies/Enemy.prefab
   - orbPrefab: {fileID: 8326750618715067698, guid: 3f0fbb90971ba4441913d7efaea77fca, type: 3}
     dropChance: 90
   - orbPrefab: {fileID: 1154120037122087691, guid: 0c16bdaa5df793949a03c99847af810a, type: 3}
@@ -245,11 +257,17 @@ MonoBehaviour:
   - orbPrefab: {fileID: 2229382513563764699, guid: 1c9fe8c97995a1a45b65587d3a15ed12, type: 3}
     dropChance: 2
 --- !u!114 &7945774641016657705
+=======
+  - orbPrefab: {fileID: 8326750618715067698, guid: b16da58f35868b846a58e1a345e542c0, type: 3}
+    dropChance: 100
+--- !u!114 &7658861091701694378
+>>>>>>> Stashed changes:Assets/Zappy.prefab
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+<<<<<<< Updated upstream:Assets/__Prefabs/Enemies/Enemy.prefab
   m_GameObject: {fileID: 6482347200803263970}
   m_Enabled: 1
   m_EditorHideFlags: 0
@@ -265,6 +283,80 @@ MonoBehaviour:
   movementThreshold: 10
   enemyQuadrantThreshold: 1
 --- !u!1 &7291366060297437777
+=======
+  m_GameObject: {fileID: 4496776415297934645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 139a8e9e7691ed3479f149d4cd9621ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dashSpeed: 30
+  dashDuration: 0.3
+  dashCooldown: 3
+  dashRange: 10
+  trailRenderer: {fileID: 0}
+  trailColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  trailTime: 0.5
+  trailStartWidth: 0.5
+  trailEndWidth: 0.1
+  useAfterimages: 1
+  dashTowardsPlayer: 1
+  randomDashIfNoPlayer: 1
+--- !u!114 &8854732301817894830
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4496776415297934645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8a22a0c1be6a174fbbcaa4dfd26c062, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  detectionRadius: 5
+  projectileLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  dodgeChance: 0.8
+  dodgeCooldown: 1
+  showDetectionRadius: 1
+--- !u!114 &4378061898078270874
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4496776415297934645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9ba75636f052634495fe3cd4157fc23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speedMultiplier: 2
+  boostDuration: 2
+  boostCooldown: 5
+  activateOnLowHealth: 1
+  lowHealthThreshold: 0.3
+  periodicActivation: 1
+  changeColorOnBoost: 1
+  boostColor: {r: 0, g: 1, b: 1, a: 1}
+--- !u!114 &478203051827444350
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4496776415297934645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c199a8def44ef8479313b6c796285b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  executeInUpdate: 1
+  executeInFixedUpdate: 0
+--- !u!1 &4514065415740954002
+>>>>>>> Stashed changes:Assets/Zappy.prefab
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

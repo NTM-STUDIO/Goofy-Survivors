@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: ZappyBehaviour
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyBehaviourPreset
+  useDash: 1
+  dashSpeed: 30
+  dashDuration: 0.3
+  dashCooldown: 3
+  trailColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  useAfterimages: 1
+  useDodge: 1
+  detectionRadius: 5
+  dodgeChance: 0.8
+  dodgeCooldown: 1
+  useSpeedBoost: 0
+  speedMultiplier: 2
+  boostDuration: 2
+  boostCooldown: 5
+  activateOnLowHealth: 1
+  lowHealthThreshold: 0.3
+  useTeleport: 0
+  teleportCooldown: 3
+  minTeleportRange: 5
+  maxTeleportRange: 10

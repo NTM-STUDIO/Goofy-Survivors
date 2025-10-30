@@ -9,6 +9,7 @@ public class WeaponController : MonoBehaviour
     private Transform playerTransform;
     private Transform firePoint;
 
+<<<<<<< Updated upstream
     void Start()
     {
 #if UNITY_2023_1_OR_NEWER
@@ -18,6 +19,31 @@ public class WeaponController : MonoBehaviour
         playerStats = FindObjectOfType<PlayerStats>();
 #pragma warning restore 618
 #endif
+=======
+    void Awake()
+    {
+        // This log tells us the moment the GameObject is created.
+        Debug.Log($"<color=blue>[WC-AWAKE]</color> WeaponController for '{this.gameObject.name}' has been created in the scene.");
+    }
+
+    void Start()
+    {
+        // This log tells us the frame before its first Update.
+        Debug.Log($"<color=blue>[WC-START]</color> WeaponController for '{this.gameObject.name}' is starting.");
+    }
+
+    public void Initialize(int id, WeaponData data, PlayerWeaponManager manager, PlayerStats stats, bool owner, WeaponRegistry registry)
+    {
+        // This is the most important log. It confirms the manager has passed the data.
+        Debug.Log($"<color=teal>[WC-INIT]</color> WeaponController is being INITIALIZED with data for '{data.name}'. IsOwner: {owner}");
+        
+        this.weaponId = id;
+        this.WeaponData = data;
+        this.weaponManager = manager;
+        this.playerStats = stats;
+        this.isWeaponOwner = owner;
+        this.weaponRegistry = registry;
+>>>>>>> Stashed changes
 
         if (playerStats == null)
         {
@@ -60,10 +86,13 @@ public class WeaponController : MonoBehaviour
         }
     }
 
+    // --- All other methods are unchanged and complete ---
+    #region Unchanged Full Code
     private void Attack()
     {
         switch (weaponData.archetype)
         {
+<<<<<<< Updated upstream
             case WeaponArchetype.Projectile:
                 FireProjectile();
                 break;
@@ -77,11 +106,27 @@ public class WeaponController : MonoBehaviour
             case WeaponArchetype.Clone:
                 SpawnShadowClone();
                 break;
+=======
+            SpawnShadowClone();
+            return;
+        }
+
+        if (weaponManager != null)
+        {
+            int finalAmount = WeaponData.amount + playerStats.projectileCount;
+            Transform[] targets = GetTargets(finalAmount);
+            weaponManager.PerformAttack(weaponId, targets);
+        }
+        else if (isWeaponOwner)
+        {
+            FireLocally();
+>>>>>>> Stashed changes
         }
     }
 
     private void SpawnShadowClone()
     {
+<<<<<<< Updated upstream
         int finalAmount = weaponData.amount + playerStats.projectileCount;
         float finalDuration = weaponData.duration * playerStats.durationMultiplier;
         float finalSize = weaponData.area * playerStats.projectileSizeMultiplier;
@@ -100,6 +145,44 @@ public class WeaponController : MonoBehaviour
     }
 
     private void FireProjectile()
+=======
+        if (WeaponData.weaponPrefab == null || weaponManager == null || weaponRegistry == null) return;
+        GameObject cloneObj = Instantiate(WeaponData.weaponPrefab, playerStats.transform.position, playerStats.transform.rotation);
+        ShadowClone cloneScript = cloneObj.GetComponent<ShadowClone>();
+        if (cloneScript != null)
+        {
+            List<WeaponData> weaponsToClone = weaponManager.GetOwnedWeapons().Where(w => w.archetype != WeaponArchetype.ShadowCloneJutsu).ToList();
+            cloneScript.Initialize(weaponsToClone, playerStats, weaponRegistry);
+        }
+    }
+
+    private void FireLocally()
+    {
+        if (WeaponData.archetype == WeaponArchetype.Projectile)
+        {
+            int finalAmount = WeaponData.amount + playerStats.projectileCount;
+            Transform[] targets = GetTargets(finalAmount);
+            DamageResult damageResult = playerStats.CalculateDamage(WeaponData.damage);
+            float finalSpeed = WeaponData.speed * playerStats.projectileSpeedMultiplier;
+            float finalDuration = WeaponData.duration * playerStats.durationMultiplier;
+            float finalKnockback = WeaponData.knockback * playerStats.knockbackMultiplier;
+            float finalSize = WeaponData.area * playerStats.projectileSizeMultiplier;
+            foreach (var target in targets)
+            {
+                Vector3 direction = (target != null) ? (target.position - playerStats.transform.position).normalized : new Vector3(Random.insideUnitCircle.normalized.x, 0, Random.insideUnitCircle.normalized.y);
+                direction.y = 0;
+                GameObject projectileObj = Instantiate(WeaponData.weaponPrefab, playerStats.transform.position, Quaternion.LookRotation(direction));
+                var projectile = projectileObj.GetComponent<ProjectileWeapon>();
+                if (projectile != null)
+                {
+                    projectile.Initialize(target, direction, damageResult.damage, damageResult.isCritical, finalSpeed, finalDuration, finalKnockback, finalSize);
+                }
+            }
+        }
+    }
+    
+    private Transform[] GetTargets(int amount)
+>>>>>>> Stashed changes
     {
         float finalDamage = weaponData.damage * playerStats.damageMultiplier;
         int finalAmount = weaponData.amount + playerStats.projectileCount;
@@ -110,6 +193,7 @@ public class WeaponController : MonoBehaviour
         int finalPierce = weaponData.pierce ? weaponData.pierceCount + playerStats.pierceCount : 1;
 
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+<<<<<<< Updated upstream
 
         System.Array.Sort(enemies, (a, b) =>
             Vector3.Distance(firePoint.position, a.transform.position)
@@ -119,6 +203,11 @@ public class WeaponController : MonoBehaviour
         int targetsToFireAt = Mathf.Min(finalAmount, enemies.Length);
 
         for (int i = 0; i < targetsToFireAt; i++)
+=======
+        Transform[] targets = new Transform[amount];
+        if (enemies.Length == 0) return targets;
+        switch (WeaponData.targetingStyle)
+>>>>>>> Stashed changes
         {
             Transform target = enemies[i].transform;
             Vector2 direction = (target.position - firePoint.position).normalized;

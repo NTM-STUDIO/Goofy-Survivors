@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 
 
 public class EnemySpawner : MonoBehaviour
@@ -235,8 +236,35 @@ public class EnemySpawner : MonoBehaviour
                     {
                         WaveEnemy selectedEnemy = currentWave.enemies[enemyIndex];
                         SpawnSide spawnSide = ChooseBalancedSpawnSide();
+<<<<<<< Updated upstream
                         Vector2 spawnPos = GetSpawnPositionOutsideCamera(spawnSide);
                         GameObject enemy = Instantiate(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
+=======
+                        Vector3 spawnPos = GetSpawnPosition3D(spawnSide);
+                        
+                        GameObject spawned = Instantiate(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
+                        // If we're in P2P (hosted) mode, ensure the host spawns the network object so clients receive it.
+                        if (GameManager.Instance != null && GameManager.Instance.isP2P)
+                        {
+                            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+                            {
+                                var netObj = spawned.GetComponent<NetworkObject>();
+                                if (netObj != null)
+                                {
+                                    netObj.Spawn();
+                                }
+                                else
+                                {
+                                    Debug.LogWarning("Spawned enemy prefab does not have a NetworkObject. Add one to sync over network.", spawned);
+                                }
+                            }
+                            else
+                            {
+                                // In a P2P client, don't locally spawn enemies - the host will spawn and sync them.
+                                Destroy(spawned);
+                            }
+                        }
+>>>>>>> Stashed changes
 
                         remainingCounts[enemyIndex]--;
                         totalEnemiesToSpawn--;
