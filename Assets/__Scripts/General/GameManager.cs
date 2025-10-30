@@ -4,12 +4,11 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 
-public class GameManager : NetworkBehaviour
+public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
 {
     public static GameManager Instance { get; private set; }
 
     [Header("Mode Settings")]
-    [Tooltip("Controlado pelo UIManager. Ative para o modo P2P.")]
     public bool isP2P = false;
 
     [Header("Core Manager References")]
@@ -19,7 +18,6 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private UpgradeManager upgradeManager;
     [SerializeField] private PlayerExperience playerExperience;
 
-    [Header("Player References (Internal)")]
     private Movement localPlayer;
     private GameObject chosenPlayerPrefab;
 
@@ -28,7 +26,6 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private GameObject bossPrefab;
     [SerializeField] private Transform bossSpawnPoint;
 
-    // Usado em P2P para guardar a seleção de todos os jogadores
     private Dictionary<ulong, GameObject> playerUnitSelections = new Dictionary<ulong, GameObject>();
 
     public enum GameState { PreGame, Playing, Paused, GameOver }
@@ -36,7 +33,7 @@ public class GameManager : NetworkBehaviour
 
     [Header("Timer Settings")]
     [SerializeField] private float totalGameTime = 900f;
-    private float currentTime; // Usado para a contagem decrescente em Single-Player
+    private float currentTime;
     private NetworkVariable<float> networkCurrentTime = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private float timerUIAccumulator = 0f;
 
@@ -82,14 +79,72 @@ public class GameManager : NetworkBehaviour
         currentTime = totalGameTime;
     }
 
-    void Update()
+    #region Starting Weapon Logic
+    public override void OnNetworkSpawn()
     {
-        if (IsOwner)
+        base.OnNetworkSpawn();
+        if (IsServer)
         {
-            HandleInput();
+            NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
+            // Handle the host player who is already connected when the server starts
+            HandleClientConnected(NetworkManager.Singleton.LocalClientId);
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        if (IsServer)
+        {
+            if (NetworkManager.Singleton != null)
+            {
+                NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
+            }
+        }
+    }
+
+    private void HandleClientConnected(ulong clientId)
+    {
+        Debug.Log($"[GameManager] Handling connection for new Client ID: {clientId}");
+        StartCoroutine(GiveStartingWeaponAfterPlayerSpawns(clientId));
+    }
+
+    private IEnumerator GiveStartingWeaponAfterPlayerSpawns(ulong clientId)
+    {
+        NetworkObject playerNetworkObject = null;
+        // Keep looping until the player's object is officially spawned and registered.
+        while (playerNetworkObject == null)
+        {
+            yield return null; // Wait one frame before checking again
+            if (NetworkManager.Singleton.SpawnManager != null)
+            {
+                playerNetworkObject = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clientId);
+            }
         }
 
-        if (isP2P && !IsHost)
+        Debug.Log($"[GameManager] Found player object for Client ID: {clientId}. Getting PlayerWeaponManager.");
+
+        PlayerWeaponManager pwm = playerNetworkObject.GetComponent<PlayerWeaponManager>();
+        if (pwm != null)
+        {
+            Debug.Log($"[GameManager] Calling Server_GiveStartingWeapon on player for Client ID: {clientId}.");
+            pwm.Server_GiveStartingWeapon();
+        }
+        else
+        {
+            Debug.LogError($"[GameManager] FATAL: Player object for Client {clientId} is missing a PlayerWeaponManager component!");
+        }
+    }
+    #endregion
+
+    void Update()
+    {
+        // The IsOwner check is only needed for scripts on player objects.
+        // For a singleton GameManager, we just need to check if we are the host/server.
+        // We can leave HandleInput to run on all clients for responsiveness.
+        HandleInput();
+
+        if (isP2P && !IsServer) // Changed from IsHost to IsServer for clarity
         {
             UpdateTimerUI(networkCurrentTime.Value);
             return;
@@ -117,7 +172,6 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    #region Game Flow
     public void SetChosenPlayerPrefab(GameObject playerPrefab)
     {
         if(isP2P) return;
@@ -153,6 +207,14 @@ public class GameManager : NetworkBehaviour
         }
         GameObject playerObject = Instantiate(chosenPlayerPrefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
         InitializeAllSystems(playerObject);
+
+        // Also give starting weapon in single-player
+        PlayerWeaponManager pwm = playerObject.GetComponent<PlayerWeaponManager>();
+        if (pwm != null)
+        {
+            // Since this is single-player, the PWM's Start() method will handle this.
+            // No extra call is needed here.
+        }
     }
 
     private void StartGame_P2P_Host()
@@ -174,8 +236,12 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     private void InitializeGameClientRpc()
     {
-        GameObject localPlayerObject = NetworkManager.Singleton.LocalClient.PlayerObject.gameObject;
-        InitializeAllSystems(localPlayerObject);
+        // This check is important because a client might receive this RPC before their player object is ready.
+        if (NetworkManager.Singleton.LocalClient.PlayerObject != null)
+        {
+            GameObject localPlayerObject = NetworkManager.Singleton.LocalClient.PlayerObject.gameObject;
+            InitializeAllSystems(localPlayerObject);
+        }
     }
 
     private void InitializeAllSystems(GameObject playerObject)
@@ -232,7 +298,6 @@ public class GameManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void PlayerDiedServerRpc()
     {
-        // Lógica de morte P2P (ex: verificar se é o último jogador vivo)
         GameOverClientRpc();
     }
 
@@ -258,18 +323,20 @@ public class GameManager : NetworkBehaviour
     {
         if(isP2P)
         {
-            NetworkManager.Singleton.Shutdown();
+            // Proper shutdown logic
+            if (NetworkManager.Singleton != null)
+            {
+                NetworkManager.Singleton.Shutdown();
+            }
             if(Instance != null) Destroy(Instance.gameObject);
-            SceneManager.LoadScene(0);
+            SceneManager.LoadScene(0); // Assuming scene 0 is your main menu
             return;
         }
         
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
-    #endregion
-
-    #region Pause Management
+    
     public void RequestPause(bool showMenu = false)
     {
         if (isP2P || CurrentState != GameState.Playing) return;
@@ -297,9 +364,7 @@ public class GameManager : NetworkBehaviour
         if (localPlayer != null) localPlayer.enabled = true;
         uiManager?.ShowPauseMenu(false);
     }
-    #endregion
-
-    #region Timers and Spawning
+    
     private void UpdateTimer()
     {
         float newTime;
@@ -356,9 +421,7 @@ public class GameManager : NetworkBehaviour
         reaperStats = bossObject.GetComponent<EnemyStats>();
         Debug.Log("O Boss Final apareceu!");
     }
-    #endregion
-
-    #region Difficulty Scaling
+    
     private void CheckForDifficultyIncrease()
     {
         float relevantTime = isP2P ? networkCurrentTime.Value : currentTime;
@@ -379,9 +442,7 @@ public class GameManager : NetworkBehaviour
         currentFireRate = Mathf.Max(0.2f, currentFireRate / fireRateMultiplier);
         Debug.Log($"Dificuldade Aumentada (x{lastDifficultyIncreaseMark}) | HP×{currentEnemyHealthMultiplier:F2}, DMG×{currentEnemyDamageMultiplier:F2}");
     }
-    #endregion
-
-    #region Getters / Setters
+    
     public float GetRemainingTime()
     {
         return isP2P ? networkCurrentTime.Value : currentTime;
@@ -391,5 +452,4 @@ public class GameManager : NetworkBehaviour
     {
         return totalGameTime;
     }
-    #endregion
 }

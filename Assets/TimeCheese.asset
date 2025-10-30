@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d45509b40da44f54f88ad5db161600e7, type: 3}
-  m_Name: PatoStats
+  m_Name: TimeCheese
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCharacterData
   characterName: TimCheese
-  playerPrefab: {fileID: 4343297250839089127, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
-  defaultWeaponPrefab: {fileID: 6969291154112545986, guid: 29845c9427df0d94780766f2d257512a, type: 3}
+  playerPrefab: {fileID: 5781343528486485951, guid: 8402faf8e3ef3b74cbdec6dac0d04bc8, type: 3}
+  defaultWeaponPrefab: {fileID: 6260151671241025186, guid: ea8b81df5ec569849bb4c70c39fb7d74, type: 3}
   maxHp: 100
   hpRegen: 0
   damageMultiplier: 1
@@ -26,7 +26,7 @@ MonoBehaviour:
   projectileSpeedMultiplier: 1
   durationMultiplier: 1
   knockbackMultiplier: 1
-  movementSpeed: 18
+  movementSpeed: 20
   luck: 1
   pickupRange: 5
   xpGainMultiplier: 1

@@ -1,22 +1,18 @@
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
-using System.Linq; // This using statement is necessary for some helper methods.
+using System.Linq;
 
 [RequireComponent(typeof(PlayerStats))]
 public class PlayerWeaponManager : NetworkBehaviour
 {
     [Header("Required Assets")]
-    [Tooltip("Assign your WeaponRegistry ScriptableObject here. It's the master list of all weapons.")]
     [SerializeField] private WeaponRegistry weaponRegistry;
-    [Tooltip("Assign a child transform here. Weapon Controllers will be created under it.")]
     [SerializeField] public Transform weaponParent;
 
     [Header("Game Settings")]
-    [Tooltip("The weapon the player will start the game with. Can be left empty for no starting weapon.")]
     [SerializeField] private WeaponData startingWeapon;
 
-    // --- STATE MANAGEMENT ---
     private readonly NetworkList<int> networkWeaponIDs = new NetworkList<int>();
     private readonly List<int> localWeaponIDs = new List<int>();
     private readonly List<WeaponController> localWeaponControllers = new List<WeaponController>();
@@ -33,38 +29,58 @@ public class PlayerWeaponManager : NetworkBehaviour
     void Start()
     {
         if (GameManager.Instance != null) { isP2P = GameManager.Instance.isP2P; }
-
-        // In single-player, the game is ready immediately.
+        // Single-player starting weapon is simple and handled here.
         if (!isP2P)
         {
             AddStartingWeapon();
         }
     }
 
+    // OnNetworkSpawn is now only responsible for cleanup and late-joiners.
     public override void OnNetworkSpawn()
     {
         if (!isP2P) return;
         base.OnNetworkSpawn();
-        networkWeaponIDs.OnListChanged += OnWeaponListChanged;
         ClearAllWeaponControllers();
-        InitializeExistingWeapons();
-
-        // In multiplayer, we add the starting weapon only after the player object has spawned on the network.
-        if (IsOwner)
-        {
-            AddStartingWeapon();
-        }
+        InitializeExistingWeaponsForLateJoin();
+        // All starting weapon logic has been REMOVED from here.
     }
 
     public override void OnNetworkDespawn()
     {
-        if (!isP2P) return;
         base.OnNetworkDespawn();
-        if (networkWeaponIDs != null) networkWeaponIDs.OnListChanged -= OnWeaponListChanged;
     }
     #endregion
 
     #region Public API
+    /// <summary>
+    /// This is the new command that ONLY the GameManager (on the server) will call.
+    /// </summary>
+    public void Server_GiveStartingWeapon()
+    {
+        // This must only ever be run on the server.
+        if (!IsServer) return;
+
+        if (startingWeapon != null)
+        {
+            int weaponId = weaponRegistry.GetWeaponId(startingWeapon);
+            if (weaponId != -1)
+            {
+                if (!networkWeaponIDs.Contains(weaponId))
+                {
+                    networkWeaponIDs.Add(weaponId);
+                }
+
+                // Send a direct command to the player who owns this object.
+                ClientRpcParams clientRpcParams = new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { OwnerClientId } }
+                };
+                AddWeaponClientRpc(weaponId, clientRpcParams);
+            }
+        }
+    }
+
     public void AddWeapon(WeaponData weaponData)
     {
         int weaponId = weaponRegistry.GetWeaponId(weaponData);
@@ -87,22 +103,13 @@ public class PlayerWeaponManager : NetworkBehaviour
     public List<WeaponData> GetOwnedWeapons()
     {
         var ownedWeapons = new List<WeaponData>();
-        
         List<int> idList;
         if (isP2P)
         {
-            // Manually copy items from NetworkList to a standard List.
-            // This is the guaranteed fix for the .ToList() issue in Unity 6.
             idList = new List<int>();
-            foreach (int id in networkWeaponIDs)
-            {
-                idList.Add(id);
-            }
+            foreach (int id in networkWeaponIDs) { idList.Add(id); }
         }
-        else
-        {
-            idList = localWeaponIDs;
-        }
+        else { idList = localWeaponIDs; }
 
         foreach (int id in idList)
         {
@@ -135,11 +142,30 @@ public class PlayerWeaponManager : NetworkBehaviour
     }
     #endregion
 
-    #region Server RPCs
+    #region RPCs for Gameplay Actions
     [ServerRpc]
-    private void AddWeaponServerRpc(int weaponId)
+    private void AddWeaponServerRpc(int weaponId, ServerRpcParams rpcParams = default)
     {
-        if (!networkWeaponIDs.Contains(weaponId)) networkWeaponIDs.Add(weaponId);
+        if (!networkWeaponIDs.Contains(weaponId))
+        {
+            networkWeaponIDs.Add(weaponId);
+        }
+
+        ClientRpcParams clientRpcParams = new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new ulong[] { rpcParams.Receive.SenderClientId }
+            }
+        };
+
+        AddWeaponClientRpc(weaponId, clientRpcParams);
+    }
+
+    [ClientRpc]
+    private void AddWeaponClientRpc(int weaponId, ClientRpcParams clientRpcParams = default)
+    {
+        InstantiateWeaponController(weaponId);
     }
 
     [ServerRpc]
@@ -156,7 +182,7 @@ public class PlayerWeaponManager : NetworkBehaviour
     }
     #endregion
 
-    #region Host-Side Spawning (for P2P mode)
+    #region Host-Side Spawning
     private void SpawnProjectiles_Host(WeaponData data, NetworkObjectReference[] targetRefs)
     {
         DamageResult damageResult = playerStats.CalculateDamage(data.damage);
@@ -241,7 +267,7 @@ public class PlayerWeaponManager : NetworkBehaviour
     }
     #endregion
 
-    #region Local Spawning (for Single-Player mode)
+    #region Local Spawning
     private void SpawnProjectiles_Local(WeaponData data, Transform[] targets)
     {
         DamageResult damageResult = playerStats.CalculateDamage(data.damage);
@@ -293,16 +319,6 @@ public class PlayerWeaponManager : NetworkBehaviour
         }
     }
 
-    private void OnWeaponListChanged(NetworkListEvent<int> changeEvent)
-    {
-        switch (changeEvent.Type)
-        {
-            case NetworkListEvent<int>.EventType.Add: InstantiateWeaponController(changeEvent.Value); break;
-            case NetworkListEvent<int>.EventType.RemoveAt: DestroyWeaponController(changeEvent.Index); break;
-            case NetworkListEvent<int>.EventType.Clear: ClearAllWeaponControllers(); break;
-        }
-    }
-
     private void InstantiateWeaponController(int weaponId)
     {
         WeaponData weaponData = weaponRegistry.GetWeaponData(weaponId);
@@ -319,8 +335,30 @@ public class PlayerWeaponManager : NetworkBehaviour
         localWeaponControllers.Add(controller);
     }
 
-    private void InitializeExistingWeapons() { foreach (int weaponId in networkWeaponIDs) InstantiateWeaponController(weaponId); }
-    private void DestroyWeaponController(int index) { if (index < localWeaponControllers.Count) { if (localWeaponControllers[index] != null) Destroy(localWeaponControllers[index].gameObject); localWeaponControllers.RemoveAt(index); } }
-    private void ClearAllWeaponControllers() { foreach (var controller in localWeaponControllers) { if (controller != null) Destroy(controller.gameObject); } localWeaponControllers.Clear(); }
+    private void InitializeExistingWeaponsForLateJoin()
+    {
+        foreach (int weaponId in networkWeaponIDs)
+        {
+            InstantiateWeaponController(weaponId);
+        }
+    }
+
+    private void DestroyWeaponController(int index)
+    {
+        if (index >= 0 && index < localWeaponControllers.Count)
+        {
+            if (localWeaponControllers[index] != null) Destroy(localWeaponControllers[index].gameObject);
+            localWeaponControllers.RemoveAt(index);
+        }
+    }
+
+    private void ClearAllWeaponControllers()
+    {
+        foreach (var controller in localWeaponControllers)
+        {
+            if (controller != null) Destroy(controller.gameObject);
+        }
+        localWeaponControllers.Clear();
+    }
     #endregion
 }

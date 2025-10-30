@@ -349,6 +349,7 @@ MonoBehaviour:
   lobbyUiPrefab: {fileID: 2702808743519566518, guid: 86491cf7f41f7e348b7d3f665bb948b3, type: 3}
   unitPrefabs:
   - {fileID: 5781343528486485951, guid: 909ee6a12a46ba543996bac26bc995f3, type: 3}
+  - {fileID: 5781343528486485951, guid: 8402faf8e3ef3b74cbdec6dac0d04bc8, type: 3}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -762,7 +763,7 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 614526252}
-    PlayerPrefab: {fileID: 5781343528486485951, guid: 909ee6a12a46ba543996bac26bc995f3, type: 3}
+    PlayerPrefab: {fileID: 0}
     Prefabs:
       NetworkPrefabsLists:
       - {fileID: 11400000, guid: adbdada5c55d0694faf8f1841059c3e6, type: 2}
@@ -774,7 +775,7 @@ MonoBehaviour:
     TimeResyncInterval: 30
     EnsureNetworkVariableLengthSafety: 0
     EnableSceneManagement: 1
-    ForceSamePrefabs: 1
+    ForceSamePrefabs: 0
     RecycleNetworkIds: 1
     NetworkIdRecycleDelay: 120
     RpcHashSize: 0
@@ -914,11 +915,11 @@ MonoBehaviour:
   - assetPrefab: {fileID: 383518980796734899, guid: 3c470efbfdb7fc2489ee1cbd65392cda, type: 3}
     weight: 0.4
   - assetPrefab: {fileID: 1010114737999647873, guid: 400cca9a532574a48875d09870502710, type: 3}
-    weight: 0.16
+    weight: 25
   - assetPrefab: {fileID: 485895516535105435, guid: 5922ebbfd4d78944e8dc01825f225fe0, type: 3}
     weight: 0.004
-  mapWidth: 10
-  mapHeight: 10
+  mapWidth: 500
+  mapHeight: 500
   assetDensity: 0.006
 --- !u!4 &729974982
 Transform:
@@ -1447,6 +1448,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6143655693931969508, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
+      propertyPath: unitPrefabs.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6143655693931969508, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
+      propertyPath: 'unitPrefabs.Array.data[1]'
+      value: 
+      objectReference: {fileID: 5781343528486485951, guid: 8402faf8e3ef3b74cbdec6dac0d04bc8, type: 3}
     - target: {fileID: 6153452740431587475, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -1959,7 +1968,7 @@ MonoBehaviour:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
       enemyCount: 1
     timeUntilNextWave: 0
-    spawnInterval: 0.3
+    spawnInterval: 5
   - waveName: XD
     enemies:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}

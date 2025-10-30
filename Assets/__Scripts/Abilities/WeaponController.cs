@@ -13,8 +13,23 @@ public class WeaponController : MonoBehaviour
     private bool isWeaponOwner;
     private float currentCooldown;
 
+    void Awake()
+    {
+        // This log tells us the moment the GameObject is created.
+        Debug.Log($"<color=blue>[WC-AWAKE]</color> WeaponController for '{this.gameObject.name}' has been created in the scene.");
+    }
+
+    void Start()
+    {
+        // This log tells us the frame before its first Update.
+        Debug.Log($"<color=blue>[WC-START]</color> WeaponController for '{this.gameObject.name}' is starting.");
+    }
+
     public void Initialize(int id, WeaponData data, PlayerWeaponManager manager, PlayerStats stats, bool owner, WeaponRegistry registry)
     {
+        // This is the most important log. It confirms the manager has passed the data.
+        Debug.Log($"<color=teal>[WC-INIT]</color> WeaponController is being INITIALIZED with data for '{data.name}'. IsOwner: {owner}");
+        
         this.weaponId = id;
         this.WeaponData = data;
         this.weaponManager = manager;
@@ -38,6 +53,8 @@ public class WeaponController : MonoBehaviour
         }
     }
 
+    // --- All other methods are unchanged and complete ---
+    #region Unchanged Full Code
     private void Attack()
     {
         if (WeaponData.archetype == WeaponArchetype.ShadowCloneJutsu)
@@ -52,36 +69,24 @@ public class WeaponController : MonoBehaviour
             Transform[] targets = GetTargets(finalAmount);
             weaponManager.PerformAttack(weaponId, targets);
         }
-        else if (isWeaponOwner) // This condition is for weapons owned by a Shadow Clone (which have no manager)
+        else if (isWeaponOwner)
         {
             FireLocally();
         }
     }
 
-    /// <summary>
-    /// THE FIX: This method now correctly calls the new Initialize method on the ShadowClone script.
-    /// </summary>
     private void SpawnShadowClone()
     {
         if (WeaponData.weaponPrefab == null || weaponManager == null || weaponRegistry == null) return;
-
         GameObject cloneObj = Instantiate(WeaponData.weaponPrefab, playerStats.transform.position, playerStats.transform.rotation);
         ShadowClone cloneScript = cloneObj.GetComponent<ShadowClone>();
-
         if (cloneScript != null)
         {
-            List<WeaponData> weaponsToClone = weaponManager.GetOwnedWeapons()
-                .Where(w => w.archetype != WeaponArchetype.ShadowCloneJutsu)
-                .ToList();
-            
-            // Provide all the necessary data to the new clone.
+            List<WeaponData> weaponsToClone = weaponManager.GetOwnedWeapons().Where(w => w.archetype != WeaponArchetype.ShadowCloneJutsu).ToList();
             cloneScript.Initialize(weaponsToClone, playerStats, weaponRegistry);
         }
     }
 
-    /// <summary>
-    /// A local-only fire method used by weapons attached to a Shadow Clone.
-    /// </summary>
     private void FireLocally()
     {
         if (WeaponData.archetype == WeaponArchetype.Projectile)
@@ -93,14 +98,10 @@ public class WeaponController : MonoBehaviour
             float finalDuration = WeaponData.duration * playerStats.durationMultiplier;
             float finalKnockback = WeaponData.knockback * playerStats.knockbackMultiplier;
             float finalSize = WeaponData.area * playerStats.projectileSizeMultiplier;
-
             foreach (var target in targets)
             {
-                Vector3 direction = (target != null)
-                    ? (target.position - playerStats.transform.position).normalized
-                    : new Vector3(Random.insideUnitCircle.normalized.x, 0, Random.insideUnitCircle.normalized.y);
+                Vector3 direction = (target != null) ? (target.position - playerStats.transform.position).normalized : new Vector3(Random.insideUnitCircle.normalized.x, 0, Random.insideUnitCircle.normalized.y);
                 direction.y = 0;
-
                 GameObject projectileObj = Instantiate(WeaponData.weaponPrefab, playerStats.transform.position, Quaternion.LookRotation(direction));
                 var projectile = projectileObj.GetComponent<ProjectileWeapon>();
                 if (projectile != null)
@@ -109,17 +110,13 @@ public class WeaponController : MonoBehaviour
                 }
             }
         }
-        // Add local fire logic for other archetypes if clones can use them (e.g., Orbit)
     }
-
-    #region Unchanged Helper Methods
+    
     private Transform[] GetTargets(int amount)
     {
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
         Transform[] targets = new Transform[amount];
-
         if (enemies.Length == 0) return targets;
-
         switch (WeaponData.targetingStyle)
         {
             case TargetingStyle.Closest:
