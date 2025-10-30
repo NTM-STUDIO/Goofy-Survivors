@@ -1,6 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
+/// <summary>
+/// This is a LOCAL-ONLY script. It is instantiated by the owner's WeaponController and
+/// continuously updates its size and damage based on the owner's PlayerStats.
+/// It does NOT need to be a NetworkObject.
+/// </summary>
 public class AuraWeapon : MonoBehaviour
 {
     // References to live data
@@ -24,26 +30,24 @@ public class AuraWeapon : MonoBehaviour
 
     void Update()
     {
-        // If the references are not set, do nothing.
+        // If the references are not set (e.g., frame before Initialize is called), do nothing.
         if (playerStats == null || weaponData == null)
         {
             return;
         }
 
         // --- CONTINUOUS STAT UPDATES ---
-        // Update the aura's size every frame to reflect any changes in player stats (e.g., from an upgrade).
+        // Update the aura's size every frame to reflect any changes in player stats.
         float currentSize = weaponData.area * playerStats.projectileSizeMultiplier;
         transform.localScale = Vector3.one * currentSize;
         
         // --- DAMAGE TICK LOGIC ---
-        // Countdown the timer for the next damage tick.
         damageTickCooldown -= Time.deltaTime;
         if (damageTickCooldown <= 0f)
         {
             ApplyDamageToEnemies();
             
-            // Reset the cooldown based on the weapon's base cooldown and the player's current attack speed.
-            // A higher attack speed results in a lower cooldown between damage ticks.
+            // Reset the cooldown based on the player's current attack speed.
             float finalAttackSpeed = playerStats.attackSpeedMultiplier;
             damageTickCooldown = weaponData.cooldown / Mathf.Max(0.01f, finalAttackSpeed);
         }
@@ -51,25 +55,22 @@ public class AuraWeapon : MonoBehaviour
 
     /// <summary>
     /// Applies damage to all enemies currently within the aura's trigger.
-    /// This method now includes critical strike calculations for each enemy hit.
     /// </summary>
     private void ApplyDamageToEnemies()
     {
-        // Calculate the knockback once, as it will be the same for all enemies this tick.
-        float finalKnockback = weaponData.knockback * playerStats.knockbackMultiplier;
+        // Remove any null (destroyed) enemies from the list before applying damage.
+        enemiesInRange.RemoveAll(item => item == null);
 
-        // Iterate backwards through the list. This is safer if an enemy is destroyed and removed.
-        for (int i = enemiesInRange.Count - 1; i >= 0; i--)
+        if (enemiesInRange.Any())
         {
-            EnemyStats enemy = enemiesInRange[i];
-            if (enemy != null)
+            float finalKnockback = weaponData.knockback * playerStats.knockbackMultiplier;
+
+            // Apply damage to every enemy currently in the list.
+            foreach (EnemyStats enemy in enemiesInRange)
             {
-                // --- CRITICAL STRIKE CALCULATION ---
-                // For each enemy in range, perform a new, independent damage calculation.
-                // This gives each enemy its own chance to be critically hit on this tick.
+                // For each enemy, perform a new, independent damage calculation.
                 DamageResult damageResult = playerStats.CalculateDamage(weaponData.damage);
                 
-                // Pass the final damage and the crit status to the enemy.
                 enemy.TakeDamage(damageResult.damage, damageResult.isCritical);
 
                 if (finalKnockback > 0 && !enemy.CompareTag("Reaper"))
@@ -78,11 +79,6 @@ public class AuraWeapon : MonoBehaviour
                     knockbackDirection.y = 0;
                     enemy.ApplyKnockback(finalKnockback, 0.1f, knockbackDirection);
                 }
-            }
-            else
-            {
-                // If an enemy was destroyed by another source, remove its null reference from the list.
-                enemiesInRange.RemoveAt(i);
             }
         }
     }

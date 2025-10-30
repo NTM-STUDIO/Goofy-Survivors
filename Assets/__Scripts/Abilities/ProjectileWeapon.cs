@@ -1,15 +1,19 @@
 using UnityEngine;
+using Unity.Netcode;
 
 [RequireComponent(typeof(Rigidbody))]
-public class ProjectileWeapon : MonoBehaviour
+[RequireComponent(typeof(NetworkObject))]
+public class ProjectileWeapon : NetworkBehaviour
 {
+    // --- STATS ---
+    // These are set once on Initialize and do not change.
     private float damage;
-    private bool wasCritical; // NEW: Stores whether this instance is a critical hit
+    private bool wasCritical;
     private float speed;
     private float knockbackForce;
+    private float lifetime;
 
     private Rigidbody rb;
-    private float lifetime;
 
     private void Awake()
     {
@@ -20,14 +24,18 @@ public class ProjectileWeapon : MonoBehaviour
         }
     }
 
-    // --- MODIFIED: Initialize method now accepts the isCritical flag ---
+    /// <summary>
+    /// This single Initialize method works for both single-player and multiplayer.
+    /// In SP, it's called by PlayerWeaponManager.
+    /// In P2P, it's called by a ClientRpc from PlayerWeaponManager.
+    /// </summary>
     public void Initialize(Transform targetEnemy, Vector3 initialDirection, float finalDamage, bool isCritical, float finalSpeed, float finalDuration, float finalKnockback, float finalSize)
     {
         this.damage = finalDamage;
-        this.wasCritical = isCritical; // Store the crit status
+        this.wasCritical = isCritical;
         this.speed = finalSpeed;
         this.knockbackForce = finalKnockback;
-        this.lifetime = 3f; // Or you could use finalDuration
+        this.lifetime = finalDuration > 0 ? finalDuration : 3f; // Use duration, fallback to 3s
         transform.localScale *= finalSize;
 
         if (rb != null)
@@ -38,37 +46,43 @@ public class ProjectileWeapon : MonoBehaviour
 
     void Update()
     {
+        // Only the server should control the lifetime of the projectile to ensure it disappears for everyone.
+        if (!IsServer) return;
+
         lifetime -= Time.deltaTime;
         if (lifetime <= 0f)
         {
+            // Destroy the object on the network.
+            // A NetworkObject's destruction on the server is automatically synced to all clients.
             Destroy(gameObject);
         }
     }
 
-    // --- MODIFIED: Trigger detection now passes the crit status ---
+    /// <summary>
+    /// Handles hit detection. In multiplayer, this logic is server-authoritative.
+    /// </summary>
     void OnTriggerEnter(Collider other)
     {
-        // Check if the collided object is tagged as "Enemy" or "Reaper".
+        // In P2P mode, only the server can register a hit. This prevents cheating.
+        // In SP mode, IsServer is effectively true, so this logic runs correctly.
+        if (!IsServer) return;
+
         if (other.CompareTag("Enemy") || other.CompareTag("Reaper"))
         {
-            // Get the EnemyStats component from the parent of the collided object.
             EnemyStats enemyStats = other.GetComponentInParent<EnemyStats>();
             if (enemyStats != null)
             {
-                // Apply damage, passing along the stored critical hit status.
+                // The server applies the damage using the stats the projectile was spawned with.
                 enemyStats.TakeDamage(damage, wasCritical);
 
-                // Only apply knockback if the target is NOT a Reaper.
-                if (!other.CompareTag("Reaper"))
+                if (knockbackForce > 0 && !other.CompareTag("Reaper"))
                 {
                     Vector3 knockbackDirection = (other.transform.position - transform.position).normalized;
                     knockbackDirection.y = 0;
                     enemyStats.ApplyKnockback(knockbackForce, 0.4f, knockbackDirection);
                 }
 
-                // Destroy the projectile after impact.
-                // You might want to add a pierce mechanic here in the future,
-                // which would prevent the projectile from being destroyed immediately.
+                // The server destroys the projectile for everyone.
                 Destroy(gameObject);
             }
         }

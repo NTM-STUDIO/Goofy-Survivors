@@ -307,9 +307,9 @@ GameObject:
   m_Component:
   - component: {fileID: 8274304304770015266}
   - component: {fileID: 1898256526795386866}
+  - component: {fileID: 3984815251308103796}
   - component: {fileID: 2876931317350191461}
   - component: {fileID: 8654451083147522726}
-  - component: {fileID: 3984815251308103796}
   - component: {fileID: 7629850890781329749}
   - component: {fileID: -9205678879833524372}
   - component: {fileID: 1471733981330585159}
@@ -365,6 +365,31 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 4
   m_CollisionDetection: 0
+--- !u!114 &3984815251308103796
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5781343528486485951}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 1732295067
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &2876931317350191461
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -377,15 +402,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f0878a6349e1d584891e5f6b8d6388de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weapons:
-  - {fileID: 11400000, guid: 71f30611e4b0a0b4a808ab2598cd8ca4, type: 2}
-  possibleWeapons:
-  - {fileID: 11400000, guid: bc2683209e691594c90546de1a8df9f1, type: 2}
-  - {fileID: 11400000, guid: 951390051091ba1489ce516a02921df1, type: 2}
-  - {fileID: 11400000, guid: f51291457a043f446aa1e7da7b62d70a, type: 2}
-  - {fileID: 11400000, guid: aa51887ce722fc54d86aa2bd9eb5bf4e, type: 2}
-  - {fileID: 11400000, guid: 7f82ddfef3f925449a966956605fc32b, type: 2}
+  ShowTopMostFoldoutHeaderGroup: 1
+  weaponRegistry: {fileID: 11400000, guid: 414a3541d8443cd4cad6a5ea659d2804, type: 2}
   weaponParent: {fileID: 8274304304770015266}
+  startingWeapon: {fileID: 11400000, guid: 71f30611e4b0a0b4a808ab2598cd8ca4, type: 2}
 --- !u!114 &8654451083147522726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -426,31 +446,6 @@ MonoBehaviour:
   spriteRenderer: {fileID: 8947401097208141202}
   hurtFlashColor: {r: 0.9716981, g: 0.041251317, b: 0.041251317, a: 1}
   hurtFlashTime: 0.4
---- !u!114 &3984815251308103796
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5781343528486485951}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1732295067
-  InScenePlacedSourceGlobalObjectIdHash: 0
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!114 &7629850890781329749
 MonoBehaviour:
   m_ObjectHideFlags: 0

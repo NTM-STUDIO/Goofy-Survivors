@@ -3,129 +3,125 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class EnemyMovement : MonoBehaviour
 {
-    // ... (Todos os seus campos e enums permanecem exatamente iguais)
     private enum PursuitBehaviour { Direct, Predictive, PredictiveFlank }
+
     [Header("Behaviour")]
     [SerializeField] private PursuitBehaviour behaviour = PursuitBehaviour.Direct;
     [SerializeField] private bool randomizeOnAwake = true;
     [SerializeField, Range(0f, 1f)] private float predictiveChance = 0.6f;
     [SerializeField, Range(0f, 1f)] private float flankChance = 0.3f;
+
     [Header("Prediction")]
     [SerializeField] private float leadTime = 0.5f;
+
     [Header("Flank")]
     [SerializeField] private float flankOffset = 2f;
     [SerializeField] private float flankFalloffDistance = 2f;
 
     [Header("Attack")]
-    [Tooltip("How often the enemy can deal damage while touching the player (seconds).")]
     [SerializeField] private float attackCooldown = 1.5f;
-    [Tooltip("The force of the knockback applied to this enemy after it attacks.")]
     [SerializeField] private float selfKnockbackForce = 50f;
-    [Tooltip("The duration of the self-knockback stun.")]
     [SerializeField] private float selfKnockbackDuration = 0.5f;
 
     [Header("Debug")]
     [SerializeField] private bool showGizmos = true;
 
-    // --- Private Variables ---
+    private const float horizontalNerfFactor = 0.56f; // same as player Movement.cs
+
     private Transform player;
     private Rigidbody playerRb;
     private Rigidbody rb;
     private EnemyStats stats;
     private float flankSign = 1f;
     private float nextAttackTime = 0f;
-
-    // Direction that can be set externally by pathfinding
     private Vector3 targetDirection = Vector3.zero;
+
+    private Vector3 debugIntercept;
+    private Vector3 debugDestination;
+    private bool hasDebugTarget;
+    private EnemyPathfinding pathfindingComponent;
+
     public Vector3 TargetDirection
     {
         get => targetDirection;
         set => targetDirection = value;
     }
-    
-    // Debug variables
-    private Vector3 debugIntercept;
-    private Vector3 debugDestination;
-    private bool hasDebugTarget;
-    private EnemyPathfinding pathfindingComponent; // Add this line
 
     private void Awake()
     {
-        // (NENHUMA ALTERAÇÃO AQUI)
         rb = GetComponent<Rigidbody>();
         stats = GetComponent<EnemyStats>();
+
         GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
-        if (playerGO != null) {
+        if (playerGO != null)
+        {
             player = playerGO.transform;
-            playerRb = player.GetComponent<Rigidbody>();
-        } else {
-            Debug.LogError("CRITICAL: Player transform not found!", gameObject);
-        }
-        if (randomizeOnAwake) RandomiseBehaviour();
-        flankSign = Random.value < 0.5f ? -1f : 1f;
-        rb.useGravity = false;
-        rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
-        pathfindingComponent = GetComponent<EnemyPathfinding>(); // Add this line
-    }
-
-    // --- MÉTODO MODIFICADO ---
-    private void FixedUpdate()
-    {
-        if (stats.IsKnockedBack)
-        {
-            return;
-        }
-
-        if (stats == null || rb == null) return;
-        
-        Vector3 direction;
-
-        // Check if we have a direction from pathfinding
-        if (targetDirection != Vector3.zero)
-        {
-            direction = targetDirection;
-            targetDirection = Vector3.zero; // Reset after using
+            playerRb = playerGO.GetComponent<Rigidbody>();
         }
         else
         {
-            // Use normal pursuit behavior if no pathfinding direction
-            if (player == null) return;
-            Vector3 enemyPosition = transform.position;
-            Vector3 targetPosition = GetTargetPosition(enemyPosition);
-            direction = targetPosition - enemyPosition;
+            Debug.LogError("Player not found!", gameObject);
         }
 
-        // Ensure we're moving only in the XZ plane
-        direction.y = 0;
+        if (randomizeOnAwake) RandomiseBehaviour();
+        flankSign = Random.value < 0.5f ? -1f : 1f;
 
-        if (direction.sqrMagnitude <= 0.0001f)
+        rb.useGravity = false;
+        rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
+
+        pathfindingComponent = GetComponent<EnemyPathfinding>();
+    }
+
+    private void FixedUpdate()
+    {
+        if (stats.IsKnockedBack || player == null)
         {
-            rb.linearVelocity = Vector3.zero;
+            rb.linearVelocity = Vector3.zero; // Ensure no movement during knockback
             return;
         }
 
-        // --- LÓGICA DE MOVIMENTO ---
+        Vector3 direction;
 
-        // PASSO 1: CALCULAR A COMPENSAÇÃO DIAGONAL
-        // Se o movimento tem um componente horizontal E vertical significativos, aplica o nerf.
-        float diagonalCompensation = 1f;
-        if (Mathf.Abs(direction.x) > 0.1f && Mathf.Abs(direction.z) > 0.1f)
+        // Use pathfinding direction if available
+        if (targetDirection != Vector3.zero)
         {
-            // O valor é 1 / sqrt(2), o mesmo que no script de jogador.
-            diagonalCompensation = 0.70710678f; 
+            direction = targetDirection;
+            targetDirection = Vector3.zero;
+        }
+        else
+        {
+            Vector3 targetPosition = GetTargetPosition(transform.position);
+            direction = targetPosition - transform.position;
         }
 
-        // PASSO 2: APLICAR A VELOCIDADE FINAL COM A COMPENSAÇÃO
-        Vector3 velocity = direction.normalized * stats.moveSpeed * diagonalCompensation;
-        rb.linearVelocity = velocity;
-        
-        // --- FIM DA LÓGICA DE MOVIMENTO ---
-        
-        debugDestination = transform.position + direction;
-        hasDebugTarget = true;
-    }
+        // --- START OF CORRECTED MOVEMENT LOGIC ---
 
-    // (O resto do seu script, incluindo OnTriggerStay, GetTargetPosition, etc., permanece inalterado)
+        // Ensure movement is only on the XZ plane
+        direction.y = 0;
+
+        // Safety check: If the direction is negligible, stop moving completely.
+        if (direction.sqrMagnitude < 0.0001f)
+        {
+            rb.linearVelocity = Vector3.zero;
+            hasDebugTarget = false;
+            return; // Exit if there's no movement to be done
+        }
+
+        // First, normalize the vector to get a pure direction with a length of 1.
+        Vector3 moveDirection = direction.normalized;
+
+        // NOW, apply the horizontal nerf to the X component of the normalized vector.
+        moveDirection.x *= horizontalNerfFactor;
+
+        // Apply the final speed to the modified direction.
+        rb.linearVelocity = moveDirection * stats.moveSpeed;
+
+        // Update debug visualization
+        debugDestination = transform.position + moveDirection * 5f; // Multiplied for better visibility
+        hasDebugTarget = true;
+
+        // --- END OF CORRECTED MOVEMENT LOGIC ---
+    }
 
     private void OnTriggerStay(Collider other)
     {
@@ -147,6 +143,7 @@ public class EnemyMovement : MonoBehaviour
         if (player == null) return enemyPosition;
         Vector3 playerPosition = player.position;
         Vector3 predicted = playerPosition;
+
         if (behaviour != PursuitBehaviour.Direct)
         {
             Vector3 velocity = playerRb ? playerRb.linearVelocity : Vector3.zero;
@@ -154,16 +151,19 @@ public class EnemyMovement : MonoBehaviour
             if (velocity.sqrMagnitude < 0.001f)
             {
                 velocity = (playerPosition - enemyPosition).normalized * stats.moveSpeed;
-                velocity.y = 0;
             }
             predicted += velocity * Mathf.Max(0f, leadTime);
         }
+
         debugIntercept = predicted;
         debugIntercept.y = transform.position.y;
+
         if (behaviour != PursuitBehaviour.PredictiveFlank) return predicted;
+
         Vector3 toTarget = predicted - enemyPosition;
         toTarget.y = 0;
         if (toTarget.sqrMagnitude <= 0.0001f) return predicted;
+
         Vector3 perpendicular = new Vector3(-toTarget.z, 0, toTarget.x).normalized;
         float distance = toTarget.magnitude;
         float falloff = flankFalloffDistance <= 0f ? 1f : Mathf.Clamp01(distance / flankFalloffDistance);
@@ -175,15 +175,17 @@ public class EnemyMovement : MonoBehaviour
         float roll = Random.value;
         float flankThreshold = Mathf.Clamp01(flankChance);
         float predictiveThreshold = Mathf.Clamp01(flankThreshold + predictiveChance);
+
         if (roll < flankThreshold) behaviour = PursuitBehaviour.PredictiveFlank;
         else if (roll < predictiveThreshold) behaviour = PursuitBehaviour.Predictive;
         else behaviour = PursuitBehaviour.Direct;
     }
 
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     private void OnDrawGizmos()
     {
         if (!showGizmos || !Application.isPlaying || !hasDebugTarget) return;
+
         Gizmos.color = Color.cyan;
         Gizmos.DrawSphere(debugIntercept, 0.12f);
         Gizmos.color = Color.magenta;
@@ -191,5 +193,5 @@ public class EnemyMovement : MonoBehaviour
         Gizmos.color = Color.yellow;
         Gizmos.DrawLine(transform.position, debugDestination);
     }
-    #endif
+#endif
 }

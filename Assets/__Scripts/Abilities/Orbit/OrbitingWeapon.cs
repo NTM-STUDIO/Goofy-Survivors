@@ -1,65 +1,107 @@
 using UnityEngine;
+using Unity.Netcode; // This is needed for NetworkBehaviour
 using System.Collections.Generic;
 
-public class OrbitingWeapon : MonoBehaviour
+[RequireComponent(typeof(NetworkObject))]
+// THE FIX IS ON THIS LINE: It must inherit from NetworkBehaviour, not MonoBehaviour
+public class OrbitingWeapon : NetworkBehaviour 
 {
-    // --- NEW: References to live data ---
+    // --- Live Data References ---
     private PlayerStats playerStats;
     private WeaponData weaponData;
     
-    // --- Stats (no longer set directly) ---
+    // --- Calculated Stats ---
     private float knockbackForce;
+    private float rotationSpeed;
+    private float orbitRadius;
+    private Transform orbitCenter;
+    private float lifetime;
+    private float currentAngle;
 
+    // This flag is set on initialization to tell the script which rules to follow.
+    private bool isP2P = false;
+
+    [Header("Weapon Settings")]
     [Range(0f, 1f)]
     [Tooltip("Controls the size of the safe zone as a RATIO of the total radius.")]
     public float innerRadiusRatio = 0.8f;
-
-    [HideInInspector] public float rotationSpeed;
-    [HideInInspector] public float orbitRadius;
-    [HideInInspector] public Transform orbitCenter;
-
-    private float size;
-    private float currentAngle;
-    private float lifetime;
     private float yOffset = 1.5f;
 
+    // --- Hit Detection ---
     private HashSet<GameObject> hitEnemies = new HashSet<GameObject>();
     private float hitResetTime = 1.0f;
     private float nextResetTime;
 
-    // --- MODIFIED: Initialize now takes references, not pre-calculated values ---
-    public void Initialize(Transform center, float startAngle, PlayerStats stats, WeaponData data, float finalSpeed, float finalDuration, float finalKnockback, float finalSize)
+    #region Initialization
+    public void LocalInitialize(Transform center, float startAngle, PlayerStats stats, WeaponData data)
     {
-        orbitCenter = center;
-        currentAngle = startAngle;
-        
-        // Store the references to calculate damage on hit
-        playerStats = stats;
-        weaponData = data;
+        this.isP2P = false;
+        this.orbitCenter = center;
+        this.currentAngle = startAngle;
+        this.playerStats = stats;
+        this.weaponData = data;
+        CalculateStats();
+    }
 
-        rotationSpeed = finalSpeed;
-        lifetime = finalDuration;
-        knockbackForce = finalKnockback;
+    public void NetworkInitialize(NetworkObjectReference ownerRef, WeaponData data, float startAngle)
+    {
+        this.isP2P = true;
+        this.weaponData = data;
+        this.currentAngle = startAngle;
+
+        if (ownerRef.TryGet(out NetworkObject ownerNetObj))
+        {
+            this.orbitCenter = ownerNetObj.transform;
+            this.playerStats = ownerNetObj.GetComponent<PlayerStats>();
+            CalculateStats();
+        }
+        else
+        {
+            if(IsServer) Destroy(gameObject);
+        }
+    }
+
+    private void CalculateStats()
+    {
+        if (playerStats == null || weaponData == null) return;
+        
+        float finalSize = weaponData.area * playerStats.projectileSizeMultiplier;
+        rotationSpeed = weaponData.speed * playerStats.projectileSpeedMultiplier;
+        lifetime = weaponData.duration * playerStats.durationMultiplier;
+        knockbackForce = weaponData.knockback * playerStats.knockbackMultiplier;
         orbitRadius = finalSize * 16f;
         transform.localScale = Vector3.one * finalSize;
-        size = finalSize;
-
         nextResetTime = Time.time + hitResetTime;
     }
+    #endregion
 
     void Update()
     {
-        if (orbitCenter == null) { Destroy(gameObject); return; }
+        if (orbitCenter == null) 
+        { 
+            if (!isP2P || IsServer) Destroy(gameObject);
+            return;
+        }
 
         lifetime -= Time.deltaTime;
-        if (lifetime <= 0f) { Destroy(gameObject); return; }
+        if (lifetime <= 0f) 
+        {
+            if (!isP2P || IsServer)
+            {
+                // In P2P, the Host is the Server, so this will correctly destroy the object.
+                // In SP, !isP2P is true, so this will correctly destroy the object.
+                Destroy(gameObject);
+            }
+            return; 
+        }
 
         currentAngle += rotationSpeed * Time.deltaTime;
         if (currentAngle > 360f) currentAngle -= 360f;
 
         float x = Mathf.Cos(currentAngle * Mathf.Deg2Rad) * orbitRadius;
         float z = Mathf.Sin(currentAngle * Mathf.Deg2Rad) * orbitRadius;
-        transform.position = orbitCenter.position + new Vector3(x, yOffset * size + 1.5f, z);
+        float finalYOffset = yOffset * transform.localScale.y + 1.5f;
+        transform.position = orbitCenter.position + new Vector3(x, finalYOffset, z);
 
         if (Time.time >= nextResetTime)
         {
@@ -68,59 +110,49 @@ public class OrbitingWeapon : MonoBehaviour
         }
     }
 
-    // --- MODIFIED: Trigger detection now calculates its own damage and crit chance on every hit ---
     void OnTriggerEnter(Collider other)
     {
-        // Must have valid references to calculate damage
-        if (playerStats == null || weaponData == null) return;
-
-        GameObject enemyObject = other.GetComponentInParent<EnemyStats>()?.gameObject;
-
-        if (enemyObject == null || hitEnemies.Contains(enemyObject))
+        if (!isP2P || IsServer)
         {
-            return;
-        }
+            if (playerStats == null || weaponData == null) return;
 
-        EnemyStats enemyStats = enemyObject.GetComponent<EnemyStats>();
+            EnemyStats enemyStats = other.GetComponentInParent<EnemyStats>();
+            if (enemyStats == null || hitEnemies.Contains(enemyStats.gameObject)) return;
 
-        Vector3 enemyPos2D = new Vector3(other.transform.position.x, 0, other.transform.position.z);
-        Vector3 centerPos2D = new Vector3(orbitCenter.position.x, 0, orbitCenter.position.z);
-        float distanceToCenter = Vector3.Distance(enemyPos2D, centerPos2D);
+            Vector3 enemyPos2D = new Vector3(other.transform.position.x, 0, other.transform.position.z);
+            Vector3 centerPos2D = new Vector3(orbitCenter.position.x, 0, orbitCenter.position.z);
+            float distanceToCenter = Vector3.Distance(enemyPos2D, centerPos2D);
+            float effectiveInnerRadius = orbitRadius * innerRadiusRatio;
 
-        float effectiveInnerRadius = orbitRadius * innerRadiusRatio;
-
-        if (distanceToCenter >= effectiveInnerRadius)
-        {
-            hitEnemies.Add(enemyObject);
-
-            // --- CRITICAL STRIKE CALCULATION ON HIT ---
-            // Perform a new, independent damage calculation for this specific hit.
-            DamageResult damageResult = playerStats.CalculateDamage(weaponData.damage);
-
-            // Pass the final damage and the crit status to the enemy.
-            enemyStats.TakeDamage(damageResult.damage, damageResult.isCritical);
-
-            if (!enemyObject.CompareTag("Reaper"))
+            if (distanceToCenter >= effectiveInnerRadius)
             {
-                Vector3 knockbackDir = (other.transform.position - orbitCenter.position).normalized;
-                knockbackDir.y = 0;
-                enemyStats.ApplyKnockback(knockbackForce, 0.4f, knockbackDir);
+                hitEnemies.Add(enemyStats.gameObject);
+                DamageResult damageResult = playerStats.CalculateDamage(weaponData.damage);
+                enemyStats.TakeDamage(damageResult.damage, damageResult.isCritical);
+
+                if (!enemyStats.CompareTag("Reaper"))
+                {
+                    Vector3 knockbackDir = (other.transform.position - orbitCenter.position).normalized;
+                    knockbackDir.y = 0;
+                    enemyStats.ApplyKnockback(knockbackForce, 0.4f, knockbackDir);
+                }
             }
         }
     }
 
-    // --- GIZMO ---
+    #region Gizmos
     private void OnDrawGizmosSelected()
     {
-        if (orbitCenter != null)
+        Transform center = orbitCenter != null ? orbitCenter : transform.parent;
+        if (center != null)
         {
-            Vector3 gizmoCenter = orbitCenter.position + new Vector3(0, yOffset, 0);
+            Vector3 gizmoCenter = center.position + new Vector3(0, yOffset, 0);
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(gizmoCenter, orbitRadius);
-
             float effectiveInnerRadius = orbitRadius * innerRadiusRatio;
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(gizmoCenter, effectiveInnerRadius);
         }
     }
+    #endregion
 }

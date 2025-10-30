@@ -4,57 +4,57 @@ using UnityEngine;
 public class ShadowClone : MonoBehaviour
 {
     [Header("Clone Stats")]
-    [SerializeField] private float lifetime = 5f; // Duração de 5 segundos
-    [SerializeField] private float health = 1f;   // Vida para ser 'one-shottable'
+    [SerializeField] private float lifetime = 5f;
+    [SerializeField] private float health = 1f;
 
     [Header("Internal References")]
-    [Tooltip("Um objeto filho vazio para organizar as armas do clone.")]
+    [Tooltip("An empty child object to organize the clone's weapons.")]
     [SerializeField] private Transform weaponContainer;
 
     void Start()
     {
-        // Garante que o container de armas exista se não for atribuído
         if (weaponContainer == null)
         {
             weaponContainer = new GameObject("WeaponContainer").transform;
             weaponContainer.SetParent(this.transform);
             weaponContainer.localPosition = Vector3.zero;
         }
-
-        // Inicia o contador para autodestruição
         Destroy(gameObject, lifetime);
     }
 
     /// <summary>
-    /// Recebe a lista de armas do jogador e as recria como filhas do clone.
+    /// THE FIX: This method now accepts the owner's stats and the weapon registry.
+    /// It uses this data to properly initialize the weapons it creates.
     /// </summary>
-    public void Initialize(List<WeaponData> playerWeapons)
+    public void Initialize(List<WeaponData> playerWeapons, PlayerStats ownerStats, WeaponRegistry registry)
     {
-        if (playerWeapons == null) return;
+        if (playerWeapons == null || ownerStats == null || registry == null) return;
 
         foreach (var weaponData in playerWeapons)
         {
-            // Cria um novo GameObject para cada arma
             GameObject weaponControllerObj = new GameObject(weaponData.weaponName + " (Clone)");
             weaponControllerObj.transform.SetParent(weaponContainer);
 
-            // Adiciona o componente WeaponController e atribui os dados da arma
             WeaponController wc = weaponControllerObj.AddComponent<WeaponController>();
-            wc.weaponData = weaponData;
+            
+            // This is the correct way to set up the new controller.
+            // We pass 'null' for the manager because a clone's weapons are self-contained.
+            // We pass 'true' for ownership because the clone's weapons are always controlled by the clone itself.
+            int weaponId = registry.GetWeaponId(weaponData);
+            wc.Initialize(weaponId, weaponData, null, ownerStats, true, registry);
         }
     }
 
     /// <summary>
-    /// Método público para o clone receber dano.
+    /// Public method for the clone to take damage.
     /// </summary>
     public void TakeDamage(float amount)
     {
-        if (health <= 0) return; // Já está morrendo
+        if (health <= 0) return;
 
         health -= amount;
         if (health <= 0)
         {
-            // Opcional: Adicione um efeito de "puff" de fumaça aqui antes de destruir
             Destroy(gameObject);
         }
     }
