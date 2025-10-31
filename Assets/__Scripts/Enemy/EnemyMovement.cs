@@ -42,6 +42,8 @@ public class EnemyMovement : NetworkBehaviour
     private bool hasDebugTarget;
     private EnemyPathfinding pathfindingComponent;
 
+    private GameObject[] players; // Array to hold all players with "Player" tag
+
     public Vector3 TargetDirection
     {
         get => targetDirection;
@@ -53,15 +55,11 @@ public class EnemyMovement : NetworkBehaviour
         rb = GetComponent<Rigidbody>();
         stats = GetComponent<EnemyStats>();
 
-        GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
-        if (playerGO != null)
+        // Find all players with "Player" tag
+        players = GameObject.FindGameObjectsWithTag("Player");
+        if (players.Length == 0)
         {
-            player = playerGO.transform;
-            playerRb = playerGO.GetComponent<Rigidbody>();
-        }
-        else
-        {
-            Debug.LogError("Player not found!", gameObject);
+            Debug.LogError("No players found with tag 'Player'!", gameObject);
         }
 
         if (randomizeOnAwake) RandomiseBehaviour();
@@ -77,6 +75,22 @@ public class EnemyMovement : NetworkBehaviour
     {
     // Only the server should simulate enemy movement. Clients receive position updates via NetworkTransform or custom sync.
     if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
+
+        // Find the closest player
+        Transform closestPlayer = null;
+        float minDist = float.MaxValue;
+        foreach (GameObject p in players)
+        {
+            if (p == null) continue; // In case a player is destroyed
+            float dist = Vector3.Distance(transform.position, p.transform.position);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                closestPlayer = p.transform;
+            }
+        }
+        player = closestPlayer;
+        playerRb = (player != null) ? player.GetComponent<Rigidbody>() : null;
 
         if (stats.IsKnockedBack || player == null)
         {
@@ -140,7 +154,7 @@ public class EnemyMovement : NetworkBehaviour
             {
                 playerStats.ApplyDamage(stats.GetAttackDamage());
             }
-            Vector3 knockbackDirection = (transform.position - player.position).normalized;
+            Vector3 knockbackDirection = (transform.position - other.transform.position).normalized;
             stats.ApplyKnockback(selfKnockbackForce, selfKnockbackDuration, knockbackDirection);
         }
     }
