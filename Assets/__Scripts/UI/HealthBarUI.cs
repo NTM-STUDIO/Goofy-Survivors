@@ -21,12 +21,21 @@ public class HealthBarUI : MonoBehaviour
     {
         if (playerStats == null)
         {
-            // Prefer first or any depending on Unity version; First is deterministic
+            // Prefer the LOCAL player's PlayerStats when using Netcode
+            var nm = Unity.Netcode.NetworkManager.Singleton;
+            if (nm != null && nm.IsListening && nm.LocalClient != null && nm.LocalClient.PlayerObject != null)
+            {
+                playerStats = nm.LocalClient.PlayerObject.GetComponent<PlayerStats>();
+            }
+            // Fallback for single-player/editor
+            if (playerStats == null)
+            {
 #if UNITY_2023_1_OR_NEWER
-            playerStats = Object.FindFirstObjectByType<PlayerStats>();
+                playerStats = Object.FindFirstObjectByType<PlayerStats>();
 #else
-            playerStats = FindObjectOfType<PlayerStats>();
+                playerStats = FindObjectOfType<PlayerStats>();
 #endif
+            }
         }
     }
 

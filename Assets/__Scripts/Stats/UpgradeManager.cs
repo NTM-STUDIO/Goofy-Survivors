@@ -110,7 +110,8 @@ public class UpgradeManager : MonoBehaviour
             isUpgradeInProgress = false;
             upgradePanel.SetActive(false);
             foreach (Transform child in choicesContainer) Destroy(child.gameObject);
-            gameManager.RequestResume();
+            // Resume globally (handles P2P via RPC)
+            gameManager.ResumeAfterLevelUp();
             EventSystem.current.SetSelectedGameObject(null);
         }
     }
@@ -127,7 +128,8 @@ public class UpgradeManager : MonoBehaviour
         DisplayUpgradeChoices(choices);
 
         upgradePanel.SetActive(true);
-        gameManager.RequestPause();
+        // Pause globally (handles P2P via RPC)
+        gameManager.RequestPauseForLevelUp();
     }
 
     private int GetNumberOfChoices(float currentLuck)
@@ -240,7 +242,13 @@ public class UpgradeManager : MonoBehaviour
             case StatType.CritDamageMultiplier: playerStats.IncreaseCritDamageMultiplier(value / 100f); break;
             case StatType.AttackSpeedMultiplier: playerStats.IncreaseAttackSpeedMultiplier(value / 100f); break;
             case StatType.ProjectileCount: playerStats.IncreaseProjectileCount(Mathf.RoundToInt(value)); break;
-            case StatType.ProjectileSizeMultiplier: playerStats.IncreaseProjectileSizeMultiplier(value / 100f); break;
+            case StatType.ProjectileSizeMultiplier:
+                // Team-share Area in P2P so all players get the same increase
+                if (gameManager != null && gameManager.isP2P)
+                    gameManager.TeamApplyAreaUpgrade(value / 100f);
+                else
+                    playerStats.IncreaseProjectileSizeMultiplier(value / 100f);
+                break;
             case StatType.ProjectileSpeedMultiplier: playerStats.IncreaseProjectileSpeedMultiplier(value / 100f); break;
             case StatType.DurationMultiplier: playerStats.IncreaseDurationMultiplier(value / 100f); break;
             case StatType.KnockbackMultiplier: playerStats.IncreaseKnockbackMultiplier(value / 100f); break;
@@ -264,7 +272,8 @@ public class UpgradeManager : MonoBehaviour
             return;
         }
 
-        gameManager.RequestPause();
+    // Pause globally (handles P2P via RPC)
+    gameManager.RequestPauseForLevelUp();
         foreach (Transform child in choicesContainer) Destroy(child.gameObject);
 
         int choicesCount = 1;

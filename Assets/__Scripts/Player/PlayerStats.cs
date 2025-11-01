@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Netcode;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -20,6 +21,7 @@ public class ActiveBuff
 
 public class PlayerStats : MonoBehaviour
 {
+    private bool _isLocalOwner = true; // default true for single-player
     // --- NEW SECTION: BELT BUFFS (STACKING) ---
     [Header("Item Effects: Belt Buffs")]
     [Tooltip("Set to true by your UpgradeManager when the player acquires the belt item.")]
@@ -84,6 +86,13 @@ public class PlayerStats : MonoBehaviour
 
     private void Start()
     {
+        // Determine local ownership if Netcode is active
+        var nm = NetworkManager.Singleton;
+        if (nm != null && nm.IsListening)
+        {
+            var netObj = GetComponent<NetworkObject>();
+            _isLocalOwner = (netObj != null && netObj.IsOwner);
+        }
         StartCoroutine(HealthRegenRoutine());
     }
 
@@ -186,8 +195,13 @@ public class PlayerStats : MonoBehaviour
         if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         if (spriteRenderer != null) _originalColor = spriteRenderer.color;
         OnHealthChanged?.Invoke(currentHp, maxHp);
-        var uiManager = FindFirstObjectByType<UIManager>();
-        if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp);
+        // Update local HUD only for the owning client (or in single-player)
+        var nm = NetworkManager.Singleton;
+        if (nm == null || !nm.IsListening || _isLocalOwner)
+        {
+            var uiManager = FindFirstObjectByType<UIManager>();
+            if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp);
+        }
     }
 
     public void ApplyLevelUpScaling()
@@ -220,7 +234,19 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    public void IncreaseMaxHP(int amount) { maxHp += amount; currentHp += amount; var uiManager = FindFirstObjectByType<UIManager>(); if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp); OnHealthChanged?.Invoke(currentHp, maxHp); }
+    public void IncreaseMaxHP(int amount)
+    {
+        maxHp += amount;
+        currentHp += amount;
+        // Update HUD only for local owner (or SP)
+        var nm = NetworkManager.Singleton;
+        if (nm == null || !nm.IsListening || _isLocalOwner)
+        {
+            var uiManager = FindFirstObjectByType<UIManager>();
+            if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp);
+        }
+        OnHealthChanged?.Invoke(currentHp, maxHp);
+    }
     public void IncreaseHPRegen(float amount) { hpRegen += amount; }
     public void IncreaseDamageMultiplier(float amount) { damageMultiplier += amount; }
     public void IncreaseCritChance(float amount) { critChance += amount; }
@@ -234,7 +260,22 @@ public class PlayerStats : MonoBehaviour
     public void IncreaseMovementSpeed(float amount) { movementSpeed += amount; }
     public void IncreaseLuck(float amount) {  luck += amount; if (luck > 500) luck = 500; }
     public void IncreasePickupRange(float amount) { pickupRange += amount; }
-    public void IncreaseXPGainMultiplier(float amount) { xpGainMultiplier += amount; }
+    public void IncreaseXPGainMultiplier(float amount)
+    {
+        var gm = GameManager.Instance;
+        if (gm != null && gm.isP2P)
+        {
+            // In multiplayer, XP gain is shared for all players: update team multiplier on server
+            gm.RequestModifySharedXpMultiplier(amount);
+            // Optionally mirror into local field for UI display; will be overridden by StatsPanel in P2P
+            xpGainMultiplier += amount;
+        }
+        else
+        {
+            // Single-player: local only
+            xpGainMultiplier += amount;
+        }
+    }
     public void DecreaseMaxHP(int amount) { maxHp -= amount; }
     public void DecreaseHPRegen(float amount) { hpRegen -= amount; }
     public void DecreaseDamageMultiplier(float amount) { damageMultiplier -= amount; }
@@ -254,12 +295,48 @@ public class PlayerStats : MonoBehaviour
 
     #region Core Gameplay Logic
     public void PrintStats() { /* ... */ }
-    public void Heal(int amount) { if (amount <= 0 || currentHp <= 0) return; int prev = currentHp; currentHp = Mathf.Clamp(currentHp + amount, 0, maxHp); if (currentHp != prev) { OnHealed?.Invoke(); OnHealthChanged?.Invoke(currentHp, maxHp); var uiManager = FindFirstObjectByType<UIManager>(); if (uiManager != null) { uiManager.UpdateHealthBar(currentHp, maxHp); } } }
-    public void ApplyDamage(float amount, Vector3? hitFromWorldPos = null, float? customIFrameDuration = null) { if (amount <= 0f || invincible || currentHp <= 0) return; int damageInt = Mathf.CeilToInt(amount); currentHp = Mathf.Clamp(currentHp - damageInt, 0, maxHp); if (spriteRenderer != null) { StopCoroutine(nameof(FlashRoutine)); StartCoroutine(FlashRoutine()); } OnDamaged?.Invoke(); OnHealthChanged?.Invoke(currentHp, maxHp); float iFrames = customIFrameDuration.HasValue ? Mathf.Max(0f, customIFrameDuration.Value) : invincibilityDuration; if (iFrames > 0f) StartCoroutine(InvincibilityRoutine(iFrames)); if (currentHp <= 0) { HandleDeath(); } var uiManager = FindFirstObjectByType<UIManager>(); if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp); }
+    public void Heal(int amount) { if (amount <= 0 || currentHp <= 0) return; int prev = currentHp; currentHp = Mathf.Clamp(currentHp + amount, 0, maxHp); if (currentHp != prev) { OnHealed?.Invoke(); OnHealthChanged?.Invoke(currentHp, maxHp); var nm = NetworkManager.Singleton; if (nm == null || !nm.IsListening || _isLocalOwner) { var uiManager = FindFirstObjectByType<UIManager>(); if (uiManager != null) { uiManager.UpdateHealthBar(currentHp, maxHp); } } } }
+    public void ApplyDamage(float amount, Vector3? hitFromWorldPos = null, float? customIFrameDuration = null) { if (amount <= 0f || invincible || currentHp <= 0) return; int damageInt = Mathf.CeilToInt(amount); currentHp = Mathf.Clamp(currentHp - damageInt, 0, maxHp); if (spriteRenderer != null) { StopCoroutine(nameof(FlashRoutine)); StartCoroutine(FlashRoutine()); } OnDamaged?.Invoke(); OnHealthChanged?.Invoke(currentHp, maxHp); float iFrames = customIFrameDuration.HasValue ? Mathf.Max(0f, customIFrameDuration.Value) : invincibilityDuration; if (iFrames > 0f) StartCoroutine(InvincibilityRoutine(iFrames)); if (currentHp <= 0) { HandleDeath(); } var nm = NetworkManager.Singleton; if (nm == null || !nm.IsListening || _isLocalOwner) { var uiManager = FindFirstObjectByType<UIManager>(); if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp); } }
     public void BeginInvincibility(float duration) { if (duration <= 0f) return; StopCoroutine(nameof(InvincibilityRoutine)); StartCoroutine(InvincibilityRoutine(duration)); }
     private IEnumerator InvincibilityRoutine(float duration) { invincible = true; yield return new WaitForSeconds(duration); invincible = false; }
     private IEnumerator FlashRoutine() { if (spriteRenderer == null) yield break; spriteRenderer.color = hurtFlashColor; yield return new WaitForSeconds(hurtFlashTime); spriteRenderer.color = _originalColor; }
-    private void HandleDeath() { Debug.Log("Player died."); OnDeath?.Invoke(); var movement = GetComponent<Movement>(); if (movement != null) { movement.enabled = false; } var colls = GetComponentsInChildren<Collider>(); foreach (var c in colls) c.enabled = false; if (GameManager.Instance != null) { GameManager.Instance.PlayerDied(); } }
+    public bool IsDowned { get; private set; } = false;
+    private void HandleDeath()
+    {
+        Debug.Log("Player died.");
+        OnDeath?.Invoke();
+        IsDowned = true;
+        var movement = GetComponent<Movement>();
+        if (movement != null) { movement.enabled = false; }
+        var colls = GetComponentsInChildren<Collider>();
+        foreach (var c in colls) c.enabled = false;
+        // Notify GameManager for revive/gameover logic
+        var netObj = GetComponent<NetworkObject>();
+        if (GameManager.Instance != null && netObj != null)
+        {
+            GameManager.Instance.PlayerDowned(netObj.OwnerClientId);
+        }
+    }
+
+    // Server-only revive helper
+    public void ServerReviveToPercent(float percent)
+    {
+        percent = Mathf.Clamp01(percent);
+        currentHp = Mathf.Max(1, Mathf.RoundToInt(maxHp * percent));
+        IsDowned = false;
+        var movement = GetComponent<Movement>();
+        if (movement != null) { movement.enabled = true; }
+        var colls = GetComponentsInChildren<Collider>(true);
+        foreach (var c in colls) c.enabled = true;
+        OnHealed?.Invoke();
+        OnHealthChanged?.Invoke(currentHp, maxHp);
+        var nm = NetworkManager.Singleton;
+        if (nm == null || !nm.IsListening || _isLocalOwner)
+        {
+            var uiManager = FindFirstObjectByType<UIManager>();
+            if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp);
+        }
+    }
     private IEnumerator HealthRegenRoutine() { while (true) { yield return new WaitForSeconds(1f); ApplyHealthRegen(); } }
     private void ApplyHealthRegen() { if (hpRegen > 0f && currentHp > 0 && currentHp < maxHp) { Heal(Mathf.CeilToInt(hpRegen)); } }
     #endregion

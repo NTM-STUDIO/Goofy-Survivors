@@ -28,7 +28,17 @@ public class StatsPanel : MonoBehaviour
 
     private void OnEnable()
     {
-        playerStats = FindFirstObjectByType<PlayerStats>();
+        // Prefer the LOCAL player's PlayerStats when using Netcode
+        var nm = Unity.Netcode.NetworkManager.Singleton;
+        if (nm != null && nm.IsListening && nm.LocalClient != null && nm.LocalClient.PlayerObject != null)
+        {
+            playerStats = nm.LocalClient.PlayerObject.GetComponent<PlayerStats>();
+        }
+        // Fallback single-player
+        if (playerStats == null)
+        {
+            playerStats = FindFirstObjectByType<PlayerStats>();
+        }
 
         // It's crucial to check if playerStats is assigned to prevent errors.
         if (playerStats == null)
@@ -77,7 +87,16 @@ public class StatsPanel : MonoBehaviour
         movementSpeedText.text = $"Move Speed: {playerStats.movementSpeed}";
         luckText.text = $"Luck: {playerStats.luck}";
         pickupRangeText.text = $"Pickup Range: {playerStats.pickupRange}";
-        xpGainMultiplierText.text = $"XP Gain: {playerStats.xpGainMultiplier:P0}";
+        var gm = GameManager.Instance;
+        if (gm != null && gm.isP2P)
+        {
+            // Show team-shared XP multiplier in P2P
+            xpGainMultiplierText.text = $"XP Gain: {gm.SharedXpMultiplier:P0}";
+        }
+        else
+        {
+            xpGainMultiplierText.text = $"XP Gain: {playerStats.xpGainMultiplier:P0}";
+        }
     }
 
     /// <summary>

@@ -17,6 +17,7 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
     [SerializeField] private EnemyDespawner enemyDespawner;
     [SerializeField] private UpgradeManager upgradeManager;
     [SerializeField] private PlayerExperience playerExperience;
+    [SerializeField] private MapGenerator mapGenerator;
 
     private Movement localPlayer;
     private GameObject chosenPlayerPrefab;
@@ -36,6 +37,22 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
     private float currentTime;
     private NetworkVariable<float> networkCurrentTime = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private float timerUIAccumulator = 0f;
+
+    [Header("Shared Team Stats (P2P)")]
+    private NetworkVariable<float> sharedXpMultiplier = new NetworkVariable<float>(1f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public float SharedXpMultiplier => sharedXpMultiplier.Value;
+
+    [Header("Revive Settings (P2P)")]
+    [SerializeField] private float reviveRadius = 2.0f;
+    [SerializeField] private float reviveTime = 5.0f;
+    private Dictionary<ulong, bool> playerAlive = new Dictionary<ulong, bool>();
+    private Dictionary<ulong, float> reviveProgress = new Dictionary<ulong, float>();
+
+    [Header("Revive VFX")]
+    [SerializeField] private Sprite reviveSprite;
+    [SerializeField] private Color reviveColor = Color.white;
+    [SerializeField] private float reviveVfxDuration = 0.8f;
+    [SerializeField] private float reviveVfxYOffset = 2.0f;
 
     [Header("General Difficulty Settings")]
     public float currentEnemyHealthMultiplier { get; private set; } = 1f;
@@ -79,6 +96,117 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         currentTime = totalGameTime;
     }
 
+    // =========================
+    // SHARED EXPERIENCE SYSTEM
+    // =========================
+    public void DistributeSharedXP(float amount)
+    {
+        // Server entrypoint: broadcast XP to everyone
+        if (isP2P)
+        {
+            if (IsServer)
+            {
+                // Scale once on server using shared team multiplier
+                float scaled = amount * Mathf.Max(0f, sharedXpMultiplier.Value);
+                ApplySharedXPClientRpc(scaled);
+            }
+        }
+        else
+        {
+            // Single player local
+            var pxp = playerExperience != null ? playerExperience : FindObjectOfType<PlayerExperience>();
+            pxp?.AddXP(amount);
+        }
+    }
+
+    [ClientRpc]
+    private void ApplySharedXPClientRpc(float amount)
+    {
+        var pxp = playerExperience != null ? playerExperience : FindObjectOfType<PlayerExperience>();
+        // This amount is already scaled on the server by the shared team multiplier
+        pxp?.AddXPFromServerScaled(amount);
+    }
+
+    // =========================
+    // SHARED XP MULTIPLIER CONTROL
+    // =========================
+    public void RequestModifySharedXpMultiplier(float delta)
+    {
+        if (!isP2P)
+        {
+            // Single-player: mirror local stat only (PlayerStats handles its own field)
+            return;
+        }
+        if (IsServer) { ModifySharedXpMultiplierInternal(delta); }
+        else { ModifySharedXpMultiplierServerRpc(delta); }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void ModifySharedXpMultiplierServerRpc(float delta)
+    {
+        ModifySharedXpMultiplierInternal(delta);
+    }
+
+    private void ModifySharedXpMultiplierInternal(float delta)
+    {
+        sharedXpMultiplier.Value = Mathf.Max(0f, sharedXpMultiplier.Value + delta);
+    }
+
+    // =========================
+    // TEAM-WIDE AREA (PROJECTILE SIZE) SHARING
+    // =========================
+    public void TeamApplyAreaUpgrade(float delta)
+    {
+        if (!isP2P)
+        {
+            // Single-player: apply directly
+            var ps = FindObjectOfType<PlayerStats>();
+            ps?.IncreaseProjectileSizeMultiplier(delta);
+            return;
+        }
+
+        if (IsServer)
+        {
+            ApplyAreaToAllPlayersOnServer(delta);
+            ApplyTeamAreaDeltaClientRpc(delta);
+        }
+        else
+        {
+            TeamApplyAreaUpgradeServerRpc(delta);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void TeamApplyAreaUpgradeServerRpc(float delta)
+    {
+        ApplyAreaToAllPlayersOnServer(delta);
+        ApplyTeamAreaDeltaClientRpc(delta);
+    }
+
+    private void ApplyAreaToAllPlayersOnServer(float delta)
+    {
+        if (NetworkManager.Singleton == null) return;
+        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client?.PlayerObject == null) continue;
+            var stats = client.PlayerObject.GetComponent<PlayerStats>();
+            if (stats != null)
+            {
+                stats.IncreaseProjectileSizeMultiplier(delta);
+            }
+        }
+    }
+
+    [ClientRpc]
+    private void ApplyTeamAreaDeltaClientRpc(float delta)
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient?.PlayerObject != null)
+        {
+            var stats = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerStats>();
+            stats?.IncreaseProjectileSizeMultiplier(delta);
+        }
+    }
+
     #region Starting Weapon Logic
     public override void OnNetworkSpawn()
     {
@@ -106,6 +234,12 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
     private void HandleClientConnected(ulong clientId)
     {
         Debug.Log($"[GameManager] Handling connection for new Client ID: {clientId}");
+        // In P2P, track newly connected players as alive on the server
+        if (isP2P && IsServer)
+        {
+            if (!playerAlive.ContainsKey(clientId)) playerAlive[clientId] = true;
+            if (!reviveProgress.ContainsKey(clientId)) reviveProgress[clientId] = 0f;
+        }
         StartCoroutine(GiveStartingWeaponAfterPlayerSpawns(clientId));
     }
 
@@ -229,6 +363,8 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         {
             GameObject playerObject = Instantiate(entry.Value, playerSpawnPoint.position, playerSpawnPoint.rotation);
             playerObject.GetComponent<NetworkObject>().SpawnAsPlayerObject(entry.Key);
+            // Track alive state on server for revive/gameover
+            playerAlive[entry.Key] = true;
         }
         InitializeGameClientRpc();
     }
@@ -251,9 +387,18 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         upgradeManager?.Initialize(playerObject);
         enemyDespawner?.Initialize(playerObject);
 
-        if (!isP2P || IsHost)
+        if (!isP2P)
         {
+            // Single-player: explicitly generate map only when game starts
+            mapGenerator?.GenerateLocal();
             enemySpawner?.StartSpawning();
+        }
+        else if (IsHost)
+        {
+            // Multiplayer host: generate shared map assets and start spawns
+            enemySpawner?.StartSpawning();
+            mapGenerator?.GenerateNetworked();
+            EnsureAllMapConsumablesSpawned();
         }
         
         if (bossSpawnPoint == null)
@@ -281,13 +426,35 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         if(uiManager) uiManager.OnGameStart();
     }
 
+    // Ensure all interactable map consumables (including chests) are network-spawned so clients can interact and observe despawns
+    private void EnsureAllMapConsumablesSpawned()
+    {
+        if (!isP2P || !IsServer) return;
+        var all = Object.FindObjectsByType<MapConsumable>(FindObjectsSortMode.None);
+        int spawned = 0;
+        foreach (var mc in all)
+        {
+            if (mc == null) continue;
+            var no = mc.GetComponent<NetworkObject>() ?? mc.gameObject.AddComponent<NetworkObject>();
+            if (!no.IsSpawned)
+            {
+                no.Spawn(true);
+                spawned++;
+            }
+        }
+        if (spawned > 0)
+        {
+            Debug.Log($"[GameManager] Network-spawned {spawned} MapConsumable(s) so clients can interact and observe state.");
+        }
+    }
+
     public void PlayerDied()
     {
         if (CurrentState == GameState.GameOver) return;
         
         if (isP2P)
         {
-            PlayerDiedServerRpc();
+            PlayerDiedServerRpc(); // legacy path; use PlayerDowned in P2P via PlayerStats
         }
         else
         {
@@ -301,11 +468,61 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         GameOverClientRpc();
     }
 
+    // New P2P downed flow entrypoint used by PlayerStats
+    public void PlayerDowned(ulong clientId)
+    {
+        if (!isP2P)
+        {
+            GameOver();
+            return;
+        }
+        if (IsServer)
+        {
+            SetPlayerDownedInternal(clientId);
+        }
+        else
+        {
+            PlayerDownedServerRpc(clientId);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void PlayerDownedServerRpc(ulong clientId)
+    {
+        SetPlayerDownedInternal(clientId);
+    }
+
+    private void SetPlayerDownedInternal(ulong clientId)
+    {
+        // Ensure the server is tracking all connected players. Missing entries default to alive=true
+        if (NetworkManager.Singleton != null)
+        {
+            foreach (var c in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                if (!playerAlive.ContainsKey(c.ClientId)) playerAlive[c.ClientId] = true;
+            }
+        }
+
+        playerAlive[clientId] = false;
+        reviveProgress[clientId] = 0f;
+        // If everyone is downed at this moment, end the game
+        bool anyAlive = false;
+        foreach (var kv in playerAlive)
+        {
+            if (kv.Value) { anyAlive = true; break; }
+        }
+        if (!anyAlive)
+        {
+            GameOverClientRpc();
+        }
+    }
+
     private void GameOver()
     {
         if (CurrentState == GameState.GameOver) return;
         CurrentState = GameState.GameOver;
         if (localPlayer != null) localPlayer.enabled = false;
+        Time.timeScale = 0f; // Stop the game completely
         
         if (uiManager != null)
         {
@@ -349,6 +566,20 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
             StartCoroutine(ShowPauseMenuNextFrame());
     }
 
+    // Global synchronized pause for level up (works in P2P)
+    public void RequestPauseForLevelUp()
+    {
+        if (!isP2P)
+        {
+            RequestPause(false);
+            return;
+        }
+        if (IsServer)
+        {
+            SetPausedClientRpc(true);
+        }
+    }
+
     private IEnumerator ShowPauseMenuNextFrame()
     {
         yield return null;
@@ -364,9 +595,46 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         if (localPlayer != null) localPlayer.enabled = true;
         uiManager?.ShowPauseMenu(false);
     }
+
+    public void ResumeAfterLevelUp()
+    {
+        if (!isP2P)
+        {
+            RequestResume();
+            return;
+        }
+        if (IsServer)
+        {
+            SetPausedClientRpc(false);
+        }
+    }
+
+    [ClientRpc]
+    private void SetPausedClientRpc(bool paused)
+    {
+        if (paused)
+        {
+            CurrentState = GameState.Paused;
+            Time.timeScale = 0f;
+            if (localPlayer != null) localPlayer.enabled = false;
+        }
+        else
+        {
+            CurrentState = GameState.Playing;
+            Time.timeScale = 1f;
+            if (localPlayer != null) localPlayer.enabled = true;
+            uiManager?.ShowPauseMenu(false);
+        }
+    }
     
     private void UpdateTimer()
     {
+        // Server-side revive tracking while playing (P2P only)
+        if (isP2P && IsServer && CurrentState == GameState.Playing)
+        {
+            ServerUpdateRevives();
+        }
+
         float newTime;
         if (isP2P)
         {
@@ -385,6 +653,84 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         {
             if (isP2P) { GameOverClientRpc(); }
             else { GameOver(); }
+        }
+    }
+
+    // Server-side revive logic in P2P
+    private void ServerUpdateRevives()
+    {
+        if (NetworkManager.Singleton == null) return;
+        var nm = NetworkManager.Singleton;
+        foreach (var kvp in playerAlive)
+        {
+            if (kvp.Value) continue; // only check downed players
+            ulong downedId = kvp.Key;
+            if (!nm.ConnectedClients.TryGetValue(downedId, out var downedClient) || downedClient.PlayerObject == null) continue;
+            Transform downedTransform = downedClient.PlayerObject.transform;
+
+            bool rescuerPresent = false;
+            foreach (var rescuer in nm.ConnectedClientsList)
+            {
+                if (rescuer.ClientId == downedId) continue;
+                if (!playerAlive.ContainsKey(rescuer.ClientId) || !playerAlive[rescuer.ClientId]) continue;
+                if (rescuer.PlayerObject == null) continue;
+                float dist = Vector3.Distance(downedTransform.position, rescuer.PlayerObject.transform.position);
+                if (dist <= reviveRadius)
+                {
+                    rescuerPresent = true;
+                    break;
+                }
+            }
+
+            if (rescuerPresent)
+            {
+                float prog = 0f;
+                reviveProgress.TryGetValue(downedId, out prog);
+                prog += Time.deltaTime;
+                if (prog >= reviveTime)
+                {
+                    var ps = downedClient.PlayerObject.GetComponent<PlayerStats>();
+                    if (ps != null)
+                    {
+                        ps.ServerReviveToPercent(0.5f);
+                        playerAlive[downedId] = true;
+                        reviveProgress.Remove(downedId);
+                        // Play revive VFX on all clients
+                        PlayReviveVFXClientRpc(downedClient.PlayerObject.NetworkObjectId);
+                    }
+                }
+                else
+                {
+                    reviveProgress[downedId] = prog;
+                }
+            }
+            else
+            {
+                reviveProgress[downedId] = 0f;
+            }
+        }
+
+        // If after revives all are down, trigger game over
+        bool anyAlive = false;
+        foreach (var kv in playerAlive)
+        {
+            if (kv.Value) { anyAlive = true; break; }
+        }
+        if (!anyAlive)
+        {
+            GameOverClientRpc();
+        }
+    }
+
+    [ClientRpc]
+    private void PlayReviveVFXClientRpc(ulong playerNetId)
+    {
+        if (NetworkManager.Singleton == null) return;
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerNetId, out var netObj))
+        {
+            if (reviveSprite == null) return;
+            var pos = netObj.transform.position;
+            ReviveVFX.Spawn(pos, reviveSprite, reviveColor, reviveVfxDuration, 0.8f, 1.3f, reviveVfxYOffset);
         }
     }
 
@@ -451,5 +797,59 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
     public float GetTotalGameTime()
     {
         return totalGameTime;
+    }
+
+    // =========================
+    // SERVER-AUTHORITATIVE PLAYER DAMAGE (P2P)
+    // =========================
+    // Call this on the server to apply damage to a specific player's character,
+    // and mirror it to that player's client so their local HUD/state stays in sync.
+    public void ServerApplyPlayerDamage(ulong targetClientId, float amount, Vector3? hitFromWorldPos = null, float? customIFrameDuration = null)
+    {
+        if (!isP2P)
+        {
+            // Single-player: just find local PlayerStats and apply directly
+            var ps = FindObjectOfType<PlayerStats>();
+            ps?.ApplyDamage(amount, hitFromWorldPos, customIFrameDuration);
+            return;
+        }
+
+        if (!IsServer)
+        {
+            // Safety: only server should call the authoritative method in P2P
+            return;
+        }
+
+        if (NetworkManager.Singleton == null) return;
+        if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(targetClientId, out var client) || client.PlayerObject == null) return;
+
+        var targetStats = client.PlayerObject.GetComponent<PlayerStats>();
+        if (targetStats != null)
+        {
+            // Apply damage on server for authority
+            targetStats.ApplyDamage(amount, hitFromWorldPos, customIFrameDuration);
+
+            // Now mirror to the owning client so their local PlayerStats/HUD stay consistent
+            var rpcParams = new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { targetClientId } }
+            };
+            ApplyDamageToLocalPlayerClientRpc(amount, hitFromWorldPos.HasValue ? hitFromWorldPos.Value : Vector3.zero, customIFrameDuration.HasValue ? customIFrameDuration.Value : -1f, rpcParams);
+        }
+    }
+
+    [ClientRpc]
+    private void ApplyDamageToLocalPlayerClientRpc(float amount, Vector3 hitFromWorldPos, float iFrameDuration, ClientRpcParams clientRpcParams = default)
+    {
+        // Runs only on the targeted client specified by ServerApplyPlayerDamage
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
+        {
+            var stats = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerStats>();
+            if (stats != null)
+            {
+                float? iframeOpt = (iFrameDuration >= 0f) ? iFrameDuration : (float?)null;
+                stats.ApplyDamage(amount, hitFromWorldPos, iframeOpt);
+            }
+        }
     }
 }

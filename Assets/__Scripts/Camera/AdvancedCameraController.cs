@@ -105,9 +105,17 @@ public class AdvancedCameraController : MonoBehaviour
     // --- Target finding logic remains the same ---
     private bool TryAssignTargetByTag()
     {
+        // Prefer binding to the LOCAL player's NetworkObject if running with Netcode
+        var nm = Unity.Netcode.NetworkManager.Singleton;
+        if (nm != null && nm.IsListening && nm.LocalClient != null && nm.LocalClient.PlayerObject != null)
+        {
+            SetTarget(nm.LocalClient.PlayerObject.transform);
+            return true;
+        }
+
+        // Fallback to a tagged player (single-player or if local not ready yet)
         GameObject taggedPlayer = GameObject.FindGameObjectWithTag("Player");
         if (taggedPlayer == null) return false;
-
         SetTarget(taggedPlayer.transform);
         return true;
     }

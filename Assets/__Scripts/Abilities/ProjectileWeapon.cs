@@ -21,6 +21,10 @@ public class ProjectileWeapon : NetworkBehaviour
         if (rb != null)
         {
             rb.useGravity = false;
+            // Prevent random spinning/rotation drift across clients
+            rb.freezeRotation = true;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         }
     }
 
@@ -46,14 +50,14 @@ public class ProjectileWeapon : NetworkBehaviour
 
     void Update()
     {
-        // Only the server should control the lifetime of the projectile to ensure it disappears for everyone.
-        if (!IsServer) return;
+        // If networking is not active, manage lifetime locally. If networked, server does it.
+        bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        if (isNetworked && !IsServer) return;
 
         lifetime -= Time.deltaTime;
         if (lifetime <= 0f)
         {
-            // Destroy the object on the network.
-            // A NetworkObject's destruction on the server is automatically synced to all clients.
+            // In MP server destroys for everyone; in SP local destroy is fine
             Destroy(gameObject);
         }
     }
@@ -63,9 +67,9 @@ public class ProjectileWeapon : NetworkBehaviour
     /// </summary>
     void OnTriggerEnter(Collider other)
     {
-        // In P2P mode, only the server can register a hit. This prevents cheating.
-        // In SP mode, IsServer is effectively true, so this logic runs correctly.
-        if (!IsServer) return;
+        // In MP, only the server should register hits. In SP, allow local hits.
+        bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        if (isNetworked && !IsServer) return;
 
         if (other.CompareTag("Enemy") || other.CompareTag("Reaper"))
         {

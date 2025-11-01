@@ -75,6 +75,44 @@ public class PlayerExperience : MonoBehaviour
         // Só chama UpgradeManager **uma vez** com o total de level-ups
         if (levelUps > 0 && upgradeManager != null)
         {
+            // Synchronized global pause (server drives via ClientRpc)
+            var gm = GameManager.Instance;
+            gm?.RequestPauseForLevelUp();
+            upgradeManager.EnqueueMultipleLevelUps(levelUps);
+        }
+
+        UpdateUI();
+    }
+
+    // Called when XP has already been scaled by the server's shared team multiplier in P2P
+    public void AddXPFromServerScaled(float scaledXp)
+    {
+        if (!enabled) return;
+
+        currentXP += scaledXp; // do NOT apply local xp multiplier here
+
+        int levelUps = 0;
+        while (currentXP >= xpToNextLevel)
+        {
+            currentXP -= xpToNextLevel;
+            currentLevel++;
+            levelUps++;
+
+            if (playerStats != null)
+                playerStats.ApplyLevelUpScaling();
+
+            if (currentLevel <= 10) xpToNextLevel += earlyLevelXpBonus;
+            else if (currentLevel <= 25) xpToNextLevel *= midGameScalingFactor;
+            else if (currentLevel <= 35) xpToNextLevel *= lateGameScalingFactor;
+            else xpToNextLevel *= endGameScalingFactor;
+
+            xpToNextLevel = Mathf.FloorToInt(xpToNextLevel);
+        }
+
+        if (levelUps > 0 && upgradeManager != null)
+        {
+            var gm = GameManager.Instance;
+            gm?.RequestPauseForLevelUp();
             upgradeManager.EnqueueMultipleLevelUps(levelUps);
         }
 

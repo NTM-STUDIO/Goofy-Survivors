@@ -27,9 +27,16 @@ public class WeaponController : MonoBehaviour
 
     public void Initialize(int id, WeaponData data, PlayerWeaponManager manager, PlayerStats stats, bool owner, WeaponRegistry registry)
     {
+        // Guard against null WeaponData (typically means WeaponRegistry mismatch on this client)
+        if (data == null)
+        {
+            Debug.LogError($"[WC-INIT] Null WeaponData for id {id}. Ensure WeaponRegistry contains this weapon on all clients and the field is assigned.");
+            return;
+        }
+
         // This is the most important log. It confirms the manager has passed the data.
         Debug.Log($"<color=teal>[WC-INIT]</color> WeaponController is being INITIALIZED with data for '{data.name}'. IsOwner: {owner}");
-        
+
         this.weaponId = id;
         this.WeaponData = data;
         this.weaponManager = manager;
@@ -37,7 +44,17 @@ public class WeaponController : MonoBehaviour
         this.isWeaponOwner = owner;
         this.weaponRegistry = registry;
 
-        if (isWeaponOwner && WeaponData.archetype == WeaponArchetype.Aura) { ActivateAura(); }
+        if (isWeaponOwner)
+        {
+            if (WeaponData.archetype == WeaponArchetype.Aura)
+            {
+                ActivateAura();
+            }
+            else if (WeaponData.archetype == WeaponArchetype.Shield)
+            {
+                if (weaponManager != null) weaponManager.NotifyShieldActivated(weaponId);
+            }
+        }
     }
 
     void Update()
@@ -77,12 +94,53 @@ public class WeaponController : MonoBehaviour
 
     private void SpawnShadowClone()
     {
-        if (WeaponData.weaponPrefab == null || weaponManager == null || weaponRegistry == null) return;
+        if (WeaponData == null || WeaponData.weaponPrefab == null)
+        {
+            Debug.LogError("[ShadowClone] WeaponData or prefab is missing.");
+            return;
+        }
+        if (weaponManager == null)
+        {
+            Debug.LogError("[ShadowClone] weaponManager reference is missing on WeaponController.");
+            return;
+        }
+        if (weaponRegistry == null)
+        {
+            Debug.LogError("[ShadowClone] WeaponRegistry reference is missing on WeaponController. Assign it on PlayerWeaponManager and pass into Initialize().");
+            return;
+        }
+
+        // In multiplayer, ask the server to spawn a networked clone and wire server-authoritative aura damage.
+        if (GameManager.Instance != null && GameManager.Instance.isP2P)
+        {
+            // Filter out projectiles and the clone weapon itself
+            List<WeaponData> owned = weaponManager.GetOwnedWeapons();
+            if (owned == null)
+            {
+                Debug.LogWarning("[ShadowClone] No owned weapons list returned.");
+                return;
+            }
+
+            List<int> weaponIdsToClone = owned
+                .Where(w => w.archetype != WeaponArchetype.ShadowCloneJutsu && w.archetype != WeaponArchetype.Projectile)
+                .Select(w => weaponRegistry.GetWeaponId(w))
+                .Where(id => id != -1)
+                .ToList();
+
+            weaponManager.NotifyShadowCloneActivated(weaponId, weaponIdsToClone.ToArray());
+            return;
+        }
+
+        // Single-player fallback: local only
         GameObject cloneObj = Instantiate(WeaponData.weaponPrefab, playerStats.transform.position, playerStats.transform.rotation);
         ShadowClone cloneScript = cloneObj.GetComponent<ShadowClone>();
         if (cloneScript != null)
         {
-            List<WeaponData> weaponsToClone = weaponManager.GetOwnedWeapons().Where(w => w.archetype != WeaponArchetype.ShadowCloneJutsu).ToList();
+            // Do not allow the shadow clone to fire projectiles: filter them out
+            List<WeaponData> weaponsToClone = weaponManager
+                .GetOwnedWeapons()
+                .Where(w => w.archetype != WeaponArchetype.ShadowCloneJutsu && w.archetype != WeaponArchetype.Projectile)
+                .ToList();
             cloneScript.Initialize(weaponsToClone, playerStats, weaponRegistry);
         }
     }
@@ -102,7 +160,8 @@ public class WeaponController : MonoBehaviour
             {
                 Vector3 direction = (target != null) ? (target.position - playerStats.transform.position).normalized : new Vector3(Random.insideUnitCircle.normalized.x, 0, Random.insideUnitCircle.normalized.y);
                 direction.y = 0;
-                GameObject projectileObj = Instantiate(WeaponData.weaponPrefab, playerStats.transform.position, Quaternion.LookRotation(direction));
+                Vector3 spawnPosWithOffset = playerStats.transform.position + Vector3.up * 3f;
+                GameObject projectileObj = Instantiate(WeaponData.weaponPrefab, spawnPosWithOffset, Quaternion.LookRotation(direction));
                 var projectile = projectileObj.GetComponent<ProjectileWeapon>();
                 if (projectile != null)
                 {
@@ -139,6 +198,9 @@ public class WeaponController : MonoBehaviour
         GameObject auraObj = Instantiate(WeaponData.weaponPrefab, weaponManager.transform.position, Quaternion.identity, weaponManager.transform);
         AuraWeapon aura = auraObj.GetComponent<AuraWeapon>();
         if (aura != null) { aura.Initialize(playerStats, WeaponData); }
+
+        // In multiplayer, also notify the server to create the authoritative aura proxy
+        weaponManager.NotifyAuraActivated(weaponId);
     }
 
     public int GetWeaponId() { return this.weaponId; }

@@ -357,9 +357,16 @@ public class EnemyStats : NetworkBehaviour
                 // Spawn orb on server if networked, otherwise local instantiate
                 if (NetworkManager.Singleton != null && IsServer)
                 {
+                    // Ensure orb prefab is registered for network spawn on clients
+                    TryRegisterNetworkPrefab(orb.orbPrefab);
                     GameObject spawned = Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
                     var netObj = spawned.GetComponent<NetworkObject>();
-                    if (netObj != null) netObj.Spawn();
+                    if (netObj == null)
+                    {
+                        // Add a NetworkObject dynamically so the orb is visible to all clients
+                        netObj = spawned.AddComponent<NetworkObject>();
+                    }
+                    netObj.Spawn(true);
                 }
                 else if (NetworkManager.Singleton == null)
                 {
@@ -369,6 +376,12 @@ public class EnemyStats : NetworkBehaviour
             }
             else { randomValue -= orb.dropChance; }
         }
+    }
+
+    // Ensure a prefab is registered with the NetworkManager so runtime-spawned objects can be instantiated on clients
+    private void TryRegisterNetworkPrefab(GameObject prefab)
+    {
+        RuntimeNetworkPrefabRegistry.TryRegister(prefab);
     }
     
     public void ApplyKnockback(float knockbackForce, float duration, Vector3 direction)

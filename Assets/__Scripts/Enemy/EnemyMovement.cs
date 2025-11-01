@@ -149,10 +149,12 @@ public class EnemyMovement : NetworkBehaviour
         if (other.CompareTag("Player") && Time.time >= nextAttackTime)
         {
             nextAttackTime = Time.time + attackCooldown;
-            PlayerStats playerStats = other.GetComponentInParent<PlayerStats>();
-            if (playerStats != null)
+            // Apply damage via GameManager so it mirrors to the owning client as well
+            var netObj = other.GetComponentInParent<NetworkObject>();
+            if (netObj != null)
             {
-                playerStats.ApplyDamage(stats.GetAttackDamage());
+                float dmg = stats.GetAttackDamage();
+                GameManager.Instance?.ServerApplyPlayerDamage(netObj.OwnerClientId, dmg, transform.position, null);
             }
             Vector3 knockbackDirection = (transform.position - other.transform.position).normalized;
             stats.ApplyKnockback(selfKnockbackForce, selfKnockbackDuration, knockbackDirection);

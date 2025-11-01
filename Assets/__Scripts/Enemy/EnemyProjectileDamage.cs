@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Netcode;
 
 [RequireComponent(typeof(Collider))]
 public class EnemyProjectileDamage3D : MonoBehaviour
@@ -31,7 +32,8 @@ public class EnemyProjectileDamage3D : MonoBehaviour
             //Debug.LogWarning("[Projectile Debug] CasterStats have not been set on this projectile!", gameObject);
         }
 
-        damage = _casterStats != null ? _casterStats.baseDamage : 0f;
+        // Use caster's effective attack damage if available (includes global difficulty multiplier)
+        damage = _casterStats != null ? _casterStats.GetAttackDamage() : 0f;
 
     }
     private void OnTriggerEnter(Collider other)
@@ -41,19 +43,30 @@ public class EnemyProjectileDamage3D : MonoBehaviour
             // --- DEBUG ---
             Debug.Log($"[Projectile Debug] Collided with player: '{other.name}'", gameObject);
 
-            var playerStats = other.GetComponentInParent<PlayerStats>();
-
-            if (playerStats != null && CasterStats != null)
+            var netObj = other.GetComponentInParent<NetworkObject>();
+            var isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+            if (isNetworked)
             {
-                Debug.Log($"[Projectile Debug] Applying {CasterStats.baseDamage} damage to the player.", gameObject);
-                playerStats.ApplyDamage(damage, transform.position, 0f);
+                // In P2P, route damage through the server for authority and mirror to owning client
+                if (CasterStats != null && netObj != null && GameManager.Instance != null)
+                {
+                    float finalDmg = (_casterStats != null) ? _casterStats.GetAttackDamage() : damage;
+                    // Always call the server-side damage entrypoint; if we're not server, the server will ignore this direct call
+                    if (NetworkManager.Singleton.IsServer)
+                    {
+                        GameManager.Instance.ServerApplyPlayerDamage(netObj.OwnerClientId, finalDmg, transform.position, 0f);
+                    }
+                    // Even if not server, allow local projectile to be destroyed for visuals
+                }
             }
             else
             {
-                if (playerStats == null)
-                    Debug.LogWarning($"[Projectile Debug] Collision with '{other.name}' but it has no PlayerStats component.", gameObject);
-                if (CasterStats == null)
-                    Debug.LogError("[Projectile Debug] CRITICAL: Tried to apply damage but CasterStats are NULL!", gameObject);
+                // Single-player fallback
+                var playerStats = other.GetComponentInParent<PlayerStats>();
+                if (playerStats != null)
+                {
+                    playerStats.ApplyDamage(damage, transform.position, 0f);
+                }
             }
 
             Destroy(gameObject);

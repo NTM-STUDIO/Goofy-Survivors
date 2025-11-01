@@ -1,8 +1,10 @@
 using UnityEngine;
+using Unity.Netcode;
 
 // 1. Require 3D components instead of 2D
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(SphereCollider))]
+[RequireComponent(typeof(NetworkObject))]
 public class ExperienceOrb : MonoBehaviour
 {
     [Header("Orb Properties")]
@@ -16,6 +18,7 @@ public class ExperienceOrb : MonoBehaviour
     private Transform attractionTarget;
     private bool isAttracted = false;
     private Vector3 currentVelocity = Vector3.zero;
+    private bool collected = false;
 
 
     void Update()
@@ -25,7 +28,7 @@ public class ExperienceOrb : MonoBehaviour
         // 2. Use Vector3.Distance for 3D space
         if (Vector3.Distance(transform.position, attractionTarget.position) < collectionDistance)
         {
-            CollectOrb();
+            if (!collected) CollectOrb();
             return;
         }
 
@@ -53,20 +56,55 @@ public class ExperienceOrb : MonoBehaviour
 
     private void CollectOrb()
     {
-        // GetComponentInParent works the same way in 3D, searching up the hierarchy.
-        PlayerExperience playerExperience = FindFirstObjectByType<PlayerExperience>();
-        PlayerStats playerStats = attractionTarget.GetComponentInParent<PlayerStats>();
+        if (collected) return;
+        collected = true;
 
-        if (playerExperience != null && playerStats != null)
+        // Proactively disable pickup collider/visuals immediately to prevent duplicates while the network despawn propagates
+        var col = GetComponent<Collider>();
+        if (col != null) col.enabled = false;
+        var rend = GetComponentInChildren<Renderer>();
+        if (rend != null) rend.enabled = false;
+
+        var nm = Unity.Netcode.NetworkManager.Singleton;
+        var playerStats = attractionTarget.GetComponentInParent<PlayerStats>();
+
+        if (playerStats == null)
+        {
+            Debug.LogWarning("ExperienceOrb: Missing PlayerStats on attraction target's parent.", attractionTarget);
+            Destroy(gameObject);
+            return;
+        }
+
+        // Multiplayer: server awards shared XP to everyone and despawns orb
+        if (nm != null && nm.IsListening)
+        {
+            if (Unity.Netcode.NetworkManager.Singleton.IsServer)
+            {
+                var gm = FindFirstObjectByType<GameManager>();
+                if (gm != null)
+                {
+                    // Pass raw XP; GameManager will scale by shared team multiplier on server
+                    gm.DistributeSharedXP(xpValue);
+                }
+
+                // Despawn or destroy
+                var netObj = GetComponent<Unity.Netcode.NetworkObject>();
+                if (netObj != null) netObj.Despawn(true); else Destroy(gameObject);
+            }
+            else
+            {
+                // Clients do nothing; server will despawn
+            }
+            return;
+        }
+
+        // Single-player: apply directly and destroy
+        var playerExperience = FindFirstObjectByType<PlayerExperience>();
+        if (playerExperience != null)
         {
             float finalXp = xpValue * playerStats.xpGainMultiplier;
             playerExperience.AddXP(finalXp);
         }
-        else
-        {
-            Debug.LogWarning("ExperienceOrb: Could not find PlayerExperience or PlayerStats on the parent of the attraction target!", attractionTarget);
-        }
-
         Destroy(gameObject);
     }
 }

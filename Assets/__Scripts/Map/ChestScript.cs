@@ -11,7 +11,7 @@ public class ChestScript : MonoBehaviour
     private bool hasOpened = false;
 
     // This method should be called by the player who interacts with the chest.
-    public void OpenChest()
+    public void OpenChest(PlayerWeaponManager interactingPlayer)
     {
         if (hasOpened) return; // Prevent opening the same chest twice
         hasOpened = true;
@@ -23,22 +23,15 @@ public class ChestScript : MonoBehaviour
             return;
         }
 
-        // In a multiplayer game, you would ideally get the PlayerWeaponManager from the specific player who opened the chest.
-        // FindObjectOfType will find the first one, which works for single-player but might not be the correct player in multiplayer.
-        // For now, this matches your original logic.
-        PlayerWeaponManager playerWeaponManager = FindObjectOfType<PlayerWeaponManager>();
-        if (playerWeaponManager == null)
+        // Use the specific player who opened the chest (passed from trigger)
+        if (interactingPlayer == null)
         {
-            Debug.LogError("OpenChest failed: Could not find a PlayerWeaponManager in the scene.", this.gameObject);
+            Debug.LogError("OpenChest failed: Interacting PlayerWeaponManager was null.", this.gameObject);
             return;
         }
 
         UIManager uiManager = FindObjectOfType<UIManager>();
-        if (uiManager == null)
-        {
-            Debug.LogError("OpenChest failed: Could not find a UIManager in the scene.", this.gameObject);
-            return;
-        }
+        // In P2P we do not need UIManager here on the server, as UI will be shown via targeted ClientRpc
 
         // --- CORE LOGIC (THE FIX) ---
 
@@ -46,7 +39,7 @@ public class ChestScript : MonoBehaviour
         List<WeaponData> allPossibleWeapons = weaponRegistry.allWeapons;
 
         // 2. Get the list of weapons the player ALREADY has by calling the new helper method.
-        List<WeaponData> ownedWeapons = playerWeaponManager.GetOwnedWeapons();
+    List<WeaponData> ownedWeapons = interactingPlayer.GetOwnedWeapons();
 
         // 3. Use LINQ's Except() to find the weapons the player does NOT own yet.
         List<WeaponData> availableWeapons = allPossibleWeapons
@@ -55,17 +48,28 @@ public class ChestScript : MonoBehaviour
 
         // --- AWARDING THE WEAPON ---
 
-        if (availableWeapons.Count > 0)
+    if (availableWeapons.Count > 0)
         {
             // Pick a random weapon from the list of available ones.
             int randomIndex = Random.Range(0, availableWeapons.Count);
             WeaponData newWeapon = availableWeapons[randomIndex];
 
-            // Use the refactored AddWeapon method. This works for both single-player and multiplayer.
-            playerWeaponManager.AddWeapon(newWeapon);
-
-            // Trigger the UI to show what the player got.
-            uiManager.OpenNewWeaponPanel(newWeapon);
+            // Award only to the interacting player
+            var gm = GameManager.Instance;
+            if (gm != null && gm.isP2P)
+            {
+                // Server gives to the owner and shows UI on that client's screen only
+                interactingPlayer.Server_GiveWeaponToOwner(weaponRegistry.GetWeaponId(newWeapon));
+            }
+            else
+            {
+                // Single-player path: add locally and show UI locally
+                interactingPlayer.AddWeapon(newWeapon);
+                if (uiManager != null)
+                {
+                    uiManager.OpenNewWeaponPanel(newWeapon);
+                }
+            }
         }
         else
         {

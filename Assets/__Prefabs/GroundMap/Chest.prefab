@@ -9,6 +9,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 495033315148591382}
+  - component: {fileID: 2483148925865283412}
+  - component: {fileID: 3853868068477018016}
+  - component: {fileID: 3962681196931342173}
+  - component: {fileID: 7494744170036592379}
   m_Layer: 3
   m_Name: Chest
   m_TagString: Chest
@@ -32,6 +36,84 @@ Transform:
   - {fileID: 4039407430364483504}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2483148925865283412
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1010114737999647873}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 2087271559
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &3853868068477018016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1010114737999647873}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15add6ebf18a11a4b9b502879fa8c7f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weaponRegistry: {fileID: 11400000, guid: 414a3541d8443cd4cad6a5ea659d2804, type: 2}
+--- !u!136 &3962681196931342173
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1010114737999647873}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 2.44
+  m_Height: 5.7600007
+  m_Direction: 1
+  m_Center: {x: 1.33, y: 2.544988, z: 0.7}
+--- !u!114 &7494744170036592379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1010114737999647873}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f95fe04a170072644a1bf3cf8340fa8a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  possibleDrops:
+  - itemPrefab: {fileID: 8326750618715067698, guid: b16da58f35868b846a58e1a345e542c0, type: 3}
+    weight: 1
+  chestScript: {fileID: 3853868068477018016}
 --- !u!1 &8334016912728966066
 GameObject:
   m_ObjectHideFlags: 0
@@ -42,9 +124,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4039407430364483504}
   - component: {fileID: 5578774135293464776}
-  - component: {fileID: 8561615044871465376}
-  - component: {fileID: 1045103857582845667}
-  - component: {fileID: 4704480463698377230}
   m_Layer: 3
   m_Name: ChestSprite
   m_TagString: Chest
@@ -108,9 +187,9 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 724221727
-  m_SortingLayer: 2
-  m_SortingOrder: 2
+  m_SortingLayerID: -394448813
+  m_SortingLayer: 3
+  m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 541af25eef3c29f4a96016e4b57cd759, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -122,57 +201,3 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &8561615044871465376
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8334016912728966066}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f95fe04a170072644a1bf3cf8340fa8a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MapConsumable
-  possibleDrops:
-  - itemPrefab: {fileID: 8326750618715067698, guid: b16da58f35868b846a58e1a345e542c0, type: 3}
-    weight: 5
-  - itemPrefab: {fileID: 8326750618715067698, guid: cf8c502583dc846429ef24883c06c64e, type: 3}
-    weight: 0.5
-  chestScript: {fileID: 1045103857582845667}
---- !u!114 &1045103857582845667
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8334016912728966066}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15add6ebf18a11a4b9b502879fa8c7f1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  weaponRegistry: {fileID: 11400000, guid: 414a3541d8443cd4cad6a5ea659d2804, type: 2}
---- !u!136 &4704480463698377230
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8334016912728966066}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 3.23
-  m_Height: 5.7600007
-  m_Direction: 1
-  m_Center: {x: 0.55948836, y: 2.544988, z: 0.00000001667405}

@@ -486,7 +486,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dayDurationSeconds: 120
   sunriseAngle: 40
-  sunsetAngle: 120
+  sunsetAngle: 60
   maxIntensity: 0.5
   intensityCurve:
     serializedVersion: 2
@@ -842,10 +842,17 @@ MonoBehaviour:
   enemyDespawner: {fileID: 1572984513}
   upgradeManager: {fileID: 1162585565}
   playerExperience: {fileID: 1772095425}
+  mapGenerator: {fileID: 729974981}
   playerSpawnPoint: {fileID: 788642270}
   bossPrefab: {fileID: 3436535658513195518, guid: 5cb7a38816e0cad4c92375cb991fce1f, type: 3}
   bossSpawnPoint: {fileID: 0}
   totalGameTime: 300
+  reviveRadius: 20
+  reviveTime: 5
+  reviveSprite: {fileID: 21300000, guid: 74f19aa955f53dd4b8fda941f6a0b9e1, type: 3}
+  reviveColor: {r: 1, g: 1, b: 1, a: 1}
+  reviveVfxDuration: 0.8
+  reviveVfxYOffset: 2
   difficultyIncreaseInterval: 25
   generalStrengthMultiplier: 1.25
   baseProjectileSpeed: 20
@@ -915,7 +922,7 @@ MonoBehaviour:
   - assetPrefab: {fileID: 383518980796734899, guid: 3c470efbfdb7fc2489ee1cbd65392cda, type: 3}
     weight: 0.4
   - assetPrefab: {fileID: 1010114737999647873, guid: 400cca9a532574a48875d09870502710, type: 3}
-    weight: 25
+    weight: 5
   - assetPrefab: {fileID: 485895516535105435, guid: 5922ebbfd4d78944e8dc01825f225fe0, type: 3}
     weight: 0.004
   mapWidth: 500

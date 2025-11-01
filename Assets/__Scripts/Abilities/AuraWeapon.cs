@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Netcode;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -12,6 +13,7 @@ public class AuraWeapon : MonoBehaviour
     // References to live data
     private PlayerStats playerStats;
     private WeaponData weaponData;
+    private NetworkedPlayerStatsTracker tracker; // optional: used for synced visuals when owner is remote
 
     // Internal timer for damage ticks
     private float damageTickCooldown;
@@ -28,27 +30,44 @@ public class AuraWeapon : MonoBehaviour
         this.weaponData = data;
     }
 
+    // Overload for remote-owner visuals: use tracker for size/knockback multipliers
+    public void Initialize(NetworkedPlayerStatsTracker syncedTracker, WeaponData data)
+    {
+        this.tracker = syncedTracker;
+        this.weaponData = data;
+    }
+
     void Update()
     {
-        // If the references are not set (e.g., frame before Initialize is called), do nothing.
-        if (playerStats == null || weaponData == null)
+        // Require weapon data; allow missing playerStats when using tracker for remote-owner visuals
+        if (weaponData == null)
         {
             return;
         }
 
         // --- CONTINUOUS STAT UPDATES ---
-        // Update the aura's size every frame to reflect any changes in player stats.
-        float currentSize = weaponData.area * playerStats.projectileSizeMultiplier;
+        // Update the aura's size every frame to reflect any changes in stats (tracker preferred for remote owners).
+        float sizeMult = 1f;
+        if (tracker != null) sizeMult = tracker.ProjectileSize.Value;
+        else if (playerStats != null) sizeMult = playerStats.projectileSizeMultiplier;
+        float currentSize = weaponData.area * sizeMult;
         transform.localScale = Vector3.one * currentSize;
-        
-        // --- DAMAGE TICK LOGIC ---
+
+        // In multiplayer, the server-only ServerAura applies damage.
+        // Local AuraWeapon should be visual-only when a network session is active.
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            return;
+        }
+
+        // --- DAMAGE TICK LOGIC (single-player only) ---
         damageTickCooldown -= Time.deltaTime;
         if (damageTickCooldown <= 0f)
         {
             ApplyDamageToEnemies();
-            
+
             // Reset the cooldown based on the player's current attack speed.
-            float finalAttackSpeed = playerStats.attackSpeedMultiplier;
+            float finalAttackSpeed = playerStats != null ? playerStats.attackSpeedMultiplier : 1f;
             damageTickCooldown = weaponData.cooldown / Mathf.Max(0.01f, finalAttackSpeed);
         }
     }
@@ -63,7 +82,8 @@ public class AuraWeapon : MonoBehaviour
 
         if (enemiesInRange.Any())
         {
-            float finalKnockback = weaponData.knockback * playerStats.knockbackMultiplier;
+            float knockbackMult = tracker != null ? tracker.Knockback.Value : (playerStats != null ? playerStats.knockbackMultiplier : 1f);
+            float finalKnockback = weaponData.knockback * knockbackMult;
 
             // Apply damage to every enemy currently in the list.
             foreach (EnemyStats enemy in enemiesInRange)

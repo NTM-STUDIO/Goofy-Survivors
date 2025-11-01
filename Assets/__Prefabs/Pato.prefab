@@ -313,6 +313,7 @@ GameObject:
   - component: {fileID: 7629850890781329749}
   - component: {fileID: -9205678879833524372}
   - component: {fileID: 1471733981330585159}
+  - component: {fileID: -5859217750854589408}
   m_Layer: 0
   m_Name: Pato
   m_TagString: Player
@@ -522,3 +523,16 @@ MonoBehaviour:
   UseRigidBodyForMotion: 0
   AutoUpdateKinematicState: 0
   AutoSetKinematicOnDespawn: 0
+--- !u!114 &-5859217750854589408
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5781343528486485951}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30b8833a650db5b4cbc328bd91d38619, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1

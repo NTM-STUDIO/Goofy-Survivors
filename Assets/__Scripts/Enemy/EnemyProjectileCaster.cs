@@ -20,6 +20,10 @@ public class EnemyProjectileCaster : MonoBehaviour
     [Tooltip("The minimum distance. If the player gets closer, the enemy backs up.")]
     public float retreatDistance = 8f;
 
+    [Header("Projectile Spread")]
+    [Tooltip("Half-angle of the aim cone in degrees. 0 = perfect aim, 15 = +/-15° spread.")]
+    [Range(0f, 45f)] public float spreadAngleDegrees = 10f;
+
     // --- Private Variables ---
     private Rigidbody rb;
     private EnemyStats myStats;
@@ -35,11 +39,11 @@ public class EnemyProjectileCaster : MonoBehaviour
 
     void Start()
     {
-        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-        if (playerObj != null) player = playerObj.transform;
-        else
+        // Find an initial target; in P2P we'll dynamically retarget to the nearest player
+        player = FindNearestPlayer();
+        if (player == null)
         {
-            Debug.LogError("EnemyCasterAI: Player object not found! Disabling AI.", this);
+            Debug.LogError("EnemyCasterAI: No player found! Disabling AI.", this);
             this.enabled = false;
             return;
         }
@@ -55,7 +59,10 @@ public class EnemyProjectileCaster : MonoBehaviour
         if (myStats.IsKnockedBack) return;
         if (player == null) return;
 
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+    // Retarget to the nearest player each frame in P2P; SP keeps original target
+    var latestPlayer = FindNearestPlayer();
+    if (latestPlayer != null) player = latestPlayer;
+    float distanceToPlayer = Vector3.Distance(transform.position, player.position);
 
         // --- MODIFIED: Removed the Idle case ---
         switch (currentState)
@@ -151,20 +158,35 @@ public class EnemyProjectileCaster : MonoBehaviour
     {
         if (projectilePrefab == null || firePoint == null || player == null) return;
 
+        // Base direction towards player (XZ plane)
         Vector3 direction = (player.position - firePoint.position).normalized;
+        direction.y = 0f;
+        // Apply a random yaw within the cone for inaccuracy
+        if (spreadAngleDegrees > 0f)
+        {
+            float yaw = Random.Range(-spreadAngleDegrees, spreadAngleDegrees);
+            direction = Quaternion.AngleAxis(yaw, Vector3.up) * direction;
+            direction.Normalize();
+        }
         GameObject projectile = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
         Transform visualsChild = projectile.transform.Find("Visuals");
 
         if (visualsChild != null)
         {
-            Vector2 projectileScreenPos = Camera.main.WorldToScreenPoint(firePoint.position);
-            Vector2 playerScreenPos = Camera.main.WorldToScreenPoint(player.position);
-            Vector2 screenDirection = (playerScreenPos - projectileScreenPos).normalized;
-            float aimingAngleZ = Mathf.Atan2(screenDirection.y, screenDirection.x) * Mathf.Rad2Deg + 90f;
+            // Point visuals in the actual shot direction (using a pseudo target along the direction)
+            Vector3 aimPoint = firePoint.position + direction * 5f;
+            Camera cam = Camera.main;
+            if (cam != null)
+            {
+                Vector2 projectileScreenPos = cam.WorldToScreenPoint(firePoint.position);
+                Vector2 aimScreenPos = cam.WorldToScreenPoint(aimPoint);
+                Vector2 screenDirection = (aimScreenPos - projectileScreenPos).normalized;
+                float aimingAngleZ = Mathf.Atan2(screenDirection.y, screenDirection.x) * Mathf.Rad2Deg + 90f;
 
-            Quaternion baseIsoRotation = Quaternion.Euler(30, 45, 0);
-            Quaternion aimingRotation = Quaternion.Euler(0, 0, aimingAngleZ);
-            visualsChild.rotation = baseIsoRotation * aimingRotation;
+                Quaternion baseIsoRotation = Quaternion.Euler(30, 45, 0);
+                Quaternion aimingRotation = Quaternion.Euler(0, 0, aimingAngleZ);
+                visualsChild.rotation = baseIsoRotation * aimingRotation;
+            }
         }
         else
         {
@@ -188,6 +210,33 @@ public class EnemyProjectileCaster : MonoBehaviour
     // --- MODIFIED: Removed GetCurrentSightRange as it's no longer used ---
     private float GetCurrentFireRate() => GameManager.Instance ? GameManager.Instance.currentFireRate : 2f;
     private float GetCurrentProjectileSpeed() => GameManager.Instance ? GameManager.Instance.currentProjectileSpeed : 15f;
+
+    private Transform FindNearestPlayer()
+    {
+        // Prefer networked list in P2P; fallback to tag search in SP.
+        if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening)
+        {
+            float best = float.MaxValue;
+            Transform bestT = null;
+            foreach (var client in Unity.Netcode.NetworkManager.Singleton.ConnectedClientsList)
+            {
+                if (client.PlayerObject == null) continue;
+                Transform t = client.PlayerObject.transform;
+                float d = Vector3.Distance(transform.position, t.position);
+                if (d < best)
+                {
+                    best = d;
+                    bestT = t;
+                }
+            }
+            return bestT;
+        }
+        else
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            return playerObj != null ? playerObj.transform : null;
+        }
+    }
 
     void OnDrawGizmosSelected()
     {
