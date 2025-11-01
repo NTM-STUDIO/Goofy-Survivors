@@ -154,7 +154,12 @@ public class EnemyStats : NetworkBehaviour
         // If networked and active, only the server should modify health. Clients should not directly change it.
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            if (!IsServer) return; // In this project projectiles call TakeDamage on server already.
+            if (!IsServer) 
+            {
+                // Clients should request damage via ServerRpc
+                TakeDamageServerRpc(damage, isCritical);
+                return;
+            }
 
             if (netCurrentHealth.Value <= 0f) return;
 
@@ -206,6 +211,12 @@ public class EnemyStats : NetworkBehaviour
         {
             Die();
         }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void TakeDamageServerRpc(float damage, bool isCritical)
+    {
+        TakeDamage(damage, isCritical);
     }
 
     private void OnNetworkHealthChanged(float oldValue, float newValue)
@@ -261,6 +272,13 @@ public class EnemyStats : NetworkBehaviour
             enemyRenderer.color = originalColor;
         }
         CurrentMutation = MutationType.None;
+
+        // Sync the mutation change over network
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && IsServer)
+        {
+            netMutation.Value = (int)CurrentMutation;
+        }
+
         return stolenType;
     }
     
@@ -387,6 +405,16 @@ public class EnemyStats : NetworkBehaviour
     public void ApplyKnockback(float knockbackForce, float duration, Vector3 direction)
     {
         if (isUnknockable || IsKnockedBack || knockbackForce <= 0) return;
+        
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            if (!IsServer)
+            {
+                ApplyKnockbackServerRpc(knockbackForce, duration, direction);
+                return;
+            }
+        }
+        
         float resistanceMultiplier = 1f - currentKnockbackResistance;
         float effectiveForce = knockbackForce * resistanceMultiplier;
         float effectiveDuration = duration * resistanceMultiplier;
@@ -398,6 +426,12 @@ public class EnemyStats : NetworkBehaviour
             currentKnockbackResistance += resistanceIncreasePerHit;
             currentKnockbackResistance = Mathf.Min(currentKnockbackResistance, maxResistance);
         }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void ApplyKnockbackServerRpc(float knockbackForce, float duration, Vector3 direction)
+    {
+        ApplyKnockback(knockbackForce, duration, direction);
     }
 
     private IEnumerator KnockbackRoutine(float force, float duration, Vector3 direction)
