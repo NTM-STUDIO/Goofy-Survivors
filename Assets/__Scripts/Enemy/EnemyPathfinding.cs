@@ -29,8 +29,8 @@ public class EnemyPathfinding : MonoBehaviour
             return;
         }
 
-        // Attempt to find the player, but don't disable the script if not found yet.
-        FindPlayer();
+    // Initial player search (may be empty at start)
+    FindPlayer();
 
         if (Pathfinding.Instance == null)
         {
@@ -51,12 +51,17 @@ public class EnemyPathfinding : MonoBehaviour
 
     private void Update()
     {
-        // If player is not found, keep trying to find it.
+        // Always check for player in case it spawns after Start
         if (player == null)
         {
             FindPlayer();
-            // If still not found, do nothing this frame.
-            if (player == null) return;
+            if (player == null)
+            {
+                // Only log once every few seconds to avoid spam
+                if (Time.frameCount % 60 == 0)
+                    Debug.Log($"[{gameObject.name}] PATHFINDING: No player found with tag 'Player'. Waiting for player spawn.", this);
+                return;
+            }
         }
 
         // Only update path in Update, not movement
