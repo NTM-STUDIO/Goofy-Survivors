@@ -120,8 +120,14 @@ GameObject:
   m_Component:
   - component: {fileID: 515978112563117300}
   - component: {fileID: 3474508115685643033}
-  - component: {fileID: 7308325972389886591}
+  - component: {fileID: 1559868650016907725}
+  - component: {fileID: 1787321919941772951}
+  - component: {fileID: 2123501208306095304}
+  - component: {fileID: 7514358417839774813}
+  - component: {fileID: 7048231635412883194}
+  - component: {fileID: 6427386719359412490}
   - component: {fileID: 2324441286661468994}
+  - component: {fileID: 1768071669699037903}
   m_Layer: 0
   m_Name: Zappy
   m_TagString: Enemy
@@ -172,7 +178,30 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 116
   m_CollisionDetection: 0
---- !u!114 &7308325972389886591
+--- !u!136 &1559868650016907725
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4496776415297934645}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Height: 1
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1787321919941772951
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -181,20 +210,105 @@ MonoBehaviour:
   m_GameObject: {fileID: 4496776415297934645}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 78d38f3981850ff4bab94d8bddb1c5eb, type: 3}
+  m_Script: {fileID: 11500000, guid: 4c199a8def44ef8479313b6c796285b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  behaviour: 0
-  randomizeOnAwake: 1
-  predictiveChance: 0.6
-  flankChance: 0.3
-  leadTime: 0.5
-  flankOffset: 2
-  flankFalloffDistance: 2
-  attackCooldown: 1
-  selfKnockbackForce: 25
-  selfKnockbackDuration: 1
-  showGizmos: 1
+  executeInUpdate: 1
+  executeInFixedUpdate: 0
+--- !u!114 &2123501208306095304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4496776415297934645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06226529016eb0b4ca8868f68afd51e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerTag: Player
+  aggroRange: 50
+  attackRange: 2
+  attackCooldown: 2
+  retreatMinDistance: 10
+  retreatMaxDistance: 30
+  retreatWaitTime: 1
+  retreatSpeedMultiplier: 5
+  speedMultiplier: 1.5
+  moveDuration: 0.3
+  stopDuration: 0.2
+  timeRandomness: 0.1
+  erraticness: 1
+  directionChangeInterval: 0.15
+  maxAngleDeviation: 45
+  speedBurstChance: 0
+  burstSpeedMultiplier: 4
+  burstDuration: 0.5
+  useAfterimages: 1
+  burstColor: {r: 1, g: 1, b: 0.3, a: 1}
+  showDebugGizmos: 1
+--- !u!114 &7514358417839774813
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4496776415297934645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8a22a0c1be6a174fbbcaa4dfd26c062, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  detectionRadius: 5
+  projectileLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  dodgeChance: 0.8
+  dodgeCooldown: 1
+  useSpeedBurstDodge: 1
+  showDetectionRadius: 1
+--- !u!114 &7048231635412883194
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4496776415297934645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9478e84f3f399f84fbf037dd8f6e9efe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  spawnInterval: 0.01
+  afterimageColor: {r: 1, g: 1, b: 0, a: 0.5}
+  fadeTime: 0.5
+  sortingOrderOffset: -1
+--- !u!114 &6427386719359412490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4496776415297934645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 2103521596
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &2324441286661468994
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -207,6 +321,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 853117fdcad11eb468dce0024d64eb22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   damagePopupPrefab: {fileID: 0}
   popupSpawnPoint: {fileID: 0}
   baseHealth: 1000
@@ -225,6 +340,52 @@ MonoBehaviour:
   orbDrops:
   - orbPrefab: {fileID: 8326750618715067698, guid: b16da58f35868b846a58e1a345e542c0, type: 3}
     dropChance: 100
+--- !u!114 &1768071669699037903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4496776415297934645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkTransformExpanded: 0
+  AutoOwnerAuthorityTickOffset: 1
+  PositionInterpolationType: 0
+  RotationInterpolationType: 0
+  ScaleInterpolationType: 0
+  PositionLerpSmoothing: 1
+  PositionMaxInterpolationTime: 0.1
+  RotationLerpSmoothing: 1
+  RotationMaxInterpolationTime: 0.1
+  ScaleLerpSmoothing: 1
+  ScaleMaxInterpolationTime: 0.1
+  AuthorityMode: 0
+  TickSyncChildren: 0
+  UseUnreliableDeltas: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
+  SyncRotAngleX: 1
+  SyncRotAngleY: 1
+  SyncRotAngleZ: 1
+  SyncScaleX: 1
+  SyncScaleY: 1
+  SyncScaleZ: 1
+  PositionThreshold: 0.001
+  RotAngleThreshold: 0.01
+  ScaleThreshold: 0.01
+  UseQuaternionSynchronization: 0
+  UseQuaternionCompression: 0
+  UseHalfFloatPrecision: 0
+  InLocalSpace: 0
+  SwitchTransformSpaceWhenParented: 0
+  Interpolate: 1
+  SlerpPosition: 0
 --- !u!1 &4514065415740954002
 GameObject:
   m_ObjectHideFlags: 0
