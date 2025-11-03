@@ -43,7 +43,6 @@ GameObject:
   - component: {fileID: 8947401097208141202}
   - component: {fileID: 6451281974338076264}
   - component: {fileID: 6532990679494418986}
-  - component: {fileID: 119259441689944566}
   - component: {fileID: 1220579941828103973}
   m_Layer: 0
   m_Name: Visuals
@@ -160,23 +159,6 @@ CapsuleCollider:
   m_Height: 5.544503
   m_Direction: 2
   m_Center: {x: -0.31592524, y: 3.5681722, z: 1.2883835}
---- !u!114 &119259441689944566
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2055715870274457301}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_IsGlobal: 0
-  priority: 1
-  blendDistance: 0
-  weight: 1
-  sharedProfile: {fileID: 11400000, guid: 4f34d30a03600564b9fb18858b4dfb9c, type: 2}
 --- !u!136 &1220579941828103973
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -445,6 +427,7 @@ MonoBehaviour:
   invincibilityDuration: 0.4
   invincible: 0
   spriteRenderer: {fileID: 8947401097208141202}
+  downedSprite: {fileID: 21300000, guid: fa879e9aa31e3574089917b0dce51c88, type: 3}
   hurtFlashColor: {r: 0.9716981, g: 0.041251317, b: 0.041251317, a: 1}
   hurtFlashTime: 0.4
 --- !u!114 &7629850890781329749

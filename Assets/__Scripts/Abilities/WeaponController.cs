@@ -60,6 +60,8 @@ public class WeaponController : MonoBehaviour
     void Update()
     {
         if (!isWeaponOwner || WeaponData == null || playerStats == null) return;
+        // Do not auto-cast when the player is downed
+        if (playerStats.IsDowned) return;
         if (WeaponData.archetype == WeaponArchetype.Aura || WeaponData.archetype == WeaponArchetype.Shield) return;
 
         currentCooldown -= Time.deltaTime;

@@ -67,9 +67,18 @@ public class PlayerStats : MonoBehaviour
     [SerializeField] private float invincibilityDuration = 0.6f;
     [SerializeField] private bool invincible = false;
     [SerializeField] private SpriteRenderer spriteRenderer;
+    [Tooltip("Sprite shown while the player is downed (0 HP). Leave empty to keep current sprite.")]
+    [SerializeField] private Sprite downedSprite;
     [ColorUsage(true, true)][SerializeField] private Color hurtFlashColor = new Color(1f, 0.4f, 0.4f, 1f);
     [SerializeField] private float hurtFlashTime = 0.1f;
     private Color _originalColor;
+    private Sprite _originalSprite;
+    private string _originalSortingLayer;
+
+    // Public getters for visual assets used by GameManager in MP
+    public Sprite DownedSprite => downedSprite;
+    public Sprite OriginalSprite => _originalSprite;
+    public string OriginalSortingLayer => _originalSortingLayer;
 
     public event Action<int, int> OnHealthChanged;
     public event Action OnDamaged;
@@ -193,7 +202,12 @@ public class PlayerStats : MonoBehaviour
         foreach (var bonus in characterData.startingBonuses) { ApplyStatBonus(bonus); }
         currentHp = maxHp;
         if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-        if (spriteRenderer != null) _originalColor = spriteRenderer.color;
+        if (spriteRenderer != null)
+        {
+            _originalColor = spriteRenderer.color;
+            _originalSprite = spriteRenderer.sprite;
+            _originalSortingLayer = spriteRenderer.sortingLayerName;
+        }
         OnHealthChanged?.Invoke(currentHp, maxHp);
         // Update local HUD only for the owning client (or in single-player)
         var nm = NetworkManager.Singleton;
@@ -306,6 +320,12 @@ public class PlayerStats : MonoBehaviour
         Debug.Log("Player died.");
         OnDeath?.Invoke();
         IsDowned = true;
+        if (spriteRenderer != null && downedSprite != null)
+        {
+            spriteRenderer.sprite = downedSprite;
+            // Move to map cosmetic sorting layer while downed for clarity
+            spriteRenderer.sortingLayerName = "MAPCOSMETIC";
+        }
         var movement = GetComponent<Movement>();
         if (movement != null) { movement.enabled = false; }
         var colls = GetComponentsInChildren<Collider>();
@@ -318,12 +338,39 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
+    // CLIENT-SIDE helpers to keep local owner in sync with server downed state
+    public void ClientApplyDownedState()
+    {
+        IsDowned = true;
+        var movement = GetComponent<Movement>();
+        if (movement != null) { movement.enabled = false; }
+        var colls = GetComponentsInChildren<Collider>();
+        foreach (var c in colls) c.enabled = false;
+    }
+
+    public void ClientApplyRevivedState()
+    {
+        IsDowned = false;
+        var movement = GetComponent<Movement>();
+        if (movement != null) { movement.enabled = true; }
+        var colls = GetComponentsInChildren<Collider>(true);
+        foreach (var c in colls) c.enabled = true;
+    }
+
     // Server-only revive helper
     public void ServerReviveToPercent(float percent)
     {
         percent = Mathf.Clamp01(percent);
         currentHp = Mathf.Max(1, Mathf.RoundToInt(maxHp * percent));
         IsDowned = false;
+        if (spriteRenderer != null && _originalSprite != null)
+        {
+            spriteRenderer.sprite = _originalSprite;
+            if (!string.IsNullOrEmpty(_originalSortingLayer))
+            {
+                spriteRenderer.sortingLayerName = _originalSortingLayer;
+            }
+        }
         var movement = GetComponent<Movement>();
         if (movement != null) { movement.enabled = true; }
         var colls = GetComponentsInChildren<Collider>(true);

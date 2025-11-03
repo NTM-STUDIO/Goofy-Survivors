@@ -98,8 +98,16 @@ public class ProjectileWeapon : NetworkBehaviour
         lifetime -= Time.deltaTime;
         if (lifetime <= 0f)
         {
-            // In MP server destroys for everyone; in SP local destroy is fine
-            Destroy(gameObject);
+            // In MP the server should despawn the NetworkObject; in SP local destroy is fine
+            var no = GetComponent<NetworkObject>();
+            if (isNetworked && no != null && no.IsSpawned)
+            {
+                no.Despawn(true);
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
     }
 
@@ -127,8 +135,16 @@ public class ProjectileWeapon : NetworkBehaviour
                     enemyStats.ApplyKnockback(knockbackForce, 0.4f, knockbackDirection);
                 }
 
-                // The server destroys the projectile for everyone.
-                Destroy(gameObject);
+                // The server despawns the projectile for everyone when networked; otherwise destroy locally.
+                var no = GetComponent<NetworkObject>();
+                if (isNetworked && no != null && no.IsSpawned)
+                {
+                    no.Despawn(true);
+                }
+                else
+                {
+                    Destroy(gameObject);
+                }
             }
         }
     }

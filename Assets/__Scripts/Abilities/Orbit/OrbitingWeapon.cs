@@ -113,7 +113,11 @@ public class OrbitingWeapon : NetworkBehaviour
         }
         else
         {
-            if(IsServer) Destroy(gameObject);
+            if (IsServer)
+            {
+                var no = GetComponent<NetworkObject>();
+                if (no != null && no.IsSpawned) no.Despawn(true); else Destroy(gameObject);
+            }
         }
     }
     #endregion
@@ -237,7 +241,11 @@ public class OrbitingWeapon : NetworkBehaviour
         if (!isInitialized || orbitCenter == null || statsTracker == null)
         {
             // Failsafe cleanup for orphaned objects that fail to initialize.
-            if (lifetime < -5f && (!isP2P || IsServer)) { Destroy(gameObject); }
+            if (lifetime < -5f && (!isP2P || IsServer))
+            {
+                var no = GetComponent<NetworkObject>();
+                if (isP2P && IsServer && no != null && no.IsSpawned) no.Despawn(true); else Destroy(gameObject);
+            }
             lifetime -= Time.deltaTime;
             return;
         }
@@ -251,7 +259,8 @@ public class OrbitingWeapon : NetworkBehaviour
                 bool hasOwner = nm.SpawnManager.SpawnedObjects.ContainsKey(ownerNetId.Value);
                 if (!hasOwner)
                 {
-                    Destroy(gameObject);
+                    var no = GetComponent<NetworkObject>();
+                    if (no != null && no.IsSpawned) no.Despawn(true); else Destroy(gameObject);
                     return;
                 }
             }
@@ -260,7 +269,11 @@ public class OrbitingWeapon : NetworkBehaviour
         lifetime -= Time.deltaTime;
         if (lifetime <= 0f)
         {
-            if (!isP2P || IsServer) { Destroy(gameObject); }
+            if (!isP2P || IsServer)
+            {
+                var no = GetComponent<NetworkObject>();
+                if (isP2P && IsServer && no != null && no.IsSpawned) no.Despawn(true); else Destroy(gameObject);
+            }
             return;
         }
         // movement and visuals are applied in LateUpdate to follow after player movement
@@ -310,6 +323,7 @@ public class OrbitingWeapon : NetworkBehaviour
         if (!isP2P || IsServer)
         {
             if (playerStats == null || weaponData == null || statsTracker == null) return;
+            if (playerStats.IsDowned) return; // do not damage while owner is downed
 
             EnemyStats enemyStats = other.GetComponentInParent<EnemyStats>();
             if (enemyStats == null || hitEnemies.Contains(enemyStats.gameObject)) return;

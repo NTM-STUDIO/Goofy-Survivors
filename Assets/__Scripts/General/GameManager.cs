@@ -101,10 +101,18 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
     [SerializeField] private Color reviveColor = Color.white;
     [SerializeField] private float reviveVfxDuration = 0.8f;
     [SerializeField] private float reviveVfxYOffset = 2.0f;
+    [SerializeField] private string reviveVfxSortingLayer = "VFX"; // ensure VFX renders on VFX sorting layer
 
     [Header("General Difficulty Settings")]
-    public float currentEnemyHealthMultiplier { get; private set; } = 1f;
-    public float currentEnemyDamageMultiplier { get; private set; } = 1f;
+    [SerializeField] private float mpPerPlayerMultiplier = 1.5f; // Assumption: multiplicative per additional player
+    private NetworkVariable<float> mpDifficultyMultiplier = new NetworkVariable<float>(1f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public float MultiplayerDifficultyMultiplier => mpDifficultyMultiplier.Value;
+
+    // Base difficulty grows over time; effective = base * multiplayer factor
+    private float baseEnemyHealthMultiplier = 1f;
+    private float baseEnemyDamageMultiplier = 1f;
+    public float currentEnemyHealthMultiplier => baseEnemyHealthMultiplier * mpDifficultyMultiplier.Value;
+    public float currentEnemyDamageMultiplier => baseEnemyDamageMultiplier * mpDifficultyMultiplier.Value;
     [SerializeField] private float difficultyIncreaseInterval = 30f;
     [SerializeField] private float generalStrengthMultiplier = 1.1f;
 
@@ -272,6 +280,7 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         if (IsServer)
         {
             NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback += HandleClientDisconnected;
             // Handle the host player who is already connected when the server starts
             HandleClientConnected(NetworkManager.Singleton.LocalClientId);
         }
@@ -285,6 +294,7 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
             if (NetworkManager.Singleton != null)
             {
                 NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
+                NetworkManager.Singleton.OnClientDisconnectCallback -= HandleClientDisconnected;
             }
         }
     }
@@ -297,8 +307,19 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         {
             if (!playerAlive.ContainsKey(clientId)) playerAlive[clientId] = true;
             if (!reviveProgress.ContainsKey(clientId)) reviveProgress[clientId] = 0f;
+            RecomputeMultiplayerDifficulty();
         }
         StartCoroutine(GiveStartingWeaponAfterPlayerSpawns(clientId));
+    }
+
+    private void HandleClientDisconnected(ulong clientId)
+    {
+        if (isP2P && IsServer)
+        {
+            if (playerAlive.ContainsKey(clientId)) playerAlive.Remove(clientId);
+            if (reviveProgress.ContainsKey(clientId)) reviveProgress.Remove(clientId);
+            RecomputeMultiplayerDifficulty();
+        }
     }
 
     private IEnumerator GiveStartingWeaponAfterPlayerSpawns(ulong clientId)
@@ -475,11 +496,16 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
             networkCurrentTime.Value = totalGameTime;
         }
         
-        currentEnemyHealthMultiplier = 1f;
-        currentEnemyDamageMultiplier = 1f;
+        baseEnemyHealthMultiplier = 1f;
+        baseEnemyDamageMultiplier = 1f;
         currentProjectileSpeed = baseProjectileSpeed;
         currentFireRate = baseFireRate;
         currentSightRange = baseSightRange;
+
+        if (isP2P && IsServer)
+        {
+            RecomputeMultiplayerDifficulty();
+        }
 
         if(uiManager) uiManager.OnGameStart();
     }
@@ -563,6 +589,11 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
 
         playerAlive[clientId] = false;
         reviveProgress[clientId] = 0f;
+        // Broadcast downed visuals to all clients
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out var downedClient) && downedClient.PlayerObject != null)
+        {
+            SetDownedVisualClientRpc(downedClient.PlayerObject.NetworkObjectId, true);
+        }
         // If everyone is downed at this moment, end the game
         bool anyAlive = false;
         foreach (var kv in playerAlive)
@@ -719,10 +750,18 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
     {
         if (NetworkManager.Singleton == null) return;
         var nm = NetworkManager.Singleton;
+        // Iterate over a snapshot of downed player IDs to avoid modifying the collection during enumeration
+        var downedIds = new List<ulong>();
         foreach (var kvp in playerAlive)
         {
-            if (kvp.Value) continue; // only check downed players
-            ulong downedId = kvp.Key;
+            if (!kvp.Value)
+            {
+                downedIds.Add(kvp.Key);
+            }
+        }
+
+        foreach (var downedId in downedIds)
+        {
             if (!nm.ConnectedClients.TryGetValue(downedId, out var downedClient) || downedClient.PlayerObject == null) continue;
             Transform downedTransform = downedClient.PlayerObject.transform;
 
@@ -755,6 +794,8 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
                         reviveProgress.Remove(downedId);
                         // Play revive VFX on all clients
                         PlayReviveVFXClientRpc(downedClient.PlayerObject.NetworkObjectId);
+                        // Restore normal visuals on all clients
+                        SetDownedVisualClientRpc(downedClient.PlayerObject.NetworkObjectId, false);
                     }
                 }
                 else
@@ -786,9 +827,61 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         if (NetworkManager.Singleton == null) return;
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerNetId, out var netObj))
         {
-            if (reviveSprite == null) return;
             var pos = netObj.transform.position;
-            ReviveVFX.Spawn(pos, reviveSprite, reviveColor, reviveVfxDuration, 0.8f, 1.3f, reviveVfxYOffset);
+            // Fallback to player's current sprite if reviveSprite is not assigned
+            Sprite spriteToUse = reviveSprite;
+            string sortingLayer = reviveVfxSortingLayer;
+            var sr = netObj.GetComponentInChildren<SpriteRenderer>();
+            if (spriteToUse == null && sr != null)
+            {
+                spriteToUse = sr.sprite;
+            }
+            // If a custom VFX layer was not specified, fall back to player's layer
+            if (string.IsNullOrEmpty(sortingLayer) && sr != null)
+            {
+                sortingLayer = sr.sortingLayerName;
+            }
+            if (spriteToUse == null) return; // nothing to render
+            ReviveVFX.Spawn(pos, spriteToUse, reviveColor, reviveVfxDuration, 0.8f, 1.3f, reviveVfxYOffset, sortingLayer);
+        }
+    }
+
+    // Public helper for other systems to trigger the revive VFX for a specific player in MP.
+    // Call on the server with the player's NetworkObjectId.
+    public void TriggerReviveVFXForPlayer(ulong playerNetId)
+    {
+        if (!isP2P) return;
+        if (IsServer)
+        {
+            PlayReviveVFXClientRpc(playerNetId);
+        }
+    }
+
+    [ClientRpc]
+    private void SetDownedVisualClientRpc(ulong playerNetId, bool isDowned)
+    {
+        if (NetworkManager.Singleton == null) return;
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerNetId, out var netObj) || netObj == null) return;
+        var ps = netObj.GetComponent<PlayerStats>();
+        var sr = netObj.GetComponentInChildren<SpriteRenderer>();
+        if (sr == null || ps == null) return;
+
+        if (isDowned)
+        {
+            // Ensure local owner also stops moving/attacking
+            ps.ClientApplyDownedState();
+            var downed = ps.DownedSprite;
+            if (downed != null) sr.sprite = downed;
+            sr.sortingLayerName = "MAPCOSMETIC";
+        }
+        else
+        {
+            // Ensure local owner restores movement/colliders
+            ps.ClientApplyRevivedState();
+            var orig = ps.OriginalSprite;
+            if (orig != null) sr.sprite = orig;
+            var origLayer = ps.OriginalSortingLayer;
+            if (!string.IsNullOrEmpty(origLayer)) sr.sortingLayerName = origLayer;
         }
     }
 
@@ -840,11 +933,38 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
 
     private void IncreaseDifficulty()
     {
-        currentEnemyHealthMultiplier *= generalStrengthMultiplier;
-        currentEnemyDamageMultiplier *= generalStrengthMultiplier;
+        baseEnemyHealthMultiplier *= generalStrengthMultiplier;
+        baseEnemyDamageMultiplier *= generalStrengthMultiplier;
         currentProjectileSpeed *= speedMultiplier;
         currentFireRate = Mathf.Max(0.2f, currentFireRate / fireRateMultiplier);
         Debug.Log($"Dificuldade Aumentada (x{lastDifficultyIncreaseMark}) | HP×{currentEnemyHealthMultiplier:F2}, DMG×{currentEnemyDamageMultiplier:F2}");
+    }
+
+    // =========================
+    // MULTIPLAYER DIFFICULTY SCALING (P2P)
+    // =========================
+    private void RecomputeMultiplayerDifficulty()
+    {
+        if (!IsServer)
+            return;
+
+        if (!isP2P)
+        {
+            mpDifficultyMultiplier.Value = 1f;
+            return;
+        }
+
+        int playerCount = 1;
+        if (NetworkManager.Singleton != null)
+        {
+            playerCount = Mathf.Max(1, NetworkManager.Singleton.ConnectedClients.Count);
+        }
+
+        // Assumption: multiplicative per additional player using mpPerPlayerMultiplier
+        // 1 player = 1x, 2 players = 1.5x, 3 players ≈ 2.25x, etc.
+        float factor = Mathf.Pow(Mathf.Max(1.0f, mpPerPlayerMultiplier), playerCount - 1);
+        mpDifficultyMultiplier.Value = factor;
+        Debug.Log($"[GameManager] MP Difficulty recalculated: players={playerCount}, factor={factor:F2}");
     }
     
     public float GetRemainingTime()

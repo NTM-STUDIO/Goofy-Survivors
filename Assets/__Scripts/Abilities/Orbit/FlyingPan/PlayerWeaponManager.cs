@@ -433,9 +433,25 @@ public class PlayerWeaponManager : NetworkBehaviour
             {
                 if (targetRef.TryGet(out NetworkObject targetObject))
                 {
-                    Vector3 direction = (targetObject.transform.position - origin).normalized;
-                    direction.y = 0;
-                    SpawnSingleProjectile_Host(data, weaponId, origin, direction, damageResult);
+                    Vector3 baseDirection = (targetObject.transform.position - origin).normalized;
+                    baseDirection.y = 0;
+
+                    // Use same computed finalAmount for per-target spawn (apply spread if >1)
+                    if (finalAmount <= 1)
+                    {
+                        SpawnSingleProjectile_Host(data, weaponId, origin, baseDirection, damageResult);
+                    }
+                    else
+                    {
+                        float totalSpread = Mathf.Min(45f, 6f * (finalAmount - 1));
+                        float step = (finalAmount > 1) ? (totalSpread * 2f) / (finalAmount - 1) : 0f;
+                        for (int i = 0; i < finalAmount; i++)
+                        {
+                            float offset = -totalSpread + (i * step);
+                            Vector3 dir = Quaternion.Euler(0f, offset, 0f) * baseDirection;
+                            SpawnSingleProjectile_Host(data, weaponId, origin, dir, damageResult);
+                        }
+                    }
                 }
             }
         }
@@ -491,7 +507,8 @@ public class PlayerWeaponManager : NetworkBehaviour
 
     private void SpawnOrbitingWeapons_Host(WeaponData data, int weaponId)
     {
-        int finalAmount = data.amount + playerStats.projectileCount;
+        int extraProjectiles = statsTracker != null ? (int)statsTracker.ProjectileCount.Value : playerStats.projectileCount;
+        int finalAmount = Mathf.Max(1, data.amount + Mathf.Max(0, extraProjectiles));
         float angleStep = 360f / finalAmount;
 
         for (int i = 0; i < finalAmount; i++)
@@ -586,7 +603,8 @@ public class PlayerWeaponManager : NetworkBehaviour
             else if (wdata.archetype == WeaponArchetype.Orbit)
             {
                 // Spawn orbiting weapons for the clone (server-authoritative damage, clone-centered movement)
-                int finalAmount = wdata.amount + playerStats.projectileCount;
+                int extraProjectiles = statsTracker != null ? (int)statsTracker.ProjectileCount.Value : playerStats.projectileCount;
+                int finalAmount = Mathf.Max(1, wdata.amount + Mathf.Max(0, extraProjectiles));
                 float angleStep = 360f / Mathf.Max(1, finalAmount);
                 for (int i = 0; i < finalAmount; i++)
                 {

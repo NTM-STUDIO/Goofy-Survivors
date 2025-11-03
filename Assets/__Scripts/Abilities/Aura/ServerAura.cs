@@ -57,6 +57,12 @@ public class ServerAura : MonoBehaviour
             return;
         }
 
+        // Do not apply aura damage while the owning player is downed
+        if (playerStats.IsDowned)
+        {
+            return;
+        }
+
         // Follow owner position
         transform.position = ownerTransform.position + Vector3.up * yOffset;
 

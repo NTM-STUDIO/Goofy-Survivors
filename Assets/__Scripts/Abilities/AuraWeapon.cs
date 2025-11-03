@@ -214,6 +214,13 @@ public class AuraWeapon : NetworkBehaviour
         damageTickCooldown -= Time.deltaTime;
         if (damageTickCooldown > 0f) return;
 
+        // If the owner is downed, pause damage application
+        if (playerStats != null && playerStats.IsDowned)
+        {
+            damageTickCooldown = 0.1f; // small delay to avoid tight loop
+            return;
+        }
+
         // Physics-based scan around the aura center to find enemies reliably in MP
         int hitCount = 0;
         Collider[] hits = null;

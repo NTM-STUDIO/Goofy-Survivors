@@ -10,7 +10,8 @@ public class ReviveVFX : MonoBehaviour
         float duration = 0.8f,
         float startScale = 0.8f,
         float endScale = 1.3f,
-        float yOffset = 2.0f
+        float yOffset = 2.0f,
+        string sortingLayerName = null
     )
     {
         if (sprite == null) return;
@@ -20,6 +21,10 @@ public class ReviveVFX : MonoBehaviour
         sr.sprite = sprite;
         sr.color = color;
         sr.sortingOrder = 9999; // ensure on top
+        if (!string.IsNullOrEmpty(sortingLayerName))
+        {
+            sr.sortingLayerName = sortingLayerName;
+        }
         go.transform.localScale = Vector3.one * startScale;
 
         var vfx = go.AddComponent<ReviveVFX>();
