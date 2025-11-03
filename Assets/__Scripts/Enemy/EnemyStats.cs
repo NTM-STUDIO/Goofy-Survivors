@@ -161,7 +161,20 @@ public class EnemyStats : NetworkBehaviour
                 return;
             }
 
-            if (netCurrentHealth.Value <= 0f) return;
+            // If this enemy hasn't finished initializing its health yet on the server,
+            // bootstrap it from MaxHealth so early server-applied damage (e.g., aura ticks) still works.
+            if (netCurrentHealth.Value <= 0f)
+            {
+                if (MaxHealth > 0f && CurrentHealth == 0f)
+                {
+                    netMaxHealth.Value = MaxHealth;
+                    netCurrentHealth.Value = MaxHealth;
+                }
+                else
+                {
+                    return;
+                }
+            }
 
             OnEnemyDamaged?.Invoke(this);
 

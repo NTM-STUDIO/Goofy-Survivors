@@ -10,9 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 5160719082514619542}
   - component: {fileID: -1537910440251582161}
+  - component: {fileID: -78935388408389742}
   - component: {fileID: 8983365130009803366}
   - component: {fileID: 8965158105383660420}
-  - component: {fileID: 2723788180818814441}
   m_Layer: 0
   m_Name: BladeVortex
   m_TagString: Untagged
@@ -63,6 +63,31 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &-78935388408389742
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6260151671241025186}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 1451613596
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &8983365130009803366
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -75,6 +100,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 799099e3fe5ed1042a3d270e7c6a11b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  debugLog: 1
+  hideVisualsOnServer: 0
+  enemyScanInterval: 0.4
+  useColliderRadiusInMP: 1
 --- !u!136 &8965158105383660420
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -98,31 +128,6 @@ CapsuleCollider:
   m_Height: 1.67
   m_Direction: 1
   m_Center: {x: 0.72, y: 3, z: 1.04}
---- !u!114 &2723788180818814441
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6260151671241025186}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 0
-  InScenePlacedSourceGlobalObjectIdHash: 0
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!1 &6942697660582106786
 GameObject:
   m_ObjectHideFlags: 0

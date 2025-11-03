@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// Server-only aura proxy that mirrors the owner's AuraWeapon size/behavior
@@ -9,20 +10,30 @@ using System.Collections.Generic;
 /// </summary>
 public class ServerAura : MonoBehaviour
 {
+    [Header("Debug & Tuning")]
+    [SerializeField] private bool debugLog = false;
+    [Tooltip("Extra scale applied to computed radius to match visuals 1:1 if needed")]
+    [SerializeField] private float radiusScale = 2.0f;
+    [Tooltip("Base sphere radius before size multipliers. Default 0.5 to match a unit sphere scaled by area.")]
+    [SerializeField] private float baseRadius = 1.0f;
+
+    [Header("Enemy Scan (no physics)")]
+    [Tooltip("Intervalo de atualização da cache de inimigos para varredura por distância (segundos)")]
+    [SerializeField] private float enemyScanInterval = 0.4f;
+
     // Live references
     private Transform ownerTransform;
     private PlayerStats playerStats;              // server authoritative damage source
-    private NetworkedPlayerStatsTracker tracker;  // synced multipliers for visuals/knockback
+    private NetworkedPlayerStatsTracker tracker;  // synced multipliers
     private WeaponData weaponData;
 
-    // Detection
-    private SphereCollider trigger; // optional (kept for debugging/visualization); not relied upon for detection
-
-    // Tick timer
+    // Tick timer and placement
     private float tickCooldown;
-
-    // Y-offset for positioning (to roughly match visuals)
     private float yOffset = 1.5f;
+
+    // Enemy cache for distance-based scan
+    private List<EnemyStats> enemyCache = new List<EnemyStats>();
+    private float nextEnemyScanTime = 0f;
 
     public void Initialize(Transform owner, PlayerStats stats, NetworkedPlayerStatsTracker syncedTracker, WeaponData data)
     {
@@ -31,12 +42,6 @@ public class ServerAura : MonoBehaviour
         tracker = syncedTracker;
         weaponData = data;
 
-    // Add trigger collider (optional)
-    trigger = gameObject.AddComponent<SphereCollider>();
-    trigger.isTrigger = true;
-    trigger.radius = 0.5f; // base radius; we'll scale the transform instead
-
-        // Position and parent to owner
         if (ownerTransform != null)
         {
             transform.SetParent(ownerTransform, false);
@@ -46,19 +51,18 @@ public class ServerAura : MonoBehaviour
 
     void Update()
     {
-        // Only meaningful on server (but this script exists only there)
-        if (ownerTransform == null || playerStats == null || tracker == null || weaponData == null)
+        if (ownerTransform == null || playerStats == null || weaponData == null)
         {
-            // If owner destroyed/despawned, clean up
             Destroy(gameObject);
             return;
         }
 
-        // Keep position with owner
+        // Follow owner position
         transform.position = ownerTransform.position + Vector3.up * yOffset;
 
-        // Update aura size continuously using synced projectile size
-        float finalSize = weaponData.area * tracker.ProjectileSize.Value;
+        // Update aura size (visual aid on server)
+        float sizeMult = tracker != null ? tracker.ProjectileSize.Value : (playerStats != null ? playerStats.projectileSizeMultiplier : 1f);
+        float finalSize = weaponData.area * sizeMult;
         transform.localScale = Vector3.one * finalSize;
 
         // Tick
@@ -73,42 +77,61 @@ public class ServerAura : MonoBehaviour
 
     private void ApplyDamage()
     {
-        // Determine effective radius (matches SphereCollider scaling: base 0.5 scaled by finalSize)
-        float finalSize = weaponData.area * tracker.ProjectileSize.Value;
-        float radius = Mathf.Max(0.01f, 0.5f * finalSize);
+        // Effective radius independent of colliders/layers
+        float sizeMult = tracker != null ? tracker.ProjectileSize.Value : (playerStats != null ? playerStats.projectileSizeMultiplier : 1f);
+        float finalSize = weaponData.area * sizeMult;
+        float radius = Mathf.Max(0.01f, baseRadius * finalSize * Mathf.Max(0.01f, radiusScale));
 
-        // Gather nearby colliders and filter for enemies
-        var colliders = Physics.OverlapSphere(ownerTransform.position, radius);
-        if (colliders == null || colliders.Length == 0) return;
-
-        float knockback = weaponData.knockback * tracker.Knockback.Value;
-        HashSet<EnemyStats> processed = new HashSet<EnemyStats>();
-        foreach (var col in colliders)
+        // Refresh enemy cache periodically
+        if (Time.time >= nextEnemyScanTime || enemyCache == null)
         {
-            if (col == null) continue;
-            // Filter by tag first for cheap check
-            if (!col.CompareTag("Enemy") && !col.CompareTag("Reaper"))
+            enemyCache = Object.FindObjectsByType<EnemyStats>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).ToList();
+            nextEnemyScanTime = Time.time + Mathf.Max(0.05f, enemyScanInterval);
+        }
+        if (enemyCache == null || enemyCache.Count == 0)
+        {
+            if (debugLog) Debug.Log("[ServerAura] No enemies cached.");
+            return;
+        }
+
+        float radiusSqr = radius * radius;
+        float knockbackMult = tracker != null ? tracker.Knockback.Value : (playerStats != null ? playerStats.knockbackMultiplier : 1f);
+        float knockback = weaponData.knockback * knockbackMult;
+        int hitCount = 0;
+        Vector3 ownerPos = ownerTransform.position; ownerPos.y = 0f;
+
+        for (int i = 0; i < enemyCache.Count; i++)
+        {
+            var enemy = enemyCache[i];
+            if (enemy == null) continue;
+            Vector3 epos = enemy.transform.position; epos.y = 0f;
+            if ((epos - ownerPos).sqrMagnitude <= radiusSqr)
             {
-                // Try parent in case collider is on a child
-                var parent = col.transform.parent;
-                if (parent == null || (!parent.CompareTag("Enemy") && !parent.CompareTag("Reaper")))
-                    continue;
-            }
+                DamageResult dmg = playerStats.CalculateDamage(weaponData.damage);
+                enemy.TakeDamage(dmg.damage, dmg.isCritical);
+                hitCount++;
 
-            var enemy = col.GetComponentInParent<EnemyStats>();
-            if (enemy == null || processed.Contains(enemy)) continue;
-            processed.Add(enemy);
-
-            DamageResult dmg = playerStats.CalculateDamage(weaponData.damage);
-            enemy.TakeDamage(dmg.damage, dmg.isCritical);
-
-            if (knockback > 0 && enemy != null && !enemy.CompareTag("Reaper"))
-            {
-                Vector3 dir = (enemy.transform.position - ownerTransform.position);
-                dir.y = 0f;
-                dir.Normalize();
-                enemy.ApplyKnockback(knockback, 0.1f, dir);
+                if (knockback > 0 && !enemy.CompareTag("Reaper"))
+                {
+                    Vector3 dir = (enemy.transform.position - ownerTransform.position); dir.y = 0f; dir.Normalize();
+                    enemy.ApplyKnockback(knockback, 0.1f, dir);
+                }
             }
         }
+
+        if (debugLog)
+        {
+            Debug.Log($"[ServerAura] Damaged {hitCount} enemies at pos {ownerTransform.position} with radius {radius}");
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (!debugLog || ownerTransform == null || weaponData == null) return;
+        float sizeMult = tracker != null ? tracker.ProjectileSize.Value : (playerStats != null ? playerStats.projectileSizeMultiplier : 1f);
+        float finalSize = weaponData.area * sizeMult;
+        float radius = Mathf.Max(0.01f, baseRadius * finalSize * Mathf.Max(0.01f, radiusScale));
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(ownerTransform.position, radius);
     }
 }

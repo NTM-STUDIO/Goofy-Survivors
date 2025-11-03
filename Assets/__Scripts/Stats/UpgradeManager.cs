@@ -243,11 +243,8 @@ public class UpgradeManager : MonoBehaviour
             case StatType.AttackSpeedMultiplier: playerStats.IncreaseAttackSpeedMultiplier(value / 100f); break;
             case StatType.ProjectileCount: playerStats.IncreaseProjectileCount(Mathf.RoundToInt(value)); break;
             case StatType.ProjectileSizeMultiplier:
-                // Team-share Area in P2P so all players get the same increase
-                if (gameManager != null && gameManager.isP2P)
-                    gameManager.TeamApplyAreaUpgrade(value / 100f);
-                else
-                    playerStats.IncreaseProjectileSizeMultiplier(value / 100f);
+                // Only apply to the local player, even in P2P (requested: only XP is shared)
+                playerStats.IncreaseProjectileSizeMultiplier(value / 100f);
                 break;
             case StatType.ProjectileSpeedMultiplier: playerStats.IncreaseProjectileSpeedMultiplier(value / 100f); break;
             case StatType.DurationMultiplier: playerStats.IncreaseDurationMultiplier(value / 100f); break;

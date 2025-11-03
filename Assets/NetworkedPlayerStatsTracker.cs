@@ -15,6 +15,7 @@ public class NetworkedPlayerStatsTracker : NetworkBehaviour
     public NetworkVariable<float> ProjectileSpeed { get; private set; } = new NetworkVariable<float>(1f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<float> Duration { get; private set; } = new NetworkVariable<float>(1f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<float> Knockback { get; private set; } = new NetworkVariable<float>(1f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public NetworkVariable<int> ProjectileCount { get; private set; } = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     // Add any other stats that need to be visually synced here.
 
     void Awake()
@@ -34,6 +35,7 @@ public class NetworkedPlayerStatsTracker : NetworkBehaviour
             ProjectileSpeed.Value = localStats.projectileSpeedMultiplier;
             Duration.Value = localStats.durationMultiplier;
             Knockback.Value = localStats.knockbackMultiplier;
+            ProjectileCount.Value = localStats.projectileCount;
         }
     }
 }

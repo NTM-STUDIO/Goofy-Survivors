@@ -1,8 +1,10 @@
 using UnityEngine;
 using System.Linq;
+using Unity.Netcode;
 
 [RequireComponent(typeof(Collider))]
-public class GuaranteedRarityGiver : MonoBehaviour
+[RequireComponent(typeof(NetworkObject))]
+public class GuaranteedRarityGiver : NetworkBehaviour
 {
     [Header("Configuração da Recompensa")]
     [Tooltip("Marque esta caixa para dar a raridade Mítica ('Godly'). Desmarque para dar a raridade Sombra ('Shadow').")]
@@ -46,21 +48,55 @@ public class GuaranteedRarityGiver : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (hasBeenTriggered || !other.CompareTag("Player")) return;
+        if (!other.CompareTag("Player")) return;
 
+        var nm = NetworkManager.Singleton;
+        if (nm != null && nm.IsListening)
+        {
+            // In MP, ask server to process once and broadcast to all players
+            var playerNO = other.GetComponentInParent<NetworkObject>();
+            if (playerNO == null) return;
+
+            if (!IsServer)
+            {
+                RequestTriggerServerRpc(giveMythicalRarity);
+            }
+            else
+            {
+                ServerProcessTrigger(giveMythicalRarity);
+            }
+            return;
+        }
+
+        // Single-player fallback
+        if (hasBeenTriggered) return;
         hasBeenTriggered = true;
-
         RarityTier rarityToGive = giveMythicalRarity ? mythicRarity : shadowRarity;
-
         if (rarityToGive == null)
         {
             Debug.LogError("GuaranteedRarityGiver: raridade não encontrada ao tentar dar upgrade!", this);
             return;
         }
-
         upgradeManager.PresentGuaranteedRarityChoices(rarityToGive);
-
-        // Destroy the giver after use
         Destroy(gameObject);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestTriggerServerRpc(bool mythical)
+    {
+        ServerProcessTrigger(mythical);
+    }
+
+    private void ServerProcessTrigger(bool mythical)
+    {
+        if (hasBeenTriggered) return;
+        hasBeenTriggered = true;
+
+        string rarityName = mythical ? "Godly" : "Shadow";
+        GameManager.Instance?.PresentGuaranteedRarityToAll(rarityName);
+
+        // Despawn network-wide
+        var no = GetComponent<NetworkObject>();
+        if (no != null && no.IsSpawned) no.Despawn(true); else Destroy(gameObject);
     }
 }

@@ -62,16 +62,29 @@ public class OrbitingWeapon : NetworkBehaviour
     /// <summary>
     /// FOR MULTIPLAYER: Called by a ClientRpc after the object is spawned.
     /// </summary>
-    public void NetworkInitialize(NetworkObjectReference ownerRef, WeaponData data, float startAngle)
+    // New overload: separate orbit center (ownerRef) from stats owner (statsOwnerRef)
+    public void NetworkInitialize(NetworkObjectReference ownerRef, NetworkObjectReference statsOwnerRef, WeaponData data, float startAngle)
     {
         this.isP2P = true;
         this.weaponData = data;
 
         if (ownerRef.TryGet(out NetworkObject ownerNetObj))
         {
+            // For normal cases, owner is the player. For shadow clones, owner is the clone.
             this.orbitCenter = ownerNetObj.transform;
-            this.playerStats = ownerNetObj.GetComponent<PlayerStats>();
-            this.statsTracker = ownerNetObj.GetComponent<NetworkedPlayerStatsTracker>();
+            // Prefer explicit stats owner when provided
+            NetworkObject statsOwnerNetObj = null;
+            if (statsOwnerRef.TryGet(out statsOwnerNetObj) && statsOwnerNetObj != null)
+            {
+                this.playerStats = statsOwnerNetObj.GetComponent<PlayerStats>();
+                this.statsTracker = statsOwnerNetObj.GetComponent<NetworkedPlayerStatsTracker>();
+            }
+            else
+            {
+                // Fallback to owner (works when owner is the player)
+                this.playerStats = ownerNetObj.GetComponent<PlayerStats>();
+                this.statsTracker = ownerNetObj.GetComponent<NetworkedPlayerStatsTracker>();
+            }
             // Parent under the owner so orbit uses localPosition and follows immediately
             try { transform.SetParent(orbitCenter, false); } catch {}
 
@@ -229,6 +242,21 @@ public class OrbitingWeapon : NetworkBehaviour
             return;
         }
 
+        // Server: if the clone/owner we are centered on is gone, despawn this orbiter
+        if (IsServer && ownerNetId.Value != 0)
+        {
+            var nm = NetworkManager.Singleton;
+            if (nm != null)
+            {
+                bool hasOwner = nm.SpawnManager.SpawnedObjects.ContainsKey(ownerNetId.Value);
+                if (!hasOwner)
+                {
+                    Destroy(gameObject);
+                    return;
+                }
+            }
+        }
+
         lifetime -= Time.deltaTime;
         if (lifetime <= 0f)
         {
@@ -258,9 +286,9 @@ public class OrbitingWeapon : NetworkBehaviour
         float z = Mathf.Sin(currentAngle * Mathf.Deg2Rad) * orbitRadius;
         float finalYOffset = yOffset * transform.localScale.y + 1.5f;
 
-        if (transform.parent == orbitCenter)
+        // If parented, always orbit around the parent (works for clones and players)
+        if (transform.parent != null)
         {
-            // Drive using localPosition so parent movement is reflected immediately
             transform.localPosition = new Vector3(x, finalYOffset, z);
         }
         else

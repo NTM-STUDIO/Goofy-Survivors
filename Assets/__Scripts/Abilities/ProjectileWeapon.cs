@@ -14,6 +14,12 @@ public class ProjectileWeapon : NetworkBehaviour
     private float lifetime;
 
     private Rigidbody rb;
+    [Header("Visual")]
+    [SerializeField] private Transform visual; // rotate this child on Z only
+    [Tooltip("Degrees to add to the computed Z angle (use 180 if the visual is inverted, 90/-90 for sideways sprites)")]
+    [SerializeField] private float visualZAngleOffset = 180f;
+    private Vector3 visualBaseEuler; // preserve X/Y (e.g., 30x,45y) and base Z
+    private Vector3 moveDir;
 
     private void Awake()
     {
@@ -25,6 +31,36 @@ public class ProjectileWeapon : NetworkBehaviour
             rb.freezeRotation = true;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        }
+
+        // Auto-assign a visual child if not explicitly set
+        if (visual == null)
+        {
+            if (transform.childCount > 0)
+            {
+                visual = transform.GetChild(0);
+            }
+            else
+            {
+                var sr = GetComponentInChildren<SpriteRenderer>();
+                if (sr != null) visual = sr.transform;
+                else
+                {
+                    var mr = GetComponentInChildren<MeshRenderer>();
+                    if (mr != null) visual = mr.transform;
+                }
+            }
+        }
+
+        // Capture base local euler so we can preserve X and Y (e.g., 30x,45y) and only change Z at runtime
+        if (visual != null)
+        {
+            visualBaseEuler = visual.localEulerAngles;
+        }
+        else
+        {
+            // Fallback to common isometric tilt if no visual child exists yet
+            visualBaseEuler = new Vector3(30f, 45f, 0f);
         }
     }
 
@@ -41,11 +77,16 @@ public class ProjectileWeapon : NetworkBehaviour
         this.knockbackForce = finalKnockback;
         this.lifetime = finalDuration > 0 ? finalDuration : 3f; // Use duration, fallback to 3s
         transform.localScale *= finalSize;
+        moveDir = initialDirection.normalized;
 
         if (rb != null)
         {
-            rb.linearVelocity = initialDirection.normalized * speed;
+            rb.linearVelocity = moveDir * speed;
+            rb.angularVelocity = Vector3.zero;
         }
+
+        // Z-only orientation (2D-style) applied to the visual child only
+        ApplyZOnlyRotation(moveDir);
     }
 
     void Update()
@@ -89,6 +130,18 @@ public class ProjectileWeapon : NetworkBehaviour
                 // The server destroys the projectile for everyone.
                 Destroy(gameObject);
             }
+        }
+    }
+
+    private void ApplyZOnlyRotation(Vector3 worldDir)
+    {
+        // Map XZ (x,z) into XY (x,y) to compute Z rotation angle
+        Vector2 v = new Vector2(worldDir.x, worldDir.z);
+        if (v.sqrMagnitude < 0.000001f) return;
+        float angle = Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg + visualZAngleOffset;
+        if (visual != null)
+        {
+            visual.localRotation = Quaternion.Euler(visualBaseEuler.x, visualBaseEuler.y, angle);
         }
     }
 }

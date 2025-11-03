@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 
 public class ShadowClone : MonoBehaviour
 {
@@ -56,6 +57,60 @@ public class ShadowClone : MonoBehaviour
         if (health <= 0)
         {
             Destroy(gameObject);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Ensure any aura proxies created under this clone are removed (server-only object)
+        var serverAuras = GetComponentsInChildren<ServerAura>(true);
+        foreach (var sa in serverAuras)
+        {
+            if (sa != null) Destroy(sa.gameObject);
+        }
+
+        // Clean up any AuraWeapon instances that were parented under this clone
+        var auras = GetComponentsInChildren<AuraWeapon>(true);
+        foreach (var aura in auras)
+        {
+            if (aura == null) continue;
+            var no = aura.GetComponent<NetworkObject>();
+            var nm = NetworkManager.Singleton;
+            if (nm != null && nm.IsListening)
+            {
+                // MP path: only the server should despawn networked objects
+                if (nm.IsServer)
+                {
+                    if (no != null && no.IsSpawned) no.Despawn(true); else Destroy(aura.gameObject);
+                }
+            }
+            else
+            {
+                // Single-player path
+                Destroy(aura.gameObject);
+            }
+        }
+
+        // Clean up any orbiters that were parented under this clone (SP and MP safety)
+        var orbiters = GetComponentsInChildren<OrbitingWeapon>(true);
+        foreach (var orb in orbiters)
+        {
+            if (orb == null) continue;
+            var no = orb.GetComponent<NetworkObject>();
+            var nm = NetworkManager.Singleton;
+            if (nm != null && nm.IsListening)
+            {
+                // MP path: only the server should despawn networked objects
+                if (nm.IsServer)
+                {
+                    if (no != null && no.IsSpawned) no.Despawn(true); else Destroy(orb.gameObject);
+                }
+            }
+            else
+            {
+                // Single-player path
+                Destroy(orb.gameObject);
+            }
         }
     }
 }

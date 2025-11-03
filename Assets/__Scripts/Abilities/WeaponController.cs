@@ -88,7 +88,12 @@ public class WeaponController : MonoBehaviour
         }
         else if (isWeaponOwner)
         {
-            FireLocally();
+            // Clone-local firing (single-player clone path)
+            // Clones should only copy Auras (handled on init) and Orbiting weapons; no projectiles
+            if (WeaponData.archetype == WeaponArchetype.Orbit)
+            {
+                SpawnOrbitingWeaponsAroundSelf();
+            }
         }
     }
 
@@ -160,13 +165,32 @@ public class WeaponController : MonoBehaviour
             {
                 Vector3 direction = (target != null) ? (target.position - playerStats.transform.position).normalized : new Vector3(Random.insideUnitCircle.normalized.x, 0, Random.insideUnitCircle.normalized.y);
                 direction.y = 0;
-                Vector3 spawnPosWithOffset = playerStats.transform.position + Vector3.up * 3f;
-                GameObject projectileObj = Instantiate(WeaponData.weaponPrefab, spawnPosWithOffset, Quaternion.LookRotation(direction));
+                Vector3 spawnPosWithOffset = playerStats.transform.position + Vector3.up * 2f;
+                // Keep root rotation unchanged; visuals rotate Z-only inside ProjectileWeapon
+                GameObject projectileObj = Instantiate(WeaponData.weaponPrefab, spawnPosWithOffset, Quaternion.identity);
                 var projectile = projectileObj.GetComponent<ProjectileWeapon>();
                 if (projectile != null)
                 {
                     projectile.Initialize(target, direction, damageResult.damage, damageResult.isCritical, finalSpeed, finalDuration, finalKnockback, finalSize);
                 }
+            }
+        }
+    }
+
+    private void SpawnOrbitingWeaponsAroundSelf()
+    {
+        int finalAmount = WeaponData.amount + playerStats.projectileCount;
+        float angleStep = 360f / Mathf.Max(1, finalAmount);
+
+        for (int i = 0; i < finalAmount; i++)
+        {
+            GameObject orbitingWeaponObj = Instantiate(WeaponData.weaponPrefab, transform.position, Quaternion.identity);
+            // Parent under the clone's weapon controller so they get destroyed with the clone
+            orbitingWeaponObj.transform.SetParent(transform, false);
+            var orbiter = orbitingWeaponObj.GetComponent<OrbitingWeapon>();
+            if (orbiter != null)
+            {
+                orbiter.LocalInitialize(transform, i * angleStep, playerStats, WeaponData);
             }
         }
     }
@@ -194,13 +218,23 @@ public class WeaponController : MonoBehaviour
 
     private void ActivateAura()
     {
-        if (WeaponData.weaponPrefab == null || weaponManager == null) return;
-        GameObject auraObj = Instantiate(WeaponData.weaponPrefab, weaponManager.transform.position, Quaternion.identity, weaponManager.transform);
-        AuraWeapon aura = auraObj.GetComponent<AuraWeapon>();
-        if (aura != null) { aura.Initialize(playerStats, WeaponData); }
+        if (WeaponData.weaponPrefab == null) return;
+        bool isP2P = GameManager.Instance != null && GameManager.Instance.isP2P;
 
-        // In multiplayer, also notify the server to create the authoritative aura proxy
-        weaponManager.NotifyAuraActivated(weaponId);
+        if (!isP2P)
+        {
+            // Single-player: local-only aura instance
+            Transform parent = weaponManager != null ? weaponManager.transform : (transform.parent != null ? transform.parent : transform);
+            GameObject auraObj = Instantiate(WeaponData.weaponPrefab, parent.position, Quaternion.identity, parent);
+            AuraWeapon aura = auraObj.GetComponent<AuraWeapon>();
+            if (aura != null) { aura.Initialize(playerStats, WeaponData); }
+        }
+
+        // In multiplayer, request server to spawn the networked aura
+        if (isP2P && weaponManager != null)
+        {
+            weaponManager.NotifyAuraActivated(weaponId);
+        }
     }
 
     public int GetWeaponId() { return this.weaponId; }

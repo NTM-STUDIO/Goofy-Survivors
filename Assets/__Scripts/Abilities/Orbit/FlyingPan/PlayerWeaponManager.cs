@@ -20,8 +20,8 @@ public class PlayerWeaponManager : NetworkBehaviour
     private PlayerStats playerStats;
     private NetworkedPlayerStatsTracker statsTracker;
     private bool isP2P = false;
-    // Server-only: track created aura/shield proxies per weapon id
-    private readonly Dictionary<int, GameObject> serverAuraProxies = new Dictionary<int, GameObject>();
+    // Server-only: track created aura logic instances per weapon id (AuraWeapon on server)
+    private readonly Dictionary<int, GameObject> serverAuraLogic = new Dictionary<int, GameObject>();
     private readonly Dictionary<int, NetworkObject> serverShieldObjects = new Dictionary<int, NetworkObject>();
 
     // Local single-player references
@@ -88,9 +88,19 @@ public class PlayerWeaponManager : NetworkBehaviour
                     Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { OwnerClientId } }
                 };
                 AddWeaponClientRpc(weaponId, clientRpcParams);
+
+                // If this starting weapon is an Aura, ensure the server-side AuraWeapon (logic-only) exists.
+                var data = weaponRegistry.GetWeaponData(weaponId);
+                if (data != null && data.archetype == WeaponArchetype.Aura)
+                {
+                    CreateServerAuraLogic(weaponId);
+                }
             }
         }
     }
+
+    // Expose registry for systems like AuraWeapon to resolve WeaponData when global lookup isn't available
+    public WeaponRegistry Registry => weaponRegistry;
 
     public void AddWeapon(WeaponData weaponData)
     {
@@ -140,7 +150,9 @@ public class PlayerWeaponManager : NetworkBehaviour
             var targetRefs = targets.Where(t => t != null && t.TryGetComponent(out NetworkObject _))
                                     .Select(t => (NetworkObjectReference)t.GetComponent<NetworkObject>())
                                     .ToArray();
-            RequestAttackServerRpc(weaponId, targetRefs);
+            // Send our current origin (prefer weaponParent if assigned) so the server spawns from the shooter’s actual firepoint
+            Vector3 origin = (weaponParent != null) ? weaponParent.position : transform.position;
+            RequestAttackServerRpc(weaponId, origin, targetRefs);
         }
         else
         {
@@ -227,6 +239,13 @@ public class PlayerWeaponManager : NetworkBehaviour
         };
 
         AddWeaponClientRpc(weaponId, clientRpcParams);
+
+        // If the granted weapon is an Aura, create the server-side AuraWeapon now
+        var data = weaponRegistry.GetWeaponData(weaponId);
+        if (data != null && data.archetype == WeaponArchetype.Aura)
+        {
+            CreateServerAuraLogic(weaponId);
+        }
     }
 
     [ClientRpc]
@@ -254,6 +273,13 @@ public class PlayerWeaponManager : NetworkBehaviour
         AddWeaponClientRpc(weaponId, clientRpcParams);
         // Also show award UI only on the owning client's screen
         ShowAwardUIClientRpc(weaponId, clientRpcParams);
+
+        // If the granted weapon is an Aura, create the server-side AuraWeapon now
+        var data = weaponRegistry.GetWeaponData(weaponId);
+        if (data != null && data.archetype == WeaponArchetype.Aura)
+        {
+            CreateServerAuraLogic(weaponId);
+        }
     }
 
     [ClientRpc]
@@ -289,14 +315,14 @@ public class PlayerWeaponManager : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void RequestAttackServerRpc(int weaponId, NetworkObjectReference[] targetRefs)
+    private void RequestAttackServerRpc(int weaponId, Vector3 origin, NetworkObjectReference[] targetRefs)
     {
         WeaponData data = weaponRegistry.GetWeaponData(weaponId);
         if (data == null) return;
 
         switch (data.archetype)
         {
-            case WeaponArchetype.Projectile: SpawnProjectiles_Host(data, targetRefs); break;
+            case WeaponArchetype.Projectile: SpawnProjectiles_Host(data, origin, targetRefs); break;
             case WeaponArchetype.Orbit: SpawnOrbitingWeapons_Host(data, weaponId); break;
         }
     }
@@ -304,26 +330,43 @@ public class PlayerWeaponManager : NetworkBehaviour
     [ServerRpc]
     private void RequestCreateAuraServerRpc(int weaponId)
     {
-        // Only the server should create aura proxies
         if (!IsServer) return;
+        CreateServerAuraLogic(weaponId);
+    }
 
-        // Avoid duplicate proxies for the same weapon id
-        if (serverAuraProxies.ContainsKey(weaponId) && serverAuraProxies[weaponId] != null)
+    // Server-only: Instantiate AuraWeapon as a NetworkObject so everyone sees it; server applies damage
+    private void CreateServerAuraLogic(int weaponId)
+    {
+        if (serverAuraLogic.ContainsKey(weaponId) && serverAuraLogic[weaponId] != null)
             return;
 
         WeaponData data = weaponRegistry.GetWeaponData(weaponId);
-        if (data == null) return;
+        if (data == null || data.archetype != WeaponArchetype.Aura || data.weaponPrefab == null) return;
 
-        // Create a server-only aura proxy attached to this player
-        GameObject proxy = new GameObject($"ServerAura_{data.name}");
-        proxy.transform.SetParent(this.transform, false);
-        proxy.transform.localPosition = Vector3.zero;
-        var serverAura = proxy.AddComponent<ServerAura>();
-        serverAura.Initialize(this.transform, playerStats, GetComponent<NetworkedPlayerStatsTracker>(), data);
-        serverAuraProxies[weaponId] = proxy;
-
-        // Inform all clients to attach local aura visuals under this owner
-        InitializeAuraVisualClientRpc(this.NetworkObjectId, weaponId);
+        TryRegisterNetworkPrefab(data.weaponPrefab);
+        Debug.Log($"[PWM] Attempting to spawn Aura '{data.name}' (weaponId={weaponId}) for owner client {OwnerClientId}.");
+        GameObject auraObj = Instantiate(data.weaponPrefab, transform.position, Quaternion.identity);
+        auraObj.name = $"Aura_{data.name}";
+    var auraNO = auraObj.GetComponent<NetworkObject>();
+        if (auraNO == null)
+        {
+            Debug.LogWarning($"Aura prefab '{data.name}' has no NetworkObject. It will not sync in MP.");
+            Destroy(auraObj);
+            return;
+        }
+        var aura = auraObj.GetComponent<AuraWeapon>();
+        if (aura != null)
+        {
+            // Set pre-spawn config; applied on OnNetworkSpawn (server). Also pass direct WeaponData.
+            int wid = weaponRegistry.GetWeaponId(data);
+            aura.PreSpawnConfigure(wid, this.NetworkObjectId, data);
+        }
+        auraNO.Spawn(true);
+        Debug.Log($"[PWM] Spawned Aura NetworkObjectId={auraNO.NetworkObjectId} for owner client {OwnerClientId}.");
+    // Keep world position on parent to avoid any snap/offset across clients
+    try { auraNO.TrySetParent(this.NetworkObject, true); } catch {}
+        Debug.Log($"[PWM] Parent set to player NO={this.NetworkObjectId} for Aura NO={auraNO.NetworkObjectId}.");
+        serverAuraLogic[weaponId] = auraObj;
     }
 
     [ServerRpc]
@@ -348,6 +391,7 @@ public class PlayerWeaponManager : NetworkBehaviour
         netObj.Spawn(true);
         if (this.NetworkObject != null)
         {
+            // Preserve world position when parenting to avoid visual pops
             try { netObj.TrySetParent(this.NetworkObject, true); }
             catch { /* fallback: leave unparented */ }
         }
@@ -370,52 +414,18 @@ public class PlayerWeaponManager : NetworkBehaviour
         }
     }
 
-    [ClientRpc]
-    private void InitializeAuraVisualClientRpc(ulong ownerNetId, int weaponId)
-    {
-        if (NetworkManager.Singleton == null) return;
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(ownerNetId, out var ownerNO)) return;
-
-        var data = weaponRegistry.GetWeaponData(weaponId);
-        if (data == null || data.archetype != WeaponArchetype.Aura || data.weaponPrefab == null) return;
-
-        // Avoid duplicates: look for an existing child named "Aura_{data.name}"
-        string childName = $"Aura_{data.name}";
-        foreach (Transform child in ownerNO.transform)
-        {
-            if (child != null && child.gameObject.name == childName)
-            {
-                return;
-            }
-        }
-
-        GameObject auraObj = Instantiate(data.weaponPrefab, ownerNO.transform.position, Quaternion.identity, ownerNO.transform);
-        auraObj.name = childName;
-        var aura = auraObj.GetComponent<AuraWeapon>();
-        if (aura != null)
-        {
-            // If the aura owner is the local player, use PlayerStats for accurate tick timing
-            var isLocalOwner = ownerNO.IsOwner;
-            if (isLocalOwner)
-            {
-                aura.Initialize(playerStats, data);
-            }
-            else
-            {
-                var t = ownerNO.GetComponent<NetworkedPlayerStatsTracker>();
-                if (t != null) aura.Initialize(t, data);
-                else aura.Initialize(playerStats, data); // fallback
-            }
-        }
-    }
+    // Removed: auras are now spawned as networked objects by the server
     #endregion
 
     #region Host-Side Spawning
-    private void SpawnProjectiles_Host(WeaponData data, NetworkObjectReference[] targetRefs)
+    private void SpawnProjectiles_Host(WeaponData data, Vector3 origin, NetworkObjectReference[] targetRefs)
     {
         DamageResult damageResult = playerStats.CalculateDamage(data.damage);
         int weaponId = weaponRegistry.GetWeaponId(data);
-        Transform firePoint = transform;
+
+        // Determine final projectile count using synced tracker when available (authoritative on server)
+        int extraProjectiles = statsTracker != null ? (int)statsTracker.ProjectileCount.Value : playerStats.projectileCount;
+        int finalAmount = data.amount + Mathf.Max(0, extraProjectiles);
 
         if (targetRefs.Length > 0)
         {
@@ -423,20 +433,19 @@ public class PlayerWeaponManager : NetworkBehaviour
             {
                 if (targetRef.TryGet(out NetworkObject targetObject))
                 {
-                    Vector3 direction = (targetObject.transform.position - firePoint.position).normalized;
+                    Vector3 direction = (targetObject.transform.position - origin).normalized;
                     direction.y = 0;
-                    SpawnSingleProjectile_Host(data, weaponId, firePoint.position, direction, damageResult);
+                    SpawnSingleProjectile_Host(data, weaponId, origin, direction, damageResult);
                 }
             }
         }
         else
         {
-            int finalAmount = data.amount + playerStats.projectileCount;
             for (int i = 0; i < finalAmount; i++)
             {
                 Vector2 randomDir = UnityEngine.Random.insideUnitCircle.normalized;
                 Vector3 direction = new Vector3(randomDir.x, 0, randomDir.y);
-                SpawnSingleProjectile_Host(data, weaponId, firePoint.position, direction, damageResult);
+                SpawnSingleProjectile_Host(data, weaponId, origin, direction, damageResult);
             }
         }
     }
@@ -444,28 +453,37 @@ public class PlayerWeaponManager : NetworkBehaviour
     private void SpawnSingleProjectile_Host(WeaponData data, int weaponId, Vector3 spawnPosition, Vector3 direction, DamageResult damageResult)
     {
         // Use identity rotation; projectile motion is controlled by Rigidbody velocity.
-        Vector3 spawnPosWithOffset = spawnPosition + Vector3.up * 3f;
+    Vector3 spawnPosWithOffset = spawnPosition + Vector3.up * 2f;
         TryRegisterNetworkPrefab(data.weaponPrefab);
         GameObject projectileObj = Instantiate(data.weaponPrefab, spawnPosWithOffset, Quaternion.identity);
         projectileObj.GetComponent<NetworkObject>().Spawn(true);
-        InitializeProjectileClientRpc(projectileObj.GetComponent<NetworkObject>().NetworkObjectId, direction, damageResult.damage, damageResult.isCritical, weaponId);
+        // Compute final values on the server using authoritative stats to ensure consistency on all clients
+        float finalSpeed = data.speed * playerStats.projectileSpeedMultiplier;
+        float finalDuration = data.duration * playerStats.durationMultiplier;
+        float finalKnockback = data.knockback * playerStats.knockbackMultiplier;
+        float finalSize = data.area * playerStats.projectileSizeMultiplier;
+        InitializeProjectileClientRpc(
+            projectileObj.GetComponent<NetworkObject>().NetworkObjectId,
+            direction,
+            damageResult.damage,
+            damageResult.isCritical,
+            weaponId,
+            finalSpeed,
+            finalDuration,
+            finalKnockback,
+            finalSize
+        );
     }
 
     [ClientRpc]
-    private void InitializeProjectileClientRpc(ulong networkObjectId, Vector3 direction, float damage, bool isCritical, int weaponId)
+    private void InitializeProjectileClientRpc(ulong networkObjectId, Vector3 direction, float damage, bool isCritical, int weaponId, float finalSpeed, float finalDuration, float finalKnockback, float finalSize)
     {
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkObjectId, out NetworkObject netObj))
         {
             var projectile = netObj.GetComponent<ProjectileWeapon>();
             if (projectile != null)
             {
-                WeaponData data = weaponRegistry.GetWeaponData(weaponId);
-                if (data == null) return;
-                
-                float finalSpeed = data.speed * playerStats.projectileSpeedMultiplier;
-                float finalDuration = data.duration * playerStats.durationMultiplier;
-                float finalKnockback = data.knockback * playerStats.knockbackMultiplier;
-                float finalSize = data.area * playerStats.projectileSizeMultiplier;
+                // Server already computed the final values using the owner's stats; just apply
                 projectile.Initialize(null, direction, damage, isCritical, finalSpeed, finalDuration, finalKnockback, finalSize);
             }
         }
@@ -483,6 +501,7 @@ public class PlayerWeaponManager : NetworkBehaviour
             var orbitNetObj = orbitingObj.GetComponent<NetworkObject>();
             orbitNetObj.Spawn(true);
             // Parent to the player on server so hierarchy follows owner immediately
+            // Preserve world position when parenting
             try { orbitNetObj.TrySetParent(this.NetworkObject, true); } catch {}
             // Server-side init to ensure authoritative logic has correct owner stats immediately
             var serverOrbiter = orbitingObj.GetComponent<OrbitingWeapon>();
@@ -492,19 +511,19 @@ public class PlayerWeaponManager : NetworkBehaviour
                 // Persist config for late joiners
                 serverOrbiter.ServerSetNetworkConfigServerRpc(this.NetworkObjectId, weaponId, i * angleStep);
             }
-            InitializeOrbitingWeaponClientRpc(orbitingObj.GetComponent<NetworkObject>().NetworkObjectId, this.NetworkObject, weaponId, i * angleStep);
+            InitializeOrbitingWeaponClientRpc(orbitingObj.GetComponent<NetworkObject>().NetworkObjectId, this.NetworkObject, this.NetworkObject, weaponId, i * angleStep);
         }
     }
 
     [ClientRpc]
-    private void InitializeOrbitingWeaponClientRpc(ulong networkObjectId, NetworkObjectReference ownerRef, int weaponId, float startAngle)
+    private void InitializeOrbitingWeaponClientRpc(ulong networkObjectId, NetworkObjectReference ownerRef, NetworkObjectReference statsOwnerRef, int weaponId, float startAngle)
     {
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkObjectId, out NetworkObject netObj))
         {
             var orbiter = netObj.GetComponent<OrbitingWeapon>();
             if (orbiter != null)
             {
-                orbiter.NetworkInitialize(ownerRef, weaponRegistry.GetWeaponData(weaponId), startAngle);
+                orbiter.NetworkInitialize(ownerRef, statsOwnerRef, weaponRegistry.GetWeaponData(weaponId), startAngle);
             }
         }
     }
@@ -518,7 +537,10 @@ public class PlayerWeaponManager : NetworkBehaviour
 
         // Spawn clone as a networked object so everyone sees it
     TryRegisterNetworkPrefab(cloneData.weaponPrefab);
-        GameObject cloneObj = Instantiate(cloneData.weaponPrefab, transform.position, transform.rotation);
+    // Spawn the clone near the player, not on top and NOT parented (so it doesn't follow)
+    Vector2 rand = UnityEngine.Random.insideUnitCircle.normalized * 1.5f;
+    Vector3 spawnPos = transform.position + new Vector3(rand.x, 0, rand.y);
+    GameObject cloneObj = Instantiate(cloneData.weaponPrefab, spawnPos, transform.rotation);
         var cloneNO = cloneObj.GetComponent<NetworkObject>();
         if (cloneNO == null)
         {
@@ -526,53 +548,88 @@ public class PlayerWeaponManager : NetworkBehaviour
             Destroy(cloneObj);
             return;
         }
-    cloneNO.Spawn(true);
-    // Parent to this player so it follows and clients can find stats via parent
-    try { cloneNO.TrySetParent(this.NetworkObject, true); } catch {}
+        cloneNO.Spawn(true);
 
-        // For each aura in the cloned list, create a server-authoritative aura proxy attached to the clone
+        // For each aura in the cloned list, create a NETWORKED AuraWeapon attached to the clone (server applies damage)
         foreach (var wid in weaponIdsToClone)
         {
             var wdata = weaponRegistry.GetWeaponData(wid);
             if (wdata == null) continue;
             if (wdata.archetype == WeaponArchetype.Aura)
             {
-                GameObject proxy = new GameObject($"ServerAura_Clone_{wdata.name}");
-                proxy.transform.SetParent(cloneObj.transform, false);
-                proxy.transform.localPosition = Vector3.zero;
-                var serverAura = proxy.AddComponent<ServerAura>();
-                serverAura.Initialize(cloneObj.transform, playerStats, GetComponent<NetworkedPlayerStatsTracker>(), wdata);
-            }
-        }
-
-        // Tell clients to attach aura visuals (local only, damage will be ignored on clients)
-        InitializeShadowCloneClientRpc(cloneNO.NetworkObjectId, weaponIdsToClone);
-    }
-
-    [ClientRpc]
-    private void InitializeShadowCloneClientRpc(ulong cloneNetId, int[] weaponIdsToClone)
-    {
-        if (NetworkManager.Singleton == null) return;
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(cloneNetId, out var cloneNO)) return;
-
-        // Attach local-only aura visuals for each aura in the list
-        foreach (var wid in weaponIdsToClone)
-        {
-            var wdata = weaponRegistry.GetWeaponData(wid);
-            if (wdata == null) continue;
-            if (wdata.archetype == WeaponArchetype.Aura && wdata.weaponPrefab != null)
-            {
-                GameObject auraObj = Instantiate(wdata.weaponPrefab, cloneNO.transform.position, Quaternion.identity, cloneNO.transform);
-                var aura = auraObj.GetComponent<AuraWeapon>();
-                if (aura != null)
+                if (wdata.weaponPrefab != null)
                 {
-                    // Prefer the owner's tracker via parent
-                    var parentTracker = cloneNO.transform.parent != null ? cloneNO.transform.parent.GetComponent<NetworkedPlayerStatsTracker>() : null;
-                    if (parentTracker != null) aura.Initialize(parentTracker, wdata);
-                    else aura.Initialize(playerStats, wdata); // fallback for SP
+                    TryRegisterNetworkPrefab(wdata.weaponPrefab);
+                    GameObject auraObj = Instantiate(wdata.weaponPrefab, cloneObj.transform.position, Quaternion.identity);
+                    auraObj.name = $"Aura_Clone_{wdata.name}";
+                        var auraNO = auraObj.GetComponent<NetworkObject>();
+                    if (auraNO == null)
+                    {
+                        Debug.LogWarning($"Aura prefab '{wdata.name}' has no NetworkObject. It will not sync in MP.");
+                        Destroy(auraObj);
+                    }
+                    else
+                    {
+                        var aura = auraObj.GetComponent<AuraWeapon>();
+                        if (aura != null)
+                        {
+                            // Stats owner = PLAYER; center parent = CLONE. Also pass direct WeaponData.
+                            int auraWeaponId = weaponRegistry.GetWeaponId(wdata);
+                            aura.PreSpawnConfigure(auraWeaponId, this.NetworkObjectId, wdata);
+                        }
+                        auraNO.Spawn(true);
+                        // Preserve world position when parenting to clone
+                        try { auraNO.TrySetParent(cloneNO, true); } catch {}
+                    }
+                }
+            }
+            else if (wdata.archetype == WeaponArchetype.Orbit)
+            {
+                // Spawn orbiting weapons for the clone (server-authoritative damage, clone-centered movement)
+                int finalAmount = wdata.amount + playerStats.projectileCount;
+                float angleStep = 360f / Mathf.Max(1, finalAmount);
+                for (int i = 0; i < finalAmount; i++)
+                {
+                    TryRegisterNetworkPrefab(wdata.weaponPrefab);
+                    GameObject orbitingObj = Instantiate(wdata.weaponPrefab, cloneObj.transform.position, Quaternion.identity);
+                    var orbitNetObj = orbitingObj.GetComponent<NetworkObject>();
+                    if (orbitNetObj == null)
+                    {
+                        Debug.LogWarning($"Orbit prefab '{wdata.name}' has no NetworkObject. Skipping for clone.");
+                        Destroy(orbitingObj);
+                        continue;
+                    }
+                    orbitNetObj.Spawn(true);
+                    // Parent to the clone preserving world position
+                    try { orbitNetObj.TrySetParent(cloneNO, true); } catch {}
+                    // Server-side init uses the PLAYER for stats, but parent is the CLONE for center
+                    var serverOrbiter = orbitingObj.GetComponent<OrbitingWeapon>();
+                    if (serverOrbiter != null)
+                    {
+                        serverOrbiter.ServerInitialize(this.NetworkObject, wdata, i * angleStep);
+                        // Persist config for late joiners (use clone as ownerId so clients center on clone)
+                        int wId = weaponRegistry.GetWeaponId(wdata);
+                        serverOrbiter.ServerSetNetworkConfigServerRpc(cloneNO.NetworkObjectId, wId, i * angleStep);
+                    }
+                    // Tell clients to initialize their copy using the clone as the owner/center, but use PLAYER for stats
+                    InitializeOrbitingWeaponClientRpc(orbitNetObj.NetworkObjectId, cloneNO, this.NetworkObject, weaponRegistry.GetWeaponId(wdata), i * angleStep);
                 }
             }
         }
+
+    // Still notify clients about clone (for any client-side setup other than aura visuals if needed)
+    InitializeShadowCloneClientRpc(cloneNO.NetworkObjectId, this.NetworkObjectId, weaponIdsToClone);
+    }
+
+    [ClientRpc]
+    private void InitializeShadowCloneClientRpc(ulong cloneNetId, ulong ownerNetId, int[] weaponIdsToClone)
+    {
+        if (NetworkManager.Singleton == null) return;
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(cloneNetId, out var cloneNO)) return;
+        NetworkObject ownerNO = null;
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(ownerNetId, out var found)) ownerNO = found;
+
+        // Auras are network-spawned by the server; nothing to do here for auras.
     }
     #endregion
 
@@ -593,8 +650,9 @@ public class PlayerWeaponManager : NetworkBehaviour
                 : new Vector3(UnityEngine.Random.insideUnitCircle.normalized.x, 0, UnityEngine.Random.insideUnitCircle.normalized.y);
             direction.y = 0;
 
-            Vector3 spawnPosWithOffset = firePoint.position + Vector3.up * 3f;
-            GameObject projectileObj = Instantiate(data.weaponPrefab, spawnPosWithOffset, Quaternion.LookRotation(direction));
+            Vector3 spawnPosWithOffset = firePoint.position + Vector3.up * 2f;
+            // Keep root rotation unchanged; ProjectileWeapon will rotate only its visual child on Z
+            GameObject projectileObj = Instantiate(data.weaponPrefab, spawnPosWithOffset, Quaternion.identity);
             var projectile = projectileObj.GetComponent<ProjectileWeapon>();
             if (projectile != null)
             {

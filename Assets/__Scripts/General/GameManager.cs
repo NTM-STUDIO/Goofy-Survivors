@@ -3,10 +3,53 @@ using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
+using System.Linq;
 
 public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
 {
     public static GameManager Instance { get; private set; }
+    // =============================
+    // 💎 TEAM-WIDE GUARANTEED RARITY (P2P)
+    // =============================
+    public void PresentGuaranteedRarityToAll(string rarityName)
+    {
+        if (!isP2P)
+        {
+            // Single-player: use local UpgradeManager directly
+            var um = upgradeManager != null ? upgradeManager : Object.FindFirstObjectByType<UpgradeManager>();
+            if (um == null) return;
+            var rm = um.GetRarityTiers();
+            var target = rm.FirstOrDefault(r => r != null && r.name == rarityName);
+            if (target != null) um.PresentGuaranteedRarityChoices(target);
+            return;
+        }
+
+        if (IsServer)
+        {
+            PresentGuaranteedRarityToAllClientRpc(rarityName);
+        }
+        else
+        {
+            PresentGuaranteedRarityToAllServerRpc(rarityName);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void PresentGuaranteedRarityToAllServerRpc(string rarityName)
+    {
+        PresentGuaranteedRarityToAllClientRpc(rarityName);
+    }
+
+    [ClientRpc]
+    private void PresentGuaranteedRarityToAllClientRpc(string rarityName)
+    {
+        var um = upgradeManager != null ? upgradeManager : Object.FindFirstObjectByType<UpgradeManager>();
+        if (um == null) return;
+        var tiers = um.GetRarityTiers();
+        var target = tiers.FirstOrDefault(r => r != null && r.name == rarityName);
+        if (target != null) { um.PresentGuaranteedRarityChoices(target); }
+    }
+
 
     [Header("Mode Settings")]
     public bool isP2P = false;
@@ -37,6 +80,11 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
     private float currentTime;
     private NetworkVariable<float> networkCurrentTime = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private float timerUIAccumulator = 0f;
+
+    [Header("Session Seed (P2P)")]
+    // A shared session seed so each client can derive a stable, unique RNG for client-only content
+    private NetworkVariable<int> sessionSeed = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public int SessionSeed => sessionSeed.Value;
 
     [Header("Shared Team Stats (P2P)")]
     private NetworkVariable<float> sharedXpMultiplier = new NetworkVariable<float>(1f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -211,6 +259,16 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+        // Server assigns a session seed once so clients can generate local-only props deterministically per session
+        if (IsServer)
+        {
+            if (sessionSeed.Value == 0)
+            {
+                // Use System.Random so we don't perturb UnityEngine.Random state used by gameplay
+                var rnd = new System.Random(System.Environment.TickCount ^ UnityEngine.Random.Range(int.MinValue, int.MaxValue));
+                sessionSeed.Value = rnd.Next(int.MinValue, int.MaxValue);
+            }
+        }
         if (IsServer)
         {
             NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
