@@ -6,6 +6,7 @@ public class ZappyMovementBehaviour : EnemyBehaviour
     [Header("Target Settings")]
     [SerializeField] private string playerTag = "Player";
     [SerializeField] private float aggroRange = 30f;
+    [SerializeField] private float targetUpdateInterval = 0.5f; // How often to check for closest player
     
     [Header("Attack & Retreat")]
     [Tooltip("Distance to get close before attacking")]
@@ -94,6 +95,9 @@ public class ZappyMovementBehaviour : EnemyBehaviour
     private Vector3 retreatPosition;
     private bool hasRetreatPosition;
     
+    // Multiplayer target tracking
+    private float nextTargetUpdateTime;
+    
     protected override void Awake()
     {
         base.Awake();
@@ -176,15 +180,18 @@ public class ZappyMovementBehaviour : EnemyBehaviour
             return;
         }
         
-        // Find or update player reference
-        if (targetPlayer == null)
+        // Periodically update target to closest player (for multiplayer support)
+        if (Time.time >= nextTargetUpdateTime)
         {
             FindClosestPlayer();
-            if (targetPlayer == null)
-            {
-                rb.linearVelocity = Vector3.zero;
-                return;
-            }
+            nextTargetUpdateTime = Time.time + targetUpdateInterval;
+        }
+        
+        // Verify we have a valid target
+        if (targetPlayer == null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            return;
         }
         
         // Check if player is in aggro range
@@ -231,16 +238,31 @@ public class ZappyMovementBehaviour : EnemyBehaviour
         }
     }
     
+    /// <summary>
+    /// Finds and targets the closest player. Called periodically to support multiplayer.
+    /// This ensures Zappy always follows the nearest player, even if players move around or die.
+    /// </summary>
     private void FindClosestPlayer()
     {
         GameObject[] players = GameObject.FindGameObjectsWithTag(playerTag);
-        if (players.Length == 0) return;
+        if (players.Length == 0)
+        {
+            targetPlayer = null;
+            return;
+        }
         
         float closestDistance = float.MaxValue;
         Transform closest = null;
         
         foreach (GameObject player in players)
         {
+            // Skip inactive or dead players if they exist
+            if (!player.activeInHierarchy) continue;
+            
+            // Optionally check if player is alive
+            PlayerStats playerStats = player.GetComponent<PlayerStats>();
+            if (playerStats != null && playerStats.CurrentHp <= 0) continue;
+            
             float distance = Vector3.Distance(transform.position, player.transform.position);
             if (distance < closestDistance)
             {

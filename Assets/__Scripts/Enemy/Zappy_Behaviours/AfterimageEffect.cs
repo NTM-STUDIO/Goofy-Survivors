@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class AfterimageEffect : MonoBehaviour
 {
@@ -18,6 +19,7 @@ public class AfterimageEffect : MonoBehaviour
     
     private bool isActive;
     private SpriteRenderer originalSprite;
+    private List<GameObject> activeAfterimages = new List<GameObject>();
     
     private void Awake()
     {
@@ -75,6 +77,9 @@ public class AfterimageEffect : MonoBehaviour
         afterimageSprite.flipX = originalSprite.flipX;
         afterimageSprite.flipY = originalSprite.flipY;
         
+        // Track the afterimage for cleanup
+        activeAfterimages.Add(afterimage);
+        
         StartCoroutine(FadeAndDestroy(afterimage, afterimageSprite));
     }
     
@@ -85,7 +90,12 @@ public class AfterimageEffect : MonoBehaviour
         
         while (elapsedTime < fadeTime)
         {
-            if (afterimage == null) yield break;
+            if (afterimage == null)
+            {
+                // Remove from tracking list if destroyed externally
+                activeAfterimages.Remove(afterimage);
+                yield break;
+            }
             
             elapsedTime += Time.deltaTime;
             float alpha = Mathf.Lerp(startColor.a, 0, elapsedTime / fadeTime);
@@ -95,19 +105,45 @@ public class AfterimageEffect : MonoBehaviour
         
         if (afterimage != null)
         {
+            // Remove from tracking list before destroying
+            activeAfterimages.Remove(afterimage);
             Destroy(afterimage);
         }
     }
 
     private void OnDestroy()
     {
+        // Stop the effect
+        StopEffect();
+        
+        // Clean up all afterimages
+        CleanupAfterimages();
+    }
+    
+    private void OnDisable()
+    {
+        // Stop the effect
+        StopEffect();
+        
+        // Clean up all active afterimages when disabled
+        CleanupAfterimages();
+    }
+    
+    private void CleanupAfterimages()
+    {
+        // Stop all coroutines to prevent new afterimages
         StopAllCoroutines();
-        foreach (Transform child in transform)
+        
+        // Destroy all tracked afterimages
+        foreach (GameObject afterimage in activeAfterimages)
         {
-            if (child.name == "Afterimage")
+            if (afterimage != null)
             {
-                Destroy(child.gameObject);
+                Destroy(afterimage);
             }
         }
+        
+        // Clear the tracking list
+        activeAfterimages.Clear();
     }
 }
