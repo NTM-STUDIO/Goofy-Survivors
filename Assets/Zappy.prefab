@@ -263,8 +263,8 @@ MonoBehaviour:
   detectionRadius: 5
   projectileLayer:
     serializedVersion: 2
-    m_Bits: 0
-  dodgeChance: 0.8
+    m_Bits: 64
+  dodgeChance: 1
   dodgeCooldown: 1
   useSpeedBurstDodge: 1
   showDetectionRadius: 1
