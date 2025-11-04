@@ -128,7 +128,7 @@ public class EnemyMovement : NetworkBehaviour
             velocity.x *= Mathf.Clamp01(horizontalNerfMultiplier);
         }
 
-        rb.linearVelocity = velocity;
+    rb.linearVelocity = velocity;
 
         // Debug
         debugDestination = transform.position + direction;

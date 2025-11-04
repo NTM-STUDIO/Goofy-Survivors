@@ -1973,8 +1973,10 @@ MonoBehaviour:
   - waveName: Wave Inicial (Perfect)
     enemies:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
-      enemyCount: 240
+      enemyCount: 5
     - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
+      enemyCount: 1
+    - enemyPrefab: {fileID: 4496776415297934645, guid: 28ba9582f3e390c4dbc1cf3917ba07b9, type: 3}
       enemyCount: 1
     timeUntilNextWave: 0
     spawnInterval: 0.5

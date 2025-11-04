@@ -280,17 +280,6 @@
       },
       "url": "https://packages.unity.com"
     },
-    "com.unity.netcode": {
-      "version": "1.9.1",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.entities": "1.3.5",
-        "com.unity.transport": "2.5.3",
-        "com.unity.modules.animation": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
-    },
     "com.unity.netcode.gameobjects": {
       "version": "2.6.0",
       "depth": 0,
@@ -387,8 +376,8 @@
       "depth": 2,
       "source": "registry",
       "dependencies": {
-        "com.unity.collections": "2.4.2",
-        "com.unity.burst": "1.7.2"
+        "com.unity.burst": "1.7.2",
+        "com.unity.collections": "2.4.2"
       },
       "url": "https://packages.unity.com"
     },
@@ -454,11 +443,11 @@
       "depth": 1,
       "source": "registry",
       "dependencies": {
+        "com.unity.collections": "1.2.4",
         "com.unity.services.core": "1.12.4",
-        "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.nuget.newtonsoft-json": "3.0.2",
-        "com.unity.services.authentication": "2.0.0",
-        "com.unity.collections": "1.2.4"
+        "com.unity.modules.unitywebrequest": "1.0.0",
+        "com.unity.services.authentication": "2.0.0"
       },
       "url": "https://packages.unity.com"
     },

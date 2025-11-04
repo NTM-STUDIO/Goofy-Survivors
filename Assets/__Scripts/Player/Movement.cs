@@ -69,6 +69,6 @@ public class Movement : NetworkBehaviour
         if (Mathf.Abs(moveInput.x) > 0.1f && Mathf.Abs(moveInput.z) > 0.1f)
             diagonalCompensation = 1f / Mathf.Sqrt(2f);
 
-        rb.linearVelocity = movementDirection * playerStats.movementSpeed * diagonalCompensation;
+    rb.linearVelocity = movementDirection * playerStats.movementSpeed * diagonalCompensation;
     }
 }

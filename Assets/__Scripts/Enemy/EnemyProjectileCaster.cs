@@ -24,6 +24,10 @@ public class EnemyProjectileCaster : MonoBehaviour
     [Tooltip("Half-angle of the aim cone in degrees. 0 = perfect aim, 15 = +/-15° spread.")]
     [Range(0f, 45f)] public float spreadAngleDegrees = 10f;
 
+    [Header("Visuals")]
+    [Tooltip("Z angle offset to apply to the projectile's Visuals child so sprites face the shot direction. If visuals look backwards, try -90 or 180.")]
+    [SerializeField] private float visualsZAngleOffset = 90f;
+
     // --- Private Variables ---
     private Rigidbody rb;
     private EnemyStats myStats;
@@ -181,7 +185,7 @@ public class EnemyProjectileCaster : MonoBehaviour
                 Vector2 projectileScreenPos = cam.WorldToScreenPoint(firePoint.position);
                 Vector2 aimScreenPos = cam.WorldToScreenPoint(aimPoint);
                 Vector2 screenDirection = (aimScreenPos - projectileScreenPos).normalized;
-                float aimingAngleZ = Mathf.Atan2(screenDirection.y, screenDirection.x) * Mathf.Rad2Deg + 90f;
+                float aimingAngleZ = Mathf.Atan2(screenDirection.y, screenDirection.x) * Mathf.Rad2Deg + visualsZAngleOffset;
 
                 Quaternion baseIsoRotation = Quaternion.Euler(30, 45, 0);
                 Quaternion aimingRotation = Quaternion.Euler(0, 0, aimingAngleZ);

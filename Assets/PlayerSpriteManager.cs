@@ -43,7 +43,7 @@ public class PlayerSpriteFlipperIsometric : MonoBehaviour
         }
 
         // 1. Get the character's velocity in world space.
-        Vector3 worldVelocity = rb.linearVelocity;
+    Vector3 worldVelocity = rb.linearVelocity;
 
         // 2. We only care about movement in the horizontal plane (X and Z).
         Vector3 horizontalVelocity = new Vector3(worldVelocity.x, 0, worldVelocity.z);

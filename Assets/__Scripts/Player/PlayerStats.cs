@@ -321,8 +321,8 @@ public class PlayerStats : MonoBehaviour
         OnDeath?.Invoke();
         IsDowned = true;
         // Immediately zero movement to avoid continued sliding this frame
-        var rb = GetComponent<Rigidbody>();
-        if (rb != null) rb.linearVelocity = Vector3.zero;
+    var rb = GetComponent<Rigidbody>();
+    if (rb != null) rb.linearVelocity = Vector3.zero;
         if (spriteRenderer != null && downedSprite != null)
         {
             spriteRenderer.sprite = downedSprite;
@@ -346,8 +346,8 @@ public class PlayerStats : MonoBehaviour
     {
         IsDowned = true;
         // Immediately zero movement to avoid continued sliding this frame (owner client)
-        var rb = GetComponent<Rigidbody>();
-        if (rb != null) rb.linearVelocity = Vector3.zero;
+    var rb = GetComponent<Rigidbody>();
+    if (rb != null) rb.linearVelocity = Vector3.zero;
         var movement = GetComponent<Movement>();
         if (movement != null) { movement.enabled = false; }
         var colls = GetComponentsInChildren<Collider>();

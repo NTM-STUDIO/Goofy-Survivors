@@ -305,7 +305,7 @@ public class ZappyMovementBehaviour : EnemyBehaviour
     {
         currentState = MovementState.Stopping;
         stateTimer = stopDuration + Random.Range(-timeRandomness, timeRandomness);
-        rb.linearVelocity = Vector3.zero;
+    rb.linearVelocity = Vector3.zero;
         
         // Keep afterimages on even during brief stops for continuous trail effect
         // They will be managed by velocity in LateUpdate
@@ -367,7 +367,7 @@ public class ZappyMovementBehaviour : EnemyBehaviour
     private void UpdateStoppingState()
     {
         stateTimer -= Time.deltaTime;
-        rb.linearVelocity = Vector3.zero;
+    rb.linearVelocity = Vector3.zero;
         
         if (stateTimer <= 0)
         {
@@ -441,7 +441,7 @@ public class ZappyMovementBehaviour : EnemyBehaviour
     {
         // Enter attacking state and stop movement
         currentState = MovementState.Attacking;
-        rb.linearVelocity = Vector3.zero;
+    rb.linearVelocity = Vector3.zero;
         
         // Disable afterimages during attack preparation
         if (useAfterimages && afterimageEffect != null)
@@ -520,7 +520,7 @@ public class ZappyMovementBehaviour : EnemyBehaviour
     private void UpdateRetreatWaitingState()
     {
         // Force stop movement during wait
-        rb.linearVelocity = Vector3.zero;
+    rb.linearVelocity = Vector3.zero;
         
         // Countdown wait timer
         stateTimer -= Time.deltaTime;

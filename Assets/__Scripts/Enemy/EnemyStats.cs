@@ -417,6 +417,8 @@ public class EnemyStats : NetworkBehaviour
     
     public void ApplyKnockback(float knockbackForce, float duration, Vector3 direction)
     {
+        // Ignore if dead/inactive or configured as unknockable
+        if (!isActiveAndEnabled || CurrentHealth <= 0f) return;
         if (isUnknockable || IsKnockedBack || knockbackForce <= 0) return;
         
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
@@ -428,12 +430,15 @@ public class EnemyStats : NetworkBehaviour
             }
         }
         
-        float resistanceMultiplier = 1f - currentKnockbackResistance;
+    // If we became inactive during network forwarding, bail out
+    if (!isActiveAndEnabled) return;
+
+    float resistanceMultiplier = 1f - currentKnockbackResistance;
         float effectiveForce = knockbackForce * resistanceMultiplier;
         float effectiveDuration = duration * resistanceMultiplier;
         if (effectiveDuration <= 0.01f) return;
         if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
-        knockbackCoroutine = StartCoroutine(KnockbackRoutine(effectiveForce, effectiveDuration, direction));
+    knockbackCoroutine = StartCoroutine(KnockbackRoutine(effectiveForce, effectiveDuration, direction));
         if (resistanceIncreasePerHit > 0)
         {
             currentKnockbackResistance += resistanceIncreasePerHit;
@@ -451,10 +456,10 @@ public class EnemyStats : NetworkBehaviour
     {
         IsKnockedBack = true;
         direction.y = 0; 
-        rb.linearVelocity = Vector3.zero;
+    rb.linearVelocity = Vector3.zero;
         rb.AddForce(direction.normalized * force, ForceMode.Impulse);
         yield return new WaitForSeconds(duration);
-        rb.linearVelocity = Vector3.zero;
+    rb.linearVelocity = Vector3.zero;
         IsKnockedBack = false;
         knockbackCoroutine = null;
     }
