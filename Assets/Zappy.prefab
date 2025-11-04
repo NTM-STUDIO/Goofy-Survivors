@@ -56,7 +56,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -876546973899608171, guid: 60f6e3c1ee6916547a8c4be6d0f97600, type: 3}
+  - {fileID: 10308, guid: 0000000000000000f000000000000000, type: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -104,7 +104,6 @@ MonoBehaviour:
   UpLeftSprite: {fileID: 21300000, guid: 1f50eec8f0fabfc40ad5132be0490b92, type: 3}
   DownRightSprite: {fileID: 21300000, guid: 1f50eec8f0fabfc40ad5132be0490b92, type: 3}
   DownLeftSprite: {fileID: 21300000, guid: 323f0081033218e4688f6ea5397168e1, type: 3}
-  invertLeftRight: 1
   firePoint: {fileID: 0}
   directionVector_Red: {x: 1, y: 0, z: 0}
   directionVector_Blue: {x: 0, y: 0, z: 1}
@@ -229,8 +228,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerTag: Player
-  aggroRange: 100
-  targetUpdateInterval: 0.5
+  aggroRange: 50
   attackRange: 2
   attackCooldown: 2
   retreatMinDistance: 10
@@ -248,7 +246,7 @@ MonoBehaviour:
   burstSpeedMultiplier: 4
   burstDuration: 0.5
   useAfterimages: 1
-  burstColor: {r: 1, g: 1, b: 1, a: 1}
+  burstColor: {r: 1, g: 1, b: 0.3, a: 1}
   showDebugGizmos: 1
 --- !u!114 &7514358417839774813
 MonoBehaviour:
@@ -270,7 +268,6 @@ MonoBehaviour:
   dodgeCooldown: 1
   useSpeedBurstDodge: 1
   showDetectionRadius: 1
-  debugLog: 0
 --- !u!114 &7048231635412883194
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -283,9 +280,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9478e84f3f399f84fbf037dd8f6e9efe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawnInterval: 0.02
-  afterimageColor: {r: 0.6792453, g: 0.6792453, b: 0.6792453, a: 0.25490198}
-  fadeTime: 0.15
+  spawnInterval: 0.01
+  afterimageColor: {r: 1, g: 1, b: 0, a: 0.5}
+  fadeTime: 0.5
   sortingOrderOffset: -1
 --- !u!114 &6427386719359412490
 MonoBehaviour:
@@ -542,7 +539,6 @@ MonoBehaviour:
   UpLeftSprite: {fileID: 21300000, guid: 1f50eec8f0fabfc40ad5132be0490b92, type: 3}
   DownRightSprite: {fileID: 21300000, guid: 1f50eec8f0fabfc40ad5132be0490b92, type: 3}
   DownLeftSprite: {fileID: 21300000, guid: 323f0081033218e4688f6ea5397168e1, type: 3}
-  invertLeftRight: 1
   firePoint: {fileID: 0}
   directionVector_Red: {x: 1, y: 0, z: 0}
   directionVector_Blue: {x: 0, y: 0, z: 1}

@@ -10,10 +10,6 @@ public class RobustIsometricController : MonoBehaviour
     public Sprite DownRightSprite;
     public Sprite DownLeftSprite;
 
-    [Header("Sprite Inversion")]
-    [Tooltip("If enabled, swaps left/right sprites (UpRight<->UpLeft, DownRight<->DownLeft) without using SpriteRenderer.flipX.")]
-    [SerializeField] private bool invertLeftRight = false;
-
     [Header("Optional Child Object Control")]
     [Tooltip("(Optional) Assign a child object like a fire point. Its local X-position will be flipped based on direction.")]
     public Transform firePoint;
@@ -96,52 +92,25 @@ public class RobustIsometricController : MonoBehaviour
         float newSign = 1f;
 
         // *** LOGIC UPDATED TO MATCH YOUR COLOR MAPPING ***
-        // Optionally invert left/right by swapping sprite assignments
-        if (!invertLeftRight)
+        if (maxDot == dotRed) // Red Line
         {
-            if (maxDot == dotRed) // Red Line
-            {
-                newSprite = UpRightSprite;
-                newSign = 1f; // Right-facing
-            }
-            else if (maxDot == dotBlue) // Blue Line
-            {
-                newSprite = UpLeftSprite;
-                newSign = -1f; // Left-facing
-            }
-            else if (maxDot == dotGreen) // Green Line
-            {
-                newSprite = DownRightSprite;
-                newSign = 1f; // Right-facing
-            }
-            else // maxDot == dotYellow (Yellow Line)
-            {
-                newSprite = DownLeftSprite;
-                newSign = -1f; // Left-facing
-            }
+            newSprite = UpRightSprite;
+            newSign = 1f; // Right-facing
         }
-        else
+        else if (maxDot == dotBlue) // Blue Line
         {
-            if (maxDot == dotRed) // Red Line (inverted)
-            {
-                newSprite = UpLeftSprite;
-                newSign = -1f; // Left-facing
-            }
-            else if (maxDot == dotBlue) // Blue Line (inverted)
-            {
-                newSprite = UpRightSprite;
-                newSign = 1f; // Right-facing
-            }
-            else if (maxDot == dotGreen) // Green Line (inverted)
-            {
-                newSprite = DownLeftSprite;
-                newSign = -1f; // Left-facing
-            }
-            else // maxDot == dotYellow (Yellow Line) (inverted)
-            {
-                newSprite = DownRightSprite;
-                newSign = 1f; // Right-facing
-            }
+            newSprite = UpLeftSprite;
+            newSign = -1f; // Left-facing
+        }
+        else if (maxDot == dotGreen) // Green Line
+        {
+            newSprite = DownRightSprite;
+            newSign = 1f; // Right-facing
+        }
+        else // maxDot == dotYellow (Yellow Line)
+        {
+            newSprite = DownLeftSprite;
+            newSign = -1f; // Left-facing
         }
 
         if (firePoint != null)
