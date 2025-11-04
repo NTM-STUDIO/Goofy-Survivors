@@ -343,8 +343,11 @@ public class EnemyStats : NetworkBehaviour
     {
         if (!gameObject.activeSelf) return;
 
-        // If networked, server should handle despawn so clients get the update.
-        if (NetworkManager.Singleton != null)
+        var nm = NetworkManager.Singleton;
+        bool netActive = nm != null && nm.IsListening;
+
+        // If networked and active, server should handle despawn so clients get the update.
+        if (netActive)
         {
             if (IsServer)
             {
@@ -368,7 +371,7 @@ public class EnemyStats : NetworkBehaviour
         }
         else
         {
-            // Single-player fallback
+            // Single-player or networking not started: local destroy
             TryDropOrb();
             Destroy(gameObject);
         }
@@ -385,8 +388,10 @@ public class EnemyStats : NetworkBehaviour
         {
             if (randomValue <= orb.dropChance)
             {
-                // Spawn orb on server if networked, otherwise local instantiate
-                if (NetworkManager.Singleton != null && IsServer)
+                // Spawn orb on server if networking is active; otherwise local instantiate
+                var nm = NetworkManager.Singleton;
+                bool netActive = nm != null && nm.IsListening;
+                if (netActive && IsServer)
                 {
                     // Ensure orb prefab is registered for network spawn on clients
                     TryRegisterNetworkPrefab(orb.orbPrefab);
@@ -399,7 +404,7 @@ public class EnemyStats : NetworkBehaviour
                     }
                     netObj.Spawn(true);
                 }
-                else if (NetworkManager.Singleton == null)
+                else
                 {
                     Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
                 }

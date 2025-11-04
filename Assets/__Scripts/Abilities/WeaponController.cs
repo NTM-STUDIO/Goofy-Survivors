@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Netcode;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -188,7 +189,39 @@ public class WeaponController : MonoBehaviour
         {
             GameObject orbitingWeaponObj = Instantiate(WeaponData.weaponPrefab, transform.position, Quaternion.identity);
             // Parent under the clone's weapon controller so they get destroyed with the clone
+            // In single-player (or when Netcode isn't listening), temporarily disable NetworkObject
+            // to avoid NotListeningException during reparenting.
+            bool netActive = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+            // Disable ALL NetworkObject components in the hierarchy prior to reparenting in SP
+            List<NetworkObject> disabledNOs = null;
+            if (!netActive)
+            {
+                var allNOs = orbitingWeaponObj.GetComponentsInChildren<NetworkObject>(true);
+                if (allNOs != null && allNOs.Length > 0)
+                {
+                    disabledNOs = new List<NetworkObject>(allNOs.Length);
+                    foreach (var no in allNOs)
+                    {
+                        if (no != null && no.enabled)
+                        {
+                            no.enabled = false;
+                            disabledNOs.Add(no);
+                        }
+                    }
+                }
+            }
+
             orbitingWeaponObj.transform.SetParent(transform, false);
+
+            // In MP: restore NetworkObjects we disabled
+            if (netActive && disabledNOs != null)
+            {
+                foreach (var no in disabledNOs)
+                {
+                    if (no != null)
+                        no.enabled = true;
+                }
+            }
             var orbiter = orbitingWeaponObj.GetComponent<OrbitingWeapon>();
             if (orbiter != null)
             {
