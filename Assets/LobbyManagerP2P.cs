@@ -19,7 +19,7 @@ public class LobbyManagerP2P : NetworkBehaviour
     {
         DontDestroyOnLoad(gameObject);
 
-        Canvas mainCanvas = FindObjectOfType<Canvas>();
+    Canvas mainCanvas = Object.FindFirstObjectByType<Canvas>();
         if (mainCanvas == null)
         {
             Debug.LogError("LobbyManagerP2P: Não foi encontrado nenhum Canvas!");

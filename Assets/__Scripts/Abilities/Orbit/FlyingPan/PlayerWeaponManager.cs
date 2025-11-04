@@ -147,9 +147,32 @@ public class PlayerWeaponManager : NetworkBehaviour
 
         if (isP2P)
         {
-            var targetRefs = targets.Where(t => t != null && t.TryGetComponent(out NetworkObject _))
-                                    .Select(t => (NetworkObjectReference)t.GetComponent<NetworkObject>())
-                                    .ToArray();
+            // IMPORTANT: Only send ONE primary target to the server; the server will fan-out the
+            // final projectile count (amount + projectileCount). Sending multiple targets here would
+            // result in server spawning the full count PER target (over-spawning).
+            NetworkObjectReference[] targetRefs = System.Array.Empty<NetworkObjectReference>();
+            if (targets != null && targets.Length > 0)
+            {
+                Transform best = null;
+                float bestDist = float.MaxValue;
+                foreach (var t in targets)
+                {
+                    if (t == null) continue;
+                    var no = t.GetComponent<NetworkObject>();
+                    if (no == null) continue;
+                    float d = Vector3.Distance(transform.position, t.position);
+                    if (d < bestDist)
+                    {
+                        bestDist = d;
+                        best = t;
+                    }
+                }
+                if (best != null)
+                {
+                    var no = best.GetComponent<NetworkObject>();
+                    targetRefs = new NetworkObjectReference[] { (NetworkObjectReference)no };
+                }
+            }
             // Send our current origin (prefer weaponParent if assigned) so the server spawns from the shooter’s actual firepoint
             Vector3 origin = (weaponParent != null) ? weaponParent.position : transform.position;
             RequestAttackServerRpc(weaponId, origin, targetRefs);

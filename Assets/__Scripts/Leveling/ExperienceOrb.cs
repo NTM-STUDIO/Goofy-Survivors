@@ -87,9 +87,9 @@ public class ExperienceOrb : MonoBehaviour
                     gm.DistributeSharedXP(xpValue);
                 }
 
-                // Despawn or destroy
+                // Despawn if spawned; otherwise destroy locally to avoid Netcode errors
                 var netObj = GetComponent<Unity.Netcode.NetworkObject>();
-                if (netObj != null) netObj.Despawn(true); else Destroy(gameObject);
+                if (netObj != null && netObj.IsSpawned) netObj.Despawn(true); else Destroy(gameObject);
             }
             else
             {

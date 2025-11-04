@@ -31,8 +31,8 @@ public class SpecialUpgradeGiver : MonoBehaviour
 
         // Get cached instances or find them once if not assigned
         gameManager = GameManager.Instance;
-        upgradeManager = UpgradeManager.Instance ?? FindObjectOfType<UpgradeManager>();
-        specialUpgradePanel = SpecialUpgradeUI.Instance ?? FindObjectOfType<SpecialUpgradeUI>();
+    upgradeManager = UpgradeManager.Instance ?? Object.FindFirstObjectByType<UpgradeManager>();
+    specialUpgradePanel = SpecialUpgradeUI.Instance ?? Object.FindFirstObjectByType<SpecialUpgradeUI>();
 
         if (gameManager == null || upgradeManager == null || specialUpgradePanel == null)
         {

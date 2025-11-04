@@ -853,6 +853,7 @@ MonoBehaviour:
   reviveColor: {r: 1, g: 1, b: 1, a: 1}
   reviveVfxDuration: 0.8
   reviveVfxYOffset: 2
+  reviveVfxSortingLayer: VFX
   mpPerPlayerMultiplier: 1.5
   difficultyIncreaseInterval: 25
   generalStrengthMultiplier: 1.25
@@ -923,7 +924,7 @@ MonoBehaviour:
   - assetPrefab: {fileID: 383518980796734899, guid: 3c470efbfdb7fc2489ee1cbd65392cda, type: 3}
     weight: 0.4
   - assetPrefab: {fileID: 1010114737999647873, guid: 400cca9a532574a48875d09870502710, type: 3}
-    weight: 5
+    weight: 0.3
   - assetPrefab: {fileID: 485895516535105435, guid: 5922ebbfd4d78944e8dc01825f225fe0, type: 3}
     weight: 0.004
   mapWidth: 500
@@ -1976,7 +1977,7 @@ MonoBehaviour:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
       enemyCount: 1
     timeUntilNextWave: 0
-    spawnInterval: 5
+    spawnInterval: 0.5
   - waveName: XD
     enemies:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}

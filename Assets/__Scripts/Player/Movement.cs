@@ -31,6 +31,13 @@ public class Movement : NetworkBehaviour
         // Somente aplica IsOwner se estivermos em P2P
         if (gameManager != null && gameManager.isP2P && !IsOwner) return;
 
+        // If downed, ignore input entirely
+        if (playerStats != null && playerStats.IsDowned)
+        {
+            moveInput = Vector3.zero;
+            return;
+        }
+
         moveInput.x = Input.GetAxisRaw("Horizontal");
         moveInput.z = Input.GetAxisRaw("Vertical");
     }
@@ -38,6 +45,13 @@ public class Movement : NetworkBehaviour
     void FixedUpdate()
     {
         if (gameManager != null && gameManager.isP2P && !IsOwner) return;
+
+        // If downed, hard-stop movement immediately
+        if (playerStats != null && playerStats.IsDowned)
+        {
+            rb.linearVelocity = Vector3.zero;
+            return;
+        }
 
         if (moveInput.sqrMagnitude < 0.0001f)
         {

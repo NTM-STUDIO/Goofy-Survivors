@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Netcode;
 
 [RequireComponent(typeof(SpriteRenderer))]
 public class RobustIsometricController : MonoBehaviour
@@ -50,16 +51,8 @@ public class RobustIsometricController : MonoBehaviour
             firePointXMagnitude = Mathf.Abs(firePoint.localPosition.x);
         }
 
-        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-        if (playerObj != null)
-        {
-            playerTransform = playerObj.transform;
-        }
-        else
-        {
-            Debug.LogError("RobustIsometricController: Player not found! Make sure your player is tagged 'Player'.", this);
-            this.enabled = false;
-        }
+        // Don't assume a single tagged Player; target will be resolved dynamically in LateUpdate
+        playerTransform = null;
 
         // Normalize vectors on startup
         directionVector_Red.Normalize();
@@ -70,6 +63,12 @@ public class RobustIsometricController : MonoBehaviour
 
     void LateUpdate()
     {
+        // Resolve or refresh target each frame to avoid looking at downed players
+        if (playerTransform == null || IsTargetDowned(playerTransform))
+        {
+            playerTransform = FindClosestActivePlayer();
+        }
+
         if (playerTransform == null) return;
 
         Vector3 directionToPlayer = playerTransform.position - transform.position;
@@ -126,6 +125,52 @@ public class RobustIsometricController : MonoBehaviour
             spriteRenderer.sprite = newSprite;
             currentSprite = newSprite;
         }
+    }
+
+    private bool IsTargetDowned(Transform t)
+    {
+        if (t == null) return true;
+        var ps = t.GetComponent<PlayerStats>();
+        return (ps == null) || ps.IsDowned;
+    }
+
+    private Transform FindClosestActivePlayer()
+    {
+        Transform closest = null;
+        float minDist = float.MaxValue;
+
+        var nm = NetworkManager.Singleton;
+        if (nm != null && nm.IsListening)
+        {
+            foreach (var client in nm.ConnectedClientsList)
+            {
+                if (client?.PlayerObject == null) continue;
+                var ps = client.PlayerObject.GetComponent<PlayerStats>();
+                if (ps == null || ps.IsDowned) continue;
+                float d = Vector3.Distance(transform.position, ps.transform.position);
+                if (d < minDist)
+                {
+                    minDist = d;
+                    closest = ps.transform;
+                }
+            }
+        }
+        else
+        {
+            // Single-player/editor: scan PlayerStats in scene
+            var all = Object.FindObjectsByType<PlayerStats>(FindObjectsSortMode.None);
+            foreach (var ps in all)
+            {
+                if (ps == null || ps.IsDowned) continue;
+                float d = Vector3.Distance(transform.position, ps.transform.position);
+                if (d < minDist)
+                {
+                    minDist = d;
+                    closest = ps.transform;
+                }
+            }
+        }
+        return closest;
     }
 
     // --- VISUAL DEBUGGER (Comments updated to match your mapping) ---

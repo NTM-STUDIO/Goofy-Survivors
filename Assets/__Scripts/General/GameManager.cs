@@ -146,7 +146,7 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
     void Start()
     {
         if (uiManager == null)
-            uiManager = FindObjectOfType<UIManager>();
+            uiManager = Object.FindFirstObjectByType<UIManager>();
 
         CurrentState = GameState.PreGame;
         currentTime = totalGameTime;
@@ -170,7 +170,7 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         else
         {
             // Single player local
-            var pxp = playerExperience != null ? playerExperience : FindObjectOfType<PlayerExperience>();
+            var pxp = playerExperience != null ? playerExperience : Object.FindFirstObjectByType<PlayerExperience>();
             pxp?.AddXP(amount);
         }
     }
@@ -178,7 +178,7 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
     [ClientRpc]
     private void ApplySharedXPClientRpc(float amount)
     {
-        var pxp = playerExperience != null ? playerExperience : FindObjectOfType<PlayerExperience>();
+    var pxp = playerExperience != null ? playerExperience : Object.FindFirstObjectByType<PlayerExperience>();
         // This amount is already scaled on the server by the shared team multiplier
         pxp?.AddXPFromServerScaled(amount);
     }
@@ -216,7 +216,7 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         if (!isP2P)
         {
             // Single-player: apply directly
-            var ps = FindObjectOfType<PlayerStats>();
+            var ps = Object.FindFirstObjectByType<PlayerStats>();
             ps?.IncreaseProjectileSizeMultiplier(delta);
             return;
         }
@@ -908,6 +908,12 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
     private void SpawnBoss()
     {
         if (bossPrefab == null || bossSpawnPoint == null) return;
+        // In P2P, teleport all players to the host's boss spawn area before spawning the boss
+        if (isP2P && IsServer)
+        {
+            ServerTeleportPlayersToBossPoint();
+        }
+
         GameObject bossObject = Instantiate(bossPrefab, bossSpawnPoint.position + Vector3.up * 10f, bossSpawnPoint.rotation);
         
         if (isP2P && IsHost)
@@ -917,6 +923,57 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         
         reaperStats = bossObject.GetComponent<EnemyStats>();
         Debug.Log("O Boss Final apareceu!");
+    }
+
+    // Server-only: compute per-player teleport destinations around the host's boss spawn point and instruct each client to move locally
+    private void ServerTeleportPlayersToBossPoint()
+    {
+        if (!isP2P || !IsServer) return;
+        var nm = NetworkManager.Singleton;
+        if (nm == null || bossSpawnPoint == null) return;
+
+        // Arrange players in a circle around the spawn point to avoid stacking
+        var clients = nm.ConnectedClientsList;
+        int count = Mathf.Max(1, clients.Count);
+        float radius = 4.0f; // spread radius around spawn point
+        Vector3 center = bossSpawnPoint.position;
+
+        for (int i = 0; i < clients.Count; i++)
+        {
+            var client = clients[i];
+            float angle = (count > 1) ? (i * Mathf.PI * 2f / count) : 0f;
+            Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
+            Vector3 dest = center + offset;
+
+            var rpcParams = new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { client.ClientId } }
+            };
+            TeleportToPositionClientRpc(dest, rpcParams);
+        }
+    }
+
+    [ClientRpc]
+    private void TeleportToPositionClientRpc(Vector3 destination, ClientRpcParams clientRpcParams = default)
+    {
+        // Teleport only the local player's object on each client (owner-driven movement)
+        var nm = NetworkManager.Singleton;
+        if (nm == null || nm.LocalClient == null || nm.LocalClient.PlayerObject == null) return;
+        var playerObj = nm.LocalClient.PlayerObject;
+
+        // Maintain current Y to avoid terrain mismatch if needed
+        var rb = playerObj.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            Vector3 current = rb.position;
+            rb.position = new Vector3(destination.x, current.y, destination.z);
+            rb.linearVelocity = Vector3.zero;
+        }
+        else
+        {
+            Vector3 current = playerObj.transform.position;
+            playerObj.transform.position = new Vector3(destination.x, current.y, destination.z);
+        }
     }
     
     private void CheckForDifficultyIncrease()
@@ -987,7 +1044,7 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         if (!isP2P)
         {
             // Single-player: just find local PlayerStats and apply directly
-            var ps = FindObjectOfType<PlayerStats>();
+            var ps = Object.FindFirstObjectByType<PlayerStats>();
             ps?.ApplyDamage(amount, hitFromWorldPos, customIFrameDuration);
             return;
         }

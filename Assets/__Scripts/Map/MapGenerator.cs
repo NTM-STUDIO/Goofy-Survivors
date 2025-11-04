@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using System.Collections;
 
 public class MapGenerator : MonoBehaviour
 {
@@ -45,7 +46,7 @@ public class MapGenerator : MonoBehaviour
         float halfWidth = mapWidth * 0.5f;
         float halfHeight = mapHeight * 0.5f;
 
-        for (int i = 0; i < numAssets; i++)
+    for (int i = 0; i < numAssets; i++)
         {
             // Generate random position within boundaries
             float x = Random.Range(-halfWidth, halfWidth);
@@ -102,14 +103,10 @@ public class MapGenerator : MonoBehaviour
             TryRegisterNetworkPrefab(chosenAsset.assetPrefab);
 
             GameObject go = Instantiate(chosenAsset.assetPrefab, assetPosition, Quaternion.identity, transform);
-            var netObj = go.GetComponent<NetworkObject>();
-            if (netObj == null)
-            {
-                // Add a NetworkObject dynamically so static map assets replicate to clients
-                netObj = go.AddComponent<NetworkObject>();
-            }
-            netObj.Spawn(true);
-            Debug.Log($"[MapGenerator] Spawned '{go.name}' with NetId={netObj.NetworkObjectId} at {assetPosition}");
+            // Remove any nested NetworkObjects under this spawned root to avoid Netcode nested spawn errors
+            RemoveNestedChildNetworkObjects(go);
+            // Delay one frame so Destroy(component) completes before spawning
+            StartCoroutine(SpawnAfterStrip(go));
         }
 
         // Also ensure any pre-placed children of MapGenerator are network-spawned (e.g., Chest, Arbusto placed in scene)
@@ -127,20 +124,13 @@ public class MapGenerator : MonoBehaviour
     {
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
         int count = 0;
-        foreach (Transform child in transform)
+    foreach (Transform child in transform)
         {
             // Skip if this object was already spawned
-            var netObj = child.GetComponent<NetworkObject>();
-            if (netObj == null)
-            {
-                netObj = child.gameObject.AddComponent<NetworkObject>();
-            }
-            if (!netObj.IsSpawned)
-            {
-                netObj.Spawn(true);
-                count++;
-                Debug.Log($"[MapGenerator] Ensured child '{child.gameObject.name}' is network-spawned (NetId={netObj.NetworkObjectId}).");
-            }
+            // Clean nested NetworkObjects beneath this root to avoid nested spawn errors
+            RemoveNestedChildNetworkObjects(child.gameObject);
+            // Delay spawning to next frame to ensure components are destroyed
+            StartCoroutine(SpawnAfterStrip(child.gameObject, () => { count++; }));
         }
         if (count > 0)
         {
@@ -160,5 +150,42 @@ public class MapGenerator : MonoBehaviour
                 return asset;
         }
         return assets[assets.Length - 1];
+    }
+
+    // Removes any NetworkObject components found in descendants of a given root (excluding the root itself)
+    private void RemoveNestedChildNetworkObjects(GameObject root)
+    {
+        var allNOs = root.GetComponentsInChildren<NetworkObject>(true);
+        foreach (var no in allNOs)
+        {
+            if (no.gameObject == root) continue; // keep root
+            Debug.LogWarning($"[MapGenerator] Removing nested NetworkObject from child '{no.gameObject.name}' under '{root.name}' to comply with Netcode runtime spawn rules.");
+            Destroy(no);
+        }
+    }
+
+    // Spawns the root as a network object after a frame so that any destroyed child NetworkObjects are fully removed
+    private IEnumerator SpawnAfterStrip(GameObject root, System.Action onSpawned = null)
+    {
+        // Only server should proceed
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) yield break;
+
+        // Wait one frame to let Destroy(component) finalize
+        yield return null;
+
+        if (root == null) yield break;
+
+        var netObj = root.GetComponent<NetworkObject>();
+        if (netObj == null)
+        {
+            netObj = root.AddComponent<NetworkObject>();
+        }
+
+        if (!netObj.IsSpawned)
+        {
+            netObj.Spawn(true);
+            Debug.Log($"[MapGenerator] Spawned '{root.name}' with NetId={netObj.NetworkObjectId} at {root.transform.position}");
+            onSpawned?.Invoke();
+        }
     }
 }

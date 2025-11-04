@@ -44,6 +44,13 @@ public class EnemyProjectileDamage3D : MonoBehaviour
             Debug.Log($"[Projectile Debug] Collided with player: '{other.name}'", gameObject);
 
             var netObj = other.GetComponentInParent<NetworkObject>();
+            var pstats = other.GetComponentInParent<PlayerStats>();
+            if (pstats != null && pstats.IsDowned)
+            {
+                // Ignore downed players completely
+                Destroy(gameObject);
+                return;
+            }
             var isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
             if (isNetworked)
             {

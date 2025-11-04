@@ -27,40 +27,39 @@ public class EnemyMovement : NetworkBehaviour
     [Header("Debug")]
     [SerializeField] private bool showGizmos = true;
 
-    private const float horizontalNerfFactor = 0.56f; // same as player Movement.cs
+    [Header("Isometric Nerf (optional)")]
+    [Tooltip("If enabled, applies an extra nerf to the world X component to compensate for isometric projection horizontal speed.")]
+    [SerializeField] private bool tryNerfHorizontal = false;
+    [Tooltip("Multiplier applied to the world X component of movement when nerf is enabled (0-1).")]
+    [Range(0f, 1f)]
+    [SerializeField] private float horizontalNerfMultiplier = 0.56f;
 
+    // --- Private Variables ---
     private Transform player;
     private Rigidbody playerRb;
     private Rigidbody rb;
     private EnemyStats stats;
     private float flankSign = 1f;
     private float nextAttackTime = 0f;
+
+    // Direction that can be set externally by pathfinding
     private Vector3 targetDirection = Vector3.zero;
-
-    private Vector3 debugIntercept;
-    private Vector3 debugDestination;
-    private bool hasDebugTarget;
-    private EnemyPathfinding pathfindingComponent;
-
-    private GameObject[] players; // Array to hold all players with "Player" tag
-
     public Vector3 TargetDirection
     {
         get => targetDirection;
         set => targetDirection = value;
     }
 
+    // Debug variables
+    private Vector3 debugIntercept;
+    private Vector3 debugDestination;
+    private bool hasDebugTarget;
+    private EnemyPathfinding pathfindingComponent;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         stats = GetComponent<EnemyStats>();
-
-        // Find all players with "Player" tag
-        players = GameObject.FindGameObjectsWithTag("Player");
-        if (players.Length == 0)
-        {
-            Debug.LogError("No players found with tag 'Player'!", gameObject);
-        }
 
         if (randomizeOnAwake) RandomiseBehaviour();
         flankSign = Random.value < 0.5f ? -1f : 1f;
@@ -73,81 +72,122 @@ public class EnemyMovement : NetworkBehaviour
 
     private void FixedUpdate()
     {
-    // Only the server should simulate enemy movement. Clients receive position updates via NetworkTransform or custom sync.
-    if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
+        // Only the server should simulate enemy movement. Clients receive position updates via NetworkTransform or custom sync.
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
 
-        // Find the closest player
-        Transform closestPlayer = null;
-        float minDist = float.MaxValue;
-        foreach (GameObject p in players)
+        // Find the closest NON-DOWNED player using authoritative lists (Netcode) or scene scan (SP)
+        FindClosestActivePlayer(out player, out playerRb);
+
+        if (stats.IsKnockedBack)
         {
-            if (p == null) continue; // In case a player is destroyed
-            float dist = Vector3.Distance(transform.position, p.transform.position);
-            if (dist < minDist)
-            {
-                minDist = dist;
-                closestPlayer = p.transform;
-            }
+            // While knocked back, do not override physics-driven motion; just skip AI movement.
+            return;
         }
-        player = closestPlayer;
-        playerRb = (player != null) ? player.GetComponent<Rigidbody>() : null;
-
-        if (stats.IsKnockedBack || player == null)
+        if (player == null)
         {
-            rb.linearVelocity = Vector3.zero; // Ensure no movement during knockback
+            // No valid (alive) target -> stop
+            rb.linearVelocity = Vector3.zero;
+            hasDebugTarget = false;
             return;
         }
 
         Vector3 direction;
-
-        // Use pathfinding direction if available
         if (targetDirection != Vector3.zero)
         {
             direction = targetDirection;
-            targetDirection = Vector3.zero;
+            targetDirection = Vector3.zero; // Reset after using
         }
         else
         {
-            Vector3 targetPosition = GetTargetPosition(transform.position);
-            direction = targetPosition - transform.position;
+            Vector3 enemyPosition = transform.position;
+            Vector3 targetPosition = GetTargetPosition(enemyPosition);
+            direction = targetPosition - enemyPosition;
         }
 
-        // --- START OF CORRECTED MOVEMENT LOGIC ---
-
-        // Ensure movement is only on the XZ plane
-        direction.y = 0;
-
-        // Safety check: If the direction is negligible, stop moving completely.
-        if (direction.sqrMagnitude < 0.0001f)
+        // XZ only
+        direction.y = 0f;
+        if (direction.sqrMagnitude <= 0.0001f)
         {
             rb.linearVelocity = Vector3.zero;
             hasDebugTarget = false;
-            return; // Exit if there's no movement to be done
+            return;
         }
 
-        // First, normalize the vector to get a pure direction with a length of 1.
-        Vector3 moveDirection = direction.normalized;
+        // Diagonal compensation (same feel as player)
+        float diagonalCompensation = 1f;
+        if (Mathf.Abs(direction.x) > 0.1f && Mathf.Abs(direction.z) > 0.1f)
+        {
+            diagonalCompensation = 0.70710678f; // 1/sqrt(2)
+        }
 
-        // NOW, apply the horizontal nerf to the X component of the normalized vector.
-        moveDirection.x *= horizontalNerfFactor;
+        Vector3 velocity = direction.normalized * stats.moveSpeed * diagonalCompensation;
 
-        // Apply the final speed to the modified direction.
-        rb.linearVelocity = moveDirection * stats.moveSpeed;
+        // Optional isometric horizontal nerf on world X axis
+        if (tryNerfHorizontal)
+        {
+            velocity.x *= Mathf.Clamp01(horizontalNerfMultiplier);
+        }
 
-        // Update debug visualization
-        debugDestination = transform.position + moveDirection * 5f; // Multiplied for better visibility
+        rb.linearVelocity = velocity;
+
+        // Debug
+        debugDestination = transform.position + direction;
         hasDebugTarget = true;
+    }
 
-        // --- END OF CORRECTED MOVEMENT LOGIC ---
+    private void FindClosestActivePlayer(out Transform closest, out Rigidbody closestRb)
+    {
+        closest = null;
+        closestRb = null;
+        float minDist = float.MaxValue;
+
+        var nm = NetworkManager.Singleton;
+        if (nm != null && nm.IsListening)
+        {
+            // P2P: iterate through connected clients' PlayerObjects
+            foreach (var client in nm.ConnectedClientsList)
+            {
+                if (client?.PlayerObject == null) continue;
+                var ps = client.PlayerObject.GetComponent<PlayerStats>();
+                if (ps == null || ps.IsDowned) continue;
+                float dist = Vector3.Distance(transform.position, ps.transform.position);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    closest = ps.transform;
+                    closestRb = ps.GetComponent<Rigidbody>();
+                }
+            }
+        }
+        else
+        {
+            // Single-player/editor: scan scene for PlayerStats
+            var all = Object.FindObjectsByType<PlayerStats>(FindObjectsSortMode.None);
+            foreach (var ps in all)
+            {
+                if (ps == null || ps.IsDowned) continue;
+                float dist = Vector3.Distance(transform.position, ps.transform.position);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    closest = ps.transform;
+                    closestRb = ps.GetComponent<Rigidbody>();
+                }
+            }
+        }
     }
 
     private void OnTriggerStay(Collider other)
     {
-    // Only server should handle attack hits to remain authoritative.
-    if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
+        // Only server should handle attack hits to remain authoritative.
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
 
         if (other.CompareTag("Player") && Time.time >= nextAttackTime)
         {
+            // Ignore downed players entirely
+            var targetPs = other.GetComponentInParent<PlayerStats>();
+            if (targetPs != null && targetPs.IsDowned) return;
+
             nextAttackTime = Time.time + attackCooldown;
             // Apply damage via GameManager so it mirrors to the owning client as well
             var netObj = other.GetComponentInParent<NetworkObject>();
@@ -174,6 +214,7 @@ public class EnemyMovement : NetworkBehaviour
             if (velocity.sqrMagnitude < 0.001f)
             {
                 velocity = (playerPosition - enemyPosition).normalized * stats.moveSpeed;
+                velocity.y = 0f;
             }
             predicted += velocity * Mathf.Max(0f, leadTime);
         }

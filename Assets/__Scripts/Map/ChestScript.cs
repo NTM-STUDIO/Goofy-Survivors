@@ -30,7 +30,7 @@ public class ChestScript : MonoBehaviour
             return;
         }
 
-        UIManager uiManager = FindObjectOfType<UIManager>();
+    UIManager uiManager = Object.FindFirstObjectByType<UIManager>();
         // In P2P we do not need UIManager here on the server, as UI will be shown via targeted ClientRpc
 
         // --- CORE LOGIC (THE FIX) ---

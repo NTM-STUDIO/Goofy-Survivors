@@ -80,7 +80,7 @@ public class EnemyProjectileCaster : MonoBehaviour
     {
         if (myStats.IsKnockedBack || Time.timeScale == 0f)
         {
-            rb.linearVelocity = Vector3.zero;
+            // While knocked back, let physics handle motion and do not override velocity.
             return;
         }
 
@@ -221,6 +221,8 @@ public class EnemyProjectileCaster : MonoBehaviour
             foreach (var client in Unity.Netcode.NetworkManager.Singleton.ConnectedClientsList)
             {
                 if (client.PlayerObject == null) continue;
+                var ps = client.PlayerObject.GetComponent<PlayerStats>();
+                if (ps != null && ps.IsDowned) continue; // skip downed players
                 Transform t = client.PlayerObject.transform;
                 float d = Vector3.Distance(transform.position, t.position);
                 if (d < best)
@@ -233,8 +235,15 @@ public class EnemyProjectileCaster : MonoBehaviour
         }
         else
         {
+            // In SP, pick the player only if not downed
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-            return playerObj != null ? playerObj.transform : null;
+            if (playerObj != null)
+            {
+                var ps = playerObj.GetComponent<PlayerStats>();
+                if (ps != null && ps.IsDowned) return null;
+                return playerObj.transform;
+            }
+            return null;
         }
     }
 

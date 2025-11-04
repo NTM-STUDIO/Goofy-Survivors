@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using Object = UnityEngine.Object; // disambiguate from System.Object
 
 // This script provides a way to execute code on the main thread from other threads.
 // It's a common utility in Unity when dealing with asynchronous operations like Firebase.
@@ -15,7 +16,7 @@ public class UnityMainThreadDispatcher : MonoBehaviour
         if (_instance == null)
         {
             // Try to find an existing instance in the scene
-            _instance = FindObjectOfType<UnityMainThreadDispatcher>();
+            _instance = Object.FindFirstObjectByType<UnityMainThreadDispatcher>();
             if (_instance == null)
             {
                 // If not found, create a new GameObject and add the dispatcher component
