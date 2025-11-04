@@ -1972,8 +1972,6 @@ MonoBehaviour:
   waves:
   - waveName: Wave Inicial (Perfect)
     enemies:
-    - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
-      enemyCount: 5
     - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
       enemyCount: 1
     - enemyPrefab: {fileID: 4496776415297934645, guid: 28ba9582f3e390c4dbc1cf3917ba07b9, type: 3}
@@ -1983,17 +1981,21 @@ MonoBehaviour:
   - waveName: XD
     enemies:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
-      enemyCount: 3
+      enemyCount: 6
     - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
       enemyCount: 300
+    - enemyPrefab: {fileID: 4496776415297934645, guid: 28ba9582f3e390c4dbc1cf3917ba07b9, type: 3}
+      enemyCount: 1
     timeUntilNextWave: 0
     spawnInterval: 0.3
   - waveName: XD
     enemies:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
-      enemyCount: 200
+      enemyCount: 100
     - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
-      enemyCount: 5
+      enemyCount: 4
+    - enemyPrefab: {fileID: 4496776415297934645, guid: 28ba9582f3e390c4dbc1cf3917ba07b9, type: 3}
+      enemyCount: 1
     timeUntilNextWave: 0
     spawnInterval: 0.1
   - waveName: XD

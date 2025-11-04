@@ -231,20 +231,20 @@ MonoBehaviour:
   playerTag: Player
   aggroRange: 100
   targetUpdateInterval: 0.5
-  attackRange: 2
-  attackCooldown: 2
-  retreatMinDistance: 10
-  retreatMaxDistance: 30
-  retreatWaitTime: 1
-  retreatSpeedMultiplier: 5
+  attackRange: 3
+  attackCooldown: 0.1
+  retreatMinDistance: 25
+  retreatMaxDistance: 40
+  retreatWaitTime: 0.2
+  retreatSpeedMultiplier: 4
   speedMultiplier: 1.5
-  moveDuration: 0.3
-  stopDuration: 0.2
+  moveDuration: 0.2
+  stopDuration: 0.12
   timeRandomness: 0.1
   erraticness: 1
   directionChangeInterval: 0.15
   maxAngleDeviation: 45
-  speedBurstChance: 0
+  speedBurstChance: 0.1
   burstSpeedMultiplier: 4
   burstDuration: 0.5
   useAfterimages: 1
@@ -285,7 +285,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spawnInterval: 0.02
   afterimageColor: {r: 0.6792453, g: 0.6792453, b: 0.6792453, a: 0.25490198}
-  fadeTime: 0.15
+  fadeTime: 0.25
   sortingOrderOffset: -1
 --- !u!114 &6427386719359412490
 MonoBehaviour:

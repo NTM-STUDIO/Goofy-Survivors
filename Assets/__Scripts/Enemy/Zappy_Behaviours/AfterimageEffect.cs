@@ -17,6 +17,12 @@ public class AfterimageEffect : MonoBehaviour
     [Tooltip("Offset na ordem de renderização")]
     public int sortingOrderOffset = -1;
     
+    [Header("Rotation Override")]
+    [Tooltip("If enabled, afterimages will use this world rotation instead of copying the source rotation.")]
+    [SerializeField] private bool useIsometricRotation = true;
+    [Tooltip("Euler angles for the afterimage rotation. Default is isometric tilt X=30, Y=45, Z=0.")]
+    [SerializeField] private Vector3 isometricEuler = new Vector3(30f, 45f, 0f);
+
     private bool isActive;
     private SpriteRenderer originalSprite;
     private List<GameObject> activeAfterimages = new List<GameObject>();
@@ -65,8 +71,8 @@ public class AfterimageEffect : MonoBehaviour
         if (originalSprite == null) return;
         
         GameObject afterimage = new GameObject("Afterimage");
-        afterimage.transform.position = transform.position;
-        afterimage.transform.rotation = transform.rotation;
+    afterimage.transform.position = transform.position;
+    afterimage.transform.rotation = useIsometricRotation ? Quaternion.Euler(isometricEuler) : transform.rotation;
         afterimage.transform.localScale = transform.localScale;
         
         SpriteRenderer afterimageSprite = afterimage.AddComponent<SpriteRenderer>();
