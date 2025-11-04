@@ -141,15 +141,18 @@ public class WeaponController : MonoBehaviour
         // Single-player fallback: local only
         GameObject cloneObj = Instantiate(WeaponData.weaponPrefab, playerStats.transform.position, playerStats.transform.rotation);
         ShadowClone cloneScript = cloneObj.GetComponent<ShadowClone>();
-        if (cloneScript != null)
+        if (cloneScript == null)
         {
-            // Do not allow the shadow clone to fire projectiles: filter them out
-            List<WeaponData> weaponsToClone = weaponManager
-                .GetOwnedWeapons()
-                .Where(w => w.archetype != WeaponArchetype.ShadowCloneJutsu && w.archetype != WeaponArchetype.Projectile)
-                .ToList();
-            cloneScript.Initialize(weaponsToClone, playerStats, weaponRegistry);
+            // Ensure the clone has a ShadowClone component in SP even if the prefab was missing it
+            cloneScript = cloneObj.AddComponent<ShadowClone>();
         }
+
+        // Do not allow the shadow clone to fire projectiles: filter them out
+        List<WeaponData> weaponsToClone = weaponManager
+            .GetOwnedWeapons()
+            .Where(w => w.archetype != WeaponArchetype.ShadowCloneJutsu && w.archetype != WeaponArchetype.Projectile)
+            .ToList();
+        cloneScript.Initialize(weaponsToClone, playerStats, weaponRegistry);
     }
 
     private void FireLocally()

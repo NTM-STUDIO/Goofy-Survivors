@@ -1,10 +1,8 @@
 using UnityEngine;
 using Unity.Netcode;
 
-// 1. Require 3D components instead of 2D
-[RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(SphereCollider))]
-[RequireComponent(typeof(NetworkObject))]
+// Use 3D components by default; prefab can add them. We don't hard-require here to avoid conflicts with existing setups.
+// If missing at runtime, we'll still operate via transform movement once attraction starts.
 public class ExperienceOrb : MonoBehaviour
 {
     [Header("Orb Properties")]
@@ -43,15 +41,14 @@ public class ExperienceOrb : MonoBehaviour
         );
     }
 
-    // 3. Use the 3D trigger event with a 3D Collider
-    void OnTriggerEnter(Collider other)
+    /// <summary>
+    /// Called by the player's pickup radius when the orb enters the pickup area.
+    /// </summary>
+    public void StartAttraction(Transform target)
     {
-        // The logic remains the same, but it's now triggered by a 3D collider.
-        if (!isAttracted && other.CompareTag("Items"))
-        {
-            isAttracted = true;
-            attractionTarget = other.transform;
-        }
+        if (isAttracted || target == null) return;
+        isAttracted = true;
+        attractionTarget = target;
     }
 
     private void CollectOrb()
@@ -59,11 +56,13 @@ public class ExperienceOrb : MonoBehaviour
         if (collected) return;
         collected = true;
 
-        // Proactively disable pickup collider/visuals immediately to prevent duplicates while the network despawn propagates
-        var col = GetComponent<Collider>();
-        if (col != null) col.enabled = false;
-        var rend = GetComponentInChildren<Renderer>();
-        if (rend != null) rend.enabled = false;
+    // Proactively disable pickup collider/visuals immediately to prevent duplicates while the network despawn propagates
+    var col = GetComponent<Collider>();
+    if (col != null) col.enabled = false;
+    var col2d = GetComponent<Collider2D>();
+    if (col2d != null) col2d.enabled = false;
+    var rend = GetComponentInChildren<Renderer>();
+    if (rend != null) rend.enabled = false;
 
         var nm = Unity.Netcode.NetworkManager.Singleton;
         var playerStats = attractionTarget.GetComponentInParent<PlayerStats>();

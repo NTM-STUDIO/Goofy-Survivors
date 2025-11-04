@@ -919,7 +919,7 @@ MonoBehaviour:
   assets:
   - assetPrefab: {fileID: 2745972941608320513, guid: ff73d214ee77c384b9df26ce0a06af07, type: 3}
     weight: 1
-  - assetPrefab: {fileID: 8018592964146069253, guid: 6fe97a023397b9440bd0beb0ca7731cb, type: 3}
+  - assetPrefab: {fileID: 7593117020678281446, guid: cc5fe909f8431a3459f0bd28352c1d66, type: 3}
     weight: 25
   - assetPrefab: {fileID: 383518980796734899, guid: 3c470efbfdb7fc2489ee1cbd65392cda, type: 3}
     weight: 0.4

@@ -50,6 +50,16 @@ public class PickupRadiusController : MonoBehaviour
             radiusModifiers.Remove(value);
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        // If an ExperienceOrb enters the pickup radius, tell it to start homing to this transform
+        var orb = other.GetComponent<ExperienceOrb>();
+        if (orb != null)
+        {
+            orb.StartAttraction(transform);
+        }
+    }
+
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
