@@ -390,6 +390,34 @@ public class PlayerStats : MonoBehaviour
             if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp);
         }
     }
+
+    // Server-only revive helper to set a fixed HP amount
+    public void ServerReviveToFixedHp(int hp)
+    {
+        // Enforce minimum of 1 HP and do not exceed maxHp
+        currentHp = Mathf.Clamp(hp, 1, maxHp);
+        IsDowned = false;
+        if (spriteRenderer != null && _originalSprite != null)
+        {
+            spriteRenderer.sprite = _originalSprite;
+            if (!string.IsNullOrEmpty(_originalSortingLayer))
+            {
+                spriteRenderer.sortingLayerName = _originalSortingLayer;
+            }
+        }
+        var movement = GetComponent<Movement>();
+        if (movement != null) { movement.enabled = true; }
+        var colls = GetComponentsInChildren<Collider>(true);
+        foreach (var c in colls) c.enabled = true;
+        OnHealed?.Invoke();
+        OnHealthChanged?.Invoke(currentHp, maxHp);
+        var nm = NetworkManager.Singleton;
+        if (nm == null || !nm.IsListening || _isLocalOwner)
+        {
+            var uiManager = FindFirstObjectByType<UIManager>();
+            if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp);
+        }
+    }
     private IEnumerator HealthRegenRoutine() { while (true) { yield return new WaitForSeconds(1f); ApplyHealthRegen(); } }
     private void ApplyHealthRegen() { if (hpRegen > 0f && currentHp > 0 && currentHp < maxHp) { Heal(Mathf.CeilToInt(hpRegen)); } }
     #endregion

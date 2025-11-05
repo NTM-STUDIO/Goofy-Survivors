@@ -62,6 +62,10 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
     [SerializeField] private PlayerExperience playerExperience;
     [SerializeField] private MapGenerator mapGenerator;
 
+    [Header("Network Prefab Registry (MP)")]
+    [Tooltip("Assign any runtime-spawned prefabs here (e.g., Experience Orbs, Projectiles, Auras, Shields, special Enemies) so both host and clients register them with Netcode before they spawn.")]
+    [SerializeField] private List<GameObject> runtimeNetworkPrefabs = new List<GameObject>();
+
     private Movement localPlayer;
     private GameObject chosenPlayerPrefab;
 
@@ -499,6 +503,9 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
             }
         }
 
+        // In multiplayer, make sure both host and clients pre-register any runtime-spawned prefabs
+        RegisterRuntimePrefabs();
+
         if (!isP2P)
         {
             // Single-player: explicitly generate map only when game starts
@@ -541,6 +548,17 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         }
 
         if(uiManager) uiManager.OnGameStart();
+    }
+
+    private void RegisterRuntimePrefabs()
+    {
+        var nm = NetworkManager.Singleton;
+        if (nm == null || !nm.IsListening) return; // Only meaningful in MP
+        if (runtimeNetworkPrefabs == null || runtimeNetworkPrefabs.Count == 0) return;
+        foreach (var prefab in runtimeNetworkPrefabs)
+        {
+            RuntimeNetworkPrefabRegistry.TryRegister(prefab);
+        }
     }
 
     // Ensure all interactable map consumables (including chests) are network-spawned so clients can interact and observe despawns
@@ -822,7 +840,8 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
                     var ps = downedClient.PlayerObject.GetComponent<PlayerStats>();
                     if (ps != null)
                     {
-                        ps.ServerReviveToPercent(0.5f);
+                        // Set fixed HP on revive as requested
+                        ps.ServerReviveToFixedHp(10);
                         playerAlive[downedId] = true;
                         reviveProgress.Remove(downedId);
                         // Play revive VFX on all clients
@@ -906,6 +925,12 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
             var downed = ps.DownedSprite;
             if (downed != null) sr.sprite = downed;
             sr.sortingLayerName = "MAPCOSMETIC";
+            // Hide aura visuals while downed on all clients
+            var auras = netObj.GetComponentsInChildren<AuraWeapon>(true);
+            foreach (var aura in auras)
+            {
+                if (aura != null) aura.SetVisualsActive(false);
+            }
         }
         else
         {
@@ -915,6 +940,12 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
             if (orig != null) sr.sprite = orig;
             var origLayer = ps.OriginalSortingLayer;
             if (!string.IsNullOrEmpty(origLayer)) sr.sortingLayerName = origLayer;
+            // Restore aura visuals after revive on all clients
+            var auras = netObj.GetComponentsInChildren<AuraWeapon>(true);
+            foreach (var aura in auras)
+            {
+                if (aura != null) aura.SetVisualsActive(true);
+            }
         }
     }
 

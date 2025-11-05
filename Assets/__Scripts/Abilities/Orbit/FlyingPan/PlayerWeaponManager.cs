@@ -495,14 +495,20 @@ public class PlayerWeaponManager : NetworkBehaviour
     Vector3 spawnPosWithOffset = spawnPosition + Vector3.up * 2f;
         TryRegisterNetworkPrefab(data.weaponPrefab);
         GameObject projectileObj = Instantiate(data.weaponPrefab, spawnPosWithOffset, Quaternion.identity);
-        projectileObj.GetComponent<NetworkObject>().Spawn(true);
+        var projNO = projectileObj.GetComponent<NetworkObject>();
+        if (projNO == null)
+        {
+            // Add a NetworkObject dynamically so projectiles are replicated to clients
+            projNO = projectileObj.AddComponent<NetworkObject>();
+        }
+        projNO.Spawn(true);
         // Compute final values on the server using authoritative stats to ensure consistency on all clients
         float finalSpeed = data.speed * playerStats.projectileSpeedMultiplier;
         float finalDuration = data.duration * playerStats.durationMultiplier;
         float finalKnockback = data.knockback * playerStats.knockbackMultiplier;
         float finalSize = data.area * playerStats.projectileSizeMultiplier;
         InitializeProjectileClientRpc(
-            projectileObj.GetComponent<NetworkObject>().NetworkObjectId,
+            projNO.NetworkObjectId,
             direction,
             damageResult.damage,
             damageResult.isCritical,

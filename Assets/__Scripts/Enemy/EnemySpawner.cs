@@ -105,13 +105,16 @@ public class EnemySpawner : MonoBehaviour
                         // If we're running a networked game and we're the server, spawn as a NetworkObject.
                         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
                         {
+                            // Ensure prefab is registered and has a NetworkObject so it replicates to clients
+                            RuntimeNetworkPrefabRegistry.TryRegister(selectedEnemy.enemyPrefab);
                             GameObject spawned = Instantiate(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
                             var netObj = spawned.GetComponent<NetworkObject>();
-                            if (netObj != null)
+                            if (netObj == null)
                             {
-                                // Server spawns the network object so it is replicated to clients.
-                                netObj.Spawn();
+                                netObj = spawned.AddComponent<NetworkObject>();
                             }
+                            // Server spawns the network object so it is replicated to clients.
+                            netObj.Spawn(true);
                         }
                         else
                         {
