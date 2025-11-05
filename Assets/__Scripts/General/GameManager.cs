@@ -69,6 +69,7 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
     [SerializeField] private Transform playerSpawnPoint;
     [SerializeField] private GameObject bossPrefab;
     [SerializeField] private Transform bossSpawnPoint;
+    [SerializeField] private GameObject playerCameraPrefab;
 
     private Dictionary<ulong, GameObject> playerUnitSelections = new Dictionary<ulong, GameObject>();
 
@@ -465,6 +466,38 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         playerExperience?.Initialize(playerObject);
         upgradeManager?.Initialize(playerObject);
         enemyDespawner?.Initialize(playerObject);
+        
+        // Instancia a câmara apenas para o jogador local
+        bool shouldInstantiateCamera = false;
+        
+        if (!isP2P)
+        {
+            // Single player: sempre instancia
+            shouldInstantiateCamera = true;
+        }
+        else
+        {
+            // Multiplayer: só instancia se for o dono
+            var networkBehaviour = playerObject.GetComponent<Unity.Netcode.NetworkBehaviour>();
+            shouldInstantiateCamera = (networkBehaviour != null && networkBehaviour.IsOwner);
+        }
+        
+        if (shouldInstantiateCamera && playerCameraPrefab != null)
+        {
+            GameObject camObj = Instantiate(playerCameraPrefab);
+            var controller = camObj.GetComponent<TMPro.Examples.CameraController>();
+            if (controller != null)
+            {
+                controller.CameraTarget = playerObject.transform;
+                
+                // Desativa a MainCamera (do menu) apenas se não for ela mesma
+                var mainCam = Camera.main;
+                if (mainCam != null && mainCam.gameObject != camObj)
+                {
+                    mainCam.gameObject.SetActive(false);
+                }
+            }
+        }
 
         if (!isP2P)
         {

@@ -69,10 +69,51 @@ public class EnemyDespawner : MonoBehaviour
         EnemyStats[] allEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
         foreach (EnemyStats enemy in allEnemies)
         {
-            if (Vector3.Distance(playerTransform.position, enemy.transform.position) > despawnRadius)
+            // Check if enemy is far from ALL players (multiplayer support)
+            if (IsEnemyFarFromAllPlayers(enemy.transform.position))
             {
                 enemySpawner.RespawnEnemy(enemy.gameObject);
             }
+        }
+    }
+
+    /// <summary>
+    /// Checks if an enemy is outside the despawn radius of ALL players.
+    /// In multiplayer, only despawn if the enemy is far from EVERY player.
+    /// </summary>
+    private bool IsEnemyFarFromAllPlayers(Vector3 enemyPosition)
+    {
+        // Check if we're in multiplayer mode
+        if (Unity.Netcode.NetworkManager.Singleton != null && 
+            Unity.Netcode.NetworkManager.Singleton.IsListening && 
+            Unity.Netcode.NetworkManager.Singleton.IsServer)
+        {
+            // Multiplayer: Check all connected players
+            foreach (var client in Unity.Netcode.NetworkManager.Singleton.ConnectedClientsList)
+            {
+                if (client?.PlayerObject == null) continue;
+                
+                float distance = Vector3.Distance(client.PlayerObject.transform.position, enemyPosition);
+                
+                // If ANY player is within range, don't despawn
+                if (distance <= despawnRadius)
+                {
+                    return false;
+                }
+            }
+            
+            // All players are out of range, can despawn
+            return true;
+        }
+        else
+        {
+            // Single player: Check only the local player
+            if (playerTransform != null)
+            {
+                return Vector3.Distance(playerTransform.position, enemyPosition) > despawnRadius;
+            }
+            
+            return false;
         }
     }
 
@@ -80,20 +121,38 @@ public class EnemyDespawner : MonoBehaviour
     {
         if (!showGizmo) return;
 
-        // Try to find the player in the editor for gizmo drawing, even without the game running.
-        if (playerTransform == null)
+        // Check if we're in multiplayer mode with active network
+        if (Unity.Netcode.NetworkManager.Singleton != null && 
+            Unity.Netcode.NetworkManager.Singleton.IsListening && 
+            Unity.Netcode.NetworkManager.Singleton.IsServer)
         {
-             GameObject player = GameObject.FindGameObjectWithTag("Player");
-            if (player != null)
+            // Draw despawn radius for all connected players
+            Gizmos.color = Color.red;
+            foreach (var client in Unity.Netcode.NetworkManager.Singleton.ConnectedClientsList)
             {
-                playerTransform = player.transform;
+                if (client?.PlayerObject != null)
+                {
+                    Gizmos.DrawWireSphere(client.PlayerObject.transform.position, despawnRadius);
+                }
             }
         }
-        
-        if (playerTransform != null)
+        else
         {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(playerTransform.position, despawnRadius);
+            // Single player mode: Try to find the player in the editor for gizmo drawing
+            if (playerTransform == null)
+            {
+                GameObject player = GameObject.FindGameObjectWithTag("Player");
+                if (player != null)
+                {
+                    playerTransform = player.transform;
+                }
+            }
+            
+            if (playerTransform != null)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawWireSphere(playerTransform.position, despawnRadius);
+            }
         }
     }
 }
