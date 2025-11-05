@@ -32,6 +32,23 @@ public class EnemySpawner : MonoBehaviour
         }
     }
 
+    private int GetPlayerCountMultiplier()
+    {
+        // Check if we're in a networked game
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            // In multiplayer, count connected clients
+            if (NetworkManager.Singleton.IsServer)
+            {
+                int playerCount = NetworkManager.Singleton.ConnectedClientsList.Count;
+                return Mathf.Max(1, playerCount); // Ensure at least 1
+            }
+        }
+        
+        // Single-player or not server: return 1
+        return 1;
+    }
+
     public void StartSpawning()
     {
         Debug.Log("EnemySpawner: Starting wave spawning.");
@@ -50,11 +67,16 @@ public class EnemySpawner : MonoBehaviour
             Wave currentWave = waves[waveIndex];
             Debug.Log("Starting Wave: " + (currentWave.waveName != "" ? currentWave.waveName : (waveIndex + 1).ToString()));
             
+            // Calculate multiplier based on number of connected players
+            int playerMultiplier = GetPlayerCountMultiplier();
+            Debug.Log($"EnemySpawner: Player multiplier is {playerMultiplier}");
+            
             List<int> remainingCounts = new List<int>();
             int totalEnemiesToSpawn = 0;
             foreach (WaveEnemy waveEnemy in currentWave.enemies)
             {
-                int clampedCount = Mathf.Max(0, waveEnemy.enemyCount);
+                // Multiply enemy count by number of players
+                int clampedCount = Mathf.Max(0, waveEnemy.enemyCount * playerMultiplier);
                 remainingCounts.Add(clampedCount);
                 totalEnemiesToSpawn += clampedCount;
             }
