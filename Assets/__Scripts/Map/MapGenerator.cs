@@ -152,15 +152,22 @@ public class MapGenerator : MonoBehaviour
         return assets[assets.Length - 1];
     }
 
-    // Removes any NetworkObject components found in descendants of a given root (excluding the root itself)
+    // Detach any child NetworkObjects to avoid nested NOs; reparent them under the MapGenerator so they can be spawned separately
     private void RemoveNestedChildNetworkObjects(GameObject root)
     {
         var allNOs = root.GetComponentsInChildren<NetworkObject>(true);
         foreach (var no in allNOs)
         {
-            if (no.gameObject == root) continue; // keep root
-            Debug.LogWarning($"[MapGenerator] Removing nested NetworkObject from child '{no.gameObject.name}' under '{root.name}' to comply with Netcode runtime spawn rules.");
-            Destroy(no);
+            if (no == null) continue;
+            if (no.gameObject == root) continue; // keep root's NO intact
+
+            Debug.LogWarning($"[MapGenerator] Detaching nested NetworkObject child '{no.gameObject.name}' from '{root.name}' to avoid nested NO hierarchy.");
+
+            // Reparent to the MapGenerator so it becomes a sibling rather than a child
+            no.transform.SetParent(this.transform, true);
+
+            // Important: DO NOT destroy the NetworkObject here; other components may require it (e.g., GuaranteedRarityGiver)
+            // We'll spawn all direct children later via EnsureChildrenNetworkSpawned()
         }
     }
 

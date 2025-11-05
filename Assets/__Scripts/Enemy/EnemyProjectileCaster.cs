@@ -1,8 +1,9 @@
 using UnityEngine;
+using Unity.Netcode;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(EnemyStats))]
-public class EnemyProjectileCaster : MonoBehaviour
+public class EnemyProjectileCaster : NetworkBehaviour
 {
     // --- MODIFIED: Removed the Idle state ---
     private enum AIState { Chasing, Attacking }
@@ -172,43 +173,160 @@ public class EnemyProjectileCaster : MonoBehaviour
             direction = Quaternion.AngleAxis(yaw, Vector3.up) * direction;
             direction.Normalize();
         }
-        GameObject projectile = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
-        Transform visualsChild = projectile.transform.Find("Visuals");
+        var nm = NetworkManager.Singleton;
+        bool isNetworked = nm != null && nm.IsListening;
 
-        if (visualsChild != null)
+        // Server-authoritative spawn in multiplayer
+        if (isNetworked)
         {
-            // Point visuals in the actual shot direction (using a pseudo target along the direction)
-            Vector3 aimPoint = firePoint.position + direction * 5f;
-            Camera cam = Camera.main;
-            if (cam != null)
+            if (!IsServer)
             {
-                Vector2 projectileScreenPos = cam.WorldToScreenPoint(firePoint.position);
-                Vector2 aimScreenPos = cam.WorldToScreenPoint(aimPoint);
-                Vector2 screenDirection = (aimScreenPos - projectileScreenPos).normalized;
-                float aimingAngleZ = Mathf.Atan2(screenDirection.y, screenDirection.x) * Mathf.Rad2Deg + visualsZAngleOffset;
-
-                Quaternion baseIsoRotation = Quaternion.Euler(30, 45, 0);
-                Quaternion aimingRotation = Quaternion.Euler(0, 0, aimingAngleZ);
-                visualsChild.rotation = baseIsoRotation * aimingRotation;
+                // Only the server should spawn projectiles in MP
+                return;
             }
+
+            // Register and ensure the projectile is a NetworkObject
+            RuntimeNetworkPrefabRegistry.TryRegister(projectilePrefab);
+            GameObject projectile = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+            var projNO = projectile.GetComponent<NetworkObject>();
+            if (projNO == null)
+            {
+                projNO = projectile.AddComponent<NetworkObject>();
+            }
+            projNO.Spawn(true);
+
+            // Compute visuals rotation locally (clients will compute too in RPC for consistency)
+            ApplyProjectileVisualsRotation(projectile.transform, firePoint.position, direction);
+
+            // Set server physics so server projectile moves and collides authoritatively
+            Rigidbody projRb = projectile.GetComponent<Rigidbody>();
+            if (projRb != null)
+            {
+                projRb.linearVelocity = direction * GetCurrentProjectileSpeed();
+            }
+
+            // Set damage caster on server projectile
+            var projectileDamageScript = projectile.GetComponentInChildren<EnemyProjectileDamage3D>();
+            if (projectileDamageScript != null)
+            {
+                projectileDamageScript.CasterStats = myStats;
+            }
+
+            // Initialize client copies to the same velocity and visuals; provide caster id for optional lookups
+            ulong casterId = 0UL;
+            var casterNO = GetComponent<NetworkObject>();
+            if (casterNO != null) casterId = casterNO.NetworkObjectId;
+            InitializeEnemyProjectileClientRpc(projNO.NetworkObjectId, direction, GetCurrentProjectileSpeed(), firePoint.position, casterId);
+
+            // Proper network despawn after lifetime
+            StartCoroutine(DespawnProjectileLater(projNO.NetworkObjectId, 5f));
         }
         else
         {
-            Debug.LogError("Projectile prefab is missing a required child object named 'Visuals'!", projectile);
+            // Single-player: classic local instantiate and behavior
+            GameObject projectile = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+            ApplyProjectileVisualsRotation(projectile.transform, firePoint.position, direction);
+
+            Rigidbody projRb = projectile.GetComponent<Rigidbody>();
+            if (projRb != null)
+            {
+                projRb.linearVelocity = direction * GetCurrentProjectileSpeed();
+            }
+            var projectileDamageScript = projectile.GetComponentInChildren<EnemyProjectileDamage3D>();
+            if (projectileDamageScript != null)
+            {
+                projectileDamageScript.CasterStats = myStats;
+            }
+            Destroy(projectile, 5f);
+        }
+    }
+
+    private void ApplyProjectileVisualsRotation(Transform projectileTransform, Vector3 origin, Vector3 direction)
+    {
+        Transform visualsChild = projectileTransform.Find("Visuals");
+        if (visualsChild == null) return;
+
+        Vector3 aimPoint = origin + direction * 5f;
+        Camera cam = Camera.main;
+        if (cam != null)
+        {
+            Vector2 projectileScreenPos = cam.WorldToScreenPoint(origin);
+            Vector2 aimScreenPos = cam.WorldToScreenPoint(aimPoint);
+            Vector2 screenDirection = (aimScreenPos - projectileScreenPos).normalized;
+            float aimingAngleZ = Mathf.Atan2(screenDirection.y, screenDirection.x) * Mathf.Rad2Deg + visualsZAngleOffset;
+
+            Quaternion baseIsoRotation = Quaternion.Euler(30, 45, 0);
+            Quaternion aimingRotation = Quaternion.Euler(0, 0, aimingAngleZ);
+            visualsChild.rotation = baseIsoRotation * aimingRotation;
+        }
+    }
+
+    [ClientRpc]
+    private void InitializeEnemyProjectileClientRpc(ulong projectileNetId, Vector3 direction, float speed, Vector3 origin, ulong casterNetId)
+    {
+        if (NetworkManager.Singleton == null) return;
+        var spawnMgr = NetworkManager.Singleton.SpawnManager;
+        if (spawnMgr == null) return;
+        if (!spawnMgr.SpawnedObjects.TryGetValue(projectileNetId, out var projNO))
+        {
+            // Fallback: if the networked projectile prefab is not registered on this client,
+            // create a local visual-only projectile so the client still sees the shot.
+            if (projectilePrefab != null)
+            {
+                GameObject localProj = Instantiate(projectilePrefab, origin, Quaternion.identity);
+                ApplyProjectileVisualsRotation(localProj.transform, origin, direction);
+                var lrb = localProj.GetComponent<Rigidbody>();
+                if (lrb != null) lrb.linearVelocity = direction * speed;
+                var dmg = localProj.GetComponentInChildren<EnemyProjectileDamage3D>();
+                if (dmg != null && casterNetId != 0UL && spawnMgr.SpawnedObjects.TryGetValue(casterNetId, out var casterNO2))
+                {
+                    var casterStats2 = casterNO2.GetComponent<EnemyStats>();
+                    if (casterStats2 != null) dmg.CasterStats = casterStats2;
+                }
+                Destroy(localProj, 5f);
+            }
+            return;
         }
 
-        Rigidbody projRb = projectile.GetComponent<Rigidbody>();
-        if (projRb != null)
+        // Apply visuals rotation consistently
+        ApplyProjectileVisualsRotation(projNO.transform, origin, direction);
+
+        // Apply client-side velocity for visual sync
+        var rb = projNO.GetComponent<Rigidbody>();
+        if (rb != null)
         {
-            projRb.linearVelocity = direction * GetCurrentProjectileSpeed();
+            rb.linearVelocity = direction * speed;
         }
-        
-        var projectileDamageScript = projectile.GetComponentInChildren<EnemyProjectileDamage3D>();
-        if (projectileDamageScript != null)
+
+        // Optionally set CasterStats reference on client (not needed for damage authority)
+        if (casterNetId != 0UL && spawnMgr.SpawnedObjects.TryGetValue(casterNetId, out var casterNO))
         {
-            projectileDamageScript.CasterStats = myStats;
+            var casterStats = casterNO.GetComponent<EnemyStats>();
+            var dmg = projNO.GetComponentInChildren<EnemyProjectileDamage3D>();
+            if (casterStats != null && dmg != null)
+            {
+                dmg.CasterStats = casterStats;
+            }
         }
-        Destroy(projectile, 5f);
+    }
+
+    private System.Collections.IEnumerator DespawnProjectileLater(ulong projectileNetId, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (!IsServer || NetworkManager.Singleton == null) yield break;
+        var spawnMgr = NetworkManager.Singleton.SpawnManager;
+        if (spawnMgr == null) yield break;
+        if (spawnMgr.SpawnedObjects.TryGetValue(projectileNetId, out var projNO))
+        {
+            if (projNO != null && projNO.IsSpawned)
+            {
+                projNO.Despawn(true);
+            }
+            else if (projNO != null)
+            {
+                Destroy(projNO.gameObject);
+            }
+        }
     }
 
     // --- MODIFIED: Removed GetCurrentSightRange as it's no longer used ---

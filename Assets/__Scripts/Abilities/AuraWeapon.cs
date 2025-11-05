@@ -197,6 +197,16 @@ public class AuraWeapon : NetworkBehaviour
 
         // --- DAMAGE TICK LOGIC (single-player only) ---
         damageTickCooldown -= Time.deltaTime;
+        // Reflect visuals in SP based on downed state and pause damage if downed
+        bool isDowned = (playerStats != null && playerStats.IsDowned);
+        SetVisualsActive(!isDowned);
+        // Do not apply aura damage while the owning player is downed in SP
+        if (isDowned)
+        {
+            if (damageTickCooldown < 0.05f) damageTickCooldown = 0.05f; // small delay to avoid tight loop
+            return;
+        }
+
         if (damageTickCooldown <= 0f)
         {
             ApplyDamageToEnemies();
@@ -214,8 +224,9 @@ public class AuraWeapon : NetworkBehaviour
         damageTickCooldown -= Time.deltaTime;
         if (damageTickCooldown > 0f) return;
 
-        // If the owner is downed, pause damage application
-        if (playerStats != null && playerStats.IsDowned)
+        // If the owner is downed, pause damage application (attempt to resolve stats if missing)
+        var psOwner = ResolveOwnerPlayerStats();
+        if (psOwner != null && psOwner.IsDowned)
         {
             damageTickCooldown = 0.1f; // small delay to avoid tight loop
             return;
@@ -298,6 +309,36 @@ public class AuraWeapon : NetworkBehaviour
 
         float finalAttackSpeed = Mathf.Max(0.01f, playerStats != null ? playerStats.attackSpeedMultiplier : 1f);
         damageTickCooldown = weaponData.cooldown / finalAttackSpeed;
+    }
+
+    private PlayerStats ResolveOwnerPlayerStats()
+    {
+        if (playerStats != null) return playerStats;
+        // Try resolve via network owner id
+        if (NetworkManager != null && NetworkManager.SpawnManager != null)
+        {
+            ulong id = statsOwnerNetId.Value;
+            if (id != 0 && NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(id, out var ownerNO))
+            {
+                var ps = ownerNO.GetComponent<PlayerStats>();
+                if (ps != null)
+                {
+                    playerStats = ps; // cache
+                    return playerStats;
+                }
+            }
+        }
+        // Fallback: parent chain
+        if (transform.parent != null)
+        {
+            var ps = transform.parent.GetComponentInParent<PlayerStats>();
+            if (ps != null)
+            {
+                playerStats = ps;
+                return playerStats;
+            }
+        }
+        return null;
     }
 
     // Attempts to read a SphereCollider on this object and convert to world center/radius
@@ -396,6 +437,27 @@ public class AuraWeapon : NetworkBehaviour
         // Also disable particle systems if any
         var ps = GetComponentsInChildren<ParticleSystem>(true);
         foreach (var p in ps) p.gameObject.SetActive(false);
+    }
+
+    public void SetVisualsActive(bool active)
+    {
+        var rends = GetComponentsInChildren<Renderer>(true);
+        foreach (var r in rends) r.enabled = active;
+        var ps = GetComponentsInChildren<ParticleSystem>(true);
+        foreach (var p in ps)
+        {
+            if (p == null) continue;
+            if (active)
+            {
+                p.gameObject.SetActive(true);
+                if (!p.isPlaying) p.Play();
+            }
+            else
+            {
+                if (p.isPlaying) p.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                p.gameObject.SetActive(false);
+            }
+        }
     }
 
     // Server-side helper to set configuration BEFORE spawning; values will be applied on OnNetworkSpawn

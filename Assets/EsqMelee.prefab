@@ -112,6 +112,10 @@ MonoBehaviour:
   directionVector_Green: {x: -1, y: 0, z: 0}
   directionVector_Yellow: {x: 0, y: 0, z: -1}
   showGizmos: 1
+  manualFlipImage: 0
+  manualOverrideDirection: 0
+  manualQuadrant: 2
+  applyOverridesEveryFrame: 1
 --- !u!136 &4719598060223026307
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -276,6 +280,8 @@ MonoBehaviour:
   selfKnockbackForce: 3
   selfKnockbackDuration: 0.5
   showGizmos: 0
+  tryNerfHorizontal: 0
+  horizontalNerfMultiplier: 0.56
 --- !u!54 &6562184088800466058
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -319,7 +325,7 @@ MonoBehaviour:
   damagePopupPrefab: {fileID: 1151078973031816182, guid: 48036a6b9a0774c408db15d75147741d, type: 3}
   popupSpawnPoint: {fileID: 3257514570938149199}
   baseHealth: 12
-  baseDamage: 8
+  baseDamage: 6
   moveSpeed: 8.5
   mutationChance: 0.1
   minMutationBonus: 1

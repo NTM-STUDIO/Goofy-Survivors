@@ -16,6 +16,16 @@ public class AfterimageEffect : MonoBehaviour
     
     [Tooltip("Offset na ordem de renderização")]
     public int sortingOrderOffset = -1;
+
+    [Header("Rotation Override (3D)")]
+    [Tooltip("If enabled, each afterimage will use the specified Euler rotation instead of the object's rotation.")]
+    public bool overrideRotation = true;
+
+    [Tooltip("Rotation to apply to afterimages (X,Y,Z in degrees). If 'Relative To Object' is true, this is added to the object's current rotation.")]
+    public Vector3 rotationEuler = new Vector3(30f, 45f, 0f);
+
+    [Tooltip("When true, rotationEuler is added to the object's current rotation. When false, rotationEuler is used as an absolute rotation.")]
+    public bool relativeToObject = false;
     
     private bool isActive;
     private SpriteRenderer originalSprite;
@@ -66,7 +76,21 @@ public class AfterimageEffect : MonoBehaviour
         
         GameObject afterimage = new GameObject("Afterimage");
         afterimage.transform.position = transform.position;
-        afterimage.transform.rotation = transform.rotation;
+        if (overrideRotation)
+        {
+            if (relativeToObject)
+            {
+                afterimage.transform.rotation = Quaternion.Euler(rotationEuler) * transform.rotation;
+            }
+            else
+            {
+                afterimage.transform.rotation = Quaternion.Euler(rotationEuler);
+            }
+        }
+        else
+        {
+            afterimage.transform.rotation = transform.rotation;
+        }
         afterimage.transform.localScale = transform.localScale;
         
         SpriteRenderer afterimageSprite = afterimage.AddComponent<SpriteRenderer>();

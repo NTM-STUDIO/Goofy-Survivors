@@ -34,6 +34,20 @@ public class RobustIsometricController : MonoBehaviour
     [Tooltip("Show colored lines in the Scene view to visualize the direction vectors.")]
     public bool showGizmos = true;
 
+    [Header("Manual/Inspector Overrides")]
+    [Tooltip("Mirror image by swapping Left/Right sprites (does not use SpriteRenderer.flipX).")]
+    public bool manualFlipImage = false;
+
+    [Tooltip("When enabled, the controller will ignore player direction and use the Manual Quadrant below.")]
+    public bool manualOverrideDirection = false;
+
+    public enum Quadrant { UpRight, UpLeft, DownRight, DownLeft }
+    [Tooltip("Selected when Manual Override Direction is enabled.")]
+    public Quadrant manualQuadrant = Quadrant.DownRight;
+
+    [Tooltip("Apply overrides every frame (recommended). Disable to only apply on change/validation.")]
+    public bool applyOverridesEveryFrame = true;
+
 
     // --- Private References ---
     private SpriteRenderer spriteRenderer;
@@ -63,54 +77,85 @@ public class RobustIsometricController : MonoBehaviour
 
     void LateUpdate()
     {
-        // Resolve or refresh target each frame to avoid looking at downed players
-        if (playerTransform == null || IsTargetDowned(playerTransform))
-        {
-            playerTransform = FindClosestActivePlayer();
-        }
-
-        if (playerTransform == null) return;
-
-        Vector3 directionToPlayer = playerTransform.position - transform.position;
-        directionToPlayer.y = 0;
-        directionToPlayer.Normalize();
-        
-        _directionToPlayer = directionToPlayer; // Store for gizmo
-
-        if (directionToPlayer.sqrMagnitude < 0.01f) return;
-
-        // Calculate the dot product for each of the four directions.
-        float dotRed = Vector3.Dot(directionToPlayer, directionVector_Red);
-        float dotBlue = Vector3.Dot(directionToPlayer, directionVector_Blue);
-        float dotGreen = Vector3.Dot(directionToPlayer, directionVector_Green);
-        float dotYellow = Vector3.Dot(directionToPlayer, directionVector_Yellow);
-
-        float maxDot = Mathf.Max(dotRed, dotBlue, dotGreen, dotYellow);
-
         Sprite newSprite = null;
-        // Default to right-facing for firepoint flipping
-        float newSign = 1f;
+        float newSign = 1f; // Default right-facing for firepoint
 
-        // *** LOGIC UPDATED TO MATCH YOUR COLOR MAPPING ***
-        if (maxDot == dotRed) // Red Line
+        if (manualOverrideDirection)
         {
-            newSprite = UpRightSprite;
-            newSign = 1f; // Right-facing
+            // Use inspector-selected quadrant; don't resolve player direction
+            switch (manualQuadrant)
+            {
+                case Quadrant.UpRight:    newSprite = UpRightSprite;    newSign = 1f;  break;
+                case Quadrant.UpLeft:     newSprite = UpLeftSprite;     newSign = -1f; break;
+                case Quadrant.DownRight:  newSprite = DownRightSprite;  newSign = 1f;  break;
+                case Quadrant.DownLeft:   newSprite = DownLeftSprite;   newSign = -1f; break;
+            }
+
+            // Store a synthetic gizmo direction that roughly matches the choice (for editor visuals)
+            switch (manualQuadrant)
+            {
+                case Quadrant.UpRight:   _directionToPlayer = directionVector_Red;    break;
+                case Quadrant.UpLeft:    _directionToPlayer = directionVector_Blue;   break;
+                case Quadrant.DownRight: _directionToPlayer = directionVector_Green;  break;
+                case Quadrant.DownLeft:  _directionToPlayer = directionVector_Yellow; break;
+            }
         }
-        else if (maxDot == dotBlue) // Blue Line
+        else
         {
-            newSprite = UpLeftSprite;
-            newSign = -1f; // Left-facing
+            // Resolve or refresh target each frame to avoid looking at downed players
+            if (playerTransform == null || IsTargetDowned(playerTransform))
+            {
+                playerTransform = FindClosestActivePlayer();
+            }
+
+            if (playerTransform == null) return;
+
+            Vector3 directionToPlayer = playerTransform.position - transform.position;
+            directionToPlayer.y = 0;
+            directionToPlayer.Normalize();
+            
+            _directionToPlayer = directionToPlayer; // Store for gizmo
+
+            if (directionToPlayer.sqrMagnitude < 0.01f) return;
+
+            // Calculate the dot product for each of the four directions.
+            float dotRed = Vector3.Dot(directionToPlayer, directionVector_Red);
+            float dotBlue = Vector3.Dot(directionToPlayer, directionVector_Blue);
+            float dotGreen = Vector3.Dot(directionToPlayer, directionVector_Green);
+            float dotYellow = Vector3.Dot(directionToPlayer, directionVector_Yellow);
+
+            float maxDot = Mathf.Max(dotRed, dotBlue, dotGreen, dotYellow);
+
+            // *** LOGIC UPDATED TO MATCH YOUR COLOR MAPPING ***
+            if (maxDot == dotRed) // Red Line
+            {
+                newSprite = UpRightSprite;
+                newSign = 1f; // Right-facing
+            }
+            else if (maxDot == dotBlue) // Blue Line
+            {
+                newSprite = UpLeftSprite;
+                newSign = -1f; // Left-facing
+            }
+            else if (maxDot == dotGreen) // Green Line
+            {
+                newSprite = DownRightSprite;
+                newSign = 1f; // Right-facing
+            }
+            else // maxDot == dotYellow (Yellow Line)
+            {
+                newSprite = DownLeftSprite;
+                newSign = -1f; // Left-facing
+            }
         }
-        else if (maxDot == dotGreen) // Green Line
+
+        // Apply inspector-driven mirror (swap left/right sprites without using flipX)
+        if (manualFlipImage)
         {
-            newSprite = DownRightSprite;
-            newSign = 1f; // Right-facing
-        }
-        else // maxDot == dotYellow (Yellow Line)
-        {
-            newSprite = DownLeftSprite;
-            newSign = -1f; // Left-facing
+            if (newSprite == UpRightSprite)      { newSprite = UpLeftSprite;     newSign = -newSign; }
+            else if (newSprite == UpLeftSprite)  { newSprite = UpRightSprite;    newSign = -newSign; }
+            else if (newSprite == DownRightSprite){ newSprite = DownLeftSprite;  newSign = -newSign; }
+            else if (newSprite == DownLeftSprite){ newSprite = DownRightSprite;  newSign = -newSign; }
         }
 
         if (firePoint != null)
@@ -124,6 +169,16 @@ public class RobustIsometricController : MonoBehaviour
         {
             spriteRenderer.sprite = newSprite;
             currentSprite = newSprite;
+        }
+    }
+
+    private void OnValidate()
+    {
+        // In editor, apply overrides immediately for fast iteration
+        if (!Application.isPlaying || applyOverridesEveryFrame)
+        {
+            // Force a one-shot update
+            LateUpdate();
         }
     }
 

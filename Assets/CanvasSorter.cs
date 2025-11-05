@@ -1,5 +1,4 @@
 using UnityEngine;
-
 // This script ensures the Canvas on this GameObject is set to the correct sorting layer.
 // It's a workaround for when the Sorting Layer option doesn't appear in the Inspector.
 [RequireComponent(typeof(Canvas))]

@@ -110,6 +110,10 @@ MonoBehaviour:
   directionVector_Green: {x: -1, y: 0, z: 0}
   directionVector_Yellow: {x: 0, y: 0, z: -1}
   showGizmos: 1
+  manualFlipImage: 1
+  manualOverrideDirection: 0
+  manualQuadrant: 2
+  applyOverridesEveryFrame: 1
 --- !u!1 &4496776415297934645
 GameObject:
   m_ObjectHideFlags: 0
@@ -228,25 +232,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerTag: Player
-  aggroRange: 50
-  attackRange: 2
-  attackCooldown: 2
-  retreatMinDistance: 10
-  retreatMaxDistance: 30
-  retreatWaitTime: 1
-  retreatSpeedMultiplier: 5
+  aggroRange: 100
+  targetUpdateInterval: 0.5
+  attackRange: 3
+  attackCooldown: 0.1
+  retreatMinDistance: 20
+  retreatMaxDistance: 40
+  retreatWaitTime: 0.1
+  retreatSpeedMultiplier: 4
   speedMultiplier: 1.5
-  moveDuration: 0.3
+  moveDuration: 0.4
   stopDuration: 0.2
   timeRandomness: 0.1
   erraticness: 1
   directionChangeInterval: 0.15
-  maxAngleDeviation: 45
-  speedBurstChance: 0
-  burstSpeedMultiplier: 4
+  maxAngleDeviation: 90
+  speedBurstChance: 0.25
+  burstSpeedMultiplier: 3
   burstDuration: 0.5
   useAfterimages: 1
-  burstColor: {r: 1, g: 1, b: 0.3, a: 1}
+  burstColor: {r: 0.99548376, g: 1, b: 0.5990566, a: 1}
   showDebugGizmos: 1
 --- !u!114 &7514358417839774813
 MonoBehaviour:
@@ -268,6 +273,7 @@ MonoBehaviour:
   dodgeCooldown: 1
   useSpeedBurstDodge: 1
   showDetectionRadius: 1
+  debugLog: 0
 --- !u!114 &7048231635412883194
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -280,10 +286,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9478e84f3f399f84fbf037dd8f6e9efe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawnInterval: 0.01
-  afterimageColor: {r: 1, g: 1, b: 0, a: 0.5}
-  fadeTime: 0.5
+  spawnInterval: 0.05
+  afterimageColor: {r: 1, g: 1, b: 1, a: 0.3529412}
+  fadeTime: 0.2
   sortingOrderOffset: -1
+  overrideRotation: 1
+  rotationEuler: {x: 30, y: 45, z: 0}
+  relativeToObject: 0
 --- !u!114 &6427386719359412490
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -545,3 +554,7 @@ MonoBehaviour:
   directionVector_Green: {x: -1, y: 0, z: 0}
   directionVector_Yellow: {x: 0, y: 0, z: -1}
   showGizmos: 1
+  manualFlipImage: 1
+  manualOverrideDirection: 0
+  manualQuadrant: 2
+  applyOverridesEveryFrame: 1
