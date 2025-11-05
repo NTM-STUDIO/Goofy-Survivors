@@ -71,27 +71,7 @@ public class AfterimageEffect : MonoBehaviour
         
         SpriteRenderer afterimageSprite = afterimage.AddComponent<SpriteRenderer>();
         afterimageSprite.sprite = originalSprite.sprite;
-        // Apply color (tint) for the afterimage while keeping the same material/shader as the source
         afterimageSprite.color = afterimageColor;
-        
-        // Ensure the afterimage uses the exact same material/shader setup as the original
-        // Use sharedMaterial to avoid creating per-instance material copies every frame
-        if (originalSprite.sharedMaterial != null)
-        {
-            afterimageSprite.sharedMaterial = originalSprite.sharedMaterial;
-        }
-        
-        // Copy MaterialPropertyBlock if the original uses per-renderer overrides (e.g., outlines, hue shift)
-        var mpb = new MaterialPropertyBlock();
-        originalSprite.GetPropertyBlock(mpb);
-        if (mpb != null)
-        {
-            afterimageSprite.SetPropertyBlock(mpb);
-        }
-        
-        // Mirror additional relevant renderer settings
-        afterimageSprite.spriteSortPoint = originalSprite.spriteSortPoint;
-        afterimageSprite.maskInteraction = originalSprite.maskInteraction;
         afterimageSprite.sortingLayerName = originalSprite.sortingLayerName;
         afterimageSprite.sortingOrder = originalSprite.sortingOrder + sortingOrderOffset;
         afterimageSprite.flipX = originalSprite.flipX;
