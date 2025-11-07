@@ -144,6 +144,10 @@ MonoBehaviour:
   directionVector_Green: {x: -1, y: 0, z: 0}
   directionVector_Yellow: {x: 0, y: 0, z: -1}
   showGizmos: 1
+  manualFlipImage: 0
+  manualOverrideDirection: 0
+  manualQuadrant: 2
+  applyOverridesEveryFrame: 1
 --- !u!136 &4719598060223026307
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -325,6 +329,10 @@ MonoBehaviour:
   directionVector_Green: {x: -1, y: 0, z: 0}
   directionVector_Yellow: {x: 0, y: 0, z: -1}
   showGizmos: 1
+  manualFlipImage: 0
+  manualOverrideDirection: 0
+  manualQuadrant: 2
+  applyOverridesEveryFrame: 1
 --- !u!136 &4928855642863439827
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -386,6 +394,7 @@ GameObject:
   - component: {fileID: 6297376134751599430}
   - component: {fileID: 63635398346227256}
   - component: {fileID: -7320895237233224594}
+  - component: {fileID: 4741437969378835864}
   m_Layer: 0
   m_Name: Igris
   m_TagString: Enemy
@@ -460,6 +469,8 @@ MonoBehaviour:
   selfKnockbackForce: 20
   selfKnockbackDuration: 1
   showGizmos: 1
+  tryNerfHorizontal: 0
+  horizontalNerfMultiplier: 0.56
 --- !u!54 &6562184088800466058
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -578,3 +589,29 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &4741437969378835864
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9116392235869641759}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9866ebc9796c80f45a290560d4d427db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  waves:
+  - waveName: Wave 1
+    enemies:
+    - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
+      enemyCount: 20
+    timeUntilNextWave: 10
+    spawnInterval: 0
+  waveIndex: 0
+  spawnOnStart: 1
+  scaleWithPlayerCount: 1
+  spawnRadius: 30
+  watchDistance: 40
+  isWatching: 0
+  lastPlayerPosition: {x: 0, y: 0, z: 0}

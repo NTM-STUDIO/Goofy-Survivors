@@ -16,6 +16,8 @@ public class EnemyPathfinding : MonoBehaviour
     private Transform player;
     private float nextPathUpdate;
 
+    public Vector3? TargetOverride { get; set; }
+
     private void Start()
     {
         Debug.Log($"[{gameObject.name}] PATHFINDING: Initializing...", this);
@@ -95,13 +97,17 @@ public class EnemyPathfinding : MonoBehaviour
 
     private void UpdatePath()
     {
+        if (player == null && !TargetOverride.HasValue) return;
         if (Pathfinding.Instance == null)
         {
             Debug.LogError($"[{gameObject.name}] PATHFINDING: Instance is null!", this);
             return;
         }
 
-        var newPath = Pathfinding.Instance.FindPath(transform.position, player.position);
+        // Determine the target for pathfinding
+        Vector3 targetPosition = TargetOverride.HasValue ? TargetOverride.Value : player.position;
+
+        var newPath = Pathfinding.Instance.FindPath(transform.position, targetPosition);
         if (newPath == null || newPath.Count == 0)
         {
             return;
