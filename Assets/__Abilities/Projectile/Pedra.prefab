@@ -125,7 +125,7 @@ GameObject:
   - component: {fileID: 3750778801767423170}
   m_Layer: 0
   m_Name: Pedra
-  m_TagString: Untagged
+  m_TagString: Ability
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -184,6 +184,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileWeapon
   ShowTopMostFoldoutHeaderGroup: 1
+  visual: {fileID: 0}
+  visualZAngleOffset: 180
 --- !u!54 &3750778801767423170
 Rigidbody:
   m_ObjectHideFlags: 0

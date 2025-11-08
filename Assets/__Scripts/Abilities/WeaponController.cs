@@ -166,6 +166,7 @@ public class WeaponController : MonoBehaviour
             float finalDuration = WeaponData.duration * playerStats.durationMultiplier;
             float finalKnockback = WeaponData.knockback * playerStats.knockbackMultiplier;
             float finalSize = WeaponData.area * playerStats.projectileSizeMultiplier;
+            int weaponId = weaponRegistry != null ? weaponRegistry.GetWeaponId(WeaponData) : -1;
             foreach (var target in targets)
             {
                 Vector3 direction = (target != null) ? (target.position - playerStats.transform.position).normalized : new Vector3(Random.insideUnitCircle.normalized.x, 0, Random.insideUnitCircle.normalized.y);
@@ -176,6 +177,7 @@ public class WeaponController : MonoBehaviour
                 var projectile = projectileObj.GetComponent<ProjectileWeapon>();
                 if (projectile != null)
                 {
+                    projectile.ConfigureSource(weaponId, WeaponData.weaponName);
                     projectile.Initialize(target, direction, damageResult.damage, damageResult.isCritical, finalSpeed, finalDuration, finalKnockback, finalSize);
                 }
             }

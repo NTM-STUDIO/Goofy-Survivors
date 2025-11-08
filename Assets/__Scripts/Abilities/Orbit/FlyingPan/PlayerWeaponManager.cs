@@ -501,6 +501,11 @@ public class PlayerWeaponManager : NetworkBehaviour
             // Add a NetworkObject dynamically so projectiles are replicated to clients
             projNO = projectileObj.AddComponent<NetworkObject>();
         }
+        var projectileComponent = projectileObj.GetComponent<ProjectileWeapon>();
+        if (projectileComponent != null)
+        {
+            projectileComponent.ConfigureSource(weaponId, data.weaponName);
+        }
         projNO.Spawn(true);
         // Compute final values on the server using authoritative stats to ensure consistency on all clients
         float finalSpeed = data.speed * playerStats.projectileSpeedMultiplier;
@@ -513,6 +518,7 @@ public class PlayerWeaponManager : NetworkBehaviour
             damageResult.damage,
             damageResult.isCritical,
             weaponId,
+            data.weaponName,
             finalSpeed,
             finalDuration,
             finalKnockback,
@@ -521,13 +527,14 @@ public class PlayerWeaponManager : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void InitializeProjectileClientRpc(ulong networkObjectId, Vector3 direction, float damage, bool isCritical, int weaponId, float finalSpeed, float finalDuration, float finalKnockback, float finalSize)
+    private void InitializeProjectileClientRpc(ulong networkObjectId, Vector3 direction, float damage, bool isCritical, int weaponId, string weaponName, float finalSpeed, float finalDuration, float finalKnockback, float finalSize)
     {
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkObjectId, out NetworkObject netObj))
         {
             var projectile = netObj.GetComponent<ProjectileWeapon>();
             if (projectile != null)
             {
+                projectile.ConfigureSource(weaponId, weaponName);
                 // Server already computed the final values using the owner's stats; just apply
                 projectile.Initialize(null, direction, damage, isCritical, finalSpeed, finalDuration, finalKnockback, finalSize);
             }
@@ -689,6 +696,7 @@ public class PlayerWeaponManager : NetworkBehaviour
         float finalDuration = data.duration * playerStats.durationMultiplier;
         float finalKnockback = data.knockback * playerStats.knockbackMultiplier;
         float finalSize = data.area * playerStats.projectileSizeMultiplier;
+        int weaponId = weaponRegistry != null ? weaponRegistry.GetWeaponId(data) : -1;
         
         foreach (var target in targets)
         {
@@ -703,6 +711,7 @@ public class PlayerWeaponManager : NetworkBehaviour
             var projectile = projectileObj.GetComponent<ProjectileWeapon>();
             if (projectile != null)
             {
+                projectile.ConfigureSource(weaponId, data.weaponName);
                 projectile.Initialize(target, direction, damageResult.damage, damageResult.isCritical, finalSpeed, finalDuration, finalKnockback, finalSize);
             }
         }

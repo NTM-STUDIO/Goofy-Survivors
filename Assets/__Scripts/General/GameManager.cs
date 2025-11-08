@@ -470,6 +470,11 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         playerExperience?.Initialize(playerObject);
         upgradeManager?.Initialize(playerObject);
         enemyDespawner?.Initialize(playerObject);
+
+        if (!isP2P || IsServer)
+        {
+            AbilityDamageTracker.Reset();
+        }
         
         // Instancia a câmara apenas para o jogador local
         bool shouldInstantiateCamera = false;
@@ -663,6 +668,11 @@ public class GameManager : NetworkBehaviour // Must be a NetworkBehaviour
         CurrentState = GameState.GameOver;
         if (localPlayer != null) localPlayer.enabled = false;
         Time.timeScale = 0f; // Stop the game completely
+
+        if (!isP2P || IsServer)
+        {
+            AbilityDamageTracker.LogTotals();
+        }
         
         if (uiManager != null)
         {

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Unity.Netcode;
 
@@ -12,6 +13,9 @@ public class ProjectileWeapon : NetworkBehaviour
     private float speed;
     private float knockbackForce;
     private float lifetime;
+
+    private int sourceWeaponId = -1;
+    private string sourceWeaponName;
 
     private Rigidbody rb;
     [Header("Visual")]
@@ -89,6 +93,22 @@ public class ProjectileWeapon : NetworkBehaviour
         ApplyZOnlyRotation(moveDir);
     }
 
+    public void ConfigureSource(int weaponId, string weaponName)
+    {
+        sourceWeaponId = weaponId;
+        sourceWeaponName = weaponName;
+    }
+
+    private string GetAbilityLabel()
+    {
+        if (!string.IsNullOrWhiteSpace(sourceWeaponName))
+        {
+            return sourceWeaponName;
+        }
+
+        return sourceWeaponId >= 0 ? $"Ability {sourceWeaponId}" : gameObject.name;
+    }
+
     void Update()
     {
         // If networking is not active, manage lifetime locally. If networked, server does it.
@@ -127,6 +147,8 @@ public class ProjectileWeapon : NetworkBehaviour
             {
                 // The server applies the damage using the stats the projectile was spawned with.
                 enemyStats.TakeDamage(damage, wasCritical);
+
+                    AbilityDamageTracker.RecordDamage(GetAbilityLabel(), damage, gameObject);
 
                 if (knockbackForce > 0 && !other.CompareTag("Reaper"))
                 {

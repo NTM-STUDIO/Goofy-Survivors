@@ -112,6 +112,16 @@ public class AuraWeapon : NetworkBehaviour
         }
     }
 
+    private string GetAbilityLabel()
+    {
+        if (weaponData != null && !string.IsNullOrWhiteSpace(weaponData.weaponName))
+        {
+            return weaponData.weaponName;
+        }
+
+        return gameObject.name;
+    }
+
     private void TryResolveWeaponDataFromId()
     {
         if (weaponData != null) return;
@@ -291,6 +301,8 @@ public class AuraWeapon : NetworkBehaviour
                     ? playerStats.CalculateDamage(weaponData.damage)
                     : new DamageResult { damage = weaponData.damage, isCritical = false };
                 enemy.TakeDamage(damageResult.damage, damageResult.isCritical);
+
+                AbilityDamageTracker.RecordDamage(GetAbilityLabel(), damageResult.damage, gameObject);
 
                 if (weaponData.knockback > 0 && !enemy.CompareTag("Reaper"))
                 {
@@ -495,6 +507,8 @@ public class AuraWeapon : NetworkBehaviour
                 DamageResult damageResult = playerStats.CalculateDamage(weaponData.damage);
                 
                 enemy.TakeDamage(damageResult.damage, damageResult.isCritical);
+
+                AbilityDamageTracker.RecordDamage(GetAbilityLabel(), damageResult.damage, gameObject);
 
                 if (finalKnockback > 0 && !enemy.CompareTag("Reaper"))
                 {
