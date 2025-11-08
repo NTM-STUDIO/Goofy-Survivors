@@ -47,10 +47,20 @@ public static class AbilityDamageTracker
         builder.AppendLine("===== Ability Damage Totals =====");
         foreach (var entry in damageTotals.OrderByDescending(kvp => kvp.Value))
         {
-            builder.AppendLine($"{entry.Key}: {entry.Value:0.##}");
+            builder.AppendLine($"{entry.Key}: {Mathf.RoundToInt(entry.Value)}");
         }
 
         Debug.Log(builder.ToString());
+    }
+
+    public static IReadOnlyDictionary<string, float> GetTotalsSnapshot()
+    {
+        var snapshot = new Dictionary<string, float>();
+        foreach (var kvp in damageTotals)
+        {
+            snapshot[kvp.Key] = Mathf.Round(kvp.Value);
+        }
+        return snapshot;
     }
 
     private static bool HasAbilityTag(GameObject source)

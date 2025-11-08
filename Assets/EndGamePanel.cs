@@ -20,10 +20,15 @@ public class EndGamePanel : MonoBehaviour
     private float timeLasted;
     private string userId;
     private bool isExistingUser = false;
+    private IReadOnlyDictionary<string, float> abilityDamageTotals;
 
     private void Awake()
     {
-        database = new db();
+        database = FindFirstObjectByType<db>();
+        if (database == null)
+        {
+            database = gameObject.AddComponent<db>();
+        }
         gameManager = GameManager.Instance;
         
         if (gameManager == null)
@@ -82,6 +87,7 @@ public class EndGamePanel : MonoBehaviour
     private async Task AutoSaveScore()
     {
         var userSnapshot = await database.GetUserAsync(userId);
+        var totalsToPersist = abilityDamageTotals ?? AbilityDamageTracker.GetTotalsSnapshot();
         if (userSnapshot.Exists)
         {
             var userDict = (IDictionary<string, object>)userSnapshot.Value;
@@ -90,7 +96,7 @@ public class EndGamePanel : MonoBehaviour
             // Only update damage if current score is better
             if (damageDone > existingDamage)
             {
-                database.NewGoofer(userId, PlayerPrefs.GetString("PlayerUsername"), (int)damageDone);
+                database.NewGoofer(userId, PlayerPrefs.GetString("PlayerUsername"), (int)damageDone, totalsToPersist);
                 Debug.Log($"Updated score for {PlayerPrefs.GetString("PlayerUsername")}: {(int)damageDone}");
             }
             else
@@ -101,7 +107,7 @@ public class EndGamePanel : MonoBehaviour
         else
         {
             // First time saving
-            database.NewGoofer(userId, PlayerPrefs.GetString("PlayerUsername"), (int)damageDone);
+            database.NewGoofer(userId, PlayerPrefs.GetString("PlayerUsername"), (int)damageDone, totalsToPersist);
             Debug.Log($"Created new entry for {PlayerPrefs.GetString("PlayerUsername")}: {(int)damageDone}");
         }
     }
@@ -150,7 +156,8 @@ public class EndGamePanel : MonoBehaviour
         }
 
         // Save or update in database
-        database.NewGoofer(userId, username, scoreToSave);
+        var totalsToPersist = abilityDamageTotals ?? AbilityDamageTracker.GetTotalsSnapshot();
+        database.NewGoofer(userId, username, scoreToSave, totalsToPersist);
         
         // Update button text
         if (buttonText != null)
@@ -186,5 +193,6 @@ public class EndGamePanel : MonoBehaviour
         {
             reaperDamageText.text = "Damage to Reaper: N/A";
         }
+        abilityDamageTotals = AbilityDamageTracker.GetTotalsSnapshot();
     }
 }
