@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
@@ -33,6 +34,16 @@ public class OrbitingWeapon : NetworkBehaviour
     private HashSet<GameObject> hitEnemies = new HashSet<GameObject>();
     private float hitResetTime = 1.0f;
     private float nextResetTime;
+
+    private string GetAbilityLabel()
+    {
+        if (weaponData != null && !string.IsNullOrWhiteSpace(weaponData.weaponName))
+        {
+            return weaponData.weaponName;
+        }
+
+        return gameObject.name;
+    }
 
     #region Initialization
     /// <summary>
@@ -341,6 +352,8 @@ public class OrbitingWeapon : NetworkBehaviour
                 // Use the local PlayerStats to calculate damage (which is server-authoritative).
                 DamageResult damageResult = playerStats.CalculateDamage(weaponData.damage);
                 enemyStats.TakeDamage(damageResult.damage, damageResult.isCritical);
+
+                AbilityDamageTracker.RecordDamage(GetAbilityLabel(), damageResult.damage, gameObject);
 
                 if (!enemyStats.CompareTag("Reaper"))
                 {

@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 8965158105383660420}
   m_Layer: 0
   m_Name: BladeVortex
-  m_TagString: Untagged
+  m_TagString: Ability
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -103,7 +103,6 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   debugLog: 1
   hideVisualsOnServer: 0
-  enemyScanInterval: 0.4
   useColliderRadiusInMP: 1
 --- !u!136 &8965158105383660420
 CapsuleCollider:

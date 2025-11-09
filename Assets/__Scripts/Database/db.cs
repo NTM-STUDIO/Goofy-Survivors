@@ -2,6 +2,7 @@ using UnityEngine;
 using Firebase;
 using Firebase.Database;
 using Firebase.Extensions;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 public class db : MonoBehaviour
@@ -14,12 +15,31 @@ public class db : MonoBehaviour
         MDatabase = FirebaseDatabase.DefaultInstance.RootReference;
     }
 
-    public void NewGoofer(string userId, string username, int damage)
+    public void NewGoofer(string userId, string username, int damage, IReadOnlyDictionary<string, float> abilityDamage = null)
     {
-        User newUser = new User(username, damage);
-        string json = JsonUtility.ToJson(newUser);
+        if (MDatabase == null)
+        {
+            Debug.LogWarning("[db] Attempted to write score before Firebase database was initialized.");
+            return;
+        }
 
-        MDatabase.Child("goofers").Child(userId).SetRawJsonValueAsync(json);
+        var payload = new Dictionary<string, object>
+        {
+            { "username", username },
+            { "damage", damage }
+        };
+
+        if (abilityDamage != null && abilityDamage.Count > 0)
+        {
+            var abilityTotals = new Dictionary<string, object>();
+            foreach (var kvp in abilityDamage)
+            {
+                abilityTotals[kvp.Key] = Mathf.RoundToInt(kvp.Value);
+            }
+            payload["abilities"] = abilityTotals;
+        }
+
+        MDatabase.Child("goofers").Child(userId).SetValueAsync(payload);
     }
 
     public async Task<bool> UserExists(string userId)
@@ -36,17 +56,5 @@ public class db : MonoBehaviour
     public Task<DataSnapshot> GetGoofersDataAsync()
     {
         return MDatabase.Child("goofers").GetValueAsync();
-    }
-}
-
-public class User
-{
-    public string username;
-    public int damage;
-
-    public User(string username, int damage)
-    {
-        this.username = username;
-        this.damage = damage;
     }
 }

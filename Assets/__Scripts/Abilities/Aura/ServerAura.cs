@@ -35,6 +35,16 @@ public class ServerAura : MonoBehaviour
     private List<EnemyStats> enemyCache = new List<EnemyStats>();
     private float nextEnemyScanTime = 0f;
 
+    private string GetAbilityLabel()
+    {
+        if (weaponData != null && !string.IsNullOrWhiteSpace(weaponData.weaponName))
+        {
+            return weaponData.weaponName;
+        }
+
+        return gameObject.name;
+    }
+
     public void Initialize(Transform owner, PlayerStats stats, NetworkedPlayerStatsTracker syncedTracker, WeaponData data)
     {
         ownerTransform = owner;
@@ -116,6 +126,8 @@ public class ServerAura : MonoBehaviour
                 DamageResult dmg = playerStats.CalculateDamage(weaponData.damage);
                 enemy.TakeDamage(dmg.damage, dmg.isCritical);
                 hitCount++;
+
+                AbilityDamageTracker.RecordDamage(GetAbilityLabel(), dmg.damage, gameObject);
 
                 if (knockback > 0 && !enemy.CompareTag("Reaper"))
                 {

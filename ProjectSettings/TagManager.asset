@@ -11,6 +11,7 @@ TagManager:
   - BossSpawn
   - Collector
   - PlayerClone
+  - Ability
   layers:
   - Default
   - TransparentFX
