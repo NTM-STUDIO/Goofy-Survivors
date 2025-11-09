@@ -64,7 +64,7 @@ public class Sound : MonoBehaviour
             Debug.Log("[Sound] Playing wind clip in Start (fallback). Forced Play called.");
         }
 
-        if (FindObjectOfType<AudioListener>() == null)
+        if (Object.FindFirstObjectByType<AudioListener>() == null)
         {
             Debug.LogWarning("[Sound] No AudioListener found in the scene. Add an AudioListener (usually on the Main Camera) to hear audio.");
         }
