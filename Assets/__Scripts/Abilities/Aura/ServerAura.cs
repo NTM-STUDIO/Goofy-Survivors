@@ -124,7 +124,7 @@ public class ServerAura : MonoBehaviour
             if ((epos - ownerPos).sqrMagnitude <= radiusSqr)
             {
                 DamageResult dmg = playerStats.CalculateDamage(weaponData.damage);
-                enemy.TakeDamage(dmg.damage, dmg.isCritical);
+                enemy.TakeDamageFromAttacker(dmg.damage, dmg.isCritical, playerStats);
                 hitCount++;
 
                 AbilityDamageTracker.RecordDamage(GetAbilityLabel(), dmg.damage, gameObject);

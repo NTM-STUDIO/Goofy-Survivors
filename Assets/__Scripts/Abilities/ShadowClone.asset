@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a235ba29a21fe3c4194c1d40bc43f19b, type: 3}
   m_Name: ShadowClone
   m_EditorClassIdentifier: 
-  weaponID: 
-  weaponName: 
+  weaponID: ShadowClone
+  weaponName: ShadowClone
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 30c2e70e2d956bf48bcc912ccaa76003, type: 3}
   weaponPrefab: {fileID: 1815106188694731433, guid: 69aea229dd87cce49a671c0812091b65, type: 3}
   archetype: 6
   targetingStyle: 0

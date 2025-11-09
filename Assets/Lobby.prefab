@@ -132,6 +132,7 @@ GameObject:
   - component: {fileID: 5429783558360208789}
   - component: {fileID: 5331240543321379447}
   - component: {fileID: 8290030995628703441}
+  - component: {fileID: -7821227062800890255}
   m_Layer: 5
   m_Name: Lobby
   m_TagString: Untagged
@@ -201,6 +202,22 @@ MonoBehaviour:
   copyIpButton: {fileID: 4281654994228252272}
   startGameButton: {fileID: 2432485160704200578}
   playerSlotPrefab: {fileID: 2906854980865552447, guid: 40f5beefc2511614b865a77069890a08, type: 3}
+--- !u!114 &-7821227062800890255
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2702808743519566518}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 878d72e780bfad4408a99f91a893b19a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  lobbyUiPrefab: {fileID: 2702808743519566518}
+  unitPrefabs:
+  - {fileID: 5781343528486485951, guid: 909ee6a12a46ba543996bac26bc995f3, type: 3}
 --- !u!1 &3386143377570794646
 GameObject:
   m_ObjectHideFlags: 0

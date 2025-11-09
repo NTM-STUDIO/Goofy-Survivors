@@ -17,6 +17,8 @@ public enum MutationType { None, Health, Damage, Speed }
 public class EnemyStats : NetworkBehaviour
 {
     public static event Action<EnemyStats> OnEnemyDamaged;
+    // Fires when an enemy actually takes damage with the exact amount and the attacker (server/SP only)
+    public static event Action<EnemyStats, float, PlayerStats> OnEnemyDamagedWithAmount;
 
     [Header("Visuals & Effects")]
     [SerializeField] private GameObject damagePopupPrefab;
@@ -151,6 +153,18 @@ public class EnemyStats : NetworkBehaviour
 
     public void TakeDamage(float damage, bool isCritical)
     {
+        // Backward-compatible API: attacker unknown
+        ApplyDamage(damage, isCritical, null);
+    }
+
+    // New overload that includes attacker for lifesteal and other effects
+    public void TakeDamageFromAttacker(float damage, bool isCritical, PlayerStats attacker)
+    {
+        ApplyDamage(damage, isCritical, attacker);
+    }
+
+    private void ApplyDamage(float damage, bool isCritical, PlayerStats attacker)
+    {
         // If networked and active, only the server should modify health. Clients should not directly change it.
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
@@ -177,6 +191,10 @@ public class EnemyStats : NetworkBehaviour
             }
 
             OnEnemyDamaged?.Invoke(this);
+            if (damage > 0f)
+            {
+                OnEnemyDamagedWithAmount?.Invoke(this, damage, attacker);
+            }
 
             float newHealth = netCurrentHealth.Value - damage;
             netCurrentHealth.Value = newHealth;
@@ -205,6 +223,10 @@ public class EnemyStats : NetworkBehaviour
         if (CurrentHealth <= 0) return;
 
         OnEnemyDamaged?.Invoke(this);
+        if (damage > 0f)
+        {
+            OnEnemyDamagedWithAmount?.Invoke(this, damage, attacker);
+        }
 
         CurrentHealth -= damage;
 

@@ -8,7 +8,7 @@ public class OrbitingWeapon : NetworkBehaviour
 {
     // --- Live Data References ---
     private PlayerStats playerStats; // Used for server-authoritative damage calculation
-    private NetworkedPlayerStatsTracker statsTracker; // Used for all synced visual/gameplay stats
+    private NetworkedPlayerStatsTracker statsTracker; // Used for all synced visual/gameplay stats in MP
     private WeaponData weaponData;
     
     // --- Core Properties ---
@@ -58,15 +58,16 @@ public class OrbitingWeapon : NetworkBehaviour
         this.statsTracker = stats.GetComponent<NetworkedPlayerStatsTracker>();
         this.weaponData = data;
 
-        if (this.statsTracker != null)
+        if (this.playerStats != null)
         {
-            this.lifetime = data.duration * stats.durationMultiplier; // Read local stat for initial lifetime
+            // In single-player, always use local PlayerStats for authoritative values
+            this.lifetime = data.duration * Mathf.Max(0.0f, this.playerStats.durationMultiplier);
             this.isInitialized = true;
             this.nextResetTime = Time.time + hitResetTime;
         }
         else
         {
-            Debug.LogError("OrbitingWeapon could not find NetworkedPlayerStatsTracker on its owner in single-player!");
+            Debug.LogError("OrbitingWeapon LocalInitialize: Missing PlayerStats reference in single-player.");
         }
     }
 
@@ -249,7 +250,7 @@ public class OrbitingWeapon : NetworkBehaviour
 
     void Update()
     {
-        if (!isInitialized || orbitCenter == null || statsTracker == null)
+        if (!isInitialized || orbitCenter == null || !HasStatsSource())
         {
             // Failsafe cleanup for orphaned objects that fail to initialize.
             if (lifetime < -5f && (!isP2P || IsServer))
@@ -292,11 +293,11 @@ public class OrbitingWeapon : NetworkBehaviour
 
     void LateUpdate()
     {
-        if (!isInitialized || orbitCenter == null || statsTracker == null) return;
+        if (!isInitialized || orbitCenter == null || !HasStatsSource()) return;
 
         // --- DYNAMIC STAT CALCULATION ---
-        float finalSize = weaponData.area * statsTracker.ProjectileSize.Value;
-        float rotationSpeed = weaponData.speed * statsTracker.ProjectileSpeed.Value;
+        float finalSize = weaponData.area * GetProjectileSizeMultiplier();
+        float rotationSpeed = weaponData.speed * GetProjectileSpeedMultiplier();
         float orbitRadius = finalSize * 16f;
 
         // Apply visual stats every frame
@@ -333,13 +334,13 @@ public class OrbitingWeapon : NetworkBehaviour
         // Damage logic is authoritative (runs in SP, or on Server in MP).
         if (!isP2P || IsServer)
         {
-            if (playerStats == null || weaponData == null || statsTracker == null) return;
+            if (playerStats == null || weaponData == null || !HasStatsSource()) return;
             if (playerStats.IsDowned) return; // do not damage while owner is downed
 
             EnemyStats enemyStats = other.GetComponentInParent<EnemyStats>();
             if (enemyStats == null || hitEnemies.Contains(enemyStats.gameObject)) return;
 
-            float orbitRadius = weaponData.area * statsTracker.ProjectileSize.Value * 16f;
+            float orbitRadius = weaponData.area * GetProjectileSizeMultiplier() * 16f;
             Vector3 enemyPos2D = new Vector3(other.transform.position.x, 0, other.transform.position.z);
             Vector3 centerPos2D = new Vector3(orbitCenter.position.x, 0, orbitCenter.position.z);
             float distanceToCenter = Vector3.Distance(enemyPos2D, centerPos2D);
@@ -351,14 +352,14 @@ public class OrbitingWeapon : NetworkBehaviour
 
                 // Use the local PlayerStats to calculate damage (which is server-authoritative).
                 DamageResult damageResult = playerStats.CalculateDamage(weaponData.damage);
-                enemyStats.TakeDamage(damageResult.damage, damageResult.isCritical);
+                enemyStats.TakeDamageFromAttacker(damageResult.damage, damageResult.isCritical, playerStats);
 
                 AbilityDamageTracker.RecordDamage(GetAbilityLabel(), damageResult.damage, gameObject);
 
                 if (!enemyStats.CompareTag("Reaper"))
                 {
                     // Use the synced tracker to get the knockback value.
-                    float knockbackForce = weaponData.knockback * statsTracker.Knockback.Value;
+                    float knockbackForce = weaponData.knockback * GetKnockbackMultiplier();
                     Vector3 knockbackDir = (other.transform.position - orbitCenter.position).normalized;
                     knockbackDir.y = 0;
                     enemyStats.ApplyKnockback(knockbackForce, 0.4f, knockbackDir);
@@ -373,7 +374,7 @@ public class OrbitingWeapon : NetworkBehaviour
         Transform center = orbitCenter != null ? orbitCenter : (Application.isPlaying ? null : transform.parent);
         if (center != null)
         {
-            float radius = Application.isPlaying ? (weaponData.area * statsTracker.ProjectileSize.Value * 16f) : 5f;
+            float radius = Application.isPlaying ? (weaponData.area * GetProjectileSizeMultiplier() * 16f) : 5f;
             Vector3 gizmoCenter = center.position + new Vector3(0, yOffset, 0);
 
             Gizmos.color = Color.red;
@@ -385,4 +386,39 @@ public class OrbitingWeapon : NetworkBehaviour
         }
     }
     #endregion
+
+    // --- Helpers: source-agnostic stat access ---
+    private bool HasStatsSource()
+    {
+        // In MP, require a tracker; in SP, require PlayerStats
+        return isP2P ? (statsTracker != null) : (playerStats != null);
+    }
+
+    private float GetProjectileSizeMultiplier()
+    {
+        if (isP2P)
+            return statsTracker != null ? statsTracker.ProjectileSize.Value : 1f;
+        return playerStats != null ? playerStats.projectileSizeMultiplier : 1f;
+    }
+
+    private float GetProjectileSpeedMultiplier()
+    {
+        if (isP2P)
+            return statsTracker != null ? statsTracker.ProjectileSpeed.Value : 1f;
+        return playerStats != null ? playerStats.projectileSpeedMultiplier : 1f;
+    }
+
+    private float GetDurationMultiplier()
+    {
+        if (isP2P)
+            return statsTracker != null ? statsTracker.Duration.Value : 1f;
+        return playerStats != null ? playerStats.durationMultiplier : 1f;
+    }
+
+    private float GetKnockbackMultiplier()
+    {
+        if (isP2P)
+            return statsTracker != null ? statsTracker.Knockback.Value : 1f;
+        return playerStats != null ? playerStats.knockbackMultiplier : 1f;
+    }
 }

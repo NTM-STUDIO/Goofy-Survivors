@@ -58,6 +58,14 @@ public class EnemySpawner : MonoBehaviour
             Debug.LogWarning("EnemySpawner: No waves assigned in inspector.");
     }
 
+    public void ResetForRestart()
+    {
+        // Stop any ongoing spawn coroutine(s) and reset wave index
+        try { StopAllCoroutines(); } catch {}
+        waveIndex = 0;
+        Debug.Log("EnemySpawner: ResetForRestart called. Coroutines stopped and waveIndex reset to 0.");
+    }
+
     IEnumerator SpawnWaves()
     {
         Debug.Log("EnemySpawner: Beginning wave spawning.");

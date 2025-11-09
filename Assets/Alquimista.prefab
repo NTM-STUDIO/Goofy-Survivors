@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 2196932948580270376}
   serializedVersion: 2
   m_LocalRotation: {x: -0.23911765, y: -0.3696438, z: 0.09904577, w: 0.89239913}
-  m_LocalPosition: {x: -0.91216767, y: 1.8212255, z: 0.03445518}
+  m_LocalPosition: {x: -0, y: 1.8212255, z: 0.03445518}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -105,6 +105,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 853117fdcad11eb468dce0024d64eb22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   damagePopupPrefab: {fileID: 1151078973031816182, guid: 48036a6b9a0774c408db15d75147741d, type: 3}
   popupSpawnPoint: {fileID: 6299832242400714897}
   baseHealth: 200
@@ -135,11 +136,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d4a1f79341d43842baf333ee95e1156, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   projectilePrefab: {fileID: 6414582260825821178, guid: 3c1228e7f29cbb544b4f7d8fd411b86f, type: 3}
   firePoint: {fileID: 6463724223198054535}
   shootRange: 25
   idealRange: 25
   retreatDistance: 17
+  spreadAngleDegrees: 10
+  visualsZAngleOffset: 90
 --- !u!1 &4562772373485292623
 GameObject:
   m_ObjectHideFlags: 0
@@ -285,6 +289,10 @@ MonoBehaviour:
   directionVector_Green: {x: -1, y: 0, z: 0}
   directionVector_Yellow: {x: 0, y: 0, z: -1}
   showGizmos: 1
+  manualFlipImage: 0
+  manualOverrideDirection: 0
+  manualQuadrant: 2
+  applyOverridesEveryFrame: 1
 --- !u!136 &3869427770675943670
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -418,3 +426,7 @@ MonoBehaviour:
   directionVector_Green: {x: -1, y: 0, z: 0}
   directionVector_Yellow: {x: 0, y: 0, z: -1}
   showGizmos: 1
+  manualFlipImage: 0
+  manualOverrideDirection: 0
+  manualQuadrant: 2
+  applyOverridesEveryFrame: 1

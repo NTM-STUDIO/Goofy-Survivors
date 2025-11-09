@@ -87,6 +87,8 @@ public class PlayerStats : MonoBehaviour
 
     public bool IsInvincible => invincible;
     public int CurrentHp => currentHp;
+    // Multiplier applied to ALL incoming healing from any source (1.0 = normal; +0.2 => +20% healing)
+    [HideInInspector] public float healingReceivedMultiplier = 1f;
 
     private void Awake()
     {
@@ -305,11 +307,32 @@ public class PlayerStats : MonoBehaviour
     public void DecreaseLuck(float amount) { luck -= amount; }
     public void DecreasePickupRange(float amount) { pickupRange -= amount; }
     public void DecreaseXPGainMultiplier(float amount) { xpGainMultiplier -= amount; }
+    public void IncreaseHealingReceivedMultiplier(float amount) { healingReceivedMultiplier += amount; }
+    public void DecreaseHealingReceivedMultiplier(float amount) { healingReceivedMultiplier -= amount; }
     #endregion
 
     #region Core Gameplay Logic
     public void PrintStats() { /* ... */ }
-    public void Heal(int amount) { if (amount <= 0 || currentHp <= 0) return; int prev = currentHp; currentHp = Mathf.Clamp(currentHp + amount, 0, maxHp); if (currentHp != prev) { OnHealed?.Invoke(); OnHealthChanged?.Invoke(currentHp, maxHp); var nm = NetworkManager.Singleton; if (nm == null || !nm.IsListening || _isLocalOwner) { var uiManager = FindFirstObjectByType<UIManager>(); if (uiManager != null) { uiManager.UpdateHealthBar(currentHp, maxHp); } } } }
+    
+    public void Heal(int amount)
+    {
+        if (amount <= 0 || currentHp <= 0) return;
+        // Apply global healing multiplier (ceil to ensure at least +1 when multiplier adds small fractions)
+        int scaled = Mathf.CeilToInt(amount * Mathf.Max(0f, healingReceivedMultiplier));
+        int prev = currentHp;
+        currentHp = Mathf.Clamp(currentHp + scaled, 0, maxHp);
+        if (currentHp != prev)
+        {
+            OnHealed?.Invoke();
+            OnHealthChanged?.Invoke(currentHp, maxHp);
+            var nm = NetworkManager.Singleton;
+            if (nm == null || !nm.IsListening || _isLocalOwner)
+            {
+                var uiManager = FindFirstObjectByType<UIManager>();
+                if (uiManager != null) { uiManager.UpdateHealthBar(currentHp, maxHp); }
+            }
+        }
+    }
     public void ApplyDamage(float amount, Vector3? hitFromWorldPos = null, float? customIFrameDuration = null) { if (amount <= 0f || invincible || currentHp <= 0) return; int damageInt = Mathf.CeilToInt(amount); currentHp = Mathf.Clamp(currentHp - damageInt, 0, maxHp); if (spriteRenderer != null) { StopCoroutine(nameof(FlashRoutine)); StartCoroutine(FlashRoutine()); } OnDamaged?.Invoke(); OnHealthChanged?.Invoke(currentHp, maxHp); float iFrames = customIFrameDuration.HasValue ? Mathf.Max(0f, customIFrameDuration.Value) : invincibilityDuration; if (iFrames > 0f) StartCoroutine(InvincibilityRoutine(iFrames)); if (currentHp <= 0) { HandleDeath(); } var nm = NetworkManager.Singleton; if (nm == null || !nm.IsListening || _isLocalOwner) { var uiManager = FindFirstObjectByType<UIManager>(); if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp); } }
     public void BeginInvincibility(float duration) { if (duration <= 0f) return; StopCoroutine(nameof(InvincibilityRoutine)); StartCoroutine(InvincibilityRoutine(duration)); }
     private IEnumerator InvincibilityRoutine(float duration) { invincible = true; yield return new WaitForSeconds(duration); invincible = false; }

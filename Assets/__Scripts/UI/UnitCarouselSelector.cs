@@ -72,6 +72,10 @@ public class UnitCarouselSelector : MonoBehaviour
         // 2. Send the prefab to the GameManager
         gameManager.SetChosenPlayerPrefab(selectedPrefab);
 
+        // Persist selection for future restarts in singleplayer
+        PlayerPrefs.SetInt("SP_SelectedUnitIndex", currentIndex);
+        PlayerPrefs.Save();
+
         // 3. Tell the GameManager to start the core game logic
         gameManager.StartGame();
 

@@ -44,6 +44,14 @@ public class PlayerExperience : MonoBehaviour
         UpdateUI();
     }
 
+    public void ResetState()
+    {
+        currentLevel = 1;
+        currentXP = 0f;
+        xpToNextLevel = 100f;
+        UpdateUI();
+    }
+
     public void AddXP(float xp)
     {
         if (!enabled) return;

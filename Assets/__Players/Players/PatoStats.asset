@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PatoStats
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCharacterData
   characterName: Pato
-  playerPrefab: {fileID: 4343297250839089127, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+  playerPrefab: {fileID: 5781343528486485951, guid: 909ee6a12a46ba543996bac26bc995f3, type: 3}
   defaultWeaponPrefab: {fileID: 6969291154112545986, guid: 29845c9427df0d94780766f2d257512a, type: 3}
   maxHp: 70
   hpRegen: 0

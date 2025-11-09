@@ -18,6 +18,9 @@ public class ProjectileWeapon : NetworkBehaviour
     private string sourceWeaponName;
 
     private Rigidbody rb;
+    // Attacker attribution
+    private ulong ownerNetId = 0; // used in MP on server to resolve attacker PlayerStats
+    private PlayerStats ownerStats = null; // used in SP
     [Header("Visual")]
     [SerializeField] private Transform visual; // rotate this child on Z only
     [Tooltip("Degrees to add to the computed Z angle (use 180 if the visual is inverted, 90/-90 for sideways sprites)")]
@@ -108,6 +111,17 @@ public class ProjectileWeapon : NetworkBehaviour
 
         return sourceWeaponId >= 0 ? $"Ability {sourceWeaponId}" : gameObject.name;
     }
+    // Called on server after spawn (MP) to set the owner NetworkObject id
+    public void SetOwnerNetworkId(ulong netId)
+    {
+        ownerNetId = netId;
+    }
+
+    // Called in SP local to attribute the attacker directly
+    public void SetOwnerLocal(PlayerStats stats)
+    {
+        ownerStats = stats;
+    }
 
     void Update()
     {
@@ -146,7 +160,19 @@ public class ProjectileWeapon : NetworkBehaviour
             if (enemyStats != null)
             {
                 // The server applies the damage using the stats the projectile was spawned with.
-                enemyStats.TakeDamage(damage, wasCritical);
+                PlayerStats attacker = null;
+                if (ownerStats != null) attacker = ownerStats; // SP path
+                else if (ownerNetId != 0 && NetworkManager != null && NetworkManager.SpawnManager != null)
+                {
+                    if (NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(ownerNetId, out var ownerNO))
+                    {
+                        attacker = ownerNO.GetComponent<PlayerStats>();
+                    }
+                }
+                if (attacker != null)
+                    enemyStats.TakeDamageFromAttacker(damage, wasCritical, attacker);
+                else
+                    enemyStats.TakeDamage(damage, wasCritical);
 
                     AbilityDamageTracker.RecordDamage(GetAbilityLabel(), damage, gameObject);
 

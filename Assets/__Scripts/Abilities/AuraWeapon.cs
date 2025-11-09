@@ -300,7 +300,12 @@ public class AuraWeapon : NetworkBehaviour
                 DamageResult damageResult = playerStats != null
                     ? playerStats.CalculateDamage(weaponData.damage)
                     : new DamageResult { damage = weaponData.damage, isCritical = false };
-                enemy.TakeDamage(damageResult.damage, damageResult.isCritical);
+                // Ensure attacker attribution where possible
+                var attacker = ResolveOwnerPlayerStats();
+                if (attacker != null)
+                    enemy.TakeDamageFromAttacker(damageResult.damage, damageResult.isCritical, attacker);
+                else
+                    enemy.TakeDamage(damageResult.damage, damageResult.isCritical);
 
                 AbilityDamageTracker.RecordDamage(GetAbilityLabel(), damageResult.damage, gameObject);
 
@@ -506,7 +511,8 @@ public class AuraWeapon : NetworkBehaviour
                 // For each enemy, perform a new, independent damage calculation.
                 DamageResult damageResult = playerStats.CalculateDamage(weaponData.damage);
                 
-                enemy.TakeDamage(damageResult.damage, damageResult.isCritical);
+                // SP path has direct playerStats
+                enemy.TakeDamageFromAttacker(damageResult.damage, damageResult.isCritical, playerStats);
 
                 AbilityDamageTracker.RecordDamage(GetAbilityLabel(), damageResult.damage, gameObject);
 

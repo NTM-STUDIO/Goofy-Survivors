@@ -10,12 +10,52 @@ using Unity.Netcode;
 public static class RuntimeNetworkPrefabRegistry
 {
     private static readonly HashSet<GameObject> s_RuntimeRegistered = new HashSet<GameObject>();
+    private static bool s_ScrubbedOnce = false;
+
+    /// <summary>
+    /// Remove invalid entries from NetworkConfig.Prefabs before starting networking to prevent
+    /// warnings about prefabs with no NetworkObject or null references. Safe to call multiple times.
+    /// </summary>
+    public static void ScrubInvalidConfigEntries()
+    {
+        if (s_ScrubbedOnce) return;
+        var nm = NetworkManager.Singleton;
+        if (nm == null || nm.NetworkConfig == null || nm.NetworkConfig.Prefabs == null) return;
+        try
+        {
+            var list = nm.NetworkConfig.Prefabs.Prefabs;
+            if (list == null) return;
+            // In some NGO versions this collection is read-only; we can't modify it.
+            // We'll just scan and log how many invalid entries NGO will ignore at runtime.
+            int invalid = 0;
+            foreach (var np in list)
+            {
+                if (np == null) { invalid++; continue; }
+                var prefab = np.Prefab != null ? np.Prefab : np.SourcePrefabToOverride;
+                if (prefab == null || prefab.GetComponent<NetworkObject>() == null) { invalid++; continue; }
+            }
+            if (invalid > 0)
+            {
+                Debug.LogWarning($"[NetPrefabs] Found {invalid} invalid prefab entries in NetworkManager configuration; NGO will ignore them at runtime.");
+            }
+            s_ScrubbedOnce = true;
+        }
+        catch { }
+    }
 
     public static void TryRegister(GameObject prefab)
     {
         if (prefab == null) return;
         var nm = NetworkManager.Singleton;
         if (nm == null) return;
+
+        // Skip invalid entries that don't have a NetworkObject; avoids noisy warnings from NGO
+        if (prefab.GetComponent<NetworkObject>() == null)
+        {
+            // Optional: uncomment to see which were skippeda
+            // Debug.LogWarning($"[NetPrefabs] Skipping registration for '{prefab.name}' (no NetworkObject component)");
+            return;
+        }
 
         // If prefab is already in the configured list, do not register again
         var config = nm.NetworkConfig;

@@ -3,6 +3,9 @@ using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Unity.Netcode;
+using UnityEngine.SceneManagement;
+using Net;
 
 public class EndGamePanel : MonoBehaviour
 {
@@ -12,6 +15,8 @@ public class EndGamePanel : MonoBehaviour
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private Button saveButton;
     [SerializeField] private TextMeshProUGUI buttonText; // Reference to button text
+    [Header("Flow Buttons")]
+    [SerializeField] private Button playAgainButton; // Will return to lobby instead of replaying immediately
 
     private db database;
     private GameManager gameManager;
@@ -71,6 +76,10 @@ public class EndGamePanel : MonoBehaviour
         usernameInput.characterLimit = 14;
 
         saveButton.onClick.AddListener(SaveScore);
+        if (playAgainButton != null)
+        {
+            playAgainButton.onClick.AddListener(OnPlayAgainRestart);
+        }
     }
 
     async void OnEnable()
@@ -194,5 +203,45 @@ public class EndGamePanel : MonoBehaviour
             reaperDamageText.text = "Damage to Reaper: N/A";
         }
         abilityDamageTotals = AbilityDamageTracker.GetTotalsSnapshot();
+    }
+
+    private void OnPlayAgainRestart()
+    {
+        // Ensure the game is not paused
+        try { GameManager.Instance.RequestResume(); } catch { }
+        Time.timeScale = 1f;
+
+        // Prefer calling the centralized Restart flow to keep behavior identical to the pause menu
+        var settings = Object.FindFirstObjectByType<SettingsManager>(FindObjectsInactive.Include);
+        if (settings != null)
+        {
+            settings.UI_Restart();
+            return;
+        }
+
+        // Fallbacks if SettingsManager is not present for some reason
+        try
+        {
+            // Try a soft singleplayer restart first
+            GameManager.Instance.SoftResetSinglePlayerWorld();
+            GameManager.Instance.StartGame();
+            // Hide this panel to avoid overlay after restarting
+            gameObject.SetActive(false);
+            return;
+        }
+        catch { }
+
+        // Final fallback: reload current scene (handles both SP and MP when no manager is available)
+        var nm = NetworkManager.Singleton;
+        var currentScene = SceneManager.GetActiveScene().name;
+        var nsm = nm != null ? nm.SceneManager : null;
+        if (nsm != null && nm.IsServer)
+        {
+            nsm.LoadScene(currentScene, LoadSceneMode.Single);
+        }
+        else
+        {
+            SceneManager.LoadScene(currentScene, LoadSceneMode.Single);
+        }
     }
 }

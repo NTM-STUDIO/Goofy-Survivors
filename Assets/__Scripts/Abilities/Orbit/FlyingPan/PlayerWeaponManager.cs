@@ -34,6 +34,20 @@ public class PlayerWeaponManager : NetworkBehaviour
     {
         playerStats = GetComponent<PlayerStats>();
         statsTracker = GetComponent<NetworkedPlayerStatsTracker>();
+        // If a loadout-chosen starting weapon exists (single-player), override before Start() adds default
+        try
+        {
+            var gm = GameManager.Instance;
+            if (gm != null && !gm.isP2P)
+            {
+                var chosen = LoadoutSelections.SelectedWeapon;
+                if (chosen != null)
+                {
+                    startingWeapon = chosen;
+                }
+            }
+        }
+        catch { }
     }
 
     void Start()
@@ -72,9 +86,23 @@ public class PlayerWeaponManager : NetworkBehaviour
         // This must only ever be run on the server.
         if (!IsServer) return;
 
-        if (startingWeapon != null)
+        // Check if LoadoutSync provided an override
+        int overrideWeaponId = -1;
+        if (LoadoutSync.TryGetSelectionFor(OwnerClientId, out var sel) && sel.weaponId >= 0)
         {
-            int weaponId = weaponRegistry.GetWeaponId(startingWeapon);
+            overrideWeaponId = sel.weaponId;
+        }
+
+        WeaponData weaponToGrant = startingWeapon;
+        if (overrideWeaponId >= 0 && weaponRegistry != null)
+        {
+            var overrideData = weaponRegistry.GetWeaponData(overrideWeaponId);
+            if (overrideData != null) weaponToGrant = overrideData;
+        }
+
+        if (weaponToGrant != null)
+        {
+            int weaponId = weaponRegistry.GetWeaponId(weaponToGrant);
             if (weaponId != -1)
             {
                 if (!networkWeaponIDs.Contains(weaponId))
@@ -507,6 +535,12 @@ public class PlayerWeaponManager : NetworkBehaviour
             projectileComponent.ConfigureSource(weaponId, data.weaponName);
         }
         projNO.Spawn(true);
+        // Attribute owner on the server instance for attacker-aware effects
+        var projComp = projectileObj.GetComponent<ProjectileWeapon>();
+        if (projComp != null && this.NetworkObject != null)
+        {
+            projComp.SetOwnerNetworkId(this.NetworkObjectId);
+        }
         // Compute final values on the server using authoritative stats to ensure consistency on all clients
         float finalSpeed = data.speed * playerStats.projectileSpeedMultiplier;
         float finalDuration = data.duration * playerStats.durationMultiplier;
@@ -713,6 +747,8 @@ public class PlayerWeaponManager : NetworkBehaviour
             {
                 projectile.ConfigureSource(weaponId, data.weaponName);
                 projectile.Initialize(target, direction, damageResult.damage, damageResult.isCritical, finalSpeed, finalDuration, finalKnockback, finalSize);
+                // Attribute owner locally for attacker-aware effects in SP
+                projectile.SetOwnerLocal(playerStats);
             }
         }
     }

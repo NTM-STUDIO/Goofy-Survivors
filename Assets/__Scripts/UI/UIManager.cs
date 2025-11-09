@@ -1,26 +1,24 @@
+// Filename: UIManager.cs
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Unity.Netcode;
+using System.Collections;
+using MyGame.ConnectionSystem.Connection;
+using MyGame.ConnectionSystem.Services;
+// VContainer namespace is no longer needed
 
 public class UIManager : MonoBehaviour
 {
     [Header("Core UI Panels")]
-    [Tooltip("O painel do menu principal com os botões 'Jogar', 'Multiplayer', etc.")]
     [SerializeField] private GameObject painelPrincipal;
-    [Tooltip("O painel para escolher o modo P2P (Host/Client)")]
     [SerializeField] private GameObject multiplayerPanel;
-    [Tooltip("O painel de seleção de unidades para o modo Single Player")]
-    [SerializeField] private GameObject unitSelectionUI;
-    [Tooltip("O menu de pausa que aparece ao pressionar ESC")]
     [SerializeField] private GameObject pauseMenu;
-    [Tooltip("O painel de estatísticas que aparece ao pressionar TAB")]
     [SerializeField] private GameObject statsPanel;
-    [Tooltip("O painel de fim de jogo (Vitória/Derrota)")]
     [SerializeField] private GameObject endGamePanel;
 
     [Header("In-Game HUD Elements")]
-    [SerializeField] private GameObject inGameHudContainer; // Um objeto pai para todo o HUD
+    [SerializeField] private GameObject inGameHudContainer;
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private Slider xpSlider;
     [SerializeField] private TMP_Text levelText;
@@ -31,133 +29,307 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI weaponNameText;
     [SerializeField] private Image weaponSpriteImage;
     
+    [Header("Multiplayer Elements")]
+    [SerializeField] private TMP_InputField joinCodeInput;
+    [SerializeField] private TextMeshProUGUI lobbyCodeText;
+    [SerializeField] private Button hostButton;
+    [SerializeField] private Button joinButton;
+    [SerializeField] private TextMeshProUGUI connectionStatusText;
+
+    [Header("Character Selection Elements")]
+    // This was missing from your provided script, but is needed for the logic
+    [SerializeField] private GameObject[] characterPrefabs;
+
     [Header("System References")]
-    [Tooltip("Referência opcional para a câmara do jogador")]
     [SerializeField] private AdvancedCameraController advancedCameraController;
 
-    // Referência para o cérebro do jogo
+    // --- CORRECTION: Dependencies are no longer injected ---
+    private ConnectionManager connectionManager;
+    private MultiplayerServicesFacade servicesFacade;
     private GameManager gameManager;
+
+    private int selectedCharacterIndex = 0;
+    private bool isHost = false;
+    private bool connectionEstablished = false;
 
     void Start()
     {
-        // É crucial obter a instância Singleton no Start para garantir que o Awake do GameManager já correu.
-        gameManager = GameManager.Instance; 
-        if (gameManager == null)
-        {
-            Debug.LogError("FATAL ERROR: UIManager não encontrou o GameManager.Instance!");
-        }
+        // --- CORRECTION: Find the instances of our managers manually ---
+        connectionManager = ConnectionManager.Instance;
+        servicesFacade = MultiplayerServicesFacade.Instance;
+        // The GameManager is found later via the helper property
 
-        // Estado inicial da UI no arranque do jogo
+        if (connectionManager == null) Debug.LogError("FATAL ERROR: UIManager could not find ConnectionManager.Instance!");
+        if (servicesFacade == null) Debug.LogError("FATAL ERROR: UIManager could not find MultiplayerServicesFacade.Instance!");
+
+        // Initial UI state
         painelPrincipal.SetActive(true);
         multiplayerPanel.SetActive(false);
-        unitSelectionUI.SetActive(false);
+
         inGameHudContainer.SetActive(false);
         endGamePanel.SetActive(false);
         pauseMenu.SetActive(false);
+        
+        if (lobbyCodeText != null) lobbyCodeText.gameObject.SetActive(false);
+        if (connectionStatusText != null) connectionStatusText.gameObject.SetActive(false);
+
+        // This part is fine, but we add a null check for safety
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+        }
+    }
+
+    // A helper property to safely get the GameManager instance whenever needed
+    private GameManager GameManager
+    {
+        get
+        {
+            if (gameManager == null)
+            {
+                gameManager = GameManager.Instance;
+            }
+            return gameManager;
+        }
     }
 
     // ===============================================================
     // FLUXO DO MENU PRINCIPAL
     // ===============================================================
-
-    /// <summary>
-    /// Chamado pelo botão 'Jogar' para o modo Single Player.
-    /// </summary>
     public void PlayButton()
     {
-        // Garante que a flag P2P está desligada
-        if(gameManager != null) gameManager.isP2P = false;
-
+        Debug.Log("[UIManager] Modo Single-Player selecionado");
+        if (GameManager != null) GameManager.isP2P = false;
         painelPrincipal.SetActive(false);
-        unitSelectionUI.SetActive(true);
+        // Start the game and show HUD if prefab is selected
+        if (GameManager != null && !GameManager.isP2P)
+        {
+            GameManager.StartGame();
+            OnGameStart();
+        }
     }
 
-    /// <summary>
-    /// Chamado pelo botão 'Multiplayer'. Prepara o jogo para o modo P2P.
-    /// </summary>
     public void MultiplayerButton()
     {
-        // 1. INFORMA o GameManager da decisão do jogador. Este é o passo mais importante.
-        if (gameManager != null)
-        {
-            gameManager.isP2P = true;
-        }
-        else
-        {
-            Debug.LogError("Não foi possível definir o modo P2P porque a referência do GameManager é nula!");
-            return;
-        }
-
-        // 2. ATUALIZA a UI para mostrar as opções de Host/Client.
+        Debug.Log("[UIManager] Modo Multiplayer selecionado");
+        if (GameManager != null) GameManager.isP2P = true;
         painelPrincipal.SetActive(false);
         multiplayerPanel.SetActive(true);
+        
+        if (connectionStatusText != null) connectionStatusText.gameObject.SetActive(false);
+        if (lobbyCodeText != null) lobbyCodeText.gameObject.SetActive(false);
     }
 
-    /// <summary>
-    /// Chamado por um botão 'Voltar' no painel multiplayer para regressar ao menu principal.
-    /// </summary>
     public void BackToMainMenu()
     {
-        // Desfaz a decisão de jogar em P2P
-        if(gameManager != null) gameManager.isP2P = false;
-
+        Debug.Log("[UIManager] Voltando ao menu principal");
+        if (GameManager != null) GameManager.isP2P = false;
+        
         multiplayerPanel.SetActive(false);
         painelPrincipal.SetActive(true);
+        
+        connectionEstablished = false;
+        isHost = false;
     }
 
-    /// <summary>
-    /// Fecha a aplicação.
-    /// </summary>
     public void QuitButton()
     {
+        Debug.Log("[UIManager] Saindo do jogo");
         Application.Quit();
-    }
-
-
-    // ===============================================================
-    // FLUXO DE CONEXÃO P2P
-    // ===============================================================
-
-    /// <summary>
-    /// Chamado pelo botão 'Host'. Inicia a sessão de rede como Host.
-    /// </summary>
-    public void StartHost()
-    {
-        Debug.Log("[UIManager] A iniciar como Host...");
-        NetworkManager.Singleton.StartHost();
-        // A UI é escondida. O LobbyManagerP2P assumirá o controlo a partir daqui.
-        multiplayerPanel.SetActive(false);
-    }
-
-    /// <summary>
-    /// Chamado pelo botão 'Client'. Tenta conectar-se a um Host.
-    /// </summary>
-    public void StartClient()
-    {
-        Debug.Log("[UIManager] A iniciar como Cliente...");
-        NetworkManager.Singleton.StartClient();
-        // A UI é escondida. O LobbyManagerP2P assumirá o controlo a partir daqui.
-        multiplayerPanel.SetActive(false);
     }
     
     // ===============================================================
-    // UI DURANTE O JOGO (Chamada por outros sistemas)
+    // FLUXO DE CONEXÃO P2P
     // ===============================================================
+    public void StartHost()
+    {
+        Debug.Log("[UIManager] Iniciando como Host...");
+        isHost = true;
+        
+        if (hostButton != null) hostButton.interactable = false;
+        if (joinButton != null) joinButton.interactable = false;
+        
+        if (connectionStatusText != null)
+        {
+            connectionStatusText.gameObject.SetActive(true);
+            connectionStatusText.text = "Criando sessão...";
+        }
+        
+        connectionManager.StartHost("HostPlayer");
+        StartCoroutine(WaitForLobbyCode());
+    }
 
-    /// <summary>
-    /// Ativa o HUD do jogo. Esta função deve ser chamada pelo GameManager quando o jogo realmente começa.
-    /// </summary>
+    public void StartClient()
+    {
+        Debug.Log("[UIManager] Iniciando como Cliente...");
+        isHost = false;
+
+        if (string.IsNullOrEmpty(joinCodeInput.text))
+        {
+            Debug.LogError("[UIManager] O Join Code não pode estar vazio!");
+            if (connectionStatusText != null)
+            {
+                connectionStatusText.gameObject.SetActive(true);
+                connectionStatusText.text = "ERRO: Insira um código válido!";
+                connectionStatusText.color = Color.red;
+            }
+            return;
+        }
+        
+        if (hostButton != null) hostButton.interactable = false;
+        if (joinButton != null) joinButton.interactable = false;
+        
+        if (connectionStatusText != null)
+        {
+            connectionStatusText.gameObject.SetActive(true);
+            connectionStatusText.text = "Conectando...";
+            connectionStatusText.color = Color.white;
+        }
+        
+        connectionManager.StartClient("ClientPlayer", joinCodeInput.text);
+    }
+
+    private IEnumerator WaitForLobbyCode()
+    {
+        float timeout = 10f;
+        float elapsed = 0f;
+        
+        while (string.IsNullOrEmpty(servicesFacade.LobbyJoinCode) && elapsed < timeout)
+        {
+            yield return new WaitForSeconds(0.1f);
+            elapsed += 0.1f;
+        }
+
+        if (!string.IsNullOrEmpty(servicesFacade.LobbyJoinCode))
+        {
+            Debug.Log($"[UIManager] Lobby criado com código: {servicesFacade.LobbyJoinCode}");
+            UpdateLobbyCodeText(servicesFacade.LobbyJoinCode);
+            
+            if (connectionStatusText != null)
+            {
+                connectionStatusText.text = "Lobby criado! Aguardando jogadores...";
+                connectionStatusText.color = Color.green;
+            }
+            
+            multiplayerPanel.SetActive(false);
+        }
+        else
+        {
+            Debug.LogError("[UIManager] Timeout ao aguardar código do lobby!");
+            if (connectionStatusText != null)
+            {
+                connectionStatusText.text = "ERRO: Falha ao criar lobby!";
+                connectionStatusText.color = Color.red;
+            }
+            
+            if (hostButton != null) hostButton.interactable = true;
+            if (joinButton != null) joinButton.interactable = true;
+        }
+    }
+
+    public void UpdateLobbyCodeText(string lobbyCode)
+    {
+        if (lobbyCodeText != null)
+        {
+            lobbyCodeText.gameObject.SetActive(true);
+            lobbyCodeText.text = $"CÓDIGO DO LOBBY:\n{lobbyCode}";
+        }
+    }
+
+    // ===============================================================
+    // CALLBACKS DE CONEXÃO
+    // ===============================================================
+    private void OnClientConnected(ulong clientId)
+    {
+        Debug.Log($"[UIManager] Cliente {clientId} conectado");
+        
+        if (NetworkManager.Singleton.IsHost && clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            connectionEstablished = true;
+            Debug.Log("[UIManager] Host conectado com sucesso!");
+        }
+        else if (NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsHost && clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            connectionEstablished = true;
+            Debug.Log("[UIManager] Cliente conectado com sucesso!");
+            
+            if (connectionStatusText != null)
+            {
+                connectionStatusText.text = "Conectado!";
+                connectionStatusText.color = Color.green;
+            }
+            
+            multiplayerPanel.SetActive(false);
+        }
+    }
+
+    private void OnClientDisconnected(ulong clientId)
+    {
+        Debug.Log($"[UIManager] Cliente {clientId} desconectado");
+        
+        if (clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            connectionEstablished = false;
+            BackToMainMenu();
+        }
+    }
+
+    // ===============================================================
+    // INÍCIO DO JOGO
+    // ===============================================================
+    private void StartSinglePlayerGame()
+    {
+        Debug.Log("[UIManager] Iniciando jogo single-player");
+        if (GameManager != null) GameManager.StartGame();
+    }
+
+    private void StartMultiplayerGame()
+    {
+        if (!connectionEstablished)
+        {
+            Debug.LogError("[UIManager] Tentativa de iniciar jogo sem conexão estabelecida!");
+            return;
+        }
+
+        Debug.Log("[UIManager] Iniciando jogo multiplayer");
+        
+        if (NetworkManager.Singleton.IsHost)
+        {
+            var selections = new System.Collections.Generic.Dictionary<ulong, GameObject>();
+            foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                selections[client.ClientId] = characterPrefabs[selectedCharacterIndex];
+            }
+            if (GameManager != null)
+            {
+                GameManager.SetPlayerSelections_P2P(selections);
+                GameManager.StartGame();
+            }
+        }
+    }
+
+    // ===============================================================
+    // UI DURANTE O JOGO
+    // ===============================================================
     public void OnGameStart()
     {
-        // Esconde todos os menus pré-jogo
+        Debug.Log("[UIManager] OnGameStart chamado - escondendo menus e mostrando HUD");
         painelPrincipal.SetActive(false);
         multiplayerPanel.SetActive(false);
-        unitSelectionUI.SetActive(false);
-        
-        // Ativa o HUD
         inGameHudContainer.SetActive(true);
-
-        if (advancedCameraController != null) advancedCameraController.enabled = true;
+        
+        if (advancedCameraController != null) 
+            advancedCameraController.enabled = true;
     }
 
     public void OpenNewWeaponPanel(WeaponData weaponData)
@@ -165,16 +337,13 @@ public class UIManager : MonoBehaviour
         newWeaponPanel.SetActive(true);
         weaponNameText.text = weaponData.weaponName;
         weaponSpriteImage.sprite = weaponData.icon;
-        
-        // Em P2P, a pausa é desativada, mas podemos querer parar o input do jogador.
-        // O GameManager deve ter a lógica para lidar com isto.
-        gameManager?.RequestPause(); 
+        if (GameManager != null) GameManager.RequestPauseForLevelUp();
     }
 
     public void CloseNewWeaponPanel()
     {
         newWeaponPanel.SetActive(false);
-        gameManager?.RequestResume();
+        if (GameManager != null) GameManager.ResumeAfterLevelUp();
     }
 
     public void UpdateTimerText(float time)
@@ -201,14 +370,11 @@ public class UIManager : MonoBehaviour
 
     public void PlayAgainButton()
     {
-        // O GameManager já tem a lógica para decidir o que fazer com base na flag isP2P.
-        gameManager?.RestartGame();
+        if (GameManager != null) GameManager.RestartGame();
     }
-
 
     public void ShowPauseMenu(bool show)
     {
-        // A lógica de pausa já está no GameManager para verificar se está em modo P2P ou não.
         pauseMenu?.SetActive(show);
     }
 
@@ -216,5 +382,25 @@ public class UIManager : MonoBehaviour
     {
         if (statsPanel != null)
             statsPanel.SetActive(!statsPanel.activeSelf);
+    }
+
+    // ===============================================================
+    // XP & LEVEL UI
+    // ===============================================================
+    public void UpdateXPBar(float currentXP, float requiredXP)
+    {
+        if (xpSlider != null)
+        {
+            xpSlider.maxValue = requiredXP;
+            xpSlider.value = currentXP;
+        }
+    }
+
+    public void UpdateLevelText(int level)
+    {
+        if (levelText != null)
+        {
+            levelText.text = $"Nível {level}";
+        }
     }
 }

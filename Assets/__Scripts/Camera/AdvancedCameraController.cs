@@ -20,6 +20,7 @@ public class AdvancedCameraController : MonoBehaviour
 
     private Camera cam;
     private Vector3 offset;
+    private bool initializedOnce = false;
 
     void Awake()
     {
@@ -124,5 +125,53 @@ public class AdvancedCameraController : MonoBehaviour
     {
         target = newTarget;
         offset = transform.position - target.position;
+        initializedOnce = true;
+    }
+
+    // Public helper to bind to a new target while preserving the existing camera offset.
+    // We DON'T snap the camera to the target; we keep the current framing and follow as before.
+    public void BindAndCenter(Transform newTarget, bool resetZoom = true)
+    {
+        target = newTarget;
+        offset = transform.position - newTarget.position;
+        initializedOnce = true;
+        if (resetZoom)
+        {
+            if (cam == null) cam = GetComponent<Camera>();
+            if (cam != null)
+            {
+                if (cam.orthographic)
+                {
+                    cam.orthographicSize = Mathf.Clamp(cam.orthographicSize, orthoMinSize, orthoMaxSize);
+                }
+                else
+                {
+                    cam.fieldOfView = Mathf.Clamp(cam.fieldOfView, perspMinFov, perspMaxFov);
+                }
+            }
+        }
+    }
+
+    // Overload with snapToTarget option
+    public void BindAndCenter(Transform newTarget, bool resetZoom, bool snapToTarget)
+    {
+        target = newTarget;
+        offset = transform.position - newTarget.position;
+        initializedOnce = true;
+        if (resetZoom)
+        {
+            if (cam == null) cam = GetComponent<Camera>();
+            if (cam != null)
+            {
+                if (cam.orthographic)
+                {
+                    cam.orthographicSize = Mathf.Clamp(cam.orthographicSize, orthoMinSize, orthoMaxSize);
+                }
+                else
+                {
+                    cam.fieldOfView = Mathf.Clamp(cam.fieldOfView, perspMinFov, perspMaxFov);
+                }
+            }
+        }
     }
 }

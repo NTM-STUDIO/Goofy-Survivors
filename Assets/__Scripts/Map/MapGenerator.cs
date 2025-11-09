@@ -114,6 +114,23 @@ public class MapGenerator : MonoBehaviour
         hasGenerated = true;
     }
 
+    // Clear all generated children and allow generation again (singleplayer)
+    public void ResetLocal()
+    {
+        // Destroy all children spawned under this generator
+        var children = new System.Collections.Generic.List<Transform>();
+        foreach (Transform child in transform)
+        {
+            children.Add(child);
+        }
+        foreach (var t in children)
+        {
+            if (t != null) Destroy(t.gameObject);
+        }
+        hasGenerated = false;
+        Debug.Log("[MapGenerator] ResetLocal: cleared generated children and reset flag.");
+    }
+
     private void TryRegisterNetworkPrefab(GameObject prefab)
     {
         RuntimeNetworkPrefabRegistry.TryRegister(prefab);
