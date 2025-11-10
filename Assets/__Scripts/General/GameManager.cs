@@ -554,25 +554,63 @@ public class GameManager : NetworkBehaviour
 
     private void StartGame_P2P_Host()
     {
+
+        // If no selections, fallback: assign default prefab to all connected players
         if (playerUnitSelections.Count == 0)
         {
-            Debug.LogError("StartGame P2P: Dicionário de seleções de jogadores está vazio!");
+            Debug.LogWarning("StartGame P2P: Dicionário de seleções de jogadores está vazio! Usando prefab padrão para todos os jogadores conectados.");
+            if (NetworkManager.Singleton != null)
+            {
+                foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+                {
+                    GameObject defaultPrefab = null;
+                    if (LoadoutSelections.CharacterPrefabsContext != null && LoadoutSelections.CharacterPrefabsContext.Count > 0)
+                    {
+                        defaultPrefab = LoadoutSelections.CharacterPrefabsContext[0];
+                    }
+                    else if (runtimeNetworkPrefabs != null && runtimeNetworkPrefabs.Count > 0)
+                    {
+                        defaultPrefab = runtimeNetworkPrefabs[0];
+                    }
+                    if (defaultPrefab == null)
+                    {
+                        Debug.LogError($"[GameManager] Nenhum prefab padrão disponível para o cliente {client.ClientId}!");
+                        continue;
+                    }
+                    GameObject playerObject = Instantiate(defaultPrefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
+                    playerObject.GetComponent<NetworkObject>().SpawnAsPlayerObject(client.ClientId);
+                    playerAlive[client.ClientId] = true;
+                }
+                InitializeGameClientRpc();
+            }
             return;
         }
 
         foreach (var entry in playerUnitSelections)
         {
-            GameObject prefabToUse = entry.Value;
-
-            // If a synced selection exists with a character index, override prefab
-            if (LoadoutSync.TryGetSelectionFor(entry.Key, out var sel) && sel.characterIndex >= 0 && LoadoutSelections.CharacterPrefabsContext != null)
+            GameObject prefabToUse = null;
+            // Always try to get the synced character index for this player
+            if (LoadoutSelections.CharacterPrefabsContext != null && LoadoutSync.TryGetSelectionFor(entry.Key, out var sel) && sel.characterIndex >= 0)
             {
                 if (sel.characterIndex < LoadoutSelections.CharacterPrefabsContext.Count && LoadoutSelections.CharacterPrefabsContext[sel.characterIndex] != null)
                 {
                     prefabToUse = LoadoutSelections.CharacterPrefabsContext[sel.characterIndex];
                 }
             }
-
+            // Fallback: use entry.Value (legacy), or first prefab in context
+            if (prefabToUse == null)
+            {
+                prefabToUse = entry.Value;
+                if ((prefabToUse == null || (prefabToUse != null && prefabToUse.name == "")) && LoadoutSelections.CharacterPrefabsContext != null && LoadoutSelections.CharacterPrefabsContext.Count > 0)
+                {
+                    prefabToUse = LoadoutSelections.CharacterPrefabsContext[0];
+                }
+            }
+            if (prefabToUse == null)
+            {
+                Debug.LogError($"[GameManager] No valid prefab found for client {entry.Key}! Skipping spawn.");
+                continue;
+            }
             GameObject playerObject = Instantiate(prefabToUse, playerSpawnPoint.position, playerSpawnPoint.rotation);
             playerObject.GetComponent<NetworkObject>().SpawnAsPlayerObject(entry.Key);
             playerAlive[entry.Key] = true;

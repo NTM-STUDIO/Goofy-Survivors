@@ -3,13 +3,17 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Unity.Netcode;
-using System.Collections;
-using MyGame.ConnectionSystem.Connection;
-using MyGame.ConnectionSystem.Services;
-// VContainer namespace is no longer needed
+using MyGame.ConnectionSystem.Connection; // Make sure you have access to this namespace
+
+// This script now listens to events from the ConnectionManager to update the UI.
+// This makes the UI logic cleaner and more reliable.
 
 public class UIManager : MonoBehaviour
 {
+    [Header("Lobby UI")]
+    [SerializeField] private GameObject lobbyPanel;
+    [SerializeField] private LobbyUI lobbyUI; // Optional: If you have specific logic in this component
+
     [Header("Core UI Panels")]
     [SerializeField] private GameObject painelPrincipal;
     [SerializeField] private GameObject multiplayerPanel;
@@ -23,12 +27,12 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Slider xpSlider;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private Slider healthBar;
-    
+
     [Header("New Weapon Panel")]
     [SerializeField] private GameObject newWeaponPanel;
     [SerializeField] private TextMeshProUGUI weaponNameText;
     [SerializeField] private Image weaponSpriteImage;
-    
+
     [Header("Multiplayer Elements")]
     [SerializeField] private TMP_InputField joinCodeInput;
     [SerializeField] private TextMeshProUGUI lobbyCodeText;
@@ -37,82 +41,82 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI connectionStatusText;
 
     [Header("Character Selection Elements")]
-    // This was missing from your provided script, but is needed for the logic
     [SerializeField] private GameObject[] characterPrefabs;
 
     [Header("System References")]
     [SerializeField] private AdvancedCameraController advancedCameraController;
 
-    // --- CORRECTION: Dependencies are no longer injected ---
+    // --- System Dependencies ---
     private ConnectionManager connectionManager;
-    private MultiplayerServicesFacade servicesFacade;
     private GameManager gameManager;
 
     private int selectedCharacterIndex = 0;
-    private bool isHost = false;
-    private bool connectionEstablished = false;
+
+    #region Unity Lifecycle & Event Subscription
+
+    void Awake()
+    {
+        // Find the ConnectionManager instance as soon as the script awakens.
+        connectionManager = ConnectionManager.Instance;
+        if (connectionManager == null)
+        {
+            Debug.LogError("FATAL ERROR: UIManager could not find ConnectionManager.Instance! Is it in the scene?", this);
+            this.enabled = false; // Disable this script if the manager is missing.
+            return;
+        }
+
+        // Subscribe to events from the ConnectionManager. This is the core of the new logic.
+        // The UIManager will now REACT to connection events instead of trying to manage the state itself.
+        connectionManager.OnStartingHost += HandleStartingHost;
+        connectionManager.OnHostCreated += HandleHostSuccess;
+        connectionManager.OnStartingClient += HandleStartingClient;
+        connectionManager.OnClientConnected += HandleClientSuccess;
+        connectionManager.OnConnectionFailed += HandleConnectionFailure;
+    }
 
     void Start()
     {
-        // --- CORRECTION: Find the instances of our managers manually ---
-        connectionManager = ConnectionManager.Instance;
-        servicesFacade = MultiplayerServicesFacade.Instance;
-        // The GameManager is found later via the helper property
-
-        if (connectionManager == null) Debug.LogError("FATAL ERROR: UIManager could not find ConnectionManager.Instance!");
-        if (servicesFacade == null) Debug.LogError("FATAL ERROR: UIManager could not find MultiplayerServicesFacade.Instance!");
-
-        // Initial UI state
+        // Set the initial state of all UI panels when the game starts.
         painelPrincipal.SetActive(true);
         multiplayerPanel.SetActive(false);
-
+        lobbyPanel.SetActive(false);
         inGameHudContainer.SetActive(false);
         endGamePanel.SetActive(false);
         pauseMenu.SetActive(false);
-        
-        if (lobbyCodeText != null) lobbyCodeText.gameObject.SetActive(false);
-        if (connectionStatusText != null) connectionStatusText.gameObject.SetActive(false);
-
-        // This part is fine, but we add a null check for safety
-        if (NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
-        }
     }
 
     void OnDestroy()
     {
-        if (NetworkManager.Singleton != null)
+        // IMPORTANT: Always unsubscribe from events when the object is destroyed to prevent memory leaks.
+        if (connectionManager != null)
         {
-            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
-            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+            connectionManager.OnStartingHost -= HandleStartingHost;
+            connectionManager.OnHostCreated -= HandleHostSuccess;
+            connectionManager.OnStartingClient -= HandleStartingClient;
+            connectionManager.OnClientConnected -= HandleClientSuccess;
+            connectionManager.OnConnectionFailed -= HandleConnectionFailure;
         }
     }
 
-    // A helper property to safely get the GameManager instance whenever needed
+    #endregion
+
+    // Helper property to safely get the GameManager instance only when needed.
     private GameManager GameManager
     {
         get
         {
-            if (gameManager == null)
-            {
-                gameManager = GameManager.Instance;
-            }
+            if (gameManager == null) gameManager = GameManager.Instance;
             return gameManager;
         }
     }
 
-    // ===============================================================
-    // FLUXO DO MENU PRINCIPAL
-    // ===============================================================
+    #region Main Menu Navigation
+
     public void PlayButton()
     {
-        Debug.Log("[UIManager] Modo Single-Player selecionado");
         if (GameManager != null) GameManager.isP2P = false;
         painelPrincipal.SetActive(false);
-        // Start the game and show HUD if prefab is selected
-        if (GameManager != null && !GameManager.isP2P)
+        if (GameManager != null)
         {
             GameManager.StartGame();
             OnGameStart();
@@ -121,214 +125,161 @@ public class UIManager : MonoBehaviour
 
     public void MultiplayerButton()
     {
-        Debug.Log("[UIManager] Modo Multiplayer selecionado");
         if (GameManager != null) GameManager.isP2P = true;
         painelPrincipal.SetActive(false);
         multiplayerPanel.SetActive(true);
-        
-        if (connectionStatusText != null) connectionStatusText.gameObject.SetActive(false);
-        if (lobbyCodeText != null) lobbyCodeText.gameObject.SetActive(false);
+        hostButton.interactable = true;
+        joinButton.interactable = true;
     }
 
     public void BackToMainMenu()
     {
-        Debug.Log("[UIManager] Voltando ao menu principal");
-        if (GameManager != null) GameManager.isP2P = false;
-        
         multiplayerPanel.SetActive(false);
+        lobbyPanel.SetActive(false); // Ensure lobby is also hidden
         painelPrincipal.SetActive(true);
-        
-        connectionEstablished = false;
-        isHost = false;
+
+        // Optional: If a player is in a lobby and clicks back, you might want to disconnect them.
+        // connectionManager?.RequestShutdown(); 
     }
 
-    public void QuitButton()
+    public void QuitButton() => Application.Quit();
+
+    #endregion
+
+    #region Multiplayer Button Clicks
+
+    // These methods are called by the UI Buttons in the Inspector.
+    // They are now very simple, only telling the ConnectionManager what to do.
+
+    public void OnHostButtonClicked()
     {
-        Debug.Log("[UIManager] Saindo do jogo");
-        Application.Quit();
-    }
-    
-    // ===============================================================
-    // FLUXO DE CONEXÃO P2P
-    // ===============================================================
-    public void StartHost()
-    {
-        Debug.Log("[UIManager] Iniciando como Host...");
-        isHost = true;
-        
-        if (hostButton != null) hostButton.interactable = false;
-        if (joinButton != null) joinButton.interactable = false;
-        
-        if (connectionStatusText != null)
-        {
-            connectionStatusText.gameObject.SetActive(true);
-            connectionStatusText.text = "Criando sessão...";
-        }
-        
+        hostButton.interactable = false; // Prevent double-clicking
+        joinButton.interactable = false;
         connectionManager.StartHost("HostPlayer");
-        StartCoroutine(WaitForLobbyCode());
     }
 
-    public void StartClient()
+    public void OnJoinButtonClicked()
     {
-        Debug.Log("[UIManager] Iniciando como Cliente...");
-        isHost = false;
-
-        if (string.IsNullOrEmpty(joinCodeInput.text))
+        string joinCode = joinCodeInput.text;
+        if (string.IsNullOrWhiteSpace(joinCode))
         {
-            Debug.LogError("[UIManager] O Join Code não pode estar vazio!");
-            if (connectionStatusText != null)
-            {
-                connectionStatusText.gameObject.SetActive(true);
-                connectionStatusText.text = "ERRO: Insira um código válido!";
-                connectionStatusText.color = Color.red;
-            }
+            // Use the central failure handler for immediate feedback.
+            HandleConnectionFailure("Join Code cannot be empty!");
             return;
         }
-        
-        if (hostButton != null) hostButton.interactable = false;
-        if (joinButton != null) joinButton.interactable = false;
-        
-        if (connectionStatusText != null)
-        {
-            connectionStatusText.gameObject.SetActive(true);
-            connectionStatusText.text = "Conectando...";
-            connectionStatusText.color = Color.white;
-        }
-        
-        connectionManager.StartClient("ClientPlayer", joinCodeInput.text);
+        hostButton.interactable = false; // Prevent double-clicking
+        joinButton.interactable = false;
+        connectionManager.StartClient("ClientPlayer", joinCode);
     }
 
-    private IEnumerator WaitForLobbyCode()
+    #endregion
+
+    #region Event Handlers (Called by ConnectionManager)
+
+    // These methods contain the UI logic and are triggered by events.
+
+    private void HandleStartingHost()
     {
-        float timeout = 10f;
-        float elapsed = 0f;
-        
-        while (string.IsNullOrEmpty(servicesFacade.LobbyJoinCode) && elapsed < timeout)
-        {
-            yield return new WaitForSeconds(0.1f);
-            elapsed += 0.1f;
-        }
-
-        if (!string.IsNullOrEmpty(servicesFacade.LobbyJoinCode))
-        {
-            Debug.Log($"[UIManager] Lobby criado com código: {servicesFacade.LobbyJoinCode}");
-            UpdateLobbyCodeText(servicesFacade.LobbyJoinCode);
-            
-            if (connectionStatusText != null)
-            {
-                connectionStatusText.text = "Lobby criado! Aguardando jogadores...";
-                connectionStatusText.color = Color.green;
-            }
-            
-            multiplayerPanel.SetActive(false);
-        }
-        else
-        {
-            Debug.LogError("[UIManager] Timeout ao aguardar código do lobby!");
-            if (connectionStatusText != null)
-            {
-                connectionStatusText.text = "ERRO: Falha ao criar lobby!";
-                connectionStatusText.color = Color.red;
-            }
-            
-            if (hostButton != null) hostButton.interactable = true;
-            if (joinButton != null) joinButton.interactable = true;
-        }
+        ShowLobbyPanel();
+        SetConnectionStatus("Creating lobby...", Color.white);
     }
 
-    public void UpdateLobbyCodeText(string lobbyCode)
+    private void HandleHostSuccess(string lobbyCode)
     {
-        if (lobbyCodeText != null)
-        {
-            lobbyCodeText.gameObject.SetActive(true);
-            lobbyCodeText.text = $"CÓDIGO DO LOBBY:\n{lobbyCode}";
-        }
+        // This method is called by the ConnectionManager when the host is ready.
+
+        // You can keep this line if you still have a status text on the UIManager itself.
+        SetConnectionStatus("Lobby created! Waiting for players...", Color.green);
+
+        // --- THIS IS THE NEW LINE ---
+        // Pass the code to the LobbyUI component to display it there.
+        if (lobbyUI != null) lobbyUI.DisplayLobbyCode(lobbyCode);
+
     }
 
-    // ===============================================================
-    // CALLBACKS DE CONEXÃO
-    // ===============================================================
-    private void OnClientConnected(ulong clientId)
+
+    private void HandleStartingClient()
     {
-        Debug.Log($"[UIManager] Cliente {clientId} conectado");
-        
-        if (NetworkManager.Singleton.IsHost && clientId == NetworkManager.Singleton.LocalClientId)
-        {
-            connectionEstablished = true;
-            Debug.Log("[UIManager] Host conectado com sucesso!");
-        }
-        else if (NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsHost && clientId == NetworkManager.Singleton.LocalClientId)
-        {
-            connectionEstablished = true;
-            Debug.Log("[UIManager] Cliente conectado com sucesso!");
-            
-            if (connectionStatusText != null)
-            {
-                connectionStatusText.text = "Conectado!";
-                connectionStatusText.color = Color.green;
-            }
-            
-            multiplayerPanel.SetActive(false);
-        }
+        ShowLobbyPanel();
+        SetConnectionStatus("Joining lobby...", Color.white);
     }
 
-    private void OnClientDisconnected(ulong clientId)
+    private void HandleClientSuccess()
     {
-        Debug.Log($"[UIManager] Cliente {clientId} desconectado");
-        
-        if (clientId == NetworkManager.Singleton.LocalClientId)
-        {
-            connectionEstablished = false;
-            BackToMainMenu();
-        }
+        // The client successfully connected to the host.
+        SetConnectionStatus("Connected!", Color.green);
     }
 
-    // ===============================================================
-    // INÍCIO DO JOGO
-    // ===============================================================
-    private void StartSinglePlayerGame()
+    private void HandleConnectionFailure(string errorMessage)
     {
-        Debug.Log("[UIManager] Iniciando jogo single-player");
-        if (GameManager != null) GameManager.StartGame();
+        // This single method handles all connection failures.
+        if (lobbyPanel.activeSelf)
+        {
+            // If we were already in the lobby UI, show the error there.
+            SetConnectionStatus($"ERROR: {errorMessage}", Color.red);
+            // After a delay, go back to the multiplayer menu.
+            Invoke(nameof(ReturnToMultiplayerMenu), 3f);
+        }
+        else if (multiplayerPanel.activeSelf)
+        {
+            // If we are still on the multiplayer menu (e.g., empty join code).
+            SetConnectionStatus($"ERROR: {errorMessage}", Color.red);
+            // Re-enable buttons so the user can try again.
+            hostButton.interactable = true;
+            joinButton.interactable = true;
+        }
     }
 
-    private void StartMultiplayerGame()
+    #endregion
+
+    #region UI Helper Methods
+
+    private void ShowLobbyPanel()
     {
-        if (!connectionEstablished)
-        {
-            Debug.LogError("[UIManager] Tentativa de iniciar jogo sem conexão estabelecida!");
-            return;
-        }
-
-        Debug.Log("[UIManager] Iniciando jogo multiplayer");
-        
-        if (NetworkManager.Singleton.IsHost)
-        {
-            var selections = new System.Collections.Generic.Dictionary<ulong, GameObject>();
-            foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
-            {
-                selections[client.ClientId] = characterPrefabs[selectedCharacterIndex];
-            }
-            if (GameManager != null)
-            {
-                GameManager.SetPlayerSelections_P2P(selections);
-                GameManager.StartGame();
-            }
-        }
+        // This is the key function: hides the multiplayer menu and shows the lobby.
+        multiplayerPanel.SetActive(false);
+        lobbyPanel.SetActive(true);
+        connectionStatusText.gameObject.SetActive(true); // Ensure status text is visible in lobby
+        lobbyCodeText.gameObject.SetActive(false); // Hide code text until it's ready
     }
 
-    // ===============================================================
-    // UI DURANTE O JOGO
-    // ===============================================================
+    private void ReturnToMultiplayerMenu()
+    {
+        // Used to reset the UI after a connection failure.
+        lobbyPanel.SetActive(false);
+        multiplayerPanel.SetActive(true);
+        hostButton.interactable = true;
+        joinButton.interactable = true;
+    }
+
+    private void SetConnectionStatus(string message, Color color)
+    {
+        if (connectionStatusText == null) return;
+        connectionStatusText.gameObject.SetActive(true);
+        connectionStatusText.text = message;
+        connectionStatusText.color = color;
+    }
+
+    private void UpdateLobbyCodeText(string lobbyCode)
+    {
+        if (lobbyCodeText == null) return;
+        lobbyCodeText.gameObject.SetActive(true);
+        lobbyCodeText.text = $"LOBBY CODE:\n{lobbyCode}";
+    }
+
+    #endregion
+
+    #region In-Game and Gameplay UI
+
     public void OnGameStart()
     {
-        Debug.Log("[UIManager] OnGameStart chamado - escondendo menus e mostrando HUD");
+        // Hide all menu panels and show the in-game HUD.
         painelPrincipal.SetActive(false);
         multiplayerPanel.SetActive(false);
+        lobbyPanel.SetActive(false);
         inGameHudContainer.SetActive(true);
-        
-        if (advancedCameraController != null) 
+
+        if (advancedCameraController != null)
             advancedCameraController.enabled = true;
     }
 
@@ -384,9 +335,6 @@ public class UIManager : MonoBehaviour
             statsPanel.SetActive(!statsPanel.activeSelf);
     }
 
-    // ===============================================================
-    // XP & LEVEL UI
-    // ===============================================================
     public void UpdateXPBar(float currentXP, float requiredXP)
     {
         if (xpSlider != null)
@@ -403,4 +351,6 @@ public class UIManager : MonoBehaviour
             levelText.text = $"Nível {level}";
         }
     }
+
+    #endregion
 }
