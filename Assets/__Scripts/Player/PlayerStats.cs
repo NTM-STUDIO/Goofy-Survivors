@@ -93,6 +93,12 @@ public class PlayerStats : MonoBehaviour
     private void Awake()
     {
         InitializeStats();
+
+        // Attach TeamWipeAbilityEnabler for multiplayer ability
+        if (GetComponent<TeamWipeAbilityEnabler>() == null)
+        {
+            gameObject.AddComponent<TeamWipeAbilityEnabler>();
+        }
     }
 
     private void Start()
