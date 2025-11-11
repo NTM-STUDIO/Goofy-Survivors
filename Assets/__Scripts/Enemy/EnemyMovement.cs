@@ -24,6 +24,14 @@ public class EnemyMovement : NetworkBehaviour
     [SerializeField] private float selfKnockbackForce = 50f;
     [SerializeField] private float selfKnockbackDuration = 0.5f;
 
+    [Header("Crowd Avoidance")]
+    [Tooltip("How far this enemy pushes away other enemies while chasing the player.")]
+    [SerializeField, Min(0f)] private float separationRadius = 1.75f;
+    [Tooltip("Strength of the separation steering. Tweak to balance between spacing and direct pursuit.")]
+    [SerializeField, Min(0f)] private float separationWeight = 2.5f;
+    [Tooltip("Optional layer mask used to detect other enemies. Leave empty to search all layers.")]
+    [SerializeField] private LayerMask separationMask = ~0;
+
     [Header("Debug")]
     [SerializeField] private bool showGizmos = true;
 
@@ -55,6 +63,7 @@ public class EnemyMovement : NetworkBehaviour
     private Vector3 debugDestination;
     private bool hasDebugTarget;
     private EnemyPathfinding pathfindingComponent;
+    private readonly Collider[] separationBuffer = new Collider[16];
 
     private void Awake()
     {
@@ -102,6 +111,13 @@ public class EnemyMovement : NetworkBehaviour
             Vector3 enemyPosition = transform.position;
             Vector3 targetPosition = GetTargetPosition(enemyPosition);
             direction = targetPosition - enemyPosition;
+        }
+
+    // Apply simple neighbor separation so mobs keep some spacing while pursuing.
+    Vector3 separation = separationWeight <= 0f || separationRadius <= 0f ? Vector3.zero : ComputeSeparationOffset();
+        if (separation != Vector3.zero)
+        {
+            direction += separation * separationWeight;
         }
 
         // XZ only
@@ -243,6 +259,41 @@ public class EnemyMovement : NetworkBehaviour
         if (roll < flankThreshold) behaviour = PursuitBehaviour.PredictiveFlank;
         else if (roll < predictiveThreshold) behaviour = PursuitBehaviour.Predictive;
         else behaviour = PursuitBehaviour.Direct;
+    }
+
+    private Vector3 ComputeSeparationOffset()
+    {
+        int hitCount = Physics.OverlapSphereNonAlloc(transform.position, separationRadius, separationBuffer, separationMask, QueryTriggerInteraction.Ignore);
+        if (hitCount == 0) return Vector3.zero;
+
+        Vector3 offset = Vector3.zero;
+        int contributing = 0;
+        float radius = Mathf.Max(separationRadius, 0.001f);
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider col = separationBuffer[i];
+            if (col == null) continue;
+            if (col.attachedRigidbody == rb) continue;
+
+            EnemyMovement otherMovement = col.GetComponentInParent<EnemyMovement>();
+            if (otherMovement == null || otherMovement == this) continue;
+
+            Vector3 delta = transform.position - otherMovement.transform.position;
+            delta.y = 0f;
+            float sqrMag = delta.sqrMagnitude;
+            if (sqrMag < 0.0001f) continue;
+
+            float distance = Mathf.Sqrt(sqrMag);
+            float strength = 1f - Mathf.Clamp01(distance / radius);
+            if (strength <= 0f) continue;
+
+            offset += delta.normalized * strength;
+            contributing++;
+        }
+
+        if (contributing == 0) return Vector3.zero;
+        return offset / contributing;
     }
 
 #if UNITY_EDITOR

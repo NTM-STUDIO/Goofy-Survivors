@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 
 [RequireComponent(typeof(Camera))]
 public class AdvancedCameraController : MonoBehaviour
@@ -25,6 +26,14 @@ public class AdvancedCameraController : MonoBehaviour
     void Awake()
     {
         cam = GetComponent<Camera>();
+        // Disable camera on dedicated server (no local client rendering)
+        var nm = NetworkManager.Singleton;
+        if (nm != null && nm.IsServer && !nm.IsClient)
+        {
+            if (cam != null) cam.enabled = false;
+            enabled = false;
+            return;
+        }
     }
 
     void Start()
@@ -45,6 +54,8 @@ public class AdvancedCameraController : MonoBehaviour
         {
             offset = transform.position - target.position;
         }*/
+        // Attempt to bind immediately if a local player exists
+        TryAssignTargetByTag();
     }
 
     void Update()
@@ -107,7 +118,7 @@ public class AdvancedCameraController : MonoBehaviour
     private bool TryAssignTargetByTag()
     {
         // Prefer binding to the LOCAL player's NetworkObject if running with Netcode
-        var nm = Unity.Netcode.NetworkManager.Singleton;
+        var nm = NetworkManager.Singleton;
         if (nm != null && nm.IsListening && nm.LocalClient != null && nm.LocalClient.PlayerObject != null)
         {
             SetTarget(nm.LocalClient.PlayerObject.transform);

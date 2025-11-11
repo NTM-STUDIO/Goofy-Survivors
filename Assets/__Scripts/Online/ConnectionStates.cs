@@ -108,7 +108,9 @@ namespace MyGame.ConnectionSystem.States
         {
             bool approve = m_ConnectionManager.NetworkManager.ConnectedClientsIds.Count < m_ConnectionManager.MaxConnectedPlayers;
             response.Approved = approve;
-            response.CreatePlayerObject = true;
+            // We spawn players manually in GameManager.StartGame_P2P_Host()
+            // so clients won't receive a PlayerObject until the host starts the match.
+            response.CreatePlayerObject = false;
             response.Pending = false;
         }
     }
