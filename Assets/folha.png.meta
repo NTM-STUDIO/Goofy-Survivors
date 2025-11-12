@@ -46,10 +46,10 @@ TextureImporter:
   spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
-  alignment: 9
-  spritePivot: {x: 0.4992293, y: 0.14378674}
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 100
-  spriteBorder: {x: 246, y: 81, z: 247, w: 91}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -105,15 +105,15 @@ TextureImporter:
         width: 1024
         height: 576
       alignment: 9
-      pivot: {x: 0.4992293, y: 0.14652686}
-      border: {x: 246, y: 81, z: 247, w: 92}
+      pivot: {x: 0.5238902, y: 0.16022736}
+      border: {x: 293, y: 90, z: 246, w: 58}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: a923d9f7cf9dec041821e430ce7b21a8
-      internalID: 1721191559
+      spriteID: a9e4d439cfba5334b9682cadc31608a9
+      internalID: 41056469
       vertices: []
       indices: 
       edges: []
@@ -122,8 +122,8 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
-    internalID: 1537655665
+    spriteID: fafde27b7320d394f8b72ad473679aff
+    internalID: 0
     vertices: []
     indices: 
     edges: []
@@ -132,7 +132,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      folha_0: 1721191559
+      folha_0: 41056469
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
