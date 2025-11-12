@@ -44,7 +44,7 @@ TextureImporter:
   lightmap: 0
   compressionQuality: 50
   spriteMode: 2
-  spriteExtrude: 1
+  spriteExtrude: 0
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
@@ -105,15 +105,31 @@ TextureImporter:
         width: 1024
         height: 576
       alignment: 9
-      pivot: {x: 0.5046239, y: 0.095834985}
-      border: {x: 141, y: 51, z: 133, w: 59}
+      pivot: {x: 0.50385326, y: 0.08761468}
+      border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
-      outline: []
+      outline:
+      - - {x: -370, y: -240}
+        - {x: 384, y: -232}
+        - {x: 374, y: 230}
+        - {x: -371, y: 229}
+      - - {x: -290, y: -28}
+        - {x: -279, y: -41}
+        - {x: -274, y: -35}
+        - {x: -279, y: -26}
+        - {x: -278, y: -7}
+        - {x: -271, y: 4}
+        - {x: -257, y: 16}
+        - {x: -243, y: 24}
+        - {x: -244, y: 30}
+        - {x: -263, y: 25}
+        - {x: -278, y: 15}
+        - {x: -293, y: -7}
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 29b106f41161a7f47b11780bbf3f3802
-      internalID: 1886918547
+      spriteID: a1a18d4df82239e41aaf40b1541aad03
+      internalID: 1291741309
       vertices: []
       indices: 
       edges: []
@@ -122,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 0cbb8f53596ea26459d93d30c335355e
+    spriteID: b511e6514cc2fa64995d914045d01d22
     internalID: 0
     vertices: []
     indices: 
@@ -132,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      aguaJogo_0: 1886918547
+      aguaJogo_0: 1291741309
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -2269,6 +2269,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9411fe8643a319d4a9063132e85b09eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   waves:
   - waveName: XD
     enemies:
@@ -2320,6 +2321,11 @@ MonoBehaviour:
   groundLevelY: 0
   spawnBuffer: 3
   raycastFallbackDistance: 30
+  minDistanceFromPlayers: 40
+  maxSpawnAttempts: 10
+  spawnCollisionCheckRadius: 1
+  fadeInDuration: 0.5
+  showReplacementLogs: 0
 --- !u!4 &683546554
 Transform:
   m_ObjectHideFlags: 0
@@ -3103,6 +3109,22 @@ MonoBehaviour:
   settingsPanel: {fileID: 1147963980}
   monitorDropdown: {fileID: 181910968}
   fpsDropdown: {fileID: 2095510671}
+  hostButtonsGroup: {fileID: 0}
+  clientButtonsGroup: {fileID: 0}
+  restartButton: {fileID: 0}
+  leaveButton: {fileID: 0}
+  lobbySceneName: P2P
+  gameplaySceneName: MainScene
+  mainMenuSceneName: Splash
+  lobbyManagerPrefab: {fileID: 0}
+  onSoftRestart:
+    m_PersistentCalls:
+      m_Calls: []
+  spReloadSceneIfSoftRestartStalls: 0
+  spReloadDelaySeconds: 1
+  spUnitPrefabs: []
+  spDefaultUnitIndex: 0
+  enableDebugLogs: 0
 --- !u!114 &1147963982
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4159,6 +4181,7 @@ MonoBehaviour:
   downedSprite: {fileID: 0}
   hurtFlashColor: {r: 0.9716981, g: 0.041251317, b: 0.041251317, a: 1}
   hurtFlashTime: 0.4
+  healingReceivedMultiplier: 1
 --- !u!114 &1658078894
 MonoBehaviour:
   m_ObjectHideFlags: 0
