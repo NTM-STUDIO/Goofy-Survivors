@@ -1,5 +1,4 @@
 // Filename: ConnectionState.cs
-// Location: _Scripts/ConnectionSystem/States/
 using System;
 using Unity.Netcode;
 using UnityEngine;
@@ -108,9 +107,7 @@ namespace MyGame.ConnectionSystem.States
         {
             bool approve = m_ConnectionManager.NetworkManager.ConnectedClientsIds.Count < m_ConnectionManager.MaxConnectedPlayers;
             response.Approved = approve;
-            // We spawn players manually in GameManager.StartGame_P2P_Host()
-            // so clients won't receive a PlayerObject until the host starts the match.
-            response.CreatePlayerObject = false;
+            response.CreatePlayerObject = false; 
             response.Pending = false;
         }
     }
@@ -121,7 +118,15 @@ namespace MyGame.ConnectionSystem.States
         {
             try
             {
-                var (success, session) = await m_UGSFacade.TryJoinSessionAsync(m_UGSFacade.JoinCodeToJoin);
+                // --- THIS IS THE CORRECTION ---
+                // We now check if the join code looks like a short lobby code or a long lobby ID.
+                // This makes the system flexible for both "Join by Code" and "Join from Browser".
+                bool isJoiningByCode = m_UGSFacade.JoinCodeToJoin.Length < 10; // Simple check: lobby codes are short.
+                
+                var (success, session) = isJoiningByCode ? 
+                    await m_UGSFacade.TryJoinSessionAsync(m_UGSFacade.JoinCodeToJoin) : 
+                    await m_UGSFacade.TryJoinSessionByIdAsync(m_UGSFacade.JoinCodeToJoin);
+
                 if (!success)
                 {
                     Debug.LogError("Failed to join UGS Session.");
