@@ -329,6 +329,8 @@ public class LoadoutPanel : MonoBehaviour
         LoadoutSelections.SetSelections(ch != null ? ch.playerPrefab : null, wd, runes);
         // Save minimal state
         LoadoutSelections.SaveToPlayerPrefs();
+        // Mark that player has manually configured their loadout
+        LoadoutSelections.MarkAsConfigured();
 
         // Apply character choice to GameManager for SP; in MP this is handled by the lobby/selection flow
         var gm = GameManager.Instance;

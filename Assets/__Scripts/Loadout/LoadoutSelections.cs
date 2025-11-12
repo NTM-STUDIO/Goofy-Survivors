@@ -19,12 +19,52 @@ public static class LoadoutSelections
     private const string K_CHAR_INDEX = "Loadout_CharacterIndex";
     private const string K_WEAPON_INDEX = "Loadout_WeaponIndex";
     private const string K_RUNES_IDS = "Loadout_RunesCSV";
+    private const string K_HAS_CONFIGURED = "Loadout_HasConfigured";
 
     public static void SetSelections(GameObject characterPrefab, WeaponData weapon, IEnumerable<RuneDefinition> runes)
     {
         SelectedCharacterPrefab = characterPrefab;
         SelectedWeapon = weapon;
         SelectedRunes = (runes != null) ? new List<RuneDefinition>(runes.Where(r => r != null)) : new List<RuneDefinition>();
+    }
+
+    // Check if player has ever configured their loadout manually
+    public static bool HasBeenConfigured()
+    {
+        return PlayerPrefs.GetInt(K_HAS_CONFIGURED, 0) == 1;
+    }
+
+    // Mark that player has manually configured their loadout
+    public static void MarkAsConfigured()
+    {
+        PlayerPrefs.SetInt(K_HAS_CONFIGURED, 1);
+        PlayerPrefs.Save();
+    }
+
+    // Initialize with random defaults if no valid selections exist
+    public static void EnsureValidDefaults()
+    {
+        // Random character if none selected
+        if (SelectedCharacterPrefab == null && CharacterPrefabsContext != null && CharacterPrefabsContext.Count > 0)
+        {
+            int randomCharIdx = Random.Range(0, CharacterPrefabsContext.Count);
+            SelectedCharacterPrefab = CharacterPrefabsContext[randomCharIdx];
+            Debug.Log($"[LoadoutSelections] Auto-selected random character: {SelectedCharacterPrefab.name}");
+        }
+
+        // Random weapon if none selected
+        if (SelectedWeapon == null && WeaponRegistryContext != null && WeaponRegistryContext.allWeapons != null && WeaponRegistryContext.allWeapons.Count > 0)
+        {
+            int randomWeaponIdx = Random.Range(0, WeaponRegistryContext.allWeapons.Count);
+            SelectedWeapon = WeaponRegistryContext.GetWeaponData(randomWeaponIdx);
+            Debug.Log($"[LoadoutSelections] Auto-selected random weapon: {SelectedWeapon.name}");
+        }
+
+        // Initialize empty runes list if null
+        if (SelectedRunes == null)
+        {
+            SelectedRunes = new List<RuneDefinition>();
+        }
     }
 
     public static void SaveToPlayerPrefs()

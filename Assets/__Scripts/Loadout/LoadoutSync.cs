@@ -23,8 +23,22 @@ public class LoadoutSync : NetworkBehaviour
         // Only the owning client sends their selection up
         if (IsOwner && IsClient && !IsServer)
         {
-            TrySendSelectionToServer();
+            // Aguardar 1 frame para garantir que DefaultLoadoutInitializer.Awake() já rodou
+            StartCoroutine(SendLoadoutAfterDelay());
         }
+    }
+
+    private System.Collections.IEnumerator SendLoadoutAfterDelay()
+    {
+        // Aguardar 1 frame para garantir que todos os Awake() terminaram
+        yield return null;
+        
+        Debug.Log($"[LoadoutSync] Preparing to send loadout to server...");
+        Debug.Log($"[LoadoutSync] Character: {LoadoutSelections.SelectedCharacterPrefab?.name ?? "NULL"}");
+        Debug.Log($"[LoadoutSync] Weapon: {LoadoutSelections.SelectedWeapon?.name ?? "NULL"}");
+        Debug.Log($"[LoadoutSync] Runes: {LoadoutSelections.SelectedRunes?.Count ?? 0}");
+        
+        TrySendSelectionToServer();
     }
 
     private void TrySendSelectionToServer()
@@ -45,6 +59,8 @@ public class LoadoutSync : NetworkBehaviour
             : Array.Empty<string>();
         string runeIdsCsv = string.Join("|", runeIds);
 
+        Debug.Log($"[LoadoutSync] Submitting to server: weaponId={weaponId}, charIndex={characterIndex}, runes={runeIdsCsv}");
+        
         SubmitSelectionServerRpc(weaponId, characterIndex, runeIdsCsv);
     }
 
@@ -67,6 +83,8 @@ public class LoadoutSync : NetworkBehaviour
             , characterIndex = characterIndex
         };
         ServerSelections[OwnerClientId] = sel;
+
+        Debug.Log($"[LoadoutSync] Server received loadout from client {OwnerClientId}: weaponId={weaponId}, charIndex={characterIndex}, runes={runeList.Count}");
 
         // Apply immediately if components available
         ApplySelectionOnServer(sel);
