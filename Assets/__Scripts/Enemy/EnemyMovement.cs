@@ -27,12 +27,9 @@ public class EnemyMovement : NetworkBehaviour
     [Header("Debug")]
     [SerializeField] private bool showGizmos = true;
 
-    [Header("Isometric Nerf (optional)")]
-    [Tooltip("If enabled, applies an extra nerf to the world X component to compensate for isometric projection horizontal speed.")]
-    [SerializeField] private bool tryNerfHorizontal = false;
-    [Tooltip("Multiplier applied to the world X component of movement when nerf is enabled (0-1).")]
-    [Range(0f, 1f)]
-    [SerializeField] private float horizontalNerfMultiplier = 0.56f;
+    [Header("Isometric / Screen-space Correction")]
+    [Tooltip("If true, uses camera-aware screen-space correction to equalize perceived speed.")]
+    [SerializeField] private bool useScreenSpaceCorrection = true;
 
     // --- Private Variables ---
     private Transform player;
@@ -68,25 +65,21 @@ public class EnemyMovement : NetworkBehaviour
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
 
         // --- KNOCKBACK FIX ---
-        // If knocked back, stop all AI movement and let physics take over.
         if (stats.IsKnockedBack)
         {
             return;
         }
 
         // --- PERFORMANCE OPTIMIZATION ---
-        // Get the player target from the central, high-performance manager.
         if (PlayerTargetManager.Instance != null)
         {
             player = PlayerTargetManager.Instance.ClosestPlayer;
             if (player != null)
             {
-                // Cache the player's rigidbody if it exists.
                 playerRb = player.GetComponent<Rigidbody>();
             }
         }
 
-        // If the manager can't find a valid player, THEN stop moving.
         if (player == null)
         {
             rb.linearVelocity = Vector3.zero;
@@ -116,21 +109,120 @@ public class EnemyMovement : NetworkBehaviour
             return;
         }
 
-        // Apply diagonal movement compensation
-        float diagonalCompensation = (Mathf.Abs(direction.x) > 0.1f && Mathf.Abs(direction.z) > 0.1f) ? 0.70710678f : 1f;
-        Vector3 velocity = direction.normalized * stats.moveSpeed * diagonalCompensation;
+        Vector3 velocity;
 
-        // Optional isometric horizontal speed nerf
-        if (tryNerfHorizontal)
+        if (useScreenSpaceCorrection && Camera.main != null)
         {
-            velocity.x *= Mathf.Clamp01(horizontalNerfMultiplier);
+            velocity = ComputeWorldVelocityForEqualScreenSpeed(direction, Camera.main, stats.moveSpeed);
+        }
+        else
+        {
+            // Fallback: simple pre-normalization X nerf (if you still want it off)
+            Vector3 dir = new Vector3(direction.x, 0f, direction.z);
+            dir.x *= 0.70710678f; // optional: classic iso factor
+            velocity = dir.normalized * stats.moveSpeed;
         }
 
         rb.linearVelocity = velocity;
 
-        // For gizmo drawing
         debugDestination = transform.position + direction;
         hasDebugTarget = true;
+    }
+
+    /// <summary>
+    /// Compute a world-space velocity (units/sec) that makes the motion appear to have
+    /// equal screen-space speed in the direction of 'worldDir'.
+    /// This estimates the mapping of small world steps in X/Z to screen space and
+    /// then solves a 2x2 system for the needed world delta per second.
+    /// </summary>
+    private Vector3 ComputeWorldVelocityForEqualScreenSpeed(Vector3 worldDir, Camera cam, float worldSpeed)
+    {
+        // Small epsilon (in world units) for finite differencing
+        const float eps = 0.05f;
+
+        Vector3 pos = transform.position;
+        Vector3 screenPos = cam.WorldToScreenPoint(pos);
+        // sample how a +eps step in world X and world Z maps to screen (pixels)
+        Vector3 s_dx = cam.WorldToScreenPoint(pos + new Vector3(eps, 0f, 0f)) - screenPos;
+        Vector3 s_dz = cam.WorldToScreenPoint(pos + new Vector3(0f, 0f, eps)) - screenPos;
+        s_dx.z = 0f;
+        s_dz.z = 0f;
+
+        // if projection is degenerate for some reason, fallback to simple normalized world direction
+        if (s_dx.sqrMagnitude < 1e-8f || s_dz.sqrMagnitude < 1e-8f)
+        {
+            return worldDir.normalized * worldSpeed;
+        }
+
+        // Build 2x2 matrix A where columns are screen-per-world-unit for X and Z
+        // A = [ s_dx/eps  s_dz/eps ] (each column is a 2-vector)
+        float a11 = s_dx.x / eps;
+        float a21 = s_dx.y / eps;
+        float a12 = s_dz.x / eps;
+        float a22 = s_dz.y / eps;
+
+        // desired screen-direction (pixels) normalized
+        Vector3 screenTarget = cam.WorldToScreenPoint(transform.position + worldDir) - screenPos;
+        screenTarget.z = 0f;
+        if (screenTarget.sqrMagnitude < 1e-6f)
+        {
+            // extremely close; fallback
+            return worldDir.normalized * worldSpeed;
+        }
+
+        Vector3 screenDirNorm = screenTarget.normalized;
+
+        // Choose a sensible target *screen speed* (pixels/sec).
+        // We'll choose the baseline as the average pixel speed produced by moving 1 world unit along X and Z,
+        // scaled by the desired worldSpeed (units/sec). This gives a screen speed "baseline" consistent with worldSpeed.
+        float pixelsPerWorldX = s_dx.magnitude / eps;
+        float pixelsPerWorldZ = s_dz.magnitude / eps;
+        float baselinePixelsPerWorld = (pixelsPerWorldX + pixelsPerWorldZ) * 0.5f;
+
+        // desired screen speed in pixels/sec
+        float desiredScreenSpeed = baselinePixelsPerWorld * worldSpeed;
+
+        // desired screen velocity (pixels/sec) vector
+        Vector2 desiredScreenVel = screenDirNorm * desiredScreenSpeed;
+
+        // We need desiredScreenDelta over one fixed step:
+        float dt = Time.fixedDeltaTime;
+        Vector2 desiredScreenDelta = desiredScreenVel * dt; // pixels per fixed step
+
+        // Solve A * worldDelta = desiredScreenDelta
+        // Where worldDelta = [dxUnits; dzUnits] (world units moved this fixed step)
+        // A = 2x2 matrix built above
+        // Compute inverse of A (2x2)
+        float det = a11 * a22 - a12 * a21;
+
+        if (Mathf.Abs(det) < 1e-8f)
+        {
+            // Degenerate mapping — fallback to normalized world direction
+            return worldDir.normalized * worldSpeed;
+        }
+
+        // inverse A
+        float inv11 = a22 / det;
+        float inv12 = -a12 / det;
+        float inv21 = -a21 / det;
+        float inv22 = a11 / det;
+
+        // worldDeltaUnits = A^{-1} * desiredScreenDelta
+        float worldDeltaX = inv11 * desiredScreenDelta.x + inv12 * desiredScreenDelta.y;
+        float worldDeltaZ = inv21 * desiredScreenDelta.x + inv22 * desiredScreenDelta.y;
+
+        // Now compute world velocity (units/sec) from delta per fixed step
+        float worldVelX = worldDeltaX / dt;
+        float worldVelZ = worldDeltaZ / dt;
+
+        // Final world velocity vector
+        Vector3 result = new Vector3(worldVelX, 0f, worldVelZ);
+
+        // If result is NaN or infinite, fallback
+        if (float.IsNaN(result.x) || float.IsNaN(result.z) || float.IsInfinity(result.x) || float.IsInfinity(result.z))
+            return worldDir.normalized * worldSpeed;
+
+        return result;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -138,16 +230,13 @@ public class EnemyMovement : NetworkBehaviour
         // Server is authoritative for attacks.
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
 
-        // The cooldown check is still important to prevent multi-hits if the enemy is pushed back in.
         if (other.CompareTag("Player") && Time.time >= nextAttackTime)
         {
             var targetPs = other.GetComponentInParent<PlayerStats>();
             if (targetPs == null || targetPs.IsDowned) return;
 
-            // Set the cooldown immediately.
             nextAttackTime = Time.time + attackCooldown;
 
-            // Apply damage to the player.
             var netObj = other.GetComponentInParent<NetworkObject>();
             if (netObj != null && GameManager.Instance != null)
             {
@@ -155,7 +244,6 @@ public class EnemyMovement : NetworkBehaviour
                 GameManager.Instance.ServerApplyPlayerDamage(netObj.OwnerClientId, dmg, transform.position, null);
             }
 
-            // Apply knockback to THIS enemy.
             Vector3 knockbackDirection = (transform.position - other.transform.position).normalized;
             stats.ApplyKnockback(selfKnockbackForce, selfKnockbackDuration, knockbackDirection);
         }

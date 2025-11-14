@@ -2633,9 +2633,9 @@ MonoBehaviour:
   reviveVfxDuration: 0.8
   reviveVfxYOffset: 2
   reviveVfxSortingLayer: VFX
-  mpPerPlayerMultiplier: 1.5
-  difficultyIncreaseInterval: 25
-  generalStrengthMultiplier: 1.25
+  mpPerPlayerMultiplier: 1.1
+  difficultyIncreaseInterval: 30
+  generalStrengthMultiplier: 1.2
   baseProjectileSpeed: 20
   baseFireRate: 1.9
   baseSightRange: 20
@@ -6225,11 +6225,11 @@ MonoBehaviour:
   - waveName: Wave Inicial (Perfect)
     enemies:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
-      enemyCount: 5000
+      enemyCount: 50
     - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
       enemyCount: 1
     timeUntilNextWave: 0
-    spawnInterval: 0.01
+    spawnInterval: 1
   - waveName: XD
     enemies:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
