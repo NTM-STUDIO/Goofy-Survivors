@@ -1,6 +1,9 @@
+// Filename: MapGenerator.cs
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 public class MapGenerator : MonoBehaviour
 {
@@ -8,154 +11,93 @@ public class MapGenerator : MonoBehaviour
     public class AssetData
     {
         public GameObject assetPrefab;
-        public float weight; // Quanto maior, mais comum é o asset
+        public float weight;
+        [Tooltip("Check this if the asset should be synchronized for all players. Uncheck for local-only cosmetics.")]
+        public bool isNetworked = true;
     }
 
     [Header("Generation Settings")]
     public AssetData[] assets;
     public int mapWidth = 2000;
     public int mapHeight = 1200;
-    public float assetDensity = 0.1f; // Adjust for more or fewer assets
+    public float assetDensity = 0.1f;
     private bool hasGenerated = false;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        // Do not generate on Start. Generation is explicitly triggered by GameManager
-        // when the player clicks Play (SP) or Host (MP).
         Debug.Log("[MapGenerator] Start() - waiting for GameManager to trigger generation.");
     }
 
-    public void GenerateLocal()
+    /// <summary>
+    /// This is the single entry point for all map generation.
+    /// The GameManager calls this on everyone via an RPC.
+    /// </summary>
+    public void GenerateMap()
     {
         if (hasGenerated)
         {
-            Debug.Log("[MapGenerator] GenerateMapLocal skipped (already generated).");
-            return;
-        }
-        // Soma os pesos dos assets
-        float totalAssetWeight = 0f;
-        foreach (var asset in assets)
-            totalAssetWeight += asset.weight;
-
-        // Calculate number of assets based on density and map size
-        int numAssets = Mathf.RoundToInt(mapWidth * mapHeight * assetDensity);
-        Debug.Log($"Spawning {numAssets} assets.");
-
-        // Calculate boundaries to keep assets centered at (0, 0)
-        float halfWidth = mapWidth * 0.5f;
-        float halfHeight = mapHeight * 0.5f;
-
-    for (int i = 0; i < numAssets; i++)
-        {
-            // Generate random position within boundaries
-            float x = Random.Range(-halfWidth, halfWidth);
-            float z = Random.Range(-halfHeight, halfHeight);
-            Vector3 assetPosition = new Vector3(x, 0f, z); // Y = 0 for flat ground
-
-            // Get random asset
-            AssetData chosenAsset = GetRandomAsset(totalAssetWeight);
-
-            // If asset is valid, instantiate
-            if (chosenAsset != null && chosenAsset.assetPrefab != null)
-            {
-                Instantiate(chosenAsset.assetPrefab, assetPosition, Quaternion.identity, transform);
-            }
-        }
-        hasGenerated = true;
-    }
-
-    // Called by GameManager host to generate assets visible to all players
-    public void GenerateNetworked()
-    {
-        // Only host/server should generate and spawn networked objects
-        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
-        {
+            Debug.Log("[MapGenerator] GenerateMap called, but map has already been generated. Skipping.");
             return;
         }
 
-        if (hasGenerated)
+        Debug.Log($"[MapGenerator] Starting map generation. Is this the Server? -> {NetworkManager.Singleton.IsServer}");
+
+        // 1. Calculate the total weight of ALL assets to create a single, unified probability pool.
+        float totalAssetWeight = assets.Sum(asset => asset.weight);
+
+        if (totalAssetWeight <= 0)
         {
-            Debug.Log("[MapGenerator] GenerateNetworked skipped (already generated).");
+            Debug.LogWarning("[MapGenerator] Total weight of all assets is zero. Nothing to spawn.");
+            hasGenerated = true;
             return;
         }
-
-        float totalAssetWeight = 0f;
-        foreach (var asset in assets)
-            totalAssetWeight += asset.weight;
 
         int numAssets = Mathf.RoundToInt(mapWidth * mapHeight * assetDensity);
-        Debug.Log($"[MapGenerator] Host spawning {numAssets} shared assets.");
+        Debug.Log($"[MapGenerator] Spawning approximately {numAssets} total assets.");
 
         float halfWidth = mapWidth * 0.5f;
         float halfHeight = mapHeight * 0.5f;
 
         for (int i = 0; i < numAssets; i++)
         {
-            float x = Random.Range(-halfWidth, halfWidth);
-            float z = Random.Range(-halfHeight, halfHeight);
-            Vector3 assetPosition = new Vector3(x, 0f, z);
+            Vector3 assetPosition = new Vector3(Random.Range(-halfWidth, halfWidth), 0f, Random.Range(-halfHeight, halfHeight));
 
+            // 2. Choose an asset from the ENTIRE pool, respecting global weights.
             AssetData chosenAsset = GetRandomAsset(totalAssetWeight);
             if (chosenAsset == null || chosenAsset.assetPrefab == null) continue;
 
-            // Ensure the prefab is registered with Netcode so clients can spawn it
-            TryRegisterNetworkPrefab(chosenAsset.assetPrefab);
-
-            GameObject go = Instantiate(chosenAsset.assetPrefab, assetPosition, Quaternion.identity, transform);
-            // Remove any nested NetworkObjects under this spawned root to avoid Netcode nested spawn errors
-            RemoveNestedChildNetworkObjects(go);
-            // Delay one frame so Destroy(component) completes before spawning
-            StartCoroutine(SpawnAfterStrip(go));
+            // 3. Decide HOW to spawn based on the asset's flag.
+            if (chosenAsset.isNetworked)
+            {
+                // If the chosen asset is networked, ONLY THE SERVER is allowed to spawn it.
+                if (NetworkManager.Singleton.IsServer)
+                {
+                    GameObject instance = Instantiate(chosenAsset.assetPrefab, assetPosition, Quaternion.identity, transform);
+                    var netObj = instance.GetComponent<NetworkObject>();
+                    if (netObj != null)
+                    {
+                        netObj.Spawn(true);
+                    }
+                    else
+                    {
+                        Debug.LogError($"Asset '{instance.name}' is marked as Networked but is missing a NetworkObject component!", instance);
+                    }
+                }
+            }
+            else
+            {
+                // If the chosen asset is NOT networked, it's a local cosmetic.
+                // EVERYONE (server and clients) spawns their own local copy.
+                Instantiate(chosenAsset.assetPrefab, assetPosition, Quaternion.identity, transform);
+            }
         }
-
-        // Also ensure any pre-placed children of MapGenerator are network-spawned (e.g., Chest, Arbusto placed in scene)
-        EnsureChildrenNetworkSpawned();
         hasGenerated = true;
     }
 
-    // Clear all generated children and allow generation again (singleplayer)
-    public void ResetLocal()
-    {
-        // Destroy all children spawned under this generator
-        var children = new System.Collections.Generic.List<Transform>();
-        foreach (Transform child in transform)
-        {
-            children.Add(child);
-        }
-        foreach (var t in children)
-        {
-            if (t != null) Destroy(t.gameObject);
-        }
-        hasGenerated = false;
-        Debug.Log("[MapGenerator] ResetLocal: cleared generated children and reset flag.");
-    }
-
-    private void TryRegisterNetworkPrefab(GameObject prefab)
-    {
-        RuntimeNetworkPrefabRegistry.TryRegister(prefab);
-    }
-
-    // Ensures all direct children under this generator are networked and spawned on clients
-    private void EnsureChildrenNetworkSpawned()
-    {
-        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
-        int count = 0;
-    foreach (Transform child in transform)
-        {
-            // Skip if this object was already spawned
-            // Clean nested NetworkObjects beneath this root to avoid nested spawn errors
-            RemoveNestedChildNetworkObjects(child.gameObject);
-            // Delay spawning to next frame to ensure components are destroyed
-            StartCoroutine(SpawnAfterStrip(child.gameObject, () => { count++; }));
-        }
-        if (count > 0)
-        {
-            Debug.Log($"[MapGenerator] Ensured {count} pre-placed children are network-spawned.");
-        }
-    }
-
-    AssetData GetRandomAsset(float totalWeight)
+    /// <summary>
+    /// Selects a random asset from the main list based on the total weight provided.
+    /// </summary>
+    private AssetData GetRandomAsset(float totalWeight)
     {
         float randomValue = Random.Range(0, totalWeight);
         float cumulative = 0f;
@@ -166,50 +108,35 @@ public class MapGenerator : MonoBehaviour
             if (randomValue <= cumulative)
                 return asset;
         }
-        return assets[assets.Length - 1];
+        // Fallback in case of floating point inaccuracies
+        return assets.Length > 0 ? assets[assets.Length - 1] : null;
     }
 
-    // Detach any child NetworkObjects to avoid nested NOs; reparent them under the MapGenerator so they can be spawned separately
-    private void RemoveNestedChildNetworkObjects(GameObject root)
+    /// <summary>
+    /// Resets the generator for a new game by destroying all spawned assets and resetting the flag.
+    /// </summary>
+    public void ResetGenerator()
     {
-        var allNOs = root.GetComponentsInChildren<NetworkObject>(true);
-        foreach (var no in allNOs)
+        hasGenerated = false;
+        
+        // Iterate through all child objects of this MapGenerator
+        foreach (Transform child in transform)
         {
-            if (no == null) continue;
-            if (no.gameObject == root) continue; // keep root's NO intact
-
-            Debug.LogWarning($"[MapGenerator] Detaching nested NetworkObject child '{no.gameObject.name}' from '{root.name}' to avoid nested NO hierarchy.");
-
-            // Reparent to the MapGenerator so it becomes a sibling rather than a child
-            no.transform.SetParent(this.transform, true);
-
-            // Important: DO NOT destroy the NetworkObject here; other components may require it (e.g., GuaranteedRarityGiver)
-            // We'll spawn all direct children later via EnsureChildrenNetworkSpawned()
+            var netObj = child.GetComponent<NetworkObject>();
+            if (netObj != null)
+            {
+                // If it's a networked object, only the server can (and should) despawn it.
+                if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && netObj.IsSpawned)
+                {
+                    netObj.Despawn(true); // true = destroy the object on all clients
+                }
+            }
+            else
+            {
+                // If it's a non-networked (local) object, anyone can destroy their own copy.
+                Destroy(child.gameObject);
+            }
         }
-    }
-
-    // Spawns the root as a network object after a frame so that any destroyed child NetworkObjects are fully removed
-    private IEnumerator SpawnAfterStrip(GameObject root, System.Action onSpawned = null)
-    {
-        // Only server should proceed
-        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) yield break;
-
-        // Wait one frame to let Destroy(component) finalize
-        yield return null;
-
-        if (root == null) yield break;
-
-        var netObj = root.GetComponent<NetworkObject>();
-        if (netObj == null)
-        {
-            netObj = root.AddComponent<NetworkObject>();
-        }
-
-        if (!netObj.IsSpawned)
-        {
-            netObj.Spawn(true);
-            Debug.Log($"[MapGenerator] Spawned '{root.name}' with NetId={netObj.NetworkObjectId} at {root.transform.position}");
-            onSpawned?.Invoke();
-        }
+        Debug.Log("[MapGenerator] Reset: cleared generated children and reset flag.");
     }
 }

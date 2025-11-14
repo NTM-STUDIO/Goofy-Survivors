@@ -258,7 +258,17 @@ namespace MyGame.ConnectionSystem.Connection
             throw new TimeoutException("Timed out waiting for lobby code.");
         }
 
-        public void RequestShutdown() => m_CurrentState.OnUserRequestedShutdown();
+        public void RequestShutdown()
+        {
+            Debug.Log("[ConnectionManager] RequestShutdown called");
+
+            // --- ADD THIS LINE ---
+            // Tell the facade to handle leaving/deleting the UGS lobby.
+            MultiplayerServicesFacade.Instance.LeaveLobby();
+
+            // The state machine will then handle shutting down Netcode.
+            m_CurrentState?.OnUserRequestedShutdown();
+        }
         #endregion
     }
 }

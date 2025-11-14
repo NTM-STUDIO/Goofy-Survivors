@@ -16,6 +16,8 @@ public class GameManager : NetworkBehaviour
 
     // === VContainer Injection (mantido da versão 2) ===
     [Header("Core Manager References")]
+
+
     [SerializeField] private UIManager uiManager;
     [SerializeField] private EnemySpawner enemySpawner;
     [SerializeField] private EnemyDespawner enemyDespawner;
@@ -107,6 +109,119 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    public void HandlePlayAgain()
+    {
+        if (!isP2P)
+        {
+            // Single-player logic remains the same: reload the scene
+            Debug.Log("[GameManager] Single-player 'Play Again' clicked. Reloading scene.");
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            return;
+        }
+
+        // In multiplayer, only the host can initiate the restart.
+        // A client's click could be used to show an "is ready" status in the future.
+        if (IsServer)
+        {
+            Debug.Log("[GameManager] Host 'Play Again' clicked. Initiating soft reset.");
+            Server_SoftResetGame();
+        }
+        else
+        {
+            Debug.Log("[GameManager] Client 'Play Again' clicked. (This currently does nothing, but could send a 'Ready' RPC).");
+            // Optional: Send a ServerRpc to the host to indicate readiness
+            // SignalReadyForRestartServerRpc();
+        }
+    }
+
+    private void Server_SoftResetGame()
+    {
+        if (!IsServer) return;
+
+        Debug.Log("[GameManager] Server is performing a soft reset.");
+
+        // --- 1. STOP GAMEPLAY SYSTEMS ---
+        if (enemySpawner != null)
+        {
+            enemySpawner.StopAndReset();
+        }
+        else
+        {
+            Debug.LogWarning("[GameManager] EnemySpawner reference is null. Cannot reset it.");
+        }
+
+        // --- 2. RESET THE MAP GENERATOR ---
+        if (mapGenerator != null)
+        {
+            mapGenerator.ResetGenerator();
+        }
+        else
+        {
+            Debug.LogWarning("[GameManager] MapGenerator reference is null. Cannot reset it.");
+        }
+
+        // --- 3. DESTROY ALL PLAYER OBJECTS ---
+        if (NetworkManager.Singleton != null)
+        {
+            var connectedClientIds = NetworkManager.Singleton.ConnectedClientsIds.ToList();
+            foreach (var clientId in connectedClientIds)
+            {
+                var playerObject = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clientId);
+                if (playerObject != null)
+                {
+                    Debug.Log($"[GameManager] Despawning player object for client {clientId}");
+                    playerObject.Despawn(true);
+                }
+            }
+        }
+
+        // --- 4. CLEAN UP OTHER NETWORKED OBJECTS (Optional but good practice) ---
+        var allNetObjects = FindObjectsOfType<NetworkObject>();
+        foreach (var netObj in allNetObjects)
+        {
+            if (netObj.gameObject != this.gameObject && netObj.IsSpawned && !netObj.IsPlayerObject)
+            {
+                if (netObj.GetComponent<ProjectileWeapon>() != null || netObj.CompareTag("Boss"))
+                {
+                    netObj.Despawn(true);
+                }
+            }
+        }
+
+        // --- 5. RESET GAME STATE VARIABLES ON THE SERVER ---
+        CurrentState = GameState.PreGame;
+        bossSpawned = false;
+        lastDifficultyIncreaseMark = 0;
+        networkCurrentTime.Value = totalGameTime;
+        playerAlive.Clear();
+        reviveProgress.Clear();
+
+        // --- 6. TELL ALL CLIENTS TO PERFORM THEIR LOCAL UI RESET ---
+        Client_ResetToLobbyClientRpc();
+    }
+
+    [ClientRpc]
+    private void Client_ResetToLobbyClientRpc()
+    {
+        Debug.Log("[GameManager] Received RPC to reset to lobby state.");
+        CurrentState = GameState.PreGame;
+        Time.timeScale = 1f; // Ensure game is not paused
+
+        // Destroy any purely local objects that were created (like the player camera)
+        var localCamera = FindObjectOfType<TMPro.Examples.CameraController>();
+        if (localCamera != null && localCamera.CameraTarget != null)
+        {
+            Destroy(localCamera.gameObject);
+        }
+
+        // Tell the UIManager to switch back to the lobby/character selection UI
+        if (uiManager != null)
+        {
+            uiManager.ShowEndGamePanel(false);
+            uiManager.ReturnToLobby(); // We will add this method to the UIManager
+        }
+    }
     void Start()
     {
         if (uiManager == null) uiManager = FindObjectOfType<UIManager>();
@@ -421,103 +536,33 @@ public class GameManager : NetworkBehaviour
     // Performs an in-place cleanup of the singleplayer world so StartGame() behaves like a fresh run
     public void SoftResetSinglePlayerWorld()
     {
-        if (isP2P) return; // only for singleplayer
+        if (isP2P) return;
 
         Time.timeScale = 1f;
         uiManager?.ShowEndGamePanel(false);
 
-        // === LIMPEZA COMPLETA (mantida da versão 1) ===
-        try
-        {
-            var players = GameObject.FindGameObjectsWithTag("Player");
-            foreach (var p in players) { if (p != null) Destroy(p); }
-        }
-        catch { }
+        // --- Your object cleanup logic ---
+        try { var players = GameObject.FindGameObjectsWithTag("Player"); foreach (var p in players) if (p != null) Destroy(p); } catch { }
+        try { var cams = FindObjectsByType<TMPro.Examples.CameraController>(FindObjectsSortMode.None); foreach (var c in cams) if (c != null) Destroy(c.gameObject); } catch { }
+        try { var accAll = FindObjectsByType<AdvancedCameraController>(FindObjectsSortMode.None); bool keptOne = false; foreach (var acc in accAll) { if (acc == null) continue; if (!keptOne) { acc.gameObject.SetActive(true); keptOne = true; } else { Destroy(acc.gameObject); } } } catch { }
+        try { var enemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None); foreach (var e in enemies) if (e != null) Destroy(e.gameObject); } catch { }
+        try { var projs = FindObjectsByType<ProjectileWeapon>(FindObjectsSortMode.None); foreach (var p in projs) if (p != null) Destroy(p.gameObject); } catch { }
+        try { var orbiters = FindObjectsByType<OrbitingWeapon>(FindObjectsSortMode.None); foreach (var ow in orbiters) if (ow != null) Destroy(ow.gameObject); } catch { }
+        try { var auras = FindObjectsByType<AuraWeapon>(FindObjectsSortMode.None); foreach (var a in auras) if (a != null) Destroy(a.gameObject); } catch { }
+        try { var pops = FindObjectsByType<DamagePopup>(FindObjectsSortMode.None); foreach (var dp in pops) if (dp != null) Destroy(dp.gameObject); } catch { }
+        try { var orbs = FindObjectsByType<ExperienceOrb>(FindObjectsSortMode.None); foreach (var o in orbs) if (o != null) Destroy(o.gameObject); } catch { }
 
-        try
-        {
-            var cams = Object.FindObjectsByType<TMPro.Examples.CameraController>(FindObjectsSortMode.None);
-            foreach (var c in cams) { if (c != null) Destroy(c.gameObject); }
-        }
-        catch { }
-
-        try
-        {
-            // Ensure only one AdvancedCameraController remains
-            var accAll = Object.FindObjectsByType<AdvancedCameraController>(FindObjectsSortMode.None);
-            bool keptOne = false;
-            foreach (var acc in accAll)
-            {
-                if (acc == null) continue;
-                if (!keptOne)
-                {
-                    acc.gameObject.SetActive(true);
-                    keptOne = true;
-                }
-                else
-                {
-                    Destroy(acc.gameObject);
-                }
-            }
-        }
-        catch { }
-
-        // Clear enemies, projectiles, and XP orbs
-        try
-        {
-            var enemies = Object.FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
-            foreach (var e in enemies) { if (e != null) Destroy(e.gameObject); }
-        }
-        catch { }
-
-        try
-        {
-            var projs = Object.FindObjectsByType<ProjectileWeapon>(FindObjectsSortMode.None);
-            foreach (var p in projs) { if (p != null) Destroy(p.gameObject); }
-        }
-        catch { }
-
-        try
-        {
-            var orbiters = Object.FindObjectsByType<OrbitingWeapon>(FindObjectsSortMode.None);
-            foreach (var ow in orbiters) { if (ow != null) Destroy(ow.gameObject); }
-        }
-        catch { }
-
-        try
-        {
-            var auras = Object.FindObjectsByType<AuraWeapon>(FindObjectsSortMode.None);
-            foreach (var a in auras) { if (a != null) Destroy(a.gameObject); }
-        }
-        catch { }
-
-        try
-        {
-            var pops = Object.FindObjectsByType<DamagePopup>(FindObjectsSortMode.None);
-            foreach (var dp in pops) { if (dp != null) Destroy(dp.gameObject); }
-        }
-        catch { }
-
-        try
-        {
-            var orbs = Object.FindObjectsByType<ExperienceOrb>(FindObjectsSortMode.None);
-            foreach (var o in orbs) { if (o != null) Destroy(o.gameObject); }
-        }
-        catch { }
-
-        // Stop despawner checks
         try { enemyDespawner?.StopAllCoroutines(); } catch { }
-
-        // Reset spawner and map
         try { enemySpawner?.ResetForRestart(); } catch { }
-        try { mapGenerator?.ResetLocal(); } catch { }
+
+        // --- THIS IS THE CORRECTED LINE ---
+        try { mapGenerator?.ResetGenerator(); } catch { }
 
         // Reset internal state
         CurrentState = GameState.PreGame;
         bossSpawned = false;
         lastDifficultyIncreaseMark = 0;
 
-        // Reset XP/level tracking
         try { playerExperience?.ResetState(); } catch { }
     }
 
@@ -629,103 +674,79 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    // In GameManager.cs
+    // Replace your entire InitializeAllSystems method with this one.
+
+    // In GameManager.cs
+
     private void InitializeAllSystems(GameObject playerObject)
     {
-        localPlayer = playerObject.GetComponent<Movement>();
-        playerExperience?.Initialize(playerObject);
-        upgradeManager?.Initialize(playerObject);
-        enemyDespawner?.Initialize(playerObject);
+        // This method runs on EVERY client and the host after their player object is ready.
 
-        if (!isP2P || IsServer)
+        // --- Your existing initializations ---
+        if (playerObject != null)
         {
-            AbilityDamageTracker.Reset();
-        }
-        
-        // Instancia a câmara apenas para o jogador local
-        bool shouldInstantiateCamera = false;
-        
-        // Ensure selected runes are applied once per spawn
-        if (playerObject.GetComponent<ApplyRunesOnSpawn>() == null)
-        {
-            playerObject.AddComponent<ApplyRunesOnSpawn>();
-        }
+            localPlayer = playerObject.GetComponent<Movement>();
+            playerExperience?.Initialize(playerObject);
+            upgradeManager?.Initialize(playerObject);
+            enemyDespawner?.Initialize(playerObject);
 
-        // === CAMERA BINDING (mantida lógica completa da versão 1) ===
-        if (!isP2P)
-        {
-            var acc = Object.FindFirstObjectByType<AdvancedCameraController>(FindObjectsInactive.Include);
-            if (acc != null)
+            if (playerObject.GetComponent<ApplyRunesOnSpawn>() == null)
             {
-                acc.gameObject.SetActive(true);
-                acc.BindAndCenter(playerObject.transform, resetZoom: true);
+                playerObject.AddComponent<ApplyRunesOnSpawn>();
             }
-            else if (playerCameraPrefab != null)
+
+            if (isP2P)
             {
-                GameObject camObj = Instantiate(playerCameraPrefab);
-                var controller = camObj.GetComponent<TMPro.Examples.CameraController>();
-                if (controller != null)
+                bool isOwner = playerObject.GetComponent<NetworkBehaviour>()?.IsOwner ?? false;
+                if (isOwner && playerCameraPrefab != null)
                 {
-                    controller.CameraTarget = playerObject.transform;
-                    var mainCam = Camera.main;
-                    if (mainCam != null && mainCam.gameObject != camObj)
-                    {
-                        mainCam.gameObject.SetActive(false);
-                    }
+                    GameObject camObj = Instantiate(playerCameraPrefab);
+                    var controller = camObj.GetComponent<TMPro.Examples.CameraController>();
+                    if (controller != null) controller.CameraTarget = playerObject.transform;
                 }
+            }
+        }
+
+        // --- CORRECTED MAP GENERATION LOGIC ---
+        if (mapGenerator != null)
+        {
+            if (isP2P)
+            {
+                // In multiplayer, the server is the authority that tells everyone to generate the map.
+                if (IsServer)
+                {
+                    GenerateMapClientRpc();
+                }
+            }
+            else
+            {
+                // In single-player, we just generate the map directly.
+                // It calls the single, unified GenerateMap() method.
+                 mapGenerator.GenerateMap();
             }
         }
         else
         {
-            // Multiplayer: só instancia se for o dono
-            var networkBehaviour = playerObject.GetComponent<Unity.Netcode.NetworkBehaviour>();
-            bool isOwner = (networkBehaviour != null && networkBehaviour.IsOwner);
-            if (isOwner && playerCameraPrefab != null)
-            {
-                GameObject camObj = Instantiate(playerCameraPrefab);
-                var controller = camObj.GetComponent<TMPro.Examples.CameraController>();
-                if (controller != null)
-                {
-                    controller.CameraTarget = playerObject.transform;
-                    var mainCam = Camera.main;
-                    if (mainCam != null && mainCam.gameObject != camObj)
-                    {
-                        mainCam.gameObject.SetActive(false);
-                    }
-                }
-            }
+            Debug.LogError("[GameManager] MapGenerator reference is null!");
         }
 
-        // === REGISTRO DE PREFABS (usa método da versão 1 que é mais robusto) ===
+        // --- The rest of your initialization logic ---
         RegisterRuntimePrefabs();
 
-        if (!isP2P)
+        if (IsServer)
         {
-            // Single-player: explicitly generate map only when game starts
-            mapGenerator?.GenerateLocal();
             enemySpawner?.StartSpawning();
         }
-        else if (IsHost)
-        {
-            // Multiplayer host: generate shared map assets and start spawns
-            enemySpawner?.StartSpawning();
-            mapGenerator?.GenerateNetworked();
-            EnsureAllMapConsumablesSpawned();
-        }
-
-        if (bossSpawnPoint == null)
-            bossSpawnPoint = GameObject.FindGameObjectWithTag("BossSpawn")?.transform;
 
         CurrentState = GameState.Playing;
         bossSpawned = false;
         lastDifficultyIncreaseMark = 0;
 
-        if (!isP2P)
-        {
-            currentTime = totalGameTime;
-        }
-        else if (IsHost)
+        if (IsServer)
         {
             networkCurrentTime.Value = totalGameTime;
+            RecomputeMultiplayerDifficulty();
         }
 
         baseEnemyHealthMultiplier = 1f;
@@ -734,13 +755,27 @@ public class GameManager : NetworkBehaviour
         currentFireRate = baseFireRate;
         currentSightRange = baseSightRange;
 
-        if (isP2P && IsServer)
-        {
-            RecomputeMultiplayerDifficulty();
-        }
-
         if (uiManager) uiManager.OnGameStart();
     }
+
+
+
+    [ClientRpc]
+    private void GenerateMapClientRpc()
+    {
+        Debug.Log($"[GameManager] Client {NetworkManager.Singleton.LocalClientId} received RPC to generate map.");
+        if (mapGenerator != null)
+        {
+            // Everyone calls the same, unified function.
+            // The MapGenerator's internal logic will handle what to spawn for server vs client.
+            mapGenerator.GenerateMap();
+        }
+        else
+        {
+            Debug.LogError($"[GameManager] MapGenerator is null on this client. Cannot generate map.");
+        }
+    }
+
 
     // === REGISTRO DE PREFABS (método da versão 1 - mais robusto) ===
     private void RegisterRuntimePrefabs()
@@ -863,7 +898,7 @@ public class GameManager : NetworkBehaviour
         {
             AbilityDamageTracker.LogTotals();
         }
-        
+
         if (uiManager != null)
         {
             uiManager.ShowEndGamePanel(true);

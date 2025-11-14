@@ -1,4 +1,4 @@
-    using UnityEngine;
+using UnityEngine;
 using Unity.Netcode;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,6 +7,9 @@ public class EnemySpawner : NetworkBehaviour
 {
     private enum SpawnSide { Left, Right, Top, Bottom }
 
+    // Add this near your other class variables at the top
+    private Coroutine spawningCoroutine;
+
     [Header("Wave Configuration")]
     public List<Wave> waves;
     public int waveIndex = 0;
@@ -14,10 +17,10 @@ public class EnemySpawner : NetworkBehaviour
     [Header("Spawning Position")]
     [Tooltip("A coordenada Y do seu chão onde os inimigos devem aparecer.")]
     public float groundLevelY = 0f;
-    
+
     [Tooltip("Distância extra ALÉM dos players para spawn invisível")]
     public float spawnBuffer = 30f;
-    
+
     [Tooltip("Uma grande distância para usar como fallback.")]
     public float raycastFallbackDistance = 200f;
 
@@ -30,17 +33,17 @@ public class EnemySpawner : NetworkBehaviour
 
     [Tooltip("Raio de verificação de colisão no ponto de spawn")]
     public float spawnCollisionCheckRadius = 1f;
-    
+
     [Header("Visual Effects")]
     [Tooltip("Duração do fade-in ao spawnar")]
     public float fadeInDuration = 0.5f;
-    
+
     [Header("Debug")]
     [Tooltip("Mostra logs de spawn replacement")]
     public bool showReplacementLogs = false;
 
     private Camera mainCamera;
-    
+
     // Cache de posições dos players
     private List<Vector3> playerPositions = new List<Vector3>();
 
@@ -52,12 +55,55 @@ public class EnemySpawner : NetworkBehaviour
             Debug.LogWarning("EnemySpawner: Main Camera not found initially. Will retry later.");
         }
     }
-    
+
+    // You can add this method anywhere inside the EnemySpawner class
+
+    /// <summary>
+    /// Stops all spawning coroutines and cleans up any active enemies.
+    /// This is called by the GameManager when the game ends or resets to the lobby.
+    /// </summary>
+    public void StopAndReset()
+    {
+        Debug.Log("[EnemySpawner] StopAndReset called. Stopping all spawning routines and cleaning up enemies.");
+
+        // 1. Stop the main spawning coroutine
+        if (spawningCoroutine != null)
+        {
+            StopCoroutine(spawningCoroutine);
+            spawningCoroutine = null;
+        }
+
+        // 2. Stop any other coroutines just in case
+        StopAllCoroutines();
+
+        // 3. Reset the wave index for the next game
+        waveIndex = 0;
+
+        // 4. Find and destroy all existing enemies (SERVER ONLY)
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            EnemyStats[] allEnemies = FindObjectsOfType<EnemyStats>();
+            Debug.Log($"[EnemySpawner] Server is destroying {allEnemies.Length} remaining enemies.");
+
+            foreach (var enemy in allEnemies)
+            {
+                var netObj = enemy.GetComponent<NetworkObject>();
+                if (netObj != null && netObj.IsSpawned)
+                {
+                    netObj.Despawn(true); // Despawn and destroy the networked object
+                }
+                else if (netObj == null)
+                {
+                    Destroy(enemy.gameObject);
+                }
+            }
+        }
+    }
     // NOVO: Atualiza posições de todos os players na rede
     private void UpdatePlayerPositions()
     {
         playerPositions.Clear();
-        
+
         // Método 1: Tenta encontrar via NetworkManager (multiplayer)
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
@@ -68,17 +114,17 @@ public class EnemySpawner : NetworkBehaviour
                     playerPositions.Add(client.PlayerObject.transform.position);
                 }
             }
-            
+
             if (playerPositions.Count > 0)
             {
                 Debug.Log($"EnemySpawner: Found {playerPositions.Count} networked players via NetworkManager.");
                 return;
             }
         }
-        
+
         // Método 2: Tenta encontrar PlayerStats
         PlayerStats[] players = FindObjectsByType<PlayerStats>(FindObjectsSortMode.None);
-        
+
         if (players.Length > 0)
         {
             foreach (PlayerStats player in players)
@@ -91,10 +137,10 @@ public class EnemySpawner : NetworkBehaviour
             Debug.Log($"EnemySpawner: Found {playerPositions.Count} active PlayerStats.");
             return;
         }
-        
+
         // Método 3: Fallback por tag
         GameObject[] playerObjects = GameObject.FindGameObjectsWithTag("Player");
-        
+
         if (playerObjects.Length > 0)
         {
             foreach (GameObject playerObj in playerObjects)
@@ -107,16 +153,16 @@ public class EnemySpawner : NetworkBehaviour
             Debug.LogWarning($"EnemySpawner: Found {playerPositions.Count} players by tag 'Player'.");
             return;
         }
-        
+
         Debug.LogError("EnemySpawner: No active players found by any method! Spawning will use fallback position.");
     }
-    
+
     // NOVO: Calcula o centro de todos os players
     private Vector3 GetPlayersCenter()
     {
         if (playerPositions.Count == 0)
             return Vector3.zero;
-            
+
         Vector3 sum = Vector3.zero;
         foreach (Vector3 pos in playerPositions)
         {
@@ -124,16 +170,16 @@ public class EnemySpawner : NetworkBehaviour
         }
         return sum / playerPositions.Count;
     }
-    
+
     // NOVO: Encontra o player mais próximo de uma posição
     private Vector3 GetClosestPlayerPosition(Vector3 position)
     {
         if (playerPositions.Count == 0)
             return Vector3.zero;
-            
+
         Vector3 closest = playerPositions[0];
         float closestDist = Vector3.Distance(position, playerPositions[0]);
-        
+
         for (int i = 1; i < playerPositions.Count; i++)
         {
             float dist = Vector3.Distance(position, playerPositions[i]);
@@ -143,7 +189,7 @@ public class EnemySpawner : NetworkBehaviour
                 closest = playerPositions[i];
             }
         }
-        
+
         return closest;
     }
 
@@ -159,28 +205,40 @@ public class EnemySpawner : NetworkBehaviour
                 return Mathf.Max(1, playerCount); // Ensure at least 1
             }
         }
-        
+
         // Single-player or not server: return 1
         return 1;
     }
+
+    // Replace your existing StartSpawning() method with this one
 
     public void StartSpawning()
     {
         Debug.Log("EnemySpawner: Starting wave spawning.");
         if (waves != null && waves.Count > 0)
-            StartCoroutine(SpawnWaves());
+        {
+            // Ensure we stop any old coroutine before starting a new one
+            if (spawningCoroutine != null)
+            {
+                StopCoroutine(spawningCoroutine);
+            }
+            spawningCoroutine = StartCoroutine(SpawnWaves());
+        }
         else
+        {
             Debug.LogWarning("EnemySpawner: No waves assigned in inspector.");
+        }
     }
+
+    // Replace your existing ResetForRestart() method with this one
 
     public void ResetForRestart()
     {
-        // Stop any ongoing spawn coroutine(s) and reset wave index
-        try { StopAllCoroutines(); } catch {}
-        waveIndex = 0;
-        Debug.Log("EnemySpawner: ResetForRestart called. Coroutines stopped and waveIndex reset to 0.");
+        // This method can now be simplified or removed, as StopAndReset is more complete.
+        // For now, it will just call the new, more robust method.
+        StopAndReset();
+        Debug.Log("EnemySpawner: ResetForRestart called.");
     }
-
     IEnumerator SpawnWaves()
     {
         Debug.Log("EnemySpawner: Beginning wave spawning.");
@@ -189,11 +247,11 @@ public class EnemySpawner : NetworkBehaviour
         {
             Wave currentWave = waves[waveIndex];
             Debug.Log("Starting Wave: " + (currentWave.waveName != "" ? currentWave.waveName : (waveIndex + 1).ToString()));
-            
+
             // Calculate multiplier based on number of connected players
             int playerMultiplier = GetPlayerCountMultiplier();
             Debug.Log($"EnemySpawner: Player multiplier is {playerMultiplier}");
-            
+
             List<int> remainingCounts = new List<int>();
             int totalEnemiesToSpawn = 0;
             foreach (WaveEnemy waveEnemy in currentWave.enemies)
@@ -213,7 +271,7 @@ public class EnemySpawner : NetworkBehaviour
             {
                 // NOVO: Atualiza posições dos players a cada spawn
                 UpdatePlayerPositions();
-                
+
                 int roll = Random.Range(0, totalEnemiesToSpawn);
                 int cumulative = 0;
                 for (int enemyIndex = 0; enemyIndex < currentWave.enemies.Count; enemyIndex++)
@@ -225,16 +283,16 @@ public class EnemySpawner : NetworkBehaviour
                     if (roll < cumulative)
                     {
                         WaveEnemy selectedEnemy = currentWave.enemies[enemyIndex];
-                        
+
                         // NOVO: Tenta encontrar posição segura baseada em TODOS os players
                         Vector3 spawnPos = Vector3.zero;
                         bool foundSafePosition = false;
-                        
+
                         for (int attempt = 0; attempt < maxSpawnAttempts; attempt++)
                         {
                             SpawnSide spawnSide = ChooseBalancedSpawnSide();
                             Vector3 candidatePos = GetSpawnPositionForAllPlayers(spawnSide);
-                            
+
                             if (IsSpawnPositionSafe(candidatePos))
                             {
                                 spawnPos = candidatePos;
@@ -242,14 +300,14 @@ public class EnemySpawner : NetworkBehaviour
                                 break;
                             }
                         }
-                        
+
                         if (!foundSafePosition)
                         {
                             Debug.LogWarning("EnemySpawner: Could not find safe spawn position after " + maxSpawnAttempts + " attempts. Using fallback.");
                             SpawnSide spawnSide = ChooseBalancedSpawnSide();
                             spawnPos = GetSpawnPositionForAllPlayers(spawnSide);
                         }
-                        
+
                         // If we're running a networked game and we're the server, spawn as a NetworkObject.
                         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
                         {
@@ -263,7 +321,7 @@ public class EnemySpawner : NetworkBehaviour
                             }
                             // Server spawns the network object so it is replicated to clients.
                             netObj.Spawn(true);
-                            
+
                             // NOVO: Adiciona fade-in que funciona em todos os clientes
                             var fadeEffect = spawned.AddComponent<EnemyFadeEffect>();
                             fadeEffect.StartFadeIn(fadeInDuration);
@@ -279,7 +337,7 @@ public class EnemySpawner : NetworkBehaviour
                         remainingCounts[enemyIndex]--;
                         totalEnemiesToSpawn--;
                         yield return new WaitForSeconds(currentWave.spawnInterval);
-                        break; 
+                        break;
                     }
                 }
             }
@@ -305,7 +363,7 @@ public class EnemySpawner : NetworkBehaviour
         Vector3 worldBottomRight = GetWorldPointOnPlane(new Vector2(1, 0), groundPlane);
         Vector3 worldTopLeft = GetWorldPointOnPlane(new Vector2(0, 1), groundPlane);
         Vector3 worldTopRight = GetWorldPointOnPlane(new Vector2(1, 1), groundPlane);
-        
+
         Vector3 spawnPoint = Vector3.zero;
         Vector3 offsetDirection = Vector3.zero;
 
@@ -353,7 +411,7 @@ public class EnemySpawner : NetworkBehaviour
         {
             Debug.LogError("EnemySpawner: No players found! Cannot calculate spawn position. Attempting to update player list...");
             UpdatePlayerPositions();
-            
+
             // Se ainda não há players, usa câmera como último recurso
             if (playerPositions.Count == 0)
             {
@@ -365,22 +423,22 @@ public class EnemySpawner : NetworkBehaviour
                 return Vector3.zero;
             }
         }
-        
+
         // Calcula centro de todos os players
         Vector3 playersCenter = GetPlayersCenter();
-        
+
         // Calcula bounds que engloba todos os players
         Bounds playerBounds = new Bounds(playerPositions[0], Vector3.zero);
         foreach (Vector3 pos in playerPositions)
         {
             playerBounds.Encapsulate(pos);
         }
-        
+
         // Expande bounds para garantir spawn fora da vista
         playerBounds.Expand(spawnBuffer * 2f);
-        
+
         Vector3 spawnPoint = Vector3.zero;
-        
+
         switch (side)
         {
             case SpawnSide.Left:
@@ -415,7 +473,7 @@ public class EnemySpawner : NetworkBehaviour
                 );
                 break;
         }
-        
+
         return spawnPoint;
     }
 
@@ -432,7 +490,7 @@ public class EnemySpawner : NetworkBehaviour
                 return false;
             }
         }
-        
+
         // Verifica distância de TODOS os players
         foreach (Vector3 playerPos in playerPositions)
         {
@@ -442,7 +500,7 @@ public class EnemySpawner : NetworkBehaviour
                 return false;
             }
         }
-        
+
         return true;
     }
 
@@ -450,12 +508,12 @@ public class EnemySpawner : NetworkBehaviour
     IEnumerator FadeInEnemy(GameObject enemy)
     {
         if (enemy == null) yield break;
-        
+
         Renderer[] renderers = enemy.GetComponentsInChildren<Renderer>();
         if (renderers.Length == 0) yield break;
-        
+
         Dictionary<Material, Color> originalColors = new Dictionary<Material, Color>();
-        
+
         foreach (Renderer rend in renderers)
         {
             foreach (Material mat in rend.materials)
@@ -464,11 +522,11 @@ public class EnemySpawner : NetworkBehaviour
                 {
                     Color originalColor = mat.color;
                     originalColors[mat] = originalColor;
-                    
+
                     Color transparent = originalColor;
                     transparent.a = 0f;
                     mat.color = transparent;
-                    
+
                     if (mat.HasProperty("_Mode"))
                     {
                         mat.SetFloat("_Mode", 3);
@@ -483,20 +541,20 @@ public class EnemySpawner : NetworkBehaviour
                 }
             }
         }
-        
+
         float elapsed = 0f;
         while (elapsed < fadeInDuration)
         {
             if (enemy == null) yield break;
-            
+
             elapsed += Time.deltaTime;
             float alpha = Mathf.Clamp01(elapsed / fadeInDuration);
-            
+
             foreach (var kvp in originalColors)
             {
                 Material mat = kvp.Key;
                 Color originalColor = kvp.Value;
-                
+
                 if (mat != null && mat.HasProperty("_Color"))
                 {
                     Color newColor = originalColor;
@@ -504,19 +562,19 @@ public class EnemySpawner : NetworkBehaviour
                     mat.color = newColor;
                 }
             }
-            
+
             yield return null;
         }
-        
+
         foreach (var kvp in originalColors)
         {
             Material mat = kvp.Key;
             Color originalColor = kvp.Value;
-            
+
             if (mat != null && mat.HasProperty("_Color"))
             {
                 mat.color = originalColor;
-                
+
                 if (mat.HasProperty("_Mode"))
                 {
                     mat.SetFloat("_Mode", 0);
@@ -599,31 +657,31 @@ public class EnemySpawner : NetworkBehaviour
     SpawnSide ChooseBalancedSpawnSide()
     {
         SpawnSide fallback = (SpawnSide)Random.Range(0, 4);
-        
+
         UpdatePlayerPositions();
         if (playerPositions.Count == 0)
         {
             Debug.LogWarning("EnemySpawner: No players for ChooseBalancedSpawnSide, using random fallback.");
             return fallback;
         }
-        
+
         EnemyStats[] activeEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
         if (activeEnemies == null || activeEnemies.Length == 0) return fallback;
-        
+
         // Calcula centro de todos os players
         Vector3 playersCenter = GetPlayersCenter();
-        
+
         int leftCount = 0;
         int rightCount = 0;
         int topCount = 0;
         int bottomCount = 0;
-        
+
         foreach (EnemyStats enemy in activeEnemies)
         {
             if (enemy == null || !enemy.isActiveAndEnabled) continue;
-            
+
             Vector3 dirToEnemy = enemy.transform.position - playersCenter;
-            
+
             // Classifica baseado na direção relativa ao centro dos players
             if (Mathf.Abs(dirToEnemy.x) > Mathf.Abs(dirToEnemy.z))
             {
@@ -636,40 +694,40 @@ public class EnemySpawner : NetworkBehaviour
                 else bottomCount++;
             }
         }
-        
+
         int totalVisible = leftCount + rightCount + topCount + bottomCount;
         if (totalVisible == 0) return fallback;
-        
+
         // Balanceamento inteligente
         int verticalDiff = topCount - bottomCount;
         int horizontalDiff = rightCount - leftCount;
         const int imbalanceThreshold = 3;
-        
+
         if (Mathf.Abs(verticalDiff) >= Mathf.Abs(horizontalDiff) && Mathf.Abs(verticalDiff) >= imbalanceThreshold)
         {
             return verticalDiff > 0 ? SpawnSide.Bottom : SpawnSide.Top;
         }
-        
+
         if (Mathf.Abs(horizontalDiff) >= imbalanceThreshold)
         {
             return horizontalDiff > 0 ? SpawnSide.Left : SpawnSide.Right;
         }
-        
+
         int[] counts = new int[4];
         counts[(int)SpawnSide.Left] = leftCount;
         counts[(int)SpawnSide.Right] = rightCount;
         counts[(int)SpawnSide.Top] = topCount;
         counts[(int)SpawnSide.Bottom] = bottomCount;
-        
+
         float[] weights = new float[counts.Length];
         int maxCount = 0;
         for (int i = 0; i < counts.Length; i++)
         {
             if (counts[i] > maxCount) maxCount = counts[i];
         }
-        
+
         if (maxCount == 0) return fallback;
-        
+
         float totalWeight = 0f;
         for (int i = 0; i < counts.Length; i++)
         {
@@ -678,9 +736,9 @@ public class EnemySpawner : NetworkBehaviour
             weights[i] = weight;
             totalWeight += weight;
         }
-        
+
         if (totalWeight <= 0f) return fallback;
-        
+
         float roll = Random.value * totalWeight;
         float cumulative = 0f;
         for (int i = 0; i < weights.Length; i++)
@@ -688,7 +746,7 @@ public class EnemySpawner : NetworkBehaviour
             cumulative += weights[i];
             if (roll <= cumulative) return (SpawnSide)i;
         }
-        
+
         return fallback;
     }
 
@@ -721,10 +779,10 @@ public class EnemySpawner : NetworkBehaviour
 
         // Tenta obter o prefab do inimigo destruído
         GameObject prefabToSpawn = null;
-        
+
         // Procura o prefab nas waves baseado no nome do inimigo
         string enemyName = destroyedEnemy.name.Replace("(Clone)", "").Trim();
-        
+
         foreach (Wave wave in waves)
         {
             foreach (WaveEnemy waveEnemy in wave.enemies)
@@ -758,7 +816,7 @@ public class EnemySpawner : NetworkBehaviour
         // NOVO: Calcula direção oposta ao despawn
         UpdatePlayerPositions();
         SpawnSide oppositeSpawnSide = GetOppositeSide(destroyedPosition);
-        
+
         Vector3 spawnPos = Vector3.zero;
         bool foundSafePosition = false;
 
@@ -844,3 +902,4 @@ public class Wave
     public float timeUntilNextWave = 10f;
     public float spawnInterval = 0.5f;
 }
+
