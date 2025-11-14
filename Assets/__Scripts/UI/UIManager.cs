@@ -368,6 +368,8 @@ public class UIManager : MonoBehaviour
 
     public void PlayAgainButton()
     {
+        Debug.Log("[UIManager] PlayAgainButton() called - delegating to GameManager.HandlePlayAgain()");
+        
         // This button now calls the GameManager's central handler.
         if (GameManager != null)
         {
