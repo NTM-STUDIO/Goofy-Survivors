@@ -1,13 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Diagnostics; // Required for Conditional attribute
 
 [RequireComponent(typeof(EnemyMovement))]
 public class EnemyPathfinding : MonoBehaviour
 {
     [Header("Pathfinding Settings")]
-    [Tooltip("How often (in seconds) should the enemy recalculate its path")]
     [SerializeField] private float pathUpdateRate = 0.5f;
-    [Tooltip("How close the enemy needs to be to a waypoint to move to the next one")]
     [SerializeField] private float waypointReachedDistance = 0.5f;
 
     private List<Vector3> path;
@@ -15,58 +14,48 @@ public class EnemyPathfinding : MonoBehaviour
     private EnemyMovement movement;
     private Transform player;
     private float nextPathUpdate;
+    private float waypointReachedSqrDistance;
 
     public Vector3? TargetOverride { get; set; }
 
-    private void Start()
+    void Start()
     {
-        Debug.Log($"[{gameObject.name}] PATHFINDING: Initializing...", this);
-
-        // Get required components
         movement = GetComponent<EnemyMovement>();
         if (movement == null)
         {
-            Debug.LogError($"[{gameObject.name}] PATHFINDING: EnemyMovement component not found!", this);
+            LogError("EnemyMovement component not found!");
             enabled = false;
             return;
         }
-
-    // Initial player search (may be empty at start)
-    FindPlayer();
 
         if (Pathfinding.Instance == null)
         {
-            Debug.LogError($"[{gameObject.name}] PATHFINDING: Pathfinding system not found in scene!", this);
+            LogError("Pathfinding system not found in scene!");
             enabled = false;
             return;
         }
 
-        // Initialize path
         path = new List<Vector3>();
+        // PERFORMANCE: Pre-calculate the squared distance to avoid expensive Sqrt() calls in FixedUpdate.
+        waypointReachedSqrDistance = waypointReachedDistance * waypointReachedDistance;
         
-        // Force an immediate path update
+        FindPlayer();
+        
         UpdatePath();
         nextPathUpdate = Time.time + pathUpdateRate;
         
-        Debug.Log($"[{gameObject.name}] PATHFINDING: Ready!", this);
+        Log("Pathfinding is ready!");
     }
 
-    private void Update()
+    void Update()
     {
-        // Always check for player in case it spawns after Start
-        if (player == null)
+        // Periodically check for the player if we don't have a target.
+        // This is less frequent than every frame to save performance.
+        if (player == null && Time.frameCount % 30 == 0)
         {
             FindPlayer();
-            if (player == null)
-            {
-                // Only log once every few seconds to avoid spam
-                if (Time.frameCount % 60 == 0)
-                    Debug.Log($"[{gameObject.name}] PATHFINDING: No player found with tag 'Player'. Waiting for player spawn.", this);
-                return;
-            }
         }
 
-        // Only update path in Update, not movement
         if (Time.time >= nextPathUpdate)
         {
             UpdatePath();
@@ -74,16 +63,14 @@ public class EnemyPathfinding : MonoBehaviour
         }
     }
 
-    private void FixedUpdate()
+    void FixedUpdate()
     {
-        // Movement logic runs in FixedUpdate to sync with EnemyMovement
-        if (player == null) return;
-        
         FollowPath();
     }
 
     /// <summary>
-    /// Finds the player GameObject in the scene and assigns its transform.
+    /// FIXED: Finds the player using the built-in tag system.
+    /// This removes the dependency on the 'ActivePlayers' static list.
     /// </summary>
     private void FindPlayer()
     {
@@ -91,87 +78,84 @@ public class EnemyPathfinding : MonoBehaviour
         if (playerGO != null)
         {
             player = playerGO.transform;
-            Debug.Log($"[{gameObject.name}] PATHFINDING: Player found!", this);
+            Log("Player found!");
+        }
+        else
+        {
+            // Log a warning only once to avoid spamming the console.
+            if (player != null) 
+            {
+                Log("Player lost. Will attempt to find again.");
+            }
+            player = null;
         }
     }
 
     private void UpdatePath()
     {
-        if (player == null && !TargetOverride.HasValue) return;
-        if (Pathfinding.Instance == null)
+        Vector3? targetPosition = TargetOverride.HasValue ? TargetOverride.Value : (player != null ? player.position : (Vector3?)null);
+
+        if (!targetPosition.HasValue || Pathfinding.Instance == null) return;
+        
+        var newPath = Pathfinding.Instance.FindPath(transform.position, targetPosition.Value);
+        if (newPath != null && newPath.Count > 0)
         {
-            Debug.LogError($"[{gameObject.name}] PATHFINDING: Instance is null!", this);
-            return;
+            path = newPath;
+            currentWaypointIndex = 0;
         }
-
-        // Determine the target for pathfinding
-        Vector3 targetPosition = TargetOverride.HasValue ? TargetOverride.Value : player.position;
-
-        var newPath = Pathfinding.Instance.FindPath(transform.position, targetPosition);
-        if (newPath == null || newPath.Count == 0)
-        {
-            return;
-        }
-
-        path = newPath;
-        currentWaypointIndex = 0;
-        Debug.Log($"[{gameObject.name}] PATHFINDING: New path with {path.Count} waypoints", this);
     }
 
     private void FollowPath()
     {
-        // If we don't have a valid path, request one but don't spam updates
-        if (path == null || path.Count == 0)
-        {
-            return; // Wait for next path update cycle
-        }
-        
-        // Check if we've gone past the end of the path
-        if (currentWaypointIndex >= path.Count)
-        {
-            return; // Wait for next path update cycle
-        }
+        if (path == null || currentWaypointIndex >= path.Count) return;
 
-        // Debug draw the path
-        #if UNITY_EDITOR
-        // Draw the full path
-        for (int i = 0; i < path.Count - 1; i++)
-        {
-            Debug.DrawLine(path[i], path[i + 1], Color.green);
-        }
+        Vector3 currentWaypoint = path[currentWaypointIndex];
+        // PERFORMANCE: Use squared magnitude to avoid expensive square root calculation.
+        float sqrDistanceToWaypoint = (currentWaypoint - transform.position).sqrMagnitude;
         
-        // Highlight current waypoint
-        Debug.DrawLine(transform.position, path[currentWaypointIndex], Color.yellow);
-        #endif
-
-        // Check distance to current waypoint
-        float distanceToWaypoint = Vector3.Distance(transform.position, path[currentWaypointIndex]);
-        
-        // Move to next waypoint if we're close enough
-        if (distanceToWaypoint < waypointReachedDistance)
+        if (sqrDistanceToWaypoint < waypointReachedSqrDistance)
         {
             currentWaypointIndex++;
-            
-            if (currentWaypointIndex >= path.Count)
-            {
-                return; // Wait for next path update
-            }
+            if (currentWaypointIndex >= path.Count) return;
+            currentWaypoint = path[currentWaypointIndex];
         }
 
-        // Calculate direction to current waypoint
-        Vector3 toWaypoint = path[currentWaypointIndex] - transform.position;
-        toWaypoint.y = 0; // Keep movement in XZ plane
+        Vector3 direction = (currentWaypoint - transform.position).normalized;
+        direction.y = 0;
         
-        // Always update direction, even if close
-        if (toWaypoint.sqrMagnitude > 0.001f)
+        movement.TargetDirection = direction;
+        
+        #if UNITY_EDITOR
+        DrawPath();
+        #endif
+    }
+
+    #if UNITY_EDITOR
+    private void DrawPath()
+    {
+        if (path == null || path.Count == 0) return;
+        for (int i = 0; i < path.Count - 1; i++)
         {
-            Vector3 direction = toWaypoint.normalized;
-            movement.TargetDirection = direction;
-            
-            #if UNITY_EDITOR
-            // Visual debug - movement direction
-            Debug.DrawRay(transform.position, direction * 2f, Color.red);
-            #endif
+            UnityEngine.Debug.DrawLine(path[i], path[i+1], Color.green);
         }
+        if(currentWaypointIndex < path.Count)
+        {
+            UnityEngine.Debug.DrawLine(transform.position, path[currentWaypointIndex], Color.yellow);
+        }
+    }
+    #endif
+
+    // PERFORMANCE: These methods will only be compiled in the Unity Editor,
+    // removing all logging overhead from final builds.
+    [Conditional("UNITY_EDITOR")]
+    private void Log(string message)
+    {
+        UnityEngine.Debug.Log($"[{gameObject.name}] PATHFINDING: {message}", this);
+    }
+    
+    [Conditional("UNITY_EDITOR")]
+    private void LogError(string message)
+    {
+        UnityEngine.Debug.LogError($"[{gameObject.name}] PATHFINDING: {message}", this);
     }
 }

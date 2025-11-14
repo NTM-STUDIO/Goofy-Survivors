@@ -105,12 +105,14 @@ public class GameManager : NetworkBehaviour
         else
         {
             Instance = this;
-            // DontDestroyOnLoad(gameObject);
+            DontDestroyOnLoad(gameObject);
         }
     }
 
     public void HandlePlayAgain()
     {
+        Debug.Log($"[GameManager] HandlePlayAgain() called - isP2P: {isP2P}, IsServer: {(isP2P ? IsServer : "N/A")}");
+        
         if (!isP2P)
         {
             // Single-player: use soft restart instead of scene reload
@@ -140,18 +142,103 @@ public class GameManager : NetworkBehaviour
             return;
         }
 
-        // In multiplayer, only the host can initiate the restart.
-        // A client's click could be used to show an "is ready" status in the future.
+        // In multiplayer, use soft reset to avoid scene transitions (which destroy NetworkManager)
         if (IsServer)
         {
-            Debug.Log("[GameManager] Host 'Play Again' clicked. Initiating soft reset.");
+            Debug.Log("[GameManager] Host 'Play Again' clicked. Performing soft reset and returning to lobby UI.");
             Server_SoftResetGame();
         }
         else
         {
-            Debug.Log("[GameManager] Client 'Play Again' clicked. (This currently does nothing, but could send a 'Ready' RPC).");
-            // Optional: Send a ServerRpc to the host to indicate readiness
-            // SignalReadyForRestartServerRpc();
+            Debug.Log("[GameManager] Client 'Play Again' clicked. Notifying host for restart...");
+            // Show feedback to client that they're waiting for host
+            if (uiManager != null)
+            {
+                uiManager.ShowEndGamePanel(false);
+            }
+            // Send notification to host that client wants to restart
+            NotifyHostRestartRequestServerRpc();
+        }
+    }
+
+    // New method to handle returning to lobby in multiplayer
+    private void ReturnToLobby_Host()
+    {
+        if (!IsServer)
+        {
+            Debug.LogWarning("[GameManager] ReturnToLobby_Host called on non-server!");
+            return;
+        }
+
+        var nsm = NetworkManager.Singleton?.SceneManager;
+        if (nsm == null)
+        {
+            Debug.LogError("[GameManager] NetworkSceneManager missing. Cannot return to lobby.");
+            return;
+        }
+
+        Debug.Log("[GameManager] Host returning all players to lobby...");
+        
+        // Find SettingsManager to get lobby scene name
+        var settings = FindObjectOfType<SettingsManager>();
+        string lobbyScene = settings?.lobbySceneName ?? "P2P";
+        
+        Debug.Log($"[GameManager] SettingsManager found: {settings != null}, Lobby scene name: {lobbyScene}");
+        
+        // Verify scene exists in build
+        int sceneIndex = SceneManager.GetSceneByName(lobbyScene).buildIndex;
+        if (sceneIndex < 0)
+        {
+            Debug.LogError($"[GameManager] Lobby scene '{lobbyScene}' not found in build settings! Please add it to File > Build Settings > Scenes in Build");
+            return;
+        }
+        
+        // Subscribe to scene load event to spawn lobby manager
+        nsm.OnLoadEventCompleted += HandleLobbySceneLoadedForRestart;
+        
+        // Load the lobby scene for all clients
+        nsm.LoadScene(lobbyScene, LoadSceneMode.Single);
+        
+        Debug.Log($"[GameManager] Loading lobby scene: {lobbyScene}");
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void NotifyHostRestartRequestServerRpc(ServerRpcParams rpcParams = default)
+    {
+        ulong clientId = rpcParams.Receive.SenderClientId;
+        Debug.Log($"[GameManager] Client {clientId} requested a restart. Host can decide when to return to lobby.");
+        // Host could show a notification or count ready players
+        // For now, we'll just log it. Could extend to show "X players want to restart" UI
+    }
+
+    private void HandleLobbySceneLoadedForRestart(string sceneName, LoadSceneMode mode, System.Collections.Generic.List<ulong> completed, System.Collections.Generic.List<ulong> timedOut)
+    {
+        Debug.Log($"[GameManager] Lobby scene loaded after restart: {sceneName}");
+        
+        // Unsubscribe to avoid multiple calls
+        var nsm = NetworkManager.Singleton?.SceneManager;
+        if (nsm != null)
+        {
+            nsm.OnLoadEventCompleted -= HandleLobbySceneLoadedForRestart;
+        }
+        
+        // Check if we need to spawn lobby manager
+        var settings = FindObjectOfType<SettingsManager>();
+        if (settings != null && settings.lobbyManagerPrefab != null && IsServer)
+        {
+            Debug.Log("[GameManager] Spawning lobby manager after restart...");
+            var lobbyManager = Instantiate(settings.lobbyManagerPrefab);
+            var netObj = lobbyManager.GetComponent<NetworkObject>();
+            if (netObj != null)
+            {
+                netObj.Spawn();
+                Debug.Log("[GameManager] Lobby manager spawned successfully");
+            }
+            else
+            {
+                Debug.LogError("[GameManager] Lobby manager prefab missing NetworkObject!");
+                Destroy(lobbyManager);
+            }
         }
     }
 
@@ -174,14 +261,14 @@ public class GameManager : NetworkBehaviour
         // --- 2. RESET THE MAP GENERATOR ---
         if (mapGenerator != null)
         {
-            mapGenerator.ResetGenerator();
+            mapGenerator.ClearMap();
         }
         else
         {
             Debug.LogWarning("[GameManager] MapGenerator reference is null. Cannot reset it.");
         }
 
-        // --- 3. DESTROY ALL PLAYER OBJECTS ---
+        // --- 3. DESTROY ALL PLAYER OBJECTS (cameras are automatically destroyed as children) ---
         if (NetworkManager.Singleton != null)
         {
             var connectedClientIds = NetworkManager.Singleton.ConnectedClientsIds.ToList();
@@ -196,7 +283,7 @@ public class GameManager : NetworkBehaviour
             }
         }
 
-        // --- 4. CLEAN UP OTHER NETWORKED OBJECTS (Optional but good practice) ---
+        // --- 4. CLEAN UP OTHER NETWORKED OBJECTS ---
         var allNetObjects = FindObjectsOfType<NetworkObject>();
         foreach (var netObj in allNetObjects)
         {
@@ -219,27 +306,57 @@ public class GameManager : NetworkBehaviour
 
         // --- 6. TELL ALL CLIENTS TO PERFORM THEIR LOCAL UI RESET ---
         Client_ResetToLobbyClientRpc();
+        
+        // --- 7. HOST RESETS UI IMMEDIATELY (while still IsHost/IsServer) ---
+        Debug.Log("[GameManager] Host performing local UI reset immediately.");
+        ResetLocalUIToLobby();
     }
 
     [ClientRpc]
     private void Client_ResetToLobbyClientRpc()
     {
-        Debug.Log("[GameManager] Received RPC to reset to lobby state.");
-        CurrentState = GameState.PreGame;
-        Time.timeScale = 1f; // Ensure game is not paused
-
-        // Destroy any purely local objects that were created (like the player camera)
-        var localCamera = FindObjectOfType<TMPro.Examples.CameraController>();
-        if (localCamera != null && localCamera.CameraTarget != null)
+        // Skip execution on host since host already executed ResetLocalUIToLobby
+        if (IsHost)
         {
-            Destroy(localCamera.gameObject);
+            Debug.Log("[GameManager] Host skipping Client_ResetToLobbyClientRpc (already executed locally).");
+            return;
         }
 
+        Debug.Log("[GameManager] Client received RPC to reset to lobby state.");
+        ResetLocalUIToLobby();
+    }
+
+    private void ResetLocalUIToLobby()
+    {
+        CurrentState = GameState.PreGame;
+        Time.timeScale = 1f;
+
+        // Wait a frame for NetworkManager to stabilize IsHost/IsServer state after reset
+        StartCoroutine(ReturnToLobbyAfterDelay());
+    }
+
+    private IEnumerator ReturnToLobbyAfterDelay()
+    {
+        // Wait for network state to stabilize
+        yield return new WaitForEndOfFrame();
+        yield return null; // Wait one more frame
+        yield return new WaitForSeconds(0.5f); // Extra delay for network state
+        
+        Debug.Log($"[GameManager] ReturnToLobbyAfterDelay - IsHost: {IsHost}, IsServer: {IsServer}, IsClient: {IsClient}");
+        
         // Tell the UIManager to switch back to the lobby/character selection UI
         if (uiManager != null)
         {
             uiManager.ShowEndGamePanel(false);
-            uiManager.ReturnToLobby(); // We will add this method to the UIManager
+            uiManager.ReturnToLobby();
+        }
+        
+        // Also manually refresh the LobbyUI button visibility after delay
+        var lobbyUI = FindObjectOfType<LobbyUI>();
+        if (lobbyUI != null && lobbyUI.gameObject.activeInHierarchy)
+        {
+            Debug.Log("[GameManager] Manually triggering LobbyUI.UpdateStartButtonVisibility()");
+            lobbyUI.UpdateStartButtonVisibility();
         }
     }
     void Start()
@@ -561,34 +678,57 @@ public class GameManager : NetworkBehaviour
         Time.timeScale = 1f;
         uiManager?.ShowEndGamePanel(false);
 
-        // --- Your object cleanup logic ---
-        try { var players = GameObject.FindGameObjectsWithTag("Player"); foreach (var p in players) if (p != null) Destroy(p); } catch { }
-        try { var cams = FindObjectsByType<TMPro.Examples.CameraController>(FindObjectsSortMode.None); foreach (var c in cams) if (c != null) Destroy(c.gameObject); } catch { }
+        // --- 1. Clear all players (cameras are automatically destroyed as children) ---
         try { 
-            var accAll = FindObjectsByType<AdvancedCameraController>(FindObjectsSortMode.None); 
-            bool keptOne = false; 
-            foreach (var acc in accAll) { 
-                if (acc == null) continue; 
-                if (!keptOne) { 
-                    acc.gameObject.SetActive(true); 
-                    keptOne = true; 
-                } else { 
-                    Destroy(acc.gameObject); 
-                } 
-            } 
+            var players = GameObject.FindGameObjectsWithTag("Player"); 
+            foreach (var p in players) 
+                if (p != null) Destroy(p); 
         } catch { }
-        try { var enemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None); foreach (var e in enemies) if (e != null) Destroy(e.gameObject); } catch { }
-        try { var projs = FindObjectsByType<ProjectileWeapon>(FindObjectsSortMode.None); foreach (var p in projs) if (p != null) Destroy(p.gameObject); } catch { }
-        try { var orbiters = FindObjectsByType<OrbitingWeapon>(FindObjectsSortMode.None); foreach (var ow in orbiters) if (ow != null) Destroy(ow.gameObject); } catch { }
-        try { var auras = FindObjectsByType<AuraWeapon>(FindObjectsSortMode.None); foreach (var a in auras) if (a != null) Destroy(a.gameObject); } catch { }
-        try { var pops = FindObjectsByType<DamagePopup>(FindObjectsSortMode.None); foreach (var dp in pops) if (dp != null) Destroy(dp.gameObject); } catch { }
-        try { var orbs = FindObjectsByType<ExperienceOrb>(FindObjectsSortMode.None); foreach (var o in orbs) if (o != null) Destroy(o.gameObject); } catch { }
 
+        // --- 2. Clear all enemies ---
+        try { 
+            var enemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None); 
+            foreach (var e in enemies) 
+                if (e != null && e.gameObject != null) Destroy(e.gameObject); 
+        } catch { }
+
+        // --- 3. Clear all projectiles and weapons ---
+        try { 
+            var projs = FindObjectsByType<ProjectileWeapon>(FindObjectsSortMode.None); 
+            foreach (var p in projs) 
+                if (p != null && p.gameObject != null) Destroy(p.gameObject); 
+        } catch { }
+        try { 
+            var orbiters = FindObjectsByType<OrbitingWeapon>(FindObjectsSortMode.None); 
+            foreach (var ow in orbiters) 
+                if (ow != null && ow.gameObject != null) Destroy(ow.gameObject); 
+        } catch { }
+        try { 
+            var auras = FindObjectsByType<AuraWeapon>(FindObjectsSortMode.None); 
+            foreach (var a in auras) 
+                if (a != null && a.gameObject != null) Destroy(a.gameObject); 
+        } catch { }
+
+        // --- 4. Clear all pickups and UI elements ---
+        try { 
+            var pops = FindObjectsByType<DamagePopup>(FindObjectsSortMode.None); 
+            foreach (var dp in pops) 
+                if (dp != null && dp.gameObject != null) Destroy(dp.gameObject); 
+        } catch { }
+        try { 
+            var orbs = FindObjectsByType<ExperienceOrb>(FindObjectsSortMode.None); 
+            foreach (var o in orbs) 
+                if (o != null && o.gameObject != null) Destroy(o.gameObject); 
+        } catch { }
+
+        // --- 5. Clear the generated map ---
+        try { 
+            if (mapGenerator != null) 
+                mapGenerator.ClearMap(); 
+        } catch { }
+
+        // --- 6. Stop coroutines ---
         try { enemyDespawner?.StopAllCoroutines(); } catch { }
-        try { enemySpawner?.ResetForRestart(); } catch { }
-
-        // --- THIS IS THE CORRECTED LINE ---
-        try { mapGenerator?.ResetGenerator(); } catch { }
 
         // Reset internal state
         CurrentState = GameState.PreGame;
@@ -637,6 +777,7 @@ public class GameManager : NetworkBehaviour
         }
         GameObject playerObject = Instantiate(chosenPlayerPrefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
         InitializeAllSystems(playerObject);
+        // AdvancedCameraController is now permanently disabled - both SP and MP use prefab camera
     }
 
     private void StartGame_P2P_Host()
@@ -738,26 +879,9 @@ public class GameManager : NetworkBehaviour
                 playerObject.AddComponent<ApplyRunesOnSpawn>();
             }
 
-            // Rebind camera to new player (singleplayer) - keeps original camera settings
-            if (!isP2P)
-            {
-                var advancedCam = FindObjectOfType<AdvancedCameraController>();
-                if (advancedCam != null)
-                {
-                    advancedCam.RebindToPlayer(playerObject.transform);
-                }
-            }
-
-            if (isP2P)
-            {
-                bool isOwner = playerObject.GetComponent<NetworkBehaviour>()?.IsOwner ?? false;
-                if (isOwner && playerCameraPrefab != null)
-                {
-                    GameObject camObj = Instantiate(playerCameraPrefab);
-                    var controller = camObj.GetComponent<TMPro.Examples.CameraController>();
-                    if (controller != null) controller.CameraTarget = playerObject.transform;
-                }
-            }
+            // Camera is now part of the player prefab, no need to instantiate separately
+            // Singleplayer: Uses AdvancedCameraController in the scene (if needed)
+            // Multiplayer: Each player prefab has its own camera as a child
         }
 
         // --- CORRECTED MAP GENERATION LOGIC ---
@@ -967,20 +1091,8 @@ public class GameManager : NetworkBehaviour
 
     public void RestartGame()
     {
-        if (isP2P)
-        {
-            // Proper shutdown logic
-            if (NetworkManager.Singleton != null)
-            {
-                NetworkManager.Singleton.Shutdown();
-            }
-            if (Instance != null) Destroy(Instance.gameObject);
-            SceneManager.LoadScene(0);
-            return;
-        }
-
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        Debug.Log("[GameManager] RestartGame() called. Redirecting to HandlePlayAgain() for unified behavior.");
+        HandlePlayAgain();
     }
 
     public void RequestPause(bool showMenu = false)

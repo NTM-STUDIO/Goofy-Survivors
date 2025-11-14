@@ -113,12 +113,22 @@ public class LobbyUI : MonoBehaviour
     /// Checks if the local player is the host and shows/hides the start button.
     /// This is now called by the HandleHostingStarted event at the correct time.
     /// </summary>
-    private void UpdateStartButtonVisibility()
+    public void UpdateStartButtonVisibility()
     {
         if (startGameButton != null)
         {
             bool isHost = NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost;
-            startGameButton.gameObject.SetActive(isHost);
+            bool isServer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
+            
+            // IsHost = IsServer && IsClient, so if we're server we should be host in this context
+            bool shouldShowButton = isHost || isServer;
+            
+            Debug.Log($"[LobbyUI] UpdateStartButtonVisibility - IsHost: {isHost}, IsServer: {isServer}, Showing button: {shouldShowButton}");
+            startGameButton.gameObject.SetActive(shouldShowButton);
+        }
+        else
+        {
+            Debug.LogWarning("[LobbyUI] UpdateStartButtonVisibility - startGameButton is NULL!");
         }
     }
 

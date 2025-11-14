@@ -17,7 +17,6 @@ public enum MutationType { None, Health, Damage, Speed }
 public class EnemyStats : NetworkBehaviour
 {
     public static event Action<EnemyStats> OnEnemyDamaged;
-    // Fires when an enemy actually takes damage with the exact amount and the attacker (server/SP only)
     public static event Action<EnemyStats, float, PlayerStats> OnEnemyDamagedWithAmount;
 
     [Header("Visuals & Effects")]
@@ -58,19 +57,19 @@ public class EnemyStats : NetworkBehaviour
 
     private Rigidbody rb;
     private SpriteRenderer enemyRenderer;
-    private Color originalColor; // This is the true original color set once in Awake
-    private Coroutine knockbackCoroutine;
+    private Color originalColor;
+    private Coroutine flashCoroutine; // OPTIMIZATION: Cached reference to the flash coroutine.
+    private Coroutine knockbackCoroutine; // OPTIMIZATION: Cached reference to the knockback coroutine.
     private float currentKnockbackResistance;
     private float originalBaseHealth;
     private float originalBaseDamage;
     private float originalMoveSpeed;
 
-    // Networked variables (server authoritative)
-    private NetworkVariable<float> netMaxHealth = new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    private NetworkVariable<float> netCurrentHealth = new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    private NetworkVariable<float> netBaseDamage = new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    private NetworkVariable<float> netMoveSpeed = new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    private NetworkVariable<int> netMutation = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<float> netMaxHealth = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<float> netCurrentHealth = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<float> netBaseDamage = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<float> netMoveSpeed = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<int> netMutation = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     void Awake()
     {
@@ -78,7 +77,6 @@ public class EnemyStats : NetworkBehaviour
         enemyRenderer = GetComponentInChildren<SpriteRenderer>();
         if (enemyRenderer != null)
         {
-            // Store the original material color to revert to after taking damage
             originalColor = enemyRenderer.color;
         }
         currentKnockbackResistance = knockbackResistance;
@@ -86,34 +84,24 @@ public class EnemyStats : NetworkBehaviour
         originalBaseHealth = baseHealth;
         originalBaseDamage = baseDamage;
         originalMoveSpeed = moveSpeed;
-        // NOTE: Do not apply random mutations here on clients. Mutation & initial stats are server-authoritative.
 
         if (popupSpawnPoint == null)
         {
-            popupSpawnPoint = this.transform;
+            popupSpawnPoint = transform;
         }
     }
 
     void Start()
     {
-        // If running with Netcode and the network is active, the server is authoritative for initial stats.
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             if (IsServer)
             {
-                float finalHealth = baseHealth;
-                if (GameManager.Instance != null)
-                {
-                    finalHealth = baseHealth * GameManager.Instance.currentEnemyHealthMultiplier;
-                }
-
-                // Apply mutation only on server so all clients get the same values.
+                float finalHealth = baseHealth * (GameManager.Instance != null ? GameManager.Instance.currentEnemyHealthMultiplier : 1f);
                 ApplyMutation();
-
                 MaxHealth = finalHealth;
                 CurrentHealth = finalHealth;
 
-                // Sync server values to clients
                 netMaxHealth.Value = MaxHealth;
                 netCurrentHealth.Value = CurrentHealth;
                 netBaseDamage.Value = baseDamage;
@@ -122,30 +110,19 @@ public class EnemyStats : NetworkBehaviour
             }
             else
             {
-                // Clients: initialize from network vars if available
                 MaxHealth = netMaxHealth.Value;
                 CurrentHealth = netCurrentHealth.Value;
                 baseDamage = netBaseDamage.Value;
                 moveSpeed = netMoveSpeed.Value;
                 CurrentMutation = (MutationType)netMutation.Value;
 
-                // Subscribe to health changes to update visuals/popups
                 netCurrentHealth.OnValueChanged += OnNetworkHealthChanged;
                 netMutation.OnValueChanged += OnNetworkMutationChanged;
             }
         }
         else
         {
-            // Single-player fallback: same behavior as before
-            float finalHealth;
-            if (GameManager.Instance != null)
-            {
-                finalHealth = baseHealth * GameManager.Instance.currentEnemyHealthMultiplier;
-            }
-            else
-            {
-                finalHealth = baseHealth;
-            }
+            float finalHealth = baseHealth * (GameManager.Instance != null ? GameManager.Instance.currentEnemyHealthMultiplier : 1f);
             MaxHealth = finalHealth;
             CurrentHealth = finalHealth;
         }
@@ -153,11 +130,9 @@ public class EnemyStats : NetworkBehaviour
 
     public void TakeDamage(float damage, bool isCritical)
     {
-        // Backward-compatible API: attacker unknown
         ApplyDamage(damage, isCritical, null);
     }
 
-    // New overload that includes attacker for lifesteal and other effects
     public void TakeDamageFromAttacker(float damage, bool isCritical, PlayerStats attacker)
     {
         ApplyDamage(damage, isCritical, attacker);
@@ -165,18 +140,14 @@ public class EnemyStats : NetworkBehaviour
 
     private void ApplyDamage(float damage, bool isCritical, PlayerStats attacker)
     {
-        // If networked and active, only the server should modify health. Clients should not directly change it.
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             if (!IsServer) 
             {
-                // Clients should request damage via ServerRpc
                 TakeDamageServerRpc(damage, isCritical);
                 return;
             }
 
-            // If this enemy hasn't finished initializing its health yet on the server,
-            // bootstrap it from MaxHealth so early server-applied damage (e.g., aura ticks) still works.
             if (netCurrentHealth.Value <= 0f)
             {
                 if (MaxHealth > 0f && CurrentHealth == 0f)
@@ -191,25 +162,20 @@ public class EnemyStats : NetworkBehaviour
             }
 
             OnEnemyDamaged?.Invoke(this);
-            if (damage > 0f)
-            {
-                OnEnemyDamagedWithAmount?.Invoke(this, damage, attacker);
-            }
+            if (damage > 0f) OnEnemyDamagedWithAmount?.Invoke(this, damage, attacker);
 
             float newHealth = netCurrentHealth.Value - damage;
             netCurrentHealth.Value = newHealth;
 
-            // Server-side: also run local visual effects for server instance
             if (damagePopupPrefab != null)
             {
-                GameObject popupGO = Instantiate(damagePopupPrefab, popupSpawnPoint.position, Quaternion.identity);
-                popupGO.GetComponent<DamagePopup>().Setup(Mathf.RoundToInt(damage), isCritical);
+                Instantiate(damagePopupPrefab, popupSpawnPoint.position, Quaternion.identity).GetComponent<DamagePopup>().Setup(Mathf.RoundToInt(damage), isCritical);
             }
 
             if (enemyRenderer != null)
             {
-                StopCoroutine("FlashColor");
-                StartCoroutine("FlashColor");
+                if (flashCoroutine != null) StopCoroutine(flashCoroutine);
+                flashCoroutine = StartCoroutine(FlashColor());
             }
 
             if (newHealth <= 0f)
@@ -219,27 +185,21 @@ public class EnemyStats : NetworkBehaviour
             return;
         }
 
-        // Single-player path (no network)
         if (CurrentHealth <= 0) return;
 
         OnEnemyDamaged?.Invoke(this);
-        if (damage > 0f)
-        {
-            OnEnemyDamagedWithAmount?.Invoke(this, damage, attacker);
-        }
-
+        if (damage > 0f) OnEnemyDamagedWithAmount?.Invoke(this, damage, attacker);
         CurrentHealth -= damage;
 
         if (damagePopupPrefab != null)
         {
-            GameObject popupGO = Instantiate(damagePopupPrefab, popupSpawnPoint.position, Quaternion.identity);
-            popupGO.GetComponent<DamagePopup>().Setup(Mathf.RoundToInt(damage), isCritical);
+            Instantiate(damagePopupPrefab, popupSpawnPoint.position, Quaternion.identity).GetComponent<DamagePopup>().Setup(Mathf.RoundToInt(damage), isCritical);
         }
 
         if (enemyRenderer != null)
         {
-            StopCoroutine("FlashColor"); 
-            StartCoroutine("FlashColor");
+            if (flashCoroutine != null) StopCoroutine(flashCoroutine);
+            flashCoroutine = StartCoroutine(FlashColor());
         }
         
         if (CurrentHealth <= 0)
@@ -256,25 +216,22 @@ public class EnemyStats : NetworkBehaviour
 
     private void OnNetworkHealthChanged(float oldValue, float newValue)
     {
-        // Update local value and show damage popup & flash if appropriate
         float damageTaken = oldValue - newValue;
         CurrentHealth = newValue;
         if (damageTaken > 0f)
         {
             if (damagePopupPrefab != null && popupSpawnPoint != null)
             {
-                GameObject popupGO = Instantiate(damagePopupPrefab, popupSpawnPoint.position, Quaternion.identity);
-                popupGO.GetComponent<DamagePopup>().Setup(Mathf.RoundToInt(damageTaken), false);
+                Instantiate(damagePopupPrefab, popupSpawnPoint.position, Quaternion.identity).GetComponent<DamagePopup>().Setup(Mathf.RoundToInt(damageTaken), false);
             }
             if (enemyRenderer != null)
             {
-                StopCoroutine("FlashColor");
-                StartCoroutine("FlashColor");
+                if (flashCoroutine != null) StopCoroutine(flashCoroutine);
+                flashCoroutine = StartCoroutine(FlashColor());
             }
         }
         if (newValue <= 0f)
         {
-            // Client-side: play any VFX or disable visuals. Actual removal is server's responsibility.
             gameObject.SetActive(false);
         }
     }
@@ -282,15 +239,13 @@ public class EnemyStats : NetworkBehaviour
     private void OnNetworkMutationChanged(int oldVal, int newVal)
     {
         CurrentMutation = (MutationType)newVal;
-        if (enemyRenderer != null)
+        if (enemyRenderer == null) return;
+        switch (CurrentMutation)
         {
-            switch (CurrentMutation)
-            {
-                case MutationType.Health: enemyRenderer.color = healthMutationColor; break;
-                case MutationType.Damage: enemyRenderer.color = damageMutationColor; break;
-                case MutationType.Speed: enemyRenderer.color = speedMutationColor; break;
-                default: enemyRenderer.color = originalColor; break;
-            }
+            case MutationType.Health: enemyRenderer.color = healthMutationColor; break;
+            case MutationType.Damage: enemyRenderer.color = damageMutationColor; break;
+            case MutationType.Speed: enemyRenderer.color = speedMutationColor; break;
+            default: enemyRenderer.color = originalColor; break;
         }
     }
 
@@ -303,12 +258,10 @@ public class EnemyStats : NetworkBehaviour
         moveSpeed = originalMoveSpeed;
         if (enemyRenderer != null)
         {
-            // Revert to the true original color
             enemyRenderer.color = originalColor;
         }
         CurrentMutation = MutationType.None;
 
-        // Sync the mutation change over network
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && IsServer)
         {
             netMutation.Value = (int)CurrentMutation;
@@ -333,20 +286,16 @@ public class EnemyStats : NetworkBehaviour
 
     public float GetAttackDamage()
     {
-        if (GameManager.Instance != null) { return baseDamage * GameManager.Instance.currentEnemyDamageMultiplier; }
-        return baseDamage;
+        return baseDamage * (GameManager.Instance != null ? GameManager.Instance.currentEnemyDamageMultiplier : 1f);
     }
 
-    // --- YOUR ORIGINAL COROUTINE RESTORED ---
     private IEnumerator FlashColor()
     {
         enemyRenderer.color = Color.red;
-        yield return new WaitForSeconds(0.15f); // Duration of the flash
+        yield return new WaitForSeconds(0.15f);
         
-        // This is the key difference: it checks the mutation status AFTER the flash.
         if (CurrentMutation != MutationType.None)
         {
-            // If it's still mutated, revert to the correct mutation color.
             switch (CurrentMutation)
             {
                 case MutationType.Health: enemyRenderer.color = healthMutationColor; break;
@@ -356,16 +305,15 @@ public class EnemyStats : NetworkBehaviour
         }
         else
         {
-            // If it's not mutated (or was just stolen), revert to the true original color.
             enemyRenderer.color = originalColor;
         }
+        flashCoroutine = null;
     }
     
     public void Die()
     {
         if (!gameObject.activeSelf) return;
 
-        // If networked AND listening, server should handle despawn so clients get the update.
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             if (IsServer)
@@ -374,7 +322,6 @@ public class EnemyStats : NetworkBehaviour
                 var netObj = GetComponent<NetworkObject>();
                 if (netObj != null)
                 {
-                    // Despawn and destroy on clients
                     netObj.Despawn(true);
                 }
                 else
@@ -384,13 +331,11 @@ public class EnemyStats : NetworkBehaviour
             }
             else
             {
-                // Clients just disable visuals until server despawns
                 gameObject.SetActive(false);
             }
         }
         else
         {
-            // Single-player fallback
             TryDropOrb();
             Destroy(gameObject);
         }
@@ -402,44 +347,38 @@ public class EnemyStats : NetworkBehaviour
         float totalChance = 0f;
         foreach (var orb in orbDrops) { totalChance += orb.dropChance; }
         if (totalChance <= 0) return;
+
         float randomValue = UnityEngine.Random.Range(0f, totalChance);
         foreach (var orb in orbDrops)
         {
             if (randomValue <= orb.dropChance)
             {
-                // Spawn orb on server if networked and listening, otherwise local instantiate
-                if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && IsServer)
+                bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+                if (isNetworked && IsServer)
                 {
-                    // Ensure orb prefab is registered for network spawn on clients
-                    TryRegisterNetworkPrefab(orb.orbPrefab);
                     GameObject spawned = Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
                     var netObj = spawned.GetComponent<NetworkObject>();
                     if (netObj == null)
                     {
-                        // Add a NetworkObject dynamically so the orb is visible to all clients
                         netObj = spawned.AddComponent<NetworkObject>();
                     }
                     netObj.Spawn(true);
                 }
-                else if (NetworkManager.Singleton == null || (NetworkManager.Singleton != null && !NetworkManager.Singleton.IsListening))
+                else if (!isNetworked)
                 {
                     Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
                 }
                 return;
             }
-            else { randomValue -= orb.dropChance; }
+            else 
+            { 
+                randomValue -= orb.dropChance; 
+            }
         }
-    }
-
-    // Ensure a prefab is registered with the NetworkManager so runtime-spawned objects can be instantiated on clients
-    private void TryRegisterNetworkPrefab(GameObject prefab)
-    {
-        RuntimeNetworkPrefabRegistry.TryRegister(prefab);
     }
     
     public void ApplyKnockback(float knockbackForce, float duration, Vector3 direction)
     {
-        // Ignore if dead/inactive or configured as unknockable
         if (!isActiveAndEnabled || CurrentHealth <= 0f) return;
         if (isUnknockable || IsKnockedBack || knockbackForce <= 0) return;
         
@@ -452,15 +391,16 @@ public class EnemyStats : NetworkBehaviour
             }
         }
         
-    // If we became inactive during network forwarding, bail out
-    if (!isActiveAndEnabled) return;
+        if (!isActiveAndEnabled) return;
 
-    float resistanceMultiplier = 1f - currentKnockbackResistance;
+        float resistanceMultiplier = 1f - currentKnockbackResistance;
         float effectiveForce = knockbackForce * resistanceMultiplier;
         float effectiveDuration = duration * resistanceMultiplier;
         if (effectiveDuration <= 0.01f) return;
+        
         if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
-    knockbackCoroutine = StartCoroutine(KnockbackRoutine(effectiveForce, effectiveDuration, direction));
+        knockbackCoroutine = StartCoroutine(KnockbackRoutine(effectiveForce, effectiveDuration, direction));
+        
         if (resistanceIncreasePerHit > 0)
         {
             currentKnockbackResistance += resistanceIncreasePerHit;
@@ -478,18 +418,20 @@ public class EnemyStats : NetworkBehaviour
     {
         IsKnockedBack = true;
         direction.y = 0; 
-    rb.linearVelocity = Vector3.zero;
+        rb.linearVelocity = Vector3.zero;
         rb.AddForce(direction.normalized * force, ForceMode.Impulse);
         yield return new WaitForSeconds(duration);
-    rb.linearVelocity = Vector3.zero;
+        rb.linearVelocity = Vector3.zero;
         IsKnockedBack = false;
         knockbackCoroutine = null;
     }
 
     private void OnDisable()
     {
-        // Unsubscribe possible handlers
-        if (netCurrentHealth != null) netCurrentHealth.OnValueChanged -= OnNetworkHealthChanged;
-        if (netMutation != null) netMutation.OnValueChanged -= OnNetworkMutationChanged;
+        if (NetworkManager.Singleton != null && !IsServer)
+        {
+            if (netCurrentHealth != null) netCurrentHealth.OnValueChanged -= OnNetworkHealthChanged;
+            if (netMutation != null) netMutation.OnValueChanged -= OnNetworkMutationChanged;
+        }
     }
 }

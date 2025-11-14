@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 using Unity.Netcode;
 
 [RequireComponent(typeof(Camera))]
-public class AdvancedCameraController : MonoBehaviour
+public class AdvancedCameraController : NetworkBehaviour
 {
     [Header("Follow Settings")]
     [SerializeField] private Transform target;
@@ -20,19 +20,62 @@ public class AdvancedCameraController : MonoBehaviour
     [SerializeField] private float zoomSpeed = 5f; // Renamed from sensitivity for clarity
 
     private Camera cam;
+    private AudioListener audioListener;
     private Vector3 offset;
     private bool initializedOnce = false;
+    private bool isMultiplayer = false;
 
     void Awake()
     {
         cam = GetComponent<Camera>();
-        // Disable camera on dedicated server (no local client rendering)
-        var nm = NetworkManager.Singleton;
-        if (nm != null && nm.IsServer && !nm.IsClient)
+        audioListener = GetComponent<AudioListener>();
+        
+        // Auto-assign parent (player) as target if not manually set
+        if (target == null && transform.parent != null)
+        {
+            target = transform.parent;
+            Debug.Log($"[AdvancedCameraController] Auto-assigned parent as target: {target.name}");
+        }
+        
+        // Check if we're in multiplayer mode - NetworkManager must exist AND be actively listening
+        isMultiplayer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        
+        Debug.Log($"[AdvancedCameraController] Awake on {gameObject.name}, isMultiplayer: {isMultiplayer}");
+        
+        // In multiplayer, disable by default until we know if we're the owner
+        // In singleplayer, keep camera and audio listener enabled
+        if (isMultiplayer)
         {
             if (cam != null) cam.enabled = false;
-            enabled = false;
-            return;
+            if (audioListener != null) audioListener.enabled = false;
+            Debug.Log($"[AdvancedCameraController] Multiplayer mode - camera disabled until ownership confirmed");
+        }
+        else
+        {
+            // In singleplayer, camera stays enabled
+            if (cam != null) cam.enabled = true;
+            if (audioListener != null) audioListener.enabled = true;
+            Debug.Log($"[AdvancedCameraController] Singleplayer mode - camera enabled");
+        }
+    }
+    
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        
+        // Only enable camera and audio listener for the local player (owner)
+        bool shouldBeActive = IsOwner;
+        
+        if (cam != null)
+        {
+            cam.enabled = shouldBeActive;
+            Debug.Log($"[AdvancedCameraController] Multiplayer camera set to: {shouldBeActive} (IsOwner: {IsOwner})");
+        }
+        
+        if (audioListener != null)
+        {
+            audioListener.enabled = shouldBeActive;
+            Debug.Log($"[AdvancedCameraController] Multiplayer AudioListener set to: {shouldBeActive} (IsOwner: {IsOwner})");
         }
     }
 
@@ -42,20 +85,18 @@ public class AdvancedCameraController : MonoBehaviour
         cam.orthographic = true;
         cam.orthographicSize = 20; // Default ortho zoom is 20
 
-      /*  if (target == null)
+        // If target was assigned (either manually or auto-assigned to parent), calculate offset
+        if (target != null)
         {
-            if (!TryAssignTargetByTag())
-            {
-                Debug.LogError("Camera Target not assigned!");
-                return;
-            }
+            offset = transform.position - target.position;
+            initializedOnce = true;
+            Debug.Log($"[AdvancedCameraController] Initialized with target: {target.name}, offset: {offset}");
         }
         else
         {
-            offset = transform.position - target.position;
-        }*/
-        // Attempt to bind immediately if a local player exists
-        TryAssignTargetByTag();
+            // Fallback: try to find player by tag (for scene cameras)
+            TryAssignTargetByTag();
+        }
     }
 
     void Update()
@@ -68,6 +109,9 @@ public class AdvancedCameraController : MonoBehaviour
     // Use LateUpdate to ensure the player has finished moving for the frame.
     void LateUpdate()
     {
+        // In multiplayer, only update camera if this is the owner's camera
+        if (isMultiplayer && !IsOwner) return;
+        
         if (target == null && !TryAssignTargetByTag()) return;
 
         // The follow logic remains the same
@@ -86,6 +130,9 @@ public class AdvancedCameraController : MonoBehaviour
     // --- UPDATED: This function polls the mouse directly every frame ---
     private void HandleScrollZoom()
     {
+        // In multiplayer, only allow zoom for the owner's camera
+        if (isMultiplayer && !IsOwner) return;
+        
         if (Mouse.current == null) return;
         
         // Read the raw scroll value directly from the mouse device

@@ -24,23 +24,12 @@ public class EnemyMovement : NetworkBehaviour
     [SerializeField] private float selfKnockbackForce = 50f;
     [SerializeField] private float selfKnockbackDuration = 0.5f;
 
-    [Header("Crowd Avoidance")]
-    [Tooltip("How far this enemy pushes away other enemies while chasing the player.")]
-    [SerializeField, Min(0f)] private float separationRadius = 1.75f;
-    [Tooltip("Strength of the separation steering. Tweak to balance between spacing and direct pursuit.")]
-    [SerializeField, Min(0f)] private float separationWeight = 2.5f;
-    [Tooltip("Optional layer mask used to detect other enemies. Leave empty to search all layers.")]
-    [SerializeField] private LayerMask separationMask = ~0;
-
     [Header("Debug")]
     [SerializeField] private bool showGizmos = true;
 
-    [Header("Isometric Nerf (optional)")]
-    [Tooltip("If enabled, applies an extra nerf to the world X component to compensate for isometric projection horizontal speed.")]
-    [SerializeField] private bool tryNerfHorizontal = false;
-    [Tooltip("Multiplier applied to the world X component of movement when nerf is enabled (0-1).")]
-    [Range(0f, 1f)]
-    [SerializeField] private float horizontalNerfMultiplier = 0.56f;
+    [Header("Isometric / Screen-space Correction")]
+    [Tooltip("If true, uses camera-aware screen-space correction to equalize perceived speed.")]
+    [SerializeField] private bool useScreenSpaceCorrection = true;
 
     // --- Private Variables ---
     private Transform player;
@@ -51,19 +40,12 @@ public class EnemyMovement : NetworkBehaviour
     private float nextAttackTime = 0f;
 
     // Direction that can be set externally by pathfinding
-    private Vector3 targetDirection = Vector3.zero;
-    public Vector3 TargetDirection
-    {
-        get => targetDirection;
-        set => targetDirection = value;
-    }
+    public Vector3 TargetDirection { get; set; } = Vector3.zero;
 
     // Debug variables
     private Vector3 debugIntercept;
     private Vector3 debugDestination;
     private bool hasDebugTarget;
-    private EnemyPathfinding pathfindingComponent;
-    private readonly Collider[] separationBuffer = new Collider[16];
 
     private void Awake()
     {
@@ -75,36 +57,41 @@ public class EnemyMovement : NetworkBehaviour
 
         rb.useGravity = false;
         rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
-
-        pathfindingComponent = GetComponent<EnemyPathfinding>();
     }
 
     private void FixedUpdate()
     {
-        // Only the server should simulate enemy movement. Clients receive position updates via NetworkTransform or custom sync.
+        // Only the server should simulate enemy movement.
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
 
-        // Find the closest NON-DOWNED player using authoritative lists (Netcode) or scene scan (SP)
-        FindClosestActivePlayer(out player, out playerRb);
-
+        // --- KNOCKBACK FIX ---
         if (stats.IsKnockedBack)
         {
-            // While knocked back, do not override physics-driven motion; just skip AI movement.
             return;
         }
+
+        // --- PERFORMANCE OPTIMIZATION ---
+        if (PlayerTargetManager.Instance != null)
+        {
+            player = PlayerTargetManager.Instance.ClosestPlayer;
+            if (player != null)
+            {
+                playerRb = player.GetComponent<Rigidbody>();
+            }
+        }
+
         if (player == null)
         {
-            // No valid (alive) target -> stop
             rb.linearVelocity = Vector3.zero;
             hasDebugTarget = false;
             return;
         }
 
         Vector3 direction;
-        if (targetDirection != Vector3.zero)
+        if (TargetDirection != Vector3.zero)
         {
-            direction = targetDirection;
-            targetDirection = Vector3.zero; // Reset after using
+            direction = TargetDirection;
+            TargetDirection = Vector3.zero; // Consume the direction from pathfinding.
         }
         else
         {
@@ -113,14 +100,7 @@ public class EnemyMovement : NetworkBehaviour
             direction = targetPosition - enemyPosition;
         }
 
-    // Apply simple neighbor separation so mobs keep some spacing while pursuing.
-    Vector3 separation = separationWeight <= 0f || separationRadius <= 0f ? Vector3.zero : ComputeSeparationOffset();
-        if (separation != Vector3.zero)
-        {
-            direction += separation * separationWeight;
-        }
-
-        // XZ only
+        // XZ plane only
         direction.y = 0f;
         if (direction.sqrMagnitude <= 0.0001f)
         {
@@ -129,89 +109,141 @@ public class EnemyMovement : NetworkBehaviour
             return;
         }
 
-        // Diagonal compensation (same feel as player)
-        float diagonalCompensation = 1f;
-        if (Mathf.Abs(direction.x) > 0.1f && Mathf.Abs(direction.z) > 0.1f)
+        Vector3 velocity;
+
+        if (useScreenSpaceCorrection && Camera.main != null)
         {
-            diagonalCompensation = 0.70710678f; // 1/sqrt(2)
+            velocity = ComputeWorldVelocityForEqualScreenSpeed(direction, Camera.main, stats.moveSpeed);
+        }
+        else
+        {
+            // Fallback: simple pre-normalization X nerf (if you still want it off)
+            Vector3 dir = new Vector3(direction.x, 0f, direction.z);
+            dir.x *= 0.70710678f; // optional: classic iso factor
+            velocity = dir.normalized * stats.moveSpeed;
         }
 
-        Vector3 velocity = direction.normalized * stats.moveSpeed * diagonalCompensation;
+        rb.linearVelocity = velocity;
 
-        // Optional isometric horizontal nerf on world X axis
-        if (tryNerfHorizontal)
-        {
-            velocity.x *= Mathf.Clamp01(horizontalNerfMultiplier);
-        }
-
-    rb.linearVelocity = velocity;
-
-        // Debug
         debugDestination = transform.position + direction;
         hasDebugTarget = true;
     }
 
-    private void FindClosestActivePlayer(out Transform closest, out Rigidbody closestRb)
+    /// <summary>
+    /// Compute a world-space velocity (units/sec) that makes the motion appear to have
+    /// equal screen-space speed in the direction of 'worldDir'.
+    /// This estimates the mapping of small world steps in X/Z to screen space and
+    /// then solves a 2x2 system for the needed world delta per second.
+    /// </summary>
+    private Vector3 ComputeWorldVelocityForEqualScreenSpeed(Vector3 worldDir, Camera cam, float worldSpeed)
     {
-        closest = null;
-        closestRb = null;
-        float minDist = float.MaxValue;
+        // Small epsilon (in world units) for finite differencing
+        const float eps = 0.05f;
 
-        var nm = NetworkManager.Singleton;
-        if (nm != null && nm.IsListening)
+        Vector3 pos = transform.position;
+        Vector3 screenPos = cam.WorldToScreenPoint(pos);
+        // sample how a +eps step in world X and world Z maps to screen (pixels)
+        Vector3 s_dx = cam.WorldToScreenPoint(pos + new Vector3(eps, 0f, 0f)) - screenPos;
+        Vector3 s_dz = cam.WorldToScreenPoint(pos + new Vector3(0f, 0f, eps)) - screenPos;
+        s_dx.z = 0f;
+        s_dz.z = 0f;
+
+        // if projection is degenerate for some reason, fallback to simple normalized world direction
+        if (s_dx.sqrMagnitude < 1e-8f || s_dz.sqrMagnitude < 1e-8f)
         {
-            // P2P: iterate through connected clients' PlayerObjects
-            foreach (var client in nm.ConnectedClientsList)
-            {
-                if (client?.PlayerObject == null) continue;
-                var ps = client.PlayerObject.GetComponent<PlayerStats>();
-                if (ps == null || ps.IsDowned) continue;
-                float dist = Vector3.Distance(transform.position, ps.transform.position);
-                if (dist < minDist)
-                {
-                    minDist = dist;
-                    closest = ps.transform;
-                    closestRb = ps.GetComponent<Rigidbody>();
-                }
-            }
+            return worldDir.normalized * worldSpeed;
         }
-        else
+
+        // Build 2x2 matrix A where columns are screen-per-world-unit for X and Z
+        // A = [ s_dx/eps  s_dz/eps ] (each column is a 2-vector)
+        float a11 = s_dx.x / eps;
+        float a21 = s_dx.y / eps;
+        float a12 = s_dz.x / eps;
+        float a22 = s_dz.y / eps;
+
+        // desired screen-direction (pixels) normalized
+        Vector3 screenTarget = cam.WorldToScreenPoint(transform.position + worldDir) - screenPos;
+        screenTarget.z = 0f;
+        if (screenTarget.sqrMagnitude < 1e-6f)
         {
-            // Single-player/editor: scan scene for PlayerStats
-            var all = Object.FindObjectsByType<PlayerStats>(FindObjectsSortMode.None);
-            foreach (var ps in all)
-            {
-                if (ps == null || ps.IsDowned) continue;
-                float dist = Vector3.Distance(transform.position, ps.transform.position);
-                if (dist < minDist)
-                {
-                    minDist = dist;
-                    closest = ps.transform;
-                    closestRb = ps.GetComponent<Rigidbody>();
-                }
-            }
+            // extremely close; fallback
+            return worldDir.normalized * worldSpeed;
         }
+
+        Vector3 screenDirNorm = screenTarget.normalized;
+
+        // Choose a sensible target *screen speed* (pixels/sec).
+        // We'll choose the baseline as the average pixel speed produced by moving 1 world unit along X and Z,
+        // scaled by the desired worldSpeed (units/sec). This gives a screen speed "baseline" consistent with worldSpeed.
+        float pixelsPerWorldX = s_dx.magnitude / eps;
+        float pixelsPerWorldZ = s_dz.magnitude / eps;
+        float baselinePixelsPerWorld = (pixelsPerWorldX + pixelsPerWorldZ) * 0.5f;
+
+        // desired screen speed in pixels/sec
+        float desiredScreenSpeed = baselinePixelsPerWorld * worldSpeed;
+
+        // desired screen velocity (pixels/sec) vector
+        Vector2 desiredScreenVel = screenDirNorm * desiredScreenSpeed;
+
+        // We need desiredScreenDelta over one fixed step:
+        float dt = Time.fixedDeltaTime;
+        Vector2 desiredScreenDelta = desiredScreenVel * dt; // pixels per fixed step
+
+        // Solve A * worldDelta = desiredScreenDelta
+        // Where worldDelta = [dxUnits; dzUnits] (world units moved this fixed step)
+        // A = 2x2 matrix built above
+        // Compute inverse of A (2x2)
+        float det = a11 * a22 - a12 * a21;
+
+        if (Mathf.Abs(det) < 1e-8f)
+        {
+            // Degenerate mapping — fallback to normalized world direction
+            return worldDir.normalized * worldSpeed;
+        }
+
+        // inverse A
+        float inv11 = a22 / det;
+        float inv12 = -a12 / det;
+        float inv21 = -a21 / det;
+        float inv22 = a11 / det;
+
+        // worldDeltaUnits = A^{-1} * desiredScreenDelta
+        float worldDeltaX = inv11 * desiredScreenDelta.x + inv12 * desiredScreenDelta.y;
+        float worldDeltaZ = inv21 * desiredScreenDelta.x + inv22 * desiredScreenDelta.y;
+
+        // Now compute world velocity (units/sec) from delta per fixed step
+        float worldVelX = worldDeltaX / dt;
+        float worldVelZ = worldDeltaZ / dt;
+
+        // Final world velocity vector
+        Vector3 result = new Vector3(worldVelX, 0f, worldVelZ);
+
+        // If result is NaN or infinite, fallback
+        if (float.IsNaN(result.x) || float.IsNaN(result.z) || float.IsInfinity(result.x) || float.IsInfinity(result.z))
+            return worldDir.normalized * worldSpeed;
+
+        return result;
     }
 
-    private void OnTriggerStay(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-        // Only server should handle attack hits to remain authoritative.
+        // Server is authoritative for attacks.
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
 
         if (other.CompareTag("Player") && Time.time >= nextAttackTime)
         {
-            // Ignore downed players entirely
             var targetPs = other.GetComponentInParent<PlayerStats>();
-            if (targetPs != null && targetPs.IsDowned) return;
+            if (targetPs == null || targetPs.IsDowned) return;
 
             nextAttackTime = Time.time + attackCooldown;
-            // Apply damage via GameManager so it mirrors to the owning client as well
+
             var netObj = other.GetComponentInParent<NetworkObject>();
-            if (netObj != null)
+            if (netObj != null && GameManager.Instance != null)
             {
                 float dmg = stats.GetAttackDamage();
-                GameManager.Instance?.ServerApplyPlayerDamage(netObj.OwnerClientId, dmg, transform.position, null);
+                GameManager.Instance.ServerApplyPlayerDamage(netObj.OwnerClientId, dmg, transform.position, null);
             }
+
             Vector3 knockbackDirection = (transform.position - other.transform.position).normalized;
             stats.ApplyKnockback(selfKnockbackForce, selfKnockbackDuration, knockbackDirection);
         }
@@ -227,6 +259,7 @@ public class EnemyMovement : NetworkBehaviour
         {
             Vector3 velocity = playerRb ? playerRb.linearVelocity : Vector3.zero;
             velocity.y = 0;
+            // A simple fallback if the player is standing still
             if (velocity.sqrMagnitude < 0.001f)
             {
                 velocity = (playerPosition - enemyPosition).normalized * stats.moveSpeed;
@@ -259,41 +292,6 @@ public class EnemyMovement : NetworkBehaviour
         if (roll < flankThreshold) behaviour = PursuitBehaviour.PredictiveFlank;
         else if (roll < predictiveThreshold) behaviour = PursuitBehaviour.Predictive;
         else behaviour = PursuitBehaviour.Direct;
-    }
-
-    private Vector3 ComputeSeparationOffset()
-    {
-        int hitCount = Physics.OverlapSphereNonAlloc(transform.position, separationRadius, separationBuffer, separationMask, QueryTriggerInteraction.Ignore);
-        if (hitCount == 0) return Vector3.zero;
-
-        Vector3 offset = Vector3.zero;
-        int contributing = 0;
-        float radius = Mathf.Max(separationRadius, 0.001f);
-
-        for (int i = 0; i < hitCount; i++)
-        {
-            Collider col = separationBuffer[i];
-            if (col == null) continue;
-            if (col.attachedRigidbody == rb) continue;
-
-            EnemyMovement otherMovement = col.GetComponentInParent<EnemyMovement>();
-            if (otherMovement == null || otherMovement == this) continue;
-
-            Vector3 delta = transform.position - otherMovement.transform.position;
-            delta.y = 0f;
-            float sqrMag = delta.sqrMagnitude;
-            if (sqrMag < 0.0001f) continue;
-
-            float distance = Mathf.Sqrt(sqrMag);
-            float strength = 1f - Mathf.Clamp01(distance / radius);
-            if (strength <= 0f) continue;
-
-            offset += delta.normalized * strength;
-            contributing++;
-        }
-
-        if (contributing == 0) return Vector3.zero;
-        return offset / contributing;
     }
 
 #if UNITY_EDITOR

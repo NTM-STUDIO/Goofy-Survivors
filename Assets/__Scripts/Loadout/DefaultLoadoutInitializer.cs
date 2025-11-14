@@ -61,6 +61,8 @@ public class DefaultLoadoutInitializer : MonoBehaviour
             // Primeira vez ou nunca configurou - usar defaults aleatórios
             Debug.Log("[DefaultLoadoutInitializer] First time or no loadout configured - using random defaults");
             LoadoutSelections.EnsureValidDefaults();
+            LoadoutSelections.SaveToPlayerPrefs(); // Garante persistência dos defaults
+            Debug.Log("[DefaultLoadoutInitializer] Saved random defaults to PlayerPrefs");
         }
 
         Debug.Log($"[DefaultLoadoutInitializer] FINAL LOADOUT: Character={LoadoutSelections.SelectedCharacterPrefab?.name}, Weapon={LoadoutSelections.SelectedWeapon?.name}, Runes={LoadoutSelections.SelectedRunes?.Count ?? 0}");

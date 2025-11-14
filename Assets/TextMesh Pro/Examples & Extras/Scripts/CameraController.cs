@@ -1,18 +1,16 @@
 using UnityEngine;
 using System.Collections;
-
+using Unity.Netcode;
 
 namespace TMPro.Examples
 {
     
-    public class CameraController : MonoBehaviour
+    public class CameraController : NetworkBehaviour
     {
-        public enum CameraModes { Follow, Isometric, Free }
+        public enum CameraModes { Follow, Isometric }
 
         private Transform cameraTransform;
-        private Transform dummyTarget;
-
-        public Transform CameraTarget;
+        private Transform target; // Parent (player) used as follow target
 
         public float FollowDistance = 30.0f;
         public float MaxFollowDistance = 100.0f;
@@ -42,6 +40,10 @@ namespace TMPro.Examples
         private Vector3 moveVector;
         private float mouseWheel;
 
+        private Camera cam;
+        private AudioListener audioListener;
+        private bool isMultiplayer = false;
+
         // Controls for Touches on Mobile devices
         //private float prev_ZoomDelta;
 
@@ -52,6 +54,8 @@ namespace TMPro.Examples
 
         void Awake()
         {
+            Debug.Log($"[CameraController] AWAKE called on {gameObject.name}, parent: {(transform.parent != null ? transform.parent.name : "NULL")}");
+            
             if (QualitySettings.vSyncCount > 0)
                 Application.targetFrameRate = 60;
             else
@@ -62,231 +66,139 @@ namespace TMPro.Examples
 
             cameraTransform = transform;
             previousSmoothing = MovementSmoothing;
+            target = transform.parent; // auto-assign parent as target
+            
+            cam = GetComponent<Camera>();
+            audioListener = GetComponent<AudioListener>();
+            
+            Debug.Log($"[CameraController] Camera component: {(cam != null ? "FOUND" : "NULL")}, AudioListener: {(audioListener != null ? "FOUND" : "NULL")}");
+            
+            // Check if we're in multiplayer mode - NetworkManager must exist AND be actively listening
+            isMultiplayer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+            
+            Debug.Log($"[CameraController] NetworkManager.Singleton: {(NetworkManager.Singleton != null ? "EXISTS" : "NULL")}, IsListening: {(NetworkManager.Singleton != null ? NetworkManager.Singleton.IsListening.ToString() : "N/A")}, isMultiplayer: {isMultiplayer}");
+            
+            // In multiplayer, disable by default until we know if we're the owner
+            // In singleplayer, keep camera and audio listener enabled
+            if (isMultiplayer)
+            {
+                if (cam != null) cam.enabled = false;
+                if (audioListener != null) audioListener.enabled = false;
+                Debug.Log($"[CameraController] Multiplayer mode - camera disabled until ownership confirmed");
+            }
+            else
+            {
+                // In singleplayer, ensure camera and audio listener are enabled
+                if (cam != null) cam.enabled = true;
+                if (audioListener != null) audioListener.enabled = true;
+                Debug.Log($"[CameraController] Singleplayer mode - camera ENABLED at local pos: {transform.localPosition}");
+            }
+        }
+        
+        public override void OnNetworkSpawn()
+        {
+            base.OnNetworkSpawn();
+            
+            // Only enable camera and audio listener for the local player (owner)
+            bool shouldBeActive = IsOwner;
+            
+            if (cam != null)
+            {
+                cam.enabled = shouldBeActive;
+                Debug.Log($"[CameraController] Multiplayer camera on {gameObject.name} set to: {shouldBeActive} (IsOwner: {IsOwner})");
+            }
+            
+            if (audioListener != null)
+            {
+                audioListener.enabled = shouldBeActive;
+                Debug.Log($"[CameraController] Multiplayer AudioListener on {gameObject.name} set to: {shouldBeActive} (IsOwner: {IsOwner})");
+            }
+
+            // If no target is set, use the parent (player) transform
+            if (target == null && transform.parent != null)
+            {
+                target = transform.parent;
+                Debug.Log($"[CameraController] Target set to parent: {target.name}");
+            }
+            
+            // Camera stays at its local position as child of player - no movement needed
+            Debug.Log($"[CameraController] Camera active at local position: {transform.localPosition}, local rotation: {transform.localEulerAngles}");
         }
 
 
         // Use this for initialization
-        void Start()
-        {
-            if (CameraTarget == null)
-            {
-                // If we don't have a target (assigned by the player, create a dummy in the center of the scene).
-                dummyTarget = new GameObject("Camera Target").transform;
-                CameraTarget = dummyTarget;
-            }
-        }
+        void Start() {}
 
         // Update is called once per frame
         void LateUpdate()
         {
-            GetPlayerInput();
-
-
-            // Check if we still have a valid target
-            if (CameraTarget != null)
-            {
-                if (CameraMode == CameraModes.Isometric)
-                {
-                    desiredPosition = CameraTarget.position + Quaternion.Euler(ElevationAngle, OrbitalAngle, 0f) * new Vector3(0, 0, -FollowDistance);
-                }
-                else if (CameraMode == CameraModes.Follow)
-                {
-                    desiredPosition = CameraTarget.position + CameraTarget.TransformDirection(Quaternion.Euler(ElevationAngle, OrbitalAngle, 0f) * (new Vector3(0, 0, -FollowDistance)));
-                }
-                else
-                {
-                    // Free Camera implementation
-                }
-
-                if (MovementSmoothing == true)
-                {
-                    // Using Smoothing
-                    cameraTransform.position = Vector3.SmoothDamp(cameraTransform.position, desiredPosition, ref currentVelocity, MovementSmoothingValue * Time.fixedDeltaTime);
-                    //cameraTransform.position = Vector3.Lerp(cameraTransform.position, desiredPosition, Time.deltaTime * 5.0f);
-                }
-                else
-                {
-                    // Not using Smoothing
-                    cameraTransform.position = desiredPosition;
-                }
-
-                if (RotationSmoothing == true)
-                    cameraTransform.rotation = Quaternion.Lerp(cameraTransform.rotation, Quaternion.LookRotation(CameraTarget.position - cameraTransform.position), RotationSmoothingValue * Time.deltaTime);
-                else
-                {
-                    cameraTransform.LookAt(CameraTarget);
-                }
-
-            }
-
+            // Camera is a child of the player - it follows automatically
+            // No manual position/rotation updates needed
+            // This script only handles enabling/disabling camera based on ownership in multiplayer
         }
 
 
 
         void GetPlayerInput()
         {
-            moveVector = Vector3.zero;
-
-            // Check Mouse Wheel Input prior to Shift Key so we can apply multiplier on Shift for Scrolling
+            // Mouse scroll
             mouseWheel = Input.GetAxis("Mouse ScrollWheel");
+            int touchCount = Input.touchCount;
 
-            float touchCount = Input.touchCount;
-
-            if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) || touchCount > 0)
+            // Orbit & elevation with right mouse
+            if (Input.GetMouseButton(1))
             {
-                mouseWheel *= 10;
-
-                if (Input.GetKeyDown(KeyCode.I))
-                    CameraMode = CameraModes.Isometric;
-
-                if (Input.GetKeyDown(KeyCode.F))
-                    CameraMode = CameraModes.Follow;
-
-                if (Input.GetKeyDown(KeyCode.S))
-                    MovementSmoothing = !MovementSmoothing;
-
-
-                // Check for right mouse button to change camera follow and elevation angle
-                if (Input.GetMouseButton(1))
+                mouseY = Input.GetAxis("Mouse Y");
+                mouseX = Input.GetAxis("Mouse X");
+                if (Mathf.Abs(mouseY) > 0.01f)
                 {
-                    mouseY = Input.GetAxis("Mouse Y");
-                    mouseX = Input.GetAxis("Mouse X");
-
-                    if (mouseY > 0.01f || mouseY < -0.01f)
-                    {
-                        ElevationAngle -= mouseY * MoveSensitivity;
-                        // Limit Elevation angle between min & max values.
-                        ElevationAngle = Mathf.Clamp(ElevationAngle, MinElevationAngle, MaxElevationAngle);
-                    }
-
-                    if (mouseX > 0.01f || mouseX < -0.01f)
-                    {
-                        OrbitalAngle += mouseX * MoveSensitivity;
-                        if (OrbitalAngle > 360)
-                            OrbitalAngle -= 360;
-                        if (OrbitalAngle < 0)
-                            OrbitalAngle += 360;
-                    }
+                    ElevationAngle -= mouseY * MoveSensitivity;
+                    ElevationAngle = Mathf.Clamp(ElevationAngle, MinElevationAngle, MaxElevationAngle);
                 }
-
-                // Get Input from Mobile Device
-                if (touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Moved)
+                if (Mathf.Abs(mouseX) > 0.01f)
                 {
-                    Vector2 deltaPosition = Input.GetTouch(0).deltaPosition;
-
-                    // Handle elevation changes
-                    if (deltaPosition.y > 0.01f || deltaPosition.y < -0.01f)
-                    {
-                        ElevationAngle -= deltaPosition.y * 0.1f;
-                        // Limit Elevation angle between min & max values.
-                        ElevationAngle = Mathf.Clamp(ElevationAngle, MinElevationAngle, MaxElevationAngle);
-                    }
-
-
-                    // Handle left & right 
-                    if (deltaPosition.x > 0.01f || deltaPosition.x < -0.01f)
-                    {
-                        OrbitalAngle += deltaPosition.x * 0.1f;
-                        if (OrbitalAngle > 360)
-                            OrbitalAngle -= 360;
-                        if (OrbitalAngle < 0)
-                            OrbitalAngle += 360;
-                    }
-
+                    OrbitalAngle += mouseX * MoveSensitivity;
                 }
-
-                // Check for left mouse button to select a new CameraTarget or to reset Follow position
-                if (Input.GetMouseButton(0))
-                {
-                    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                    RaycastHit hit;
-
-                    if (Physics.Raycast(ray, out hit, 300, 1 << 10 | 1 << 11 | 1 << 12 | 1 << 14))
-                    {
-                        if (hit.transform == CameraTarget)
-                        {
-                            // Reset Follow Position
-                            OrbitalAngle = 0;
-                        }
-                        else
-                        {
-                            CameraTarget = hit.transform;
-                            OrbitalAngle = 0;
-                            MovementSmoothing = previousSmoothing;
-                        }
-
-                    }
-                }
-
-
-                if (Input.GetMouseButton(2))
-                {
-                    if (dummyTarget == null)
-                    {
-                        // We need a Dummy Target to anchor the Camera
-                        dummyTarget = new GameObject("Camera Target").transform;
-                        dummyTarget.position = CameraTarget.position;
-                        dummyTarget.rotation = CameraTarget.rotation;
-                        CameraTarget = dummyTarget;
-                        previousSmoothing = MovementSmoothing;
-                        MovementSmoothing = false;
-                    }
-                    else if (dummyTarget != CameraTarget)
-                    {
-                        // Move DummyTarget to CameraTarget
-                        dummyTarget.position = CameraTarget.position;
-                        dummyTarget.rotation = CameraTarget.rotation;
-                        CameraTarget = dummyTarget;
-                        previousSmoothing = MovementSmoothing;
-                        MovementSmoothing = false;
-                    }
-
-
-                    mouseY = Input.GetAxis("Mouse Y");
-                    mouseX = Input.GetAxis("Mouse X");
-
-                    moveVector = cameraTransform.TransformDirection(mouseX, mouseY, 0);
-
-                    dummyTarget.Translate(-moveVector, Space.World);
-
-                }
-
             }
 
-            // Check Pinching to Zoom in - out on Mobile device
+            // Touch single finger rotate / elevate
+            if (touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Moved)
+            {
+                Vector2 d = Input.GetTouch(0).deltaPosition;
+                if (Mathf.Abs(d.y) > 0.01f)
+                {
+                    ElevationAngle -= d.y * 0.1f;
+                    ElevationAngle = Mathf.Clamp(ElevationAngle, MinElevationAngle, MaxElevationAngle);
+                }
+                if (Mathf.Abs(d.x) > 0.01f)
+                {
+                    OrbitalAngle += d.x * 0.1f;
+                }
+            }
+
+            // Pinch zoom
             if (touchCount == 2)
             {
-                Touch touch0 = Input.GetTouch(0);
-                Touch touch1 = Input.GetTouch(1);
-
-                Vector2 touch0PrevPos = touch0.position - touch0.deltaPosition;
-                Vector2 touch1PrevPos = touch1.position - touch1.deltaPosition;
-
-                float prevTouchDelta = (touch0PrevPos - touch1PrevPos).magnitude;
-                float touchDelta = (touch0.position - touch1.position).magnitude;
-
-                float zoomDelta = prevTouchDelta - touchDelta;
-
-                if (zoomDelta > 0.01f || zoomDelta < -0.01f)
+                Touch t0 = Input.GetTouch(0);
+                Touch t1 = Input.GetTouch(1);
+                Vector2 p0Prev = t0.position - t0.deltaPosition;
+                Vector2 p1Prev = t1.position - t1.deltaPosition;
+                float prevDist = (p0Prev - p1Prev).magnitude;
+                float dist = (t0.position - t1.position).magnitude;
+                float zoomDelta = prevDist - dist;
+                if (Mathf.Abs(zoomDelta) > 0.01f)
                 {
                     FollowDistance += zoomDelta * 0.25f;
-                    // Limit FollowDistance between min & max values.
                     FollowDistance = Mathf.Clamp(FollowDistance, MinFollowDistance, MaxFollowDistance);
                 }
-
-
             }
 
-            // Check MouseWheel to Zoom in-out
-            if (mouseWheel < -0.01f || mouseWheel > 0.01f)
+            // Mouse wheel zoom
+            if (Mathf.Abs(mouseWheel) > 0.01f)
             {
-
-                FollowDistance -= mouseWheel * 5.0f;
-                // Limit FollowDistance between min & max values.
+                FollowDistance -= mouseWheel * 5f;
                 FollowDistance = Mathf.Clamp(FollowDistance, MinFollowDistance, MaxFollowDistance);
             }
-
-
         }
     }
 }

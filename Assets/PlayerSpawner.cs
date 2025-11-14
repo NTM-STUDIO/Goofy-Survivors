@@ -7,37 +7,10 @@ public class PlayerSpawner : NetworkBehaviour
 {
     [SerializeField] private GameObject playerPrefab;
 
+    // Deprecated: Player spawning is now handled exclusively by GameManager.StartGame_P2P_Host().
     public override void OnNetworkSpawn()
     {
-        if (IsServer)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
-        }
-    }
-
-    private void OnDestroy()
-    {
-        if (NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
-        }
-    }
-
-    private void HandleClientConnected(ulong clientId)
-    {
-        if (!IsServer || playerPrefab == null) return;
-
-        // Simple spawn position spacing by clientId
-        var spawnPos = new Vector3((int)clientId * 2f, 0f, 0f);
-        var go = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
-        var netObj = go.GetComponent<NetworkObject>();
-        if (netObj == null)
-        {
-            Debug.LogError("Player prefab must have a NetworkObject component.");
-            Destroy(go);
-            return;
-        }
-        // Spawn as the player's owned object so you can use IsOwner logic
-        netObj.SpawnAsPlayerObject(clientId);
+        // Intentionally left blank to avoid duplicate spawns.
+        // Keep component in scene for now (safe to remove later).
     }
 }

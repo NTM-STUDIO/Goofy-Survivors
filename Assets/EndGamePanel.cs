@@ -87,7 +87,7 @@ public class EndGamePanel : MonoBehaviour
         UpdateEndGameStats();
 
         // Auto-save score for existing users (but don't hide the update button)
-        if (!string.IsNullOrEmpty(userId) && isExistingUser)
+        if (!string.IsNullOrEmpty(userId) && isExistingUser && database != null)
         {
             await AutoSaveScore();
         }
@@ -95,9 +95,17 @@ public class EndGamePanel : MonoBehaviour
 
     private async Task AutoSaveScore()
     {
-        var userSnapshot = await database.GetUserAsync(userId);
-        var totalsToPersist = abilityDamageTotals ?? AbilityDamageTracker.GetTotalsSnapshot();
-        if (userSnapshot.Exists)
+        if (database == null)
+        {
+            Debug.LogWarning("[EndGamePanel] Database not initialized. Cannot auto-save score.");
+            return;
+        }
+        
+        try
+        {
+            var userSnapshot = await database.GetUserAsync(userId);
+            var totalsToPersist = abilityDamageTotals ?? AbilityDamageTracker.GetTotalsSnapshot();
+            if (userSnapshot.Exists)
         {
             var userDict = (IDictionary<string, object>)userSnapshot.Value;
             int existingDamage = System.Convert.ToInt32(userDict["damage"]);
@@ -119,10 +127,21 @@ public class EndGamePanel : MonoBehaviour
             database.NewGoofer(userId, PlayerPrefs.GetString("PlayerUsername"), (int)damageDone, totalsToPersist);
             Debug.Log($"Created new entry for {PlayerPrefs.GetString("PlayerUsername")}: {(int)damageDone}");
         }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[EndGamePanel] Failed to auto-save score: {ex.Message}");
+        }
     }
 
     public async void SaveScore()
     {
+        if (database == null)
+        {
+            Debug.LogWarning("[EndGamePanel] Database not initialized. Cannot save score.");
+            return;
+        }
+        
         string username = usernameInput.text;
         if (string.IsNullOrEmpty(username))
         {
@@ -146,35 +165,42 @@ public class EndGamePanel : MonoBehaviour
         // Get existing damage score from database
         int scoreToSave = (int)damageDone;
         
-        if (isExistingUser)
+        try
         {
-            var userSnapshot = await database.GetUserAsync(userId);
-            if (userSnapshot.Exists)
+            if (isExistingUser)
             {
-                var userDict = (IDictionary<string, object>)userSnapshot.Value;
-                int existingDamage = System.Convert.ToInt32(userDict["damage"]);
-                
-                // Keep the higher score between existing and current
-                scoreToSave = Mathf.Max(existingDamage, (int)damageDone);
-                
-                if (!string.IsNullOrEmpty(oldUsername) && oldUsername != username)
+                var userSnapshot = await database.GetUserAsync(userId);
+                if (userSnapshot.Exists)
                 {
-                    Debug.Log($"Username changed from '{oldUsername}' to '{username}'. Score preserved: {scoreToSave}");
+                    var userDict = (IDictionary<string, object>)userSnapshot.Value;
+                    int existingDamage = System.Convert.ToInt32(userDict["damage"]);
+                    
+                    // Keep the higher score between existing and current
+                    scoreToSave = Mathf.Max(existingDamage, (int)damageDone);
+                    
+                    if (!string.IsNullOrEmpty(oldUsername) && oldUsername != username)
+                    {
+                        Debug.Log($"Username changed from '{oldUsername}' to '{username}'. Score preserved: {scoreToSave}");
+                    }
                 }
             }
-        }
 
-        // Save or update in database
-        var totalsToPersist = abilityDamageTotals ?? AbilityDamageTracker.GetTotalsSnapshot();
-        database.NewGoofer(userId, username, scoreToSave, totalsToPersist);
-        
-        // Update button text
-        if (buttonText != null)
-        {
-            buttonText.text = "Update Username";
+            // Save or update in database
+            var totalsToPersist = abilityDamageTotals ?? AbilityDamageTracker.GetTotalsSnapshot();
+            database.NewGoofer(userId, username, scoreToSave, totalsToPersist);
+            
+            // Update button text
+            if (buttonText != null)
+            {
+                buttonText.text = "Update Username";
+            }
+            
+            Debug.Log($"Saved/Updated: {username} with score: {scoreToSave}");
         }
-        
-        Debug.Log($"Saved/Updated: {username} with score: {scoreToSave}");
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[EndGamePanel] Failed to save score: {ex.Message}");
+        }
     }
 
     public void UpdateEndGameStats()
@@ -207,6 +233,8 @@ public class EndGamePanel : MonoBehaviour
 
     private void OnPlayAgainRestart()
     {
+        Debug.Log("[EndGamePanel] OnPlayAgainRestart() called - attempting to use SettingsManager.UI_Restart()");
+        
         // Ensure the game is not paused
         try { GameManager.Instance.RequestResume(); } catch { }
         Time.timeScale = 1f;
@@ -215,6 +243,7 @@ public class EndGamePanel : MonoBehaviour
         var settings = Object.FindFirstObjectByType<SettingsManager>(FindObjectsInactive.Include);
         if (settings != null)
         {
+            Debug.Log("[EndGamePanel] Found SettingsManager, calling UI_Restart()");
             settings.UI_Restart();
             return;
         }

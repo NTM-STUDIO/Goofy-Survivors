@@ -1,4 +1,3 @@
-// Filename: MapGenerator.cs
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections;
@@ -28,10 +27,6 @@ public class MapGenerator : MonoBehaviour
         Debug.Log("[MapGenerator] Start() - waiting for GameManager to trigger generation.");
     }
 
-    /// <summary>
-    /// This is the single entry point for all map generation.
-    /// The GameManager calls this on everyone via an RPC.
-    /// </summary>
     public void GenerateMap()
     {
         if (hasGenerated)
@@ -40,9 +35,13 @@ public class MapGenerator : MonoBehaviour
             return;
         }
 
-        Debug.Log($"[MapGenerator] Starting map generation. Is this the Server? -> {NetworkManager.Singleton.IsServer}");
+        // --- FIX: Determine if this is a multiplayer session or single-player ---
+        bool isNetworkedSession = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        // The authority is the server in a multiplayer game, OR the player in a single-player game.
+        bool isAuthority = isNetworkedSession ? NetworkManager.Singleton.IsServer : true;
 
-        // 1. Calculate the total weight of ALL assets to create a single, unified probability pool.
+        Debug.Log($"[MapGenerator] Starting map generation. Is Authority? -> {isAuthority} (Networked: {isNetworkedSession})");
+
         float totalAssetWeight = assets.Sum(asset => asset.weight);
 
         if (totalAssetWeight <= 0)
@@ -52,7 +51,7 @@ public class MapGenerator : MonoBehaviour
             return;
         }
 
-        int numAssets = Mathf.RoundToInt(mapWidth * mapHeight * assetDensity);
+        int numAssets = Mathf.RoundToInt((float)mapWidth * mapHeight * assetDensity);
         Debug.Log($"[MapGenerator] Spawning approximately {numAssets} total assets.");
 
         float halfWidth = mapWidth * 0.5f;
@@ -61,24 +60,24 @@ public class MapGenerator : MonoBehaviour
         for (int i = 0; i < numAssets; i++)
         {
             Vector3 assetPosition = new Vector3(Random.Range(-halfWidth, halfWidth), 0f, Random.Range(-halfHeight, halfHeight));
-
-            // 2. Choose an asset from the ENTIRE pool, respecting global weights.
             AssetData chosenAsset = GetRandomAsset(totalAssetWeight);
             if (chosenAsset == null || chosenAsset.assetPrefab == null) continue;
 
-            // 3. Decide HOW to spawn based on the asset's flag.
             if (chosenAsset.isNetworked)
             {
-                // If the chosen asset is networked, ONLY THE SERVER is allowed to spawn it.
-                if (NetworkManager.Singleton.IsServer)
+                // --- FIX: Only the authority can spawn networked/master objects ---
+                if (isAuthority)
                 {
                     GameObject instance = Instantiate(chosenAsset.assetPrefab, assetPosition, Quaternion.identity, transform);
                     var netObj = instance.GetComponent<NetworkObject>();
-                    if (netObj != null)
+
+                    // If we are in a multiplayer game, we also need to spawn it over the network.
+                    // In single-player, we just instantiate it.
+                    if (isNetworkedSession && netObj != null)
                     {
                         netObj.Spawn(true);
                     }
-                    else
+                    else if (netObj == null)
                     {
                         Debug.LogError($"Asset '{instance.name}' is marked as Networked but is missing a NetworkObject component!", instance);
                     }
@@ -86,19 +85,16 @@ public class MapGenerator : MonoBehaviour
             }
             else
             {
-                // If the chosen asset is NOT networked, it's a local cosmetic.
-                // EVERYONE (server and clients) spawns their own local copy.
+                // Local cosmetics are spawned by everyone (clients and server/single-player). This logic is correct.
                 Instantiate(chosenAsset.assetPrefab, assetPosition, Quaternion.identity, transform);
             }
         }
         hasGenerated = true;
     }
 
-    /// <summary>
-    /// Selects a random asset from the main list based on the total weight provided.
-    /// </summary>
     private AssetData GetRandomAsset(float totalWeight)
     {
+        if (totalWeight <= 0) return null;
         float randomValue = Random.Range(0, totalWeight);
         float cumulative = 0f;
 
@@ -108,35 +104,71 @@ public class MapGenerator : MonoBehaviour
             if (randomValue <= cumulative)
                 return asset;
         }
-        // Fallback in case of floating point inaccuracies
         return assets.Length > 0 ? assets[assets.Length - 1] : null;
     }
 
-    /// <summary>
-    /// Resets the generator for a new game by destroying all spawned assets and resetting the flag.
-    /// </summary>
     public void ResetGenerator()
     {
         hasGenerated = false;
         
-        // Iterate through all child objects of this MapGenerator
+        // --- FIX: Determine session type to correctly despawn/destroy objects ---
+        bool isNetworkedSession = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        bool isServer = isNetworkedSession && NetworkManager.Singleton.IsServer;
+
+        // Use a temporary list to avoid issues with modifying the collection while iterating
+        List<GameObject> childrenToDestroy = new List<GameObject>();
         foreach (Transform child in transform)
         {
-            var netObj = child.GetComponent<NetworkObject>();
-            if (netObj != null)
+            childrenToDestroy.Add(child.gameObject);
+        }
+
+        foreach (var childGO in childrenToDestroy)
+        {
+            var netObj = childGO.GetComponent<NetworkObject>();
+            
+            // If it's a spawned network object in a server- authoritative session...
+            if (netObj != null && isServer && netObj.IsSpawned)
             {
-                // If it's a networked object, only the server can (and should) despawn it.
-                if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && netObj.IsSpawned)
-                {
-                    netObj.Despawn(true); // true = destroy the object on all clients
-                }
+                // Only the server can despawn it.
+                netObj.Despawn(true);
             }
             else
             {
-                // If it's a non-networked (local) object, anyone can destroy their own copy.
-                Destroy(child.gameObject);
+                // This will correctly destroy:
+                // 1. All local (non-networked) objects on every client/server.
+                // 2. All "networked" objects when playing in single-player mode.
+                Destroy(childGO);
             }
         }
         Debug.Log("[MapGenerator] Reset: cleared generated children and reset flag.");
+    }
+
+    public void ClearMap()
+    {
+        Debug.Log("[MapGenerator] Clearing existing map...");
+
+        // This existing method handles networked and local objects that are children of the generator
+        ResetGenerator();
+
+        // Destroy any remaining objects on the Terrain layer that might not be children
+        int terrainLayer = LayerMask.NameToLayer("Terrain");
+        if (terrainLayer != -1)
+        {
+            GameObject[] allObjects = FindObjectsByType<GameObject>(FindObjectsSortMode.None);
+            foreach (var obj in allObjects)
+            {
+                if (obj != null && obj.layer == terrainLayer)
+                {
+                    Destroy(obj);
+                }
+            }
+            Debug.Log("[MapGenerator] Destroyed all objects on Terrain layer.");
+        }
+        else
+        {
+            Debug.LogWarning("[MapGenerator] Terrain layer not found!");
+        }
+
+        Debug.Log("[MapGenerator] Map cleared successfully.");
     }
 }

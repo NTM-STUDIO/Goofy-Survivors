@@ -79,20 +79,26 @@ public class EnemySpawner : NetworkBehaviour
         // 3. Reset the wave index for the next game
         waveIndex = 0;
 
-        // 4. Find and destroy all existing enemies (SERVER ONLY)
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        // 4. Find and destroy all existing enemies
+        // In multiplayer, only the server destroys. In singleplayer, destroy directly.
+        bool shouldDestroyEnemies = (NetworkManager.Singleton == null) || 
+                                   (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer);
+
+        if (shouldDestroyEnemies)
         {
-            EnemyStats[] allEnemies = FindObjectsOfType<EnemyStats>();
-            Debug.Log($"[EnemySpawner] Server is destroying {allEnemies.Length} remaining enemies.");
+            EnemyStats[] allEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
+            Debug.Log($"[EnemySpawner] Destroying {allEnemies.Length} remaining enemies.");
 
             foreach (var enemy in allEnemies)
             {
+                if (enemy == null) continue;
+
                 var netObj = enemy.GetComponent<NetworkObject>();
                 if (netObj != null && netObj.IsSpawned)
                 {
                     netObj.Despawn(true); // Despawn and destroy the networked object
                 }
-                else if (netObj == null)
+                else
                 {
                     Destroy(enemy.gameObject);
                 }
@@ -134,7 +140,7 @@ public class EnemySpawner : NetworkBehaviour
                     playerPositions.Add(player.transform.position);
                 }
             }
-            Debug.Log($"EnemySpawner: Found {playerPositions.Count} active PlayerStats.");
+            //Debug.Log($"EnemySpawner: Found {playerPositions.Count} active PlayerStats.");
             return;
         }
 

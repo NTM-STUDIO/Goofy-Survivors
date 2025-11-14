@@ -225,15 +225,26 @@ public class UIManager : MonoBehaviour
         // --- THIS IS THE CRITICAL LOGIC ---
         // Check if the current player is the host.
         bool isHost = NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost;
+        bool isServer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
+        
+        // IsHost = IsServer && IsClient, so if we're server we should be host in this context
+        bool shouldShowButton = isHost || isServer;
+        
+        Debug.Log($"[UIManager.SetupLobbyUI] NetworkManager exists: {NetworkManager.Singleton != null}, IsHost: {isHost}, IsServer: {isServer}, Showing button: {shouldShowButton}");
 
         // Only show the "Start Game" button if the player is the host.
         if (startGameButton != null)
         {
-            startGameButton.gameObject.SetActive(isHost);
+            Debug.Log($"[UIManager.SetupLobbyUI] Setting startGameButton active to: {shouldShowButton}");
+            startGameButton.gameObject.SetActive(shouldShowButton);
+        }
+        else
+        {
+            Debug.LogWarning("[UIManager.SetupLobbyUI] startGameButton is NULL! Check Inspector assignment.");
         }
 
         // You could also update status text here
-        if (isHost)
+        if (shouldShowButton)
         {
             SetConnectionStatus("You are the host. Waiting for players...", Color.white);
         }
