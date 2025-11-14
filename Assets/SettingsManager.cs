@@ -16,14 +16,10 @@ public class SettingsManager : MonoBehaviour
     [Tooltip("The dropdown for selecting the FPS limit.")]
     public TMP_Dropdown fpsDropdown;
 
-    [Header("Pause Actions (Buttons/Groups)")]
-    [Tooltip("Shown only for host. Should contain Restart + Leave for host.")]
-    public GameObject hostButtonsGroup;
-    [Tooltip("Shown only for clients. Should contain Leave for client.")]
-    public GameObject clientButtonsGroup;
-    [Tooltip("Restart round button (host-only).")]
+    [Header("Pause Actions (Buttons)")]
+    [Tooltip("Restart round button (host-only in multiplayer).")]
     public UnityEngine.UI.Button restartButton;
-    [Tooltip("Leave button (host: back to lobby for all, client: disconnect and go to lobby or menu).")]
+    [Tooltip("Leave button (visible to all players).")]
     public UnityEngine.UI.Button leaveButton;
 
     [Header("Scene Names & Prefabs")]
@@ -108,8 +104,6 @@ public class SettingsManager : MonoBehaviour
         }
     }
 
-    // (Inside your SettingsManager class)
-
     public void ToggleSettingsPanel()
     {
         if (settingsPanel == null)
@@ -129,8 +123,8 @@ public class SettingsManager : MonoBehaviour
         if (isPanelOpen)
         {
             GameManager.Instance.RequestPause();
-            RefreshRoleUI();
-            if (enableDebugLogs) Debug.Log("[SettingsManager] Panel opened (paused). HostGroup=" + (hostButtonsGroup && hostButtonsGroup.activeSelf) + " ClientGroup=" + (clientButtonsGroup && clientButtonsGroup.activeSelf));
+            RefreshRoleUI(); // Update button visibility every time panel opens
+            if (enableDebugLogs) Debug.Log("[SettingsManager] Panel opened (paused).");
         }
         else
         {
@@ -171,15 +165,17 @@ public class SettingsManager : MonoBehaviour
 
     private void RefreshRoleUI()
     {
-        // Show/hide host/client button groups based on NGO role
-        if (hostButtonsGroup != null)
-            hostButtonsGroup.SetActive(IsMultiplayerActive() && IsHost());
-        if (clientButtonsGroup != null)
-            clientButtonsGroup.SetActive(IsMultiplayerActive() && IsClientOnly());
-
-        // Optionally disable restart button for non-host
+        // In multiplayer, the restart button is only for the host. In singleplayer, it's always available.
         if (restartButton != null)
+        {
             restartButton.gameObject.SetActive(!IsMultiplayerActive() || IsHost());
+        }
+
+        // As requested, the leave button should now be always visible for all players.
+        if (leaveButton != null)
+        {
+            leaveButton.gameObject.SetActive(true);
+        }
     }
 
     // Host-only in MP; SP allowed
