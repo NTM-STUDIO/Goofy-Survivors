@@ -113,10 +113,30 @@ public class GameManager : NetworkBehaviour
     {
         if (!isP2P)
         {
-            // Single-player logic remains the same: reload the scene
-            Debug.Log("[GameManager] Single-player 'Play Again' clicked. Reloading scene.");
+            // Single-player: use soft restart instead of scene reload
+            Debug.Log("[GameManager] Single-player 'Play Again' clicked. Performing soft restart.");
             Time.timeScale = 1f;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            
+            try
+            {
+                uiManager?.ShowEndGamePanel(false);
+                SoftResetSinglePlayerWorld();
+                
+                // Ensure loadout selections are valid
+                LoadoutSelections.EnsureValidDefaults();
+                if (LoadoutSelections.SelectedCharacterPrefab != null)
+                {
+                    SetChosenPlayerPrefab(LoadoutSelections.SelectedCharacterPrefab);
+                }
+                
+                StartGame();
+                Debug.Log("[GameManager] Soft restart completed successfully.");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[GameManager] Soft restart failed: {ex.Message}. Falling back to scene reload.");
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            }
             return;
         }
 
@@ -544,7 +564,19 @@ public class GameManager : NetworkBehaviour
         // --- Your object cleanup logic ---
         try { var players = GameObject.FindGameObjectsWithTag("Player"); foreach (var p in players) if (p != null) Destroy(p); } catch { }
         try { var cams = FindObjectsByType<TMPro.Examples.CameraController>(FindObjectsSortMode.None); foreach (var c in cams) if (c != null) Destroy(c.gameObject); } catch { }
-        try { var accAll = FindObjectsByType<AdvancedCameraController>(FindObjectsSortMode.None); bool keptOne = false; foreach (var acc in accAll) { if (acc == null) continue; if (!keptOne) { acc.gameObject.SetActive(true); keptOne = true; } else { Destroy(acc.gameObject); } } } catch { }
+        try { 
+            var accAll = FindObjectsByType<AdvancedCameraController>(FindObjectsSortMode.None); 
+            bool keptOne = false; 
+            foreach (var acc in accAll) { 
+                if (acc == null) continue; 
+                if (!keptOne) { 
+                    acc.gameObject.SetActive(true); 
+                    keptOne = true; 
+                } else { 
+                    Destroy(acc.gameObject); 
+                } 
+            } 
+        } catch { }
         try { var enemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None); foreach (var e in enemies) if (e != null) Destroy(e.gameObject); } catch { }
         try { var projs = FindObjectsByType<ProjectileWeapon>(FindObjectsSortMode.None); foreach (var p in projs) if (p != null) Destroy(p.gameObject); } catch { }
         try { var orbiters = FindObjectsByType<OrbitingWeapon>(FindObjectsSortMode.None); foreach (var ow in orbiters) if (ow != null) Destroy(ow.gameObject); } catch { }
@@ -704,6 +736,16 @@ public class GameManager : NetworkBehaviour
             if (playerObject.GetComponent<ApplyRunesOnSpawn>() == null)
             {
                 playerObject.AddComponent<ApplyRunesOnSpawn>();
+            }
+
+            // Rebind camera to new player (singleplayer) - keeps original camera settings
+            if (!isP2P)
+            {
+                var advancedCam = FindObjectOfType<AdvancedCameraController>();
+                if (advancedCam != null)
+                {
+                    advancedCam.RebindToPlayer(playerObject.transform);
+                }
             }
 
             if (isP2P)

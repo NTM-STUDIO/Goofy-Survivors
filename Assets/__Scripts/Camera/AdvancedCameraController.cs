@@ -185,4 +185,22 @@ public class AdvancedCameraController : MonoBehaviour
             }
         }
     }
+
+    // Simple function to rebind camera to new player while keeping original behavior
+    public void RebindToPlayer(Transform newTarget)
+    {
+        if (newTarget != null)
+        {
+            target = newTarget;
+            // Keep the same offset as before, or use default if not set
+            if (!initializedOnce)
+            {
+                offset = transform.position - newTarget.position;
+            }
+            // Snap camera to player position + current offset
+            transform.position = newTarget.position + offset;
+            initializedOnce = true;
+            Debug.Log("[AdvancedCameraController] Rebound to new player");
+        }
+    }
 }
