@@ -570,15 +570,25 @@ public class GameManager : NetworkBehaviour
     {
         if (chosenPlayerPrefab == null)
         {
-            // Try to get first valid player prefab from LoadoutPanel.characters
-            var loadoutPanel = FindObjectOfType<LoadoutPanel>();
-            if (loadoutPanel != null && loadoutPanel.characters != null && loadoutPanel.characters.Count > 0)
+            // Primeiro tenta usar LoadoutSelections (garante defaults válidos)
+            LoadoutSelections.EnsureValidDefaults();
+            if (LoadoutSelections.SelectedCharacterPrefab != null)
             {
-                var firstValid = loadoutPanel.characters.FirstOrDefault(c => c != null && c.playerPrefab != null);
-                if (firstValid != null && firstValid.playerPrefab != null)
+                chosenPlayerPrefab = LoadoutSelections.SelectedCharacterPrefab;
+                Debug.Log("[GameManager] Using character from LoadoutSelections: " + chosenPlayerPrefab.name);
+            }
+            // Try to get first valid player prefab from LoadoutPanel.characters
+            else
+            {
+                var loadoutPanel = FindObjectOfType<LoadoutPanel>();
+                if (loadoutPanel != null && loadoutPanel.characters != null && loadoutPanel.characters.Count > 0)
                 {
-                    chosenPlayerPrefab = firstValid.playerPrefab;
-                    Debug.LogWarning("[GameManager] No player prefab selected, using first character prefab from LoadoutPanel: " + chosenPlayerPrefab.name);
+                    var firstValid = loadoutPanel.characters.FirstOrDefault(c => c != null && c.playerPrefab != null);
+                    if (firstValid != null && firstValid.playerPrefab != null)
+                    {
+                        chosenPlayerPrefab = firstValid.playerPrefab;
+                        Debug.LogWarning("[GameManager] No player prefab selected, using first character prefab from LoadoutPanel: " + chosenPlayerPrefab.name);
+                    }
                 }
             }
             // If still null, fallback to runtimeNetworkPrefabs
@@ -734,9 +744,11 @@ public class GameManager : NetworkBehaviour
         // --- The rest of your initialization logic ---
         RegisterRuntimePrefabs();
 
-        if (IsServer)
+        // Spawning logic: Always spawn in singleplayer, only server spawns in multiplayer
+        if (!isP2P || IsServer)
         {
             enemySpawner?.StartSpawning();
+            Debug.Log($"[GameManager] StartSpawning called (isP2P={isP2P}, IsServer={IsServer})");
         }
 
         CurrentState = GameState.Playing;
