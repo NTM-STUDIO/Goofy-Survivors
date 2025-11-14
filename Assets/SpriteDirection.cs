@@ -15,20 +15,14 @@ public class RobustIsometricController : MonoBehaviour
     public Transform firePoint;
 
     [Header("Direction Vectors (Tweak in Inspector!)")]
-    // *** NOTE: The variable names no longer match the direction, but they match the color. ***
-    // This is intentional to make the logic below work with your color mapping.
     [Tooltip("The world direction for the UP-RIGHT sprite (RED LINE)")]
     public Vector3 directionVector_Red = new Vector3(1, 0, 0);
-
     [Tooltip("The world direction for the UP-LEFT sprite (BLUE LINE)")]
     public Vector3 directionVector_Blue = new Vector3(0, 0, 1);
-
     [Tooltip("The world direction for the DOWN-RIGHT sprite (GREEN LINE)")]
     public Vector3 directionVector_Green = new Vector3(-1, 0, 0);
-
     [Tooltip("The world direction for the DOWN-LEFT sprite (YELLOW LINE)")]
     public Vector3 directionVector_Yellow = new Vector3(0, 0, -1);
-
 
     [Header("Debugging")]
     [Tooltip("Show colored lines in the Scene view to visualize the direction vectors.")]
@@ -37,21 +31,17 @@ public class RobustIsometricController : MonoBehaviour
     [Header("Manual/Inspector Overrides")]
     [Tooltip("Mirror image by swapping Left/Right sprites (does not use SpriteRenderer.flipX).")]
     public bool manualFlipImage = false;
-
     [Tooltip("When enabled, the controller will ignore player direction and use the Manual Quadrant below.")]
     public bool manualOverrideDirection = false;
-
     public enum Quadrant { UpRight, UpLeft, DownRight, DownLeft }
     [Tooltip("Selected when Manual Override Direction is enabled.")]
     public Quadrant manualQuadrant = Quadrant.DownRight;
-
     [Tooltip("Apply overrides every frame (recommended). Disable to only apply on change/validation.")]
     public bool applyOverridesEveryFrame = true;
 
-
     // --- Private References ---
     private SpriteRenderer spriteRenderer;
-    private Transform playerTransform;
+    private Transform playerTransform; // This will be updated from the PlayerTargetManager
     private Sprite currentSprite;
     private float firePointXMagnitude;
     private Vector3 _directionToPlayer; // For Gizmos
@@ -65,10 +55,7 @@ public class RobustIsometricController : MonoBehaviour
             firePointXMagnitude = Mathf.Abs(firePoint.localPosition.x);
         }
 
-        // Don't assume a single tagged Player; target will be resolved dynamically in LateUpdate
-        playerTransform = null;
-
-        // Normalize vectors on startup
+        // Normalize vectors on startup for accurate dot products
         directionVector_Red.Normalize();
         directionVector_Blue.Normalize();
         directionVector_Green.Normalize();
@@ -82,7 +69,7 @@ public class RobustIsometricController : MonoBehaviour
 
         if (manualOverrideDirection)
         {
-            // Use inspector-selected quadrant; don't resolve player direction
+            // Use inspector-selected quadrant
             switch (manualQuadrant)
             {
                 case Quadrant.UpRight:    newSprite = UpRightSprite;    newSign = 1f;  break;
@@ -90,33 +77,25 @@ public class RobustIsometricController : MonoBehaviour
                 case Quadrant.DownRight:  newSprite = DownRightSprite;  newSign = 1f;  break;
                 case Quadrant.DownLeft:   newSprite = DownLeftSprite;   newSign = -1f; break;
             }
-
-            // Store a synthetic gizmo direction that roughly matches the choice (for editor visuals)
-            switch (manualQuadrant)
-            {
-                case Quadrant.UpRight:   _directionToPlayer = directionVector_Red;    break;
-                case Quadrant.UpLeft:    _directionToPlayer = directionVector_Blue;   break;
-                case Quadrant.DownRight: _directionToPlayer = directionVector_Green;  break;
-                case Quadrant.DownLeft:  _directionToPlayer = directionVector_Yellow; break;
-            }
         }
         else
         {
-            // Resolve or refresh target each frame to avoid looking at downed players
-            if (playerTransform == null || IsTargetDowned(playerTransform))
+            // --- PERFORMANCE OPTIMIZATION ---
+            // Get the target from the central manager instead of searching every frame.
+            if (PlayerTargetManager.Instance != null)
             {
-                playerTransform = FindClosestActivePlayer();
+                playerTransform = PlayerTargetManager.Instance.ClosestPlayer;
             }
-
-            if (playerTransform == null) return;
+            
+            if (playerTransform == null) return; // If manager finds no player, do nothing.
 
             Vector3 directionToPlayer = playerTransform.position - transform.position;
             directionToPlayer.y = 0;
-            directionToPlayer.Normalize();
             
-            _directionToPlayer = directionToPlayer; // Store for gizmo
+            if (directionToPlayer.sqrMagnitude < 0.01f) return; // Don't update if too close
 
-            if (directionToPlayer.sqrMagnitude < 0.01f) return;
+            directionToPlayer.Normalize();
+            _directionToPlayer = directionToPlayer; // Store for gizmo
 
             // Calculate the dot product for each of the four directions.
             float dotRed = Vector3.Dot(directionToPlayer, directionVector_Red);
@@ -126,30 +105,13 @@ public class RobustIsometricController : MonoBehaviour
 
             float maxDot = Mathf.Max(dotRed, dotBlue, dotGreen, dotYellow);
 
-            // *** LOGIC UPDATED TO MATCH YOUR COLOR MAPPING ***
-            if (maxDot == dotRed) // Red Line
-            {
-                newSprite = UpRightSprite;
-                newSign = 1f; // Right-facing
-            }
-            else if (maxDot == dotBlue) // Blue Line
-            {
-                newSprite = UpLeftSprite;
-                newSign = -1f; // Left-facing
-            }
-            else if (maxDot == dotGreen) // Green Line
-            {
-                newSprite = DownRightSprite;
-                newSign = 1f; // Right-facing
-            }
-            else // maxDot == dotYellow (Yellow Line)
-            {
-                newSprite = DownLeftSprite;
-                newSign = -1f; // Left-facing
-            }
+            if (maxDot == dotRed)      { newSprite = UpRightSprite;   newSign = 1f; }
+            else if (maxDot == dotBlue) { newSprite = UpLeftSprite;    newSign = -1f; }
+            else if (maxDot == dotGreen){ newSprite = DownRightSprite; newSign = 1f; }
+            else                       { newSprite = DownLeftSprite;  newSign = -1f; }
         }
 
-        // Apply inspector-driven mirror (swap left/right sprites without using flipX)
+        // Apply inspector-driven mirror
         if (manualFlipImage)
         {
             if (newSprite == UpRightSprite)      { newSprite = UpLeftSprite;     newSign = -newSign; }
@@ -158,6 +120,7 @@ public class RobustIsometricController : MonoBehaviour
             else if (newSprite == DownLeftSprite){ newSprite = DownRightSprite;  newSign = -newSign; }
         }
 
+        // Flip firepoint if it exists
         if (firePoint != null)
         {
             Vector3 newFirePointPos = firePoint.localPosition;
@@ -165,6 +128,7 @@ public class RobustIsometricController : MonoBehaviour
             firePoint.localPosition = newFirePointPos;
         }
 
+        // Update the sprite only if it has changed
         if (newSprite != null && newSprite != currentSprite)
         {
             spriteRenderer.sprite = newSprite;
@@ -174,86 +138,32 @@ public class RobustIsometricController : MonoBehaviour
 
     private void OnValidate()
     {
-        // In editor, apply overrides immediately for fast iteration
         if (!Application.isPlaying || applyOverridesEveryFrame)
         {
-            // Force a one-shot update
             LateUpdate();
         }
     }
 
-    private bool IsTargetDowned(Transform t)
-    {
-        if (t == null) return true;
-        var ps = t.GetComponent<PlayerStats>();
-        return (ps == null) || ps.IsDowned;
-    }
-
-    private Transform FindClosestActivePlayer()
-    {
-        Transform closest = null;
-        float minDist = float.MaxValue;
-
-        var nm = NetworkManager.Singleton;
-        if (nm != null && nm.IsListening)
-        {
-            foreach (var client in nm.ConnectedClientsList)
-            {
-                if (client?.PlayerObject == null) continue;
-                var ps = client.PlayerObject.GetComponent<PlayerStats>();
-                if (ps == null || ps.IsDowned) continue;
-                float d = Vector3.Distance(transform.position, ps.transform.position);
-                if (d < minDist)
-                {
-                    minDist = d;
-                    closest = ps.transform;
-                }
-            }
-        }
-        else
-        {
-            // Single-player/editor: scan PlayerStats in scene
-            var all = Object.FindObjectsByType<PlayerStats>(FindObjectsSortMode.None);
-            foreach (var ps in all)
-            {
-                if (ps == null || ps.IsDowned) continue;
-                float d = Vector3.Distance(transform.position, ps.transform.position);
-                if (d < minDist)
-                {
-                    minDist = d;
-                    closest = ps.transform;
-                }
-            }
-        }
-        return closest;
-    }
-
-    // --- VISUAL DEBUGGER (Comments updated to match your mapping) ---
     private void OnDrawGizmosSelected()
     {
-        if (!showGizmos) return; // Works in editor too now
+        if (!showGizmos) return;
 
         Vector3 origin = transform.position;
         float lineLength = 2.5f;
 
-        // Only draw the white line if the game is playing
-        if(Application.isPlaying)
+        if (Application.isPlaying)
         {
             Gizmos.color = Color.white;
             Gizmos.DrawLine(origin, origin + _directionToPlayer * lineLength);
         }
 
-        // Draw Direction Vectors
-        Gizmos.color = Color.red; // Your Top-Right
-        Gizmos.DrawLine(origin, origin + directionVector_Red * lineLength);
-
-        Gizmos.color = Color.blue; // Your Top-Left
-        Gizmos.DrawLine(origin, origin + directionVector_Blue * lineLength);
-
-        Gizmos.color = Color.green; // Your Bottom-Right
-        Gizmos.DrawLine(origin, origin + directionVector_Green * lineLength);
-
-        Gizmos.color = Color.yellow; // Your Bottom-Left
-        Gizmos.DrawLine(origin, origin + directionVector_Yellow * lineLength);
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(origin, origin + directionVector_Red.normalized * lineLength);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(origin, origin + directionVector_Blue.normalized * lineLength);
+        Gizmos.color = Color.green;
+        Gizmos.DrawLine(origin, origin + directionVector_Green.normalized * lineLength);
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(origin, origin + directionVector_Yellow.normalized * lineLength);
     }
 }
