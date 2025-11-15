@@ -1382,6 +1382,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 049b2a212c669f040bb7f395333eb712, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   target: {fileID: 0}
   orthoMinSize: 25
   orthoMaxSize: 30
@@ -2625,7 +2626,7 @@ MonoBehaviour:
   bossPrefab: {fileID: 3436535658513195518, guid: 5cb7a38816e0cad4c92375cb991fce1f, type: 3}
   bossSpawnPoint: {fileID: 0}
   playerCameraPrefab: {fileID: 330585543}
-  totalGameTime: 300
+  totalGameTime: 15
   reviveRadius: 20
   reviveTime: 5
   reviveSprite: {fileID: 21300000, guid: faad5318c27ba4345981689458656aa5, type: 3}
@@ -4705,6 +4706,22 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 8478981745940144710, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
+      propertyPath: weaponRegistry
+      value: 
+      objectReference: {fileID: 11400000, guid: 414a3541d8443cd4cad6a5ea659d2804, type: 2}
+    - target: {fileID: 8478981745940144710, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
+      propertyPath: abilityStatRowPrefab
+      value: 
+      objectReference: {fileID: 8080651751416958951, guid: 60c2eb5f00d7a4d40b99f27ce1a8b44d, type: 3}
+    - target: {fileID: 8478981745940144710, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
+      propertyPath: abilityStatsContainer
+      value: 
+      objectReference: {fileID: 1487818804}
+    - target: {fileID: 8478981745940144710, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
+      propertyPath: abilityStatsScrollView
+      value: 
+      objectReference: {fileID: 1762497305}
     m_RemovedComponents:
     - {fileID: 175791973798440382, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
     - {fileID: 657562922347376077, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
@@ -6243,7 +6260,7 @@ MonoBehaviour:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
       enemyCount: 200
     - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
-      enemyCount: 5
+      enemyCount: 4
     - enemyPrefab: {fileID: 4496776415297934645, guid: 28ba9582f3e390c4dbc1cf3917ba07b9, type: 3}
       enemyCount: 1
     timeUntilNextWave: 0
@@ -6275,9 +6292,9 @@ MonoBehaviour:
   - waveName: XD
     enemies:
     - enemyPrefab: {fileID: 3628100632088497594, guid: ba70a9bcdc2136a43a532f2731d03e56, type: 3}
-      enemyCount: 4
+      enemyCount: 5
     - enemyPrefab: {fileID: 4496776415297934645, guid: 28ba9582f3e390c4dbc1cf3917ba07b9, type: 3}
-      enemyCount: 4
+      enemyCount: 2
     timeUntilNextWave: 0
     spawnInterval: 1
   - waveName: XD
@@ -6291,7 +6308,7 @@ MonoBehaviour:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
       enemyCount: 9999
     timeUntilNextWave: 5
-    spawnInterval: 0.01
+    spawnInterval: 0.05
   waveIndex: 0
   groundLevelY: 0
   spawnBuffer: 30

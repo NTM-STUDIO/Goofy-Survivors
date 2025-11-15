@@ -923,6 +923,12 @@ public class GameManager : NetworkBehaviour
             Debug.Log($"[GameManager] StartSpawning called (isP2P={isP2P}, IsServer={IsServer})");
         }
 
+        // Fix: Reset timer for singleplayer so boss spawn works
+        if (!isP2P)
+        {
+            currentTime = totalGameTime;
+        }
+
         CurrentState = GameState.Playing;
         bossSpawned = false;
         lastDifficultyIncreaseMark = 0;
@@ -1360,28 +1366,48 @@ public class GameManager : NetworkBehaviour
         if (!bossSpawned && relevantTime <= 10.0f)
         {
             SpawnBoss();
-            bossSpawned = true;
         }
     }
 
     private void SpawnBoss()
     {
-        if (bossPrefab == null || bossSpawnPoint == null) return;
-
-        if (isP2P && IsServer)
+        if (bossPrefab == null) return;
+        if (bossSpawned) return; // Extra guard
+        bossSpawned = true; // Set immediately to prevent re-entry
+        if (bossSpawnPoint == null)
         {
-            ServerTeleportPlayersToBossPoint();
+            var bossSpawnObj = GameObject.FindGameObjectWithTag("BossSpawn");
+            if (bossSpawnObj != null)
+            {
+                bossSpawnPoint = bossSpawnObj.transform;
+                Debug.Log("[GameManager] Found BossSpawn point at runtime.");
+            }
+            else
+            {
+                Debug.LogError("[GameManager] No BossSpawn point found in scene!");
+                return;
+            }
         }
 
-        GameObject bossObject = Instantiate(bossPrefab, bossSpawnPoint.position + Vector3.up * 10f, bossSpawnPoint.rotation);
-
-        if (isP2P && IsHost)
+        if (isP2P)
         {
-            bossObject.GetComponent<NetworkObject>().Spawn(true);
+            if (IsServer)
+            {
+                ServerTeleportPlayersToBossPoint();
+                GameObject bossObject = Instantiate(bossPrefab, bossSpawnPoint.position + Vector3.up * 10f, bossSpawnPoint.rotation);
+                bossObject.GetComponent<NetworkObject>().Spawn(true);
+                reaperStats = bossObject.GetComponent<EnemyStats>();
+                Debug.Log("O Boss Final apareceu! (host)");
+            }
+            // Clients do nothing: boss will be network-spawned
         }
-
-        reaperStats = bossObject.GetComponent<EnemyStats>();
-        Debug.Log("O Boss Final apareceu!");
+        else
+        {
+            // Singleplayer: always spawn locally
+            GameObject bossObject = Instantiate(bossPrefab, bossSpawnPoint.position + Vector3.up * 10f, bossSpawnPoint.rotation);
+            reaperStats = bossObject.GetComponent<EnemyStats>();
+            Debug.Log("O Boss Final apareceu! (singleplayer)");
+        }
     }
 
     private void ServerTeleportPlayersToBossPoint()
@@ -1398,6 +1424,9 @@ public class GameManager : NetworkBehaviour
         for (int i = 0; i < clients.Count; i++)
         {
             var client = clients[i];
+            // Skip teleporting the host (server's own player)
+            if (client.ClientId == NetworkManager.Singleton.LocalClientId)
+                continue;
             float angle = (count > 1) ? (i * Mathf.PI * 2f / count) : 0f;
             Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
             Vector3 dest = center + offset;
