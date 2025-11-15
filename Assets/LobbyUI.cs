@@ -28,6 +28,7 @@ public class LobbyUI : MonoBehaviour
     [SerializeField] private Button startGameButton;
 
     private ConnectionManager connectionManager;
+    private bool isSubscribed = false;
 
     // OnEnable is called every time the UI panel is set to active.
     // This is the best place to subscribe to events.
@@ -36,24 +37,49 @@ public class LobbyUI : MonoBehaviour
         connectionManager = ConnectionManager.Instance;
         if (connectionManager != null)
         {
-            // Subscribe to both the player list and the hosting status events.
-            connectionManager.PlayerList.OnListChanged += HandlePlayerListChanged;
+            // Subscribe to hosting event
             connectionManager.OnHostingStarted += HandleHostingStarted;
+            
+            // Start coroutine to wait for network setup and subscribe to PlayerList
+            StartCoroutine(WaitAndInitialize());
         }
         else
         {
             Debug.LogError("LobbyUI could not find the ConnectionManager instance! Ensure it is in the scene and its execution order is set correctly.", this);
         }
 
-        // Initially hide the start button. It will be enabled by the HandleHostingStarted event if this player is the host.
-        if(startGameButton != null)
+        // Check if we're already host when UI opens
+        UpdateStartButtonVisibility();
+    }
+
+    private System.Collections.IEnumerator WaitAndInitialize()
+    {
+        // Wait until NetworkManager is started and PlayerList is assigned
+        while (connectionManager == null || 
+               connectionManager.PlayerList == null || 
+               NetworkManager.Singleton == null ||
+               !NetworkManager.Singleton.IsListening)
         {
-            startGameButton.gameObject.SetActive(false);
+            yield return null;
         }
 
-        // Perform an initial draw of the lobby state in case we were already connected
-        // before this UI panel became visible.
+        // Subscribe to PlayerList changes if not already subscribed
+        if (!isSubscribed && connectionManager.PlayerList != null)
+        {
+            connectionManager.PlayerList.OnListChanged += HandlePlayerListChanged;
+            isSubscribed = true;
+            Debug.Log("[LobbyUI] Subscribed to PlayerList changes");
+        }
+
+        // Give a small delay for NetworkList to replicate from host to clients
+        yield return new WaitForSeconds(0.2f);
+
+        // Now redraw with the replicated data
+        Debug.Log($"[LobbyUI] Initial redraw - PlayerList count: {connectionManager.PlayerList.Count}");
         RedrawLobby();
+        
+        // Update button visibility again after network is ready
+        UpdateStartButtonVisibility();
     }
 
     // OnDisable is called every time the UI panel is deactivated.
@@ -62,7 +88,11 @@ public class LobbyUI : MonoBehaviour
     {
         if (connectionManager != null)
         {
-            connectionManager.PlayerList.OnListChanged -= HandlePlayerListChanged;
+            if (isSubscribed && connectionManager.PlayerList != null)
+            {
+                connectionManager.PlayerList.OnListChanged -= HandlePlayerListChanged;
+                isSubscribed = false;
+            }
             connectionManager.OnHostingStarted -= HandleHostingStarted;
         }
     }
@@ -72,7 +102,9 @@ public class LobbyUI : MonoBehaviour
     /// </summary>
     private void HandleHostingStarted()
     {
+        Debug.Log("[LobbyUI] HandleHostingStarted called");
         UpdateStartButtonVisibility();
+        RedrawLobby(); // Redraw when hosting starts
     }
 
     /// <summary>
@@ -80,6 +112,7 @@ public class LobbyUI : MonoBehaviour
     /// </summary>
     private void HandlePlayerListChanged(NetworkListEvent<PlayerData> changeEvent)
     {
+        Debug.Log($"[LobbyUI] PlayerList changed - Event type: {changeEvent.Type}, Count: {connectionManager.PlayerList.Count}");
         RedrawLobby();
     }
 
@@ -88,7 +121,19 @@ public class LobbyUI : MonoBehaviour
     /// </summary>
     private void RedrawLobby()
     {
-        if (connectionManager == null || playerSlotsParent == null) return;
+        if (connectionManager == null || playerSlotsParent == null)
+        {
+            Debug.LogWarning("[LobbyUI] RedrawLobby - ConnectionManager or playerSlotsParent is null");
+            return;
+        }
+
+        if (connectionManager.PlayerList == null)
+        {
+            Debug.LogWarning("[LobbyUI] RedrawLobby - PlayerList is null");
+            return;
+        }
+
+        Debug.Log($"[LobbyUI] RedrawLobby called - Player count: {connectionManager.PlayerList.Count}");
 
         // Clear all previously created player slot GameObjects to prevent duplicates.
         foreach (Transform child in playerSlotsParent)
@@ -97,6 +142,7 @@ public class LobbyUI : MonoBehaviour
         }
 
         // Create a new UI slot for each player currently in the synchronized list.
+        int slotIndex = 0;
         foreach (PlayerData player in connectionManager.PlayerList)
         {
             GameObject slotInstance = Instantiate(playerSlotPrefab, playerSlotsParent);
@@ -104,8 +150,15 @@ public class LobbyUI : MonoBehaviour
             if (label != null)
             {
                 // PlayerName is a FixedString, so we must convert it to a regular string for the UI.
-                label.text = player.PlayerName.ToString();
+                string playerName = player.PlayerName.ToString();
+                label.text = playerName;
+                Debug.Log($"[LobbyUI] Created slot {slotIndex} for player: {playerName}");
             }
+            else
+            {
+                Debug.LogWarning($"[LobbyUI] Player slot prefab is missing TextMeshProUGUI component!");
+            }
+            slotIndex++;
         }
     }
 
@@ -141,6 +194,11 @@ public class LobbyUI : MonoBehaviour
         {
             lobbyCodeLabel.gameObject.SetActive(true);
             lobbyCodeLabel.text = $"CODE: {code}";
+            Debug.Log($"[LobbyUI] Displaying lobby code: {code}");
+        }
+        else
+        {
+            Debug.LogWarning("[LobbyUI] DisplayLobbyCode - lobbyCodeLabel is null!");
         }
     }
 
@@ -149,6 +207,8 @@ public class LobbyUI : MonoBehaviour
     /// </summary>
     public void OnStartGameButtonClicked()
     {
+        Debug.Log("[LobbyUI] Start Game button clicked");
+        
         // We only need to tell the GameManager to start. Its internal logic already
         // ensures that only the host can actually begin the match.
         if (GameManager.Instance != null)

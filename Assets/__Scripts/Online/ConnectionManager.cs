@@ -36,7 +36,8 @@ namespace MyGame.ConnectionSystem.Connection
     /// Manages the connection state, player data, and provides events for the UI to hook into.
     /// This is a non-networked MonoBehaviour that controls the NetworkManager.
     /// </summary>
-    public class ConnectionManager : MonoBehaviour
+    // NOTE: This script must be attached to a GameObject with a NetworkObject component in the Unity scene!
+    public class ConnectionManager : NetworkBehaviour
     {
         public static ConnectionManager Instance { get; private set; }
 
@@ -81,7 +82,7 @@ namespace MyGame.ConnectionSystem.Connection
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
-            // Initialize the synchronized list.
+            // Initialize the synchronized list (default: server writes, all clients read).
             PlayerList = new NetworkList<PlayerData>();
         }
 
