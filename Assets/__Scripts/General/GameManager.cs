@@ -248,6 +248,9 @@ public class GameManager : NetworkBehaviour
 
         Debug.Log("[GameManager] Server is performing a soft reset.");
 
+        // Reset ability damage tracker for new run
+        AbilityDamageTracker.Reset();
+
         // --- 1. STOP GAMEPLAY SYSTEMS ---
         if (enemySpawner != null)
         {
@@ -677,6 +680,9 @@ public class GameManager : NetworkBehaviour
 
         Time.timeScale = 1f;
         uiManager?.ShowEndGamePanel(false);
+
+        // Reset ability damage tracker for new run
+        AbilityDamageTracker.Reset();
 
         // --- 1. Clear all players (cameras are automatically destroyed as children) ---
         try { 

@@ -15,6 +15,17 @@ public class EndGamePanel : MonoBehaviour
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private Button saveButton;
     [SerializeField] private TextMeshProUGUI buttonText; // Reference to button text
+    
+    [Header("Ability Stats Display")]
+    [Tooltip("ScrollView onde as estatísticas das habilidades serão exibidas")]
+    [SerializeField] private ScrollRect abilityStatsScrollView;
+    [Tooltip("Prefab do RowAbilityDmgStat para mostrar estatísticas de cada habilidade")]
+    [SerializeField] private GameObject abilityStatRowPrefab;
+    [Tooltip("Transform do Content dentro da ScrollView onde as rows serão instanciadas (Opcional - será detectado automaticamente da ScrollView se não atribuído)")]
+    [SerializeField] private Transform abilityStatsContainer;
+    [Tooltip("Registro de armas para obter os ícones das habilidades")]
+    [SerializeField] private WeaponRegistry weaponRegistry;
+    
     [Header("Flow Buttons")]
     [SerializeField] private Button playAgainButton; // Will return to lobby instead of replaying immediately
 
@@ -26,6 +37,7 @@ public class EndGamePanel : MonoBehaviour
     private string userId;
     private bool isExistingUser = false;
     private IReadOnlyDictionary<string, float> abilityDamageTotals;
+    private readonly List<GameObject> spawnedRows = new List<GameObject>();
 
     private void Awake()
     {
@@ -84,6 +96,9 @@ public class EndGamePanel : MonoBehaviour
 
     async void OnEnable()
     {
+        // Clear old visual rows but capture current run stats first
+        ClearAbilityStats();
+        
         UpdateEndGameStats();
 
         // Auto-save score for existing users (but don't hide the update button)
@@ -205,6 +220,9 @@ public class EndGamePanel : MonoBehaviour
 
     public void UpdateEndGameStats()
     {
+        // Clear any lingering stats from previous runs
+        ClearAbilityStats();
+        
         // --- Calculate and Display Time Survived (THE CLEAN WAY) ---
         // --- THIS IS THE FINAL FIX ---
         float totalTime = gameManager.GetTotalGameTime();
@@ -229,12 +247,174 @@ public class EndGamePanel : MonoBehaviour
             reaperDamageText.text = "Damage to Reaper: N/A";
         }
         abilityDamageTotals = AbilityDamageTracker.GetTotalsSnapshot();
+        
+        // Popula as estatísticas das habilidades na ScrollView
+        PopulateAbilityStats();
+    }
+
+    /// <summary>
+    /// Limpa as rows antigas e cria novas rows com as estatísticas de cada habilidade
+    /// </summary>
+    private void PopulateAbilityStats()
+    {
+
+        // Limpa rows anteriores
+        ClearAbilityStats();
+
+        // Debug: Mostra o estado atual das referências
+
+        // Se não tiver container atribuído, tenta obter automaticamente da ScrollView
+        if (abilityStatsContainer == null && abilityStatsScrollView != null)
+        {
+            abilityStatsContainer = abilityStatsScrollView.content;
+
+            // Verifica se a ScrollView tem content válido
+            if (abilityStatsContainer == null)
+            {
+                return;
+            }
+        }
+
+        // Verifica se temos as referências necessárias
+        if (abilityStatRowPrefab == null)
+        {
+            return;
+        }
+
+        // Verifica se o prefab tem o componente AbilityStatRow
+        if (abilityStatRowPrefab.GetComponent<AbilityStatRow>() == null)
+        {
+            return;
+        }
+
+        if (abilityStatsScrollView == null && abilityStatsContainer == null)
+        {
+            return;
+        }
+
+        if (abilityStatsContainer == null)
+        {
+            return;
+        }
+
+        // Verifica se o container tem os componentes necessários
+        if (abilityStatsContainer.GetComponent<VerticalLayoutGroup>() == null)
+        {
+        }
+        else
+        {
+        }
+
+        if (abilityDamageTotals == null)
+        {
+            abilityDamageTotals = AbilityDamageTracker.GetTotalsSnapshot();
+        }
+
+        if (abilityDamageTotals == null || abilityDamageTotals.Count == 0)
+        {
+            return;
+        }
+
+
+        // Ordena as habilidades por dano (maior para menor) e cria uma row para cada uma
+        var sortedAbilities = new List<KeyValuePair<string, float>>(abilityDamageTotals);
+        sortedAbilities.Sort((a, b) => b.Value.CompareTo(a.Value));
+
+        foreach (var ability in sortedAbilities)
+        {
+            GameObject rowObj = Instantiate(abilityStatRowPrefab, abilityStatsContainer);
+            spawnedRows.Add(rowObj);
+
+
+            AbilityStatRow row = rowObj.GetComponent<AbilityStatRow>();
+            if (row != null)
+            {
+                // Tenta obter o ícone da arma baseado no nome da habilidade
+                Texture weaponIcon = GetWeaponIcon(ability.Key);
+                
+                row.SetData(ability.Key, ability.Value, weaponIcon);
+            }
+            else
+            {
+            }
+        }
+
+
+        // Força atualização do layout após criar as rows
+        LayoutRebuilder.ForceRebuildLayoutImmediate(abilityStatsContainer as RectTransform);
+    }
+
+    /// <summary>
+    /// Obtém o ícone da arma baseado no nome da habilidade
+    /// </summary>
+    /// <param name="abilityName">Nome da habilidade</param>
+    /// <returns>Texture do ícone da arma ou null se não encontrado</returns>
+    private Texture GetWeaponIcon(string abilityName)
+    {
+        if (weaponRegistry == null)
+        {
+            Debug.LogWarning("[EndGamePanel] WeaponRegistry não está atribuído! Não é possível obter ícones das armas.");
+            return null;
+        }
+
+        try
+        {
+            // Procura a arma no registry baseado no nome da habilidade
+            foreach (var weapon in weaponRegistry.allWeapons)
+            {
+                if (weapon != null && weapon.weaponName == abilityName)
+                {
+                    // Verifica se tem sprite e converte para Texture
+                    if (weapon.icon != null)
+                    {
+                        Debug.Log($"[EndGamePanel] Ícone encontrado para {abilityName}: {weapon.icon.name}");
+                        return weapon.icon.texture;
+                    }
+                }
+            }
+
+            Debug.LogWarning($"[EndGamePanel] Ícone não encontrado para a habilidade: {abilityName}");
+            return null;
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[EndGamePanel] Erro ao buscar ícone para {abilityName}: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Limpa todas as rows de estatísticas de habilidades previamente criadas
+    /// </summary>
+    private void ClearAbilityStats()
+    {
+        foreach (var row in spawnedRows)
+        {
+            if (row != null)
+            {
+                Destroy(row);
+            }
+        }
+        spawnedRows.Clear();
+    }
+
+    /// <summary>
+    /// Método público para testar a criação das rows (pode ser chamado do Inspector)
+    /// </summary>
+    [ContextMenu("Test Populate Ability Stats")]
+    public void TestPopulateAbilityStats()
+    {
+        Debug.Log("[EndGamePanel] TestPopulateAbilityStats() chamado manualmente");
+        PopulateAbilityStats();
     }
 
     private void OnPlayAgainRestart()
     {
-        Debug.Log("[EndGamePanel] OnPlayAgainRestart() called - attempting to use SettingsManager.UI_Restart()");
-        
+        // Clear visual stats but don't reset tracker yet - let new game start first
+        ClearAbilityStats();
+        abilityDamageTotals = null;
+        damageDone = 0f;
+
         // Ensure the game is not paused
         try { GameManager.Instance.RequestResume(); } catch { }
         Time.timeScale = 1f;
