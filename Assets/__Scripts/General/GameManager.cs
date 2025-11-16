@@ -93,6 +93,9 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private float fireRateMultiplier = 1.05f;
 
     public EnemyStats reaperStats { get; private set; }
+    private float lastReaperDamage = 0f;
+    public float LastReaperDamage => lastReaperDamage;
+
     private bool bossSpawned = false;
     private int lastDifficultyIncreaseMark = 0;
 
@@ -1084,6 +1087,12 @@ public class GameManager : NetworkBehaviour
         if (localPlayer != null) localPlayer.enabled = false;
         Time.timeScale = 0f; // Stop the game completely
 
+        // Cache reaper damage before anything is destroyed
+        if (reaperStats != null)
+        {
+            lastReaperDamage = reaperStats.MaxHealth - reaperStats.CurrentHealth;
+        }
+
         if (!isP2P || IsServer)
         {
             AbilityDamageTracker.LogTotals();
@@ -1558,5 +1567,10 @@ public class GameManager : NetworkBehaviour
                 stats.ApplyDamage(amount, hitFromWorldPos, iframeOpt);
             }
         }
+    }
+
+    public void CacheReaperDamage(float damage)
+    {
+        lastReaperDamage = damage;
     }
 }

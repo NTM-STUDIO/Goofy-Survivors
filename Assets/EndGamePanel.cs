@@ -233,19 +233,10 @@ public class EndGamePanel : MonoBehaviour
         int seconds = Mathf.FloorToInt(timeLasted % 60);
         timeLastedText.text = $"Time Survived: {minutes:00}:{seconds:00}";
 
-        // --- Calculate and Display Damage to Reaper (THE CLEAN WAY) ---
-        if (gameManager.reaperStats != null)
-        {
-            EnemyStats stats = gameManager.reaperStats;
-            float reaperMaxHealth = stats.MaxHealth;
-            float reaperCurrentHealth = stats.CurrentHealth;
-            damageDone = reaperMaxHealth - reaperCurrentHealth;
-            reaperDamageText.text = $"Damage to Reaper: {damageDone:F0}";
-        }
-        else
-        {
-            reaperDamageText.text = "Damage to Reaper: N/A";
-        }
+        // --- Always display cached reaper damage ---
+        damageDone = gameManager.LastReaperDamage;
+        reaperDamageText.text = $"Damage to Reaper: {damageDone:F0}";
+        Debug.Log($"[EndGamePanel] Displaying reaper damage: {damageDone}");
         abilityDamageTotals = AbilityDamageTracker.GetTotalsSnapshot();
         
         // Popula as estatísticas das habilidades na ScrollView

@@ -276,8 +276,8 @@ MonoBehaviour:
   leadTime: 0.5
   flankOffset: 2
   flankFalloffDistance: 2
-  attackCooldown: 0.5
-  selfKnockbackForce: 3
+  attackCooldown: 0.4
+  selfKnockbackForce: 15
   selfKnockbackDuration: 0.5
   showGizmos: 0
   useScreenSpaceCorrection: 1
@@ -334,7 +334,7 @@ MonoBehaviour:
   speedMutationColor: {r: 0, g: 0, b: 1, a: 1}
   isUnknockable: 0
   knockbackResistance: 0
-  resistanceIncreasePerHit: 0.1
+  resistanceIncreasePerHit: 0
   maxResistance: 0.8
   orbDrops:
   - orbPrefab: {fileID: 8326750618715067698, guid: 3f0fbb90971ba4441913d7efaea77fca, type: 3}

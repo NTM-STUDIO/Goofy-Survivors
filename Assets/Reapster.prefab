@@ -131,7 +131,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   damagePopupPrefab: {fileID: 1151078973031816182, guid: 48036a6b9a0774c408db15d75147741d, type: 3}
   popupSpawnPoint: {fileID: 2598792735908836707}
-  baseHealth: 1e+9
+  baseHealth: 9999999
   baseDamage: 0
   moveSpeed: 0
   mutationChance: 0

@@ -192,8 +192,13 @@ public class WeaponController : MonoBehaviour
         for (int i = 0; i < finalAmount; i++)
         {
             GameObject orbitingWeaponObj = Instantiate(WeaponData.weaponPrefab, transform.position, Quaternion.identity);
-            // Parent under the clone's weapon controller so they get destroyed with the clone
-            orbitingWeaponObj.transform.SetParent(transform, false);
+            // Only parent if not a NetworkObject or if Netcode is listening
+            var netObj = orbitingWeaponObj.GetComponent<Unity.Netcode.NetworkObject>();
+            if (netObj == null || (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening))
+            {
+                orbitingWeaponObj.transform.SetParent(transform, false);
+            }
+            // Always set the orbit center to this transform (so frying pan orbits the shadow clone)
             var orbiter = orbitingWeaponObj.GetComponent<OrbitingWeapon>();
             if (orbiter != null)
             {

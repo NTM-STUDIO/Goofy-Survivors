@@ -7,6 +7,9 @@ using MyGame.ConnectionSystem.Connection;
 
 public class UIManager : MonoBehaviour
 {
+    // Fade animation for new weapon panel
+    private CanvasGroup newWeaponPanelCanvasGroup;
+    private Coroutine newWeaponPanelFadeCoroutine;
     [Header("Lobby UI")]
     [SerializeField] private GameObject lobbyPanel;
     [SerializeField] private LobbyUI lobbyUI;
@@ -73,6 +76,16 @@ public class UIManager : MonoBehaviour
         inGameHudContainer.SetActive(false);
         endGamePanel.SetActive(false);
         pauseMenu.SetActive(false);
+
+        // Setup CanvasGroup for newWeaponPanel (for fade in/out)
+        if (newWeaponPanel != null)
+        {
+            newWeaponPanelCanvasGroup = newWeaponPanel.GetComponent<CanvasGroup>();
+            if (newWeaponPanelCanvasGroup == null)
+                newWeaponPanelCanvasGroup = newWeaponPanel.AddComponent<CanvasGroup>();
+            newWeaponPanelCanvasGroup.alpha = 0f;
+            newWeaponPanel.SetActive(false);
+        }
     }
 
     public void OnStartGameButtonClicked()
@@ -343,16 +356,45 @@ public class UIManager : MonoBehaviour
 
     public void OpenNewWeaponPanel(WeaponData weaponData)
     {
+        if (newWeaponPanelFadeCoroutine != null)
+            StopCoroutine(newWeaponPanelFadeCoroutine);
         newWeaponPanel.SetActive(true);
+        if (newWeaponPanelCanvasGroup == null)
+            newWeaponPanelCanvasGroup = newWeaponPanel.GetComponent<CanvasGroup>();
+        newWeaponPanelCanvasGroup.alpha = 0f;
         weaponNameText.text = weaponData.weaponName;
         weaponSpriteImage.sprite = weaponData.icon;
         if (GameManager != null) GameManager.RequestPauseForLevelUp();
+        newWeaponPanelFadeCoroutine = StartCoroutine(FadeCanvasGroup(newWeaponPanelCanvasGroup, 0f, 1f, 1f));
     }
 
     public void CloseNewWeaponPanel()
     {
-        newWeaponPanel.SetActive(false);
+        if (newWeaponPanelFadeCoroutine != null)
+            StopCoroutine(newWeaponPanelFadeCoroutine);
+        if (newWeaponPanelCanvasGroup == null)
+            newWeaponPanelCanvasGroup = newWeaponPanel.GetComponent<CanvasGroup>();
+        newWeaponPanelFadeCoroutine = StartCoroutine(FadeOutAndDeactivateNewWeaponPanel());
         if (GameManager != null) GameManager.ResumeAfterLevelUp();
+    }
+
+    private IEnumerator FadeOutAndDeactivateNewWeaponPanel()
+    {
+        yield return FadeCanvasGroup(newWeaponPanelCanvasGroup, 1f, 0f, 1f);
+        newWeaponPanel.SetActive(false);
+    }
+
+    private IEnumerator FadeCanvasGroup(CanvasGroup cg, float from, float to, float duration)
+    {
+        float elapsed = 0f;
+        cg.alpha = from;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            cg.alpha = Mathf.Lerp(from, to, elapsed / duration);
+            yield return null;
+        }
+        cg.alpha = to;
     }
 
     public void UpdateTimerText(float time)
@@ -420,5 +462,4 @@ public class UIManager : MonoBehaviour
             levelText.text = $"Nível {level}";
         }
     }
-    #endregion
 }

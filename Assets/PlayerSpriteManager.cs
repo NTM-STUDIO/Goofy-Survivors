@@ -1,83 +1,146 @@
 using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]
-public class PlayerSpriteFlipperIsometric : MonoBehaviour
+public class Player4WaySpriteFlipperIsometric : MonoBehaviour
 {
-    [Header("Assign Sprites")]
-    [Tooltip("The sprite to use when the player is moving LEFT on the screen.")]
-    public Sprite LeftSprite;
+    public enum FlipMode { TwoWay, FourWay }
+    [Header("Mode")]
+    public FlipMode flipMode = FlipMode.FourWay;
 
-    [Tooltip("The sprite to use when the player is moving RIGHT on the screen.")]
-    public Sprite RightSprite;
+    [Header("Assign Sprites (Screen Directions)")]
+    public Sprite UpRightSprite;
+    public Sprite UpLeftSprite;
+    public Sprite DownRightSprite;
+    public Sprite DownLeftSprite;
 
-    // --- Private References ---
+    [Header("Optional Child Object Flip (Firepoint)")]
+    public Transform firePoint;
+
+    [Header("Settings")]
+    public float velocityThreshold = 0.1f;
+
+    // --- Private ---
     private SpriteRenderer spriteRenderer;
     private Rigidbody rb;
-    private Transform cameraTransform;
+    private Transform cam;
 
-    // A small threshold to prevent the sprite from flipping on tiny movements
-    private const float velocityThreshold = 0.1f;
+    private float firePointXMagnitude;
+    private Sprite currentSprite;
 
     void Awake()
     {
-        // Get the components we need
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponentInParent<Rigidbody>();
-        
-        // Find the main camera in the scene
+
         if (Camera.main != null)
-        {
-            cameraTransform = Camera.main.transform;
-        }
-        else
-        {
-            Debug.LogError("PlayerSpriteFlipper: Main camera not found in the scene. Please ensure you have a camera tagged as 'MainCamera'.");
-        }
+            cam = Camera.main.transform;
+
+        if (firePoint != null)
+            firePointXMagnitude = Mathf.Abs(firePoint.localPosition.x);
     }
 
     void LateUpdate()
     {
-        if (cameraTransform == null)
-        {
+        if (cam == null) return;
+
+        Vector3 vel = rb.linearVelocity;
+        vel.y = 0;
+
+        if (vel.sqrMagnitude < velocityThreshold * velocityThreshold)
             return;
-        }
 
-        // 1. Get the character's velocity in world space.
-    Vector3 worldVelocity = rb.linearVelocity;
+        vel.Normalize();
 
-        // 2. We only care about movement in the horizontal plane (X and Z).
-        Vector3 horizontalVelocity = new Vector3(worldVelocity.x, 0, worldVelocity.z);
+        Vector3 camForward = cam.forward;
+        camForward.y = 0;
+        camForward.Normalize();
 
-        // 3. If the character is not moving significantly, do nothing.
-        if (horizontalVelocity.magnitude < velocityThreshold)
+        Vector3 camRight = cam.right;
+        camRight.y = 0;
+        camRight.Normalize();
+
+        float dotForward = Vector3.Dot(vel, camForward);   // + = moving down screen
+        float dotRight   = Vector3.Dot(vel, camRight);     // + = moving right
+
+        Sprite newSprite = currentSprite;
+        float sign = 1f;
+
+        // -------- 2-WAY MODE --------
+        if (flipMode == FlipMode.TwoWay)
         {
-            return;
-        }
-
-        // 4. Get the camera's right vector, ignoring any vertical tilt.
-        Vector3 cameraRight = new Vector3(cameraTransform.right.x, 0, cameraTransform.right.z).normalized;
-
-        // 5. Calculate the dot product between the player's horizontal velocity and the camera's right vector.
-        // A positive dot product means the player is moving more towards the camera's right.
-        // A negative dot product means the player is moving more towards the camera's left.
-        float dotProduct = Vector3.Dot(horizontalVelocity, cameraRight);
-
-        // 6. Check the direction of movement relative to the camera.
-        if (dotProduct > 0)
-        {
-            // Moving right relative to the camera.
-            if (spriteRenderer.sprite != RightSprite)
+            if (dotRight >= 0)
             {
-                spriteRenderer.sprite = RightSprite;
+                // moving right
+                newSprite = RightMostSprite(); 
+                sign = 1f;
+            }
+            else
+            {
+                // moving left
+                newSprite = LeftMostSprite();
+                sign = -1f;
             }
         }
         else
         {
-            // Moving left relative to the camera.
-            if (spriteRenderer.sprite != LeftSprite)
+            // -------- 4-WAY MODE --------
+            if (dotForward >= 0) // Down
             {
-                spriteRenderer.sprite = LeftSprite;
+                if (dotRight >= 0)
+                {
+                    newSprite = DownRightSprite;
+                    sign = 1f;
+                }
+                else
+                {
+                    newSprite = DownLeftSprite;
+                    sign = -1f;
+                }
+            }
+            else // Up
+            {
+                if (dotRight >= 0)
+                {
+                    newSprite = UpRightSprite;
+                    sign = 1f;
+                }
+                else
+                {
+                    newSprite = UpLeftSprite;
+                    sign = -1f;
+                }
             }
         }
+
+        // Apply sprite if changed
+        if (newSprite != currentSprite)
+        {
+            spriteRenderer.sprite = newSprite;
+            currentSprite = newSprite;
+        }
+
+        // Flip firepoint
+        if (firePoint != null)
+        {
+            Vector3 p = firePoint.localPosition;
+            p.x = firePointXMagnitude * sign;
+            firePoint.localPosition = p;
+        }
+    }
+
+    // Helper: pick best left sprite for 2-way mode:
+    private Sprite LeftMostSprite()
+    {
+        if (UpLeftSprite != null) return UpLeftSprite;
+        if (DownLeftSprite != null) return DownLeftSprite;
+        return currentSprite;
+    }
+
+    // Helper: pick best right sprite for 2-way mode:
+    private Sprite RightMostSprite()
+    {
+        if (UpRightSprite != null) return UpRightSprite;
+        if (DownRightSprite != null) return DownRightSprite;
+        return currentSprite;
     }
 }

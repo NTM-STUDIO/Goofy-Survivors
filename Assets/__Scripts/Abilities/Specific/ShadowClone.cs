@@ -37,12 +37,17 @@ public class ShadowClone : MonoBehaviour
             weaponControllerObj.transform.SetParent(weaponContainer);
 
             WeaponController wc = weaponControllerObj.AddComponent<WeaponController>();
-            
-            // This is the correct way to set up the new controller.
-            // We pass 'null' for the manager because a clone's weapons are self-contained.
-            // We pass 'true' for ownership because the clone's weapons are always controlled by the clone itself.
             int weaponId = registry.GetWeaponId(weaponData);
             wc.Initialize(weaponId, weaponData, null, ownerStats, true, registry);
+
+            // If this weapon spawns an OrbitingWeapon, set its orbit center to this clone
+            // (Assumes WeaponController spawns the orbiting weapon as a child or via a known method)
+            var orbiting = weaponControllerObj.GetComponentInChildren<OrbitingWeapon>();
+            if (orbiting != null)
+            {
+                // Force orbit center to this clone
+                orbiting.LocalInitialize(this.transform, 0f, ownerStats, weaponData);
+            }
         }
     }
 
@@ -62,7 +67,7 @@ public class ShadowClone : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Ensure any aura proxies created under this clone are removed (server-only object)
+        // Clean up any aura proxies created under this clone
         var serverAuras = GetComponentsInChildren<ServerAura>(true);
         foreach (var sa in serverAuras)
         {
@@ -76,39 +81,29 @@ public class ShadowClone : MonoBehaviour
             if (aura == null) continue;
             var no = aura.GetComponent<NetworkObject>();
             var nm = NetworkManager.Singleton;
-            if (nm != null && nm.IsListening)
+            if (nm != null && nm.IsListening && nm.IsServer && no != null && no.IsSpawned)
             {
-                // MP path: only the server should despawn networked objects
-                if (nm.IsServer)
-                {
-                    if (no != null && no.IsSpawned) no.Despawn(true); else Destroy(aura.gameObject);
-                }
+                no.Despawn(true);
             }
             else
             {
-                // Single-player path
                 Destroy(aura.gameObject);
             }
         }
 
-        // Clean up any orbiters that were parented under this clone (SP and MP safety)
+        // Clean up any orbiters that were parented under this clone
         var orbiters = GetComponentsInChildren<OrbitingWeapon>(true);
         foreach (var orb in orbiters)
         {
             if (orb == null) continue;
             var no = orb.GetComponent<NetworkObject>();
             var nm = NetworkManager.Singleton;
-            if (nm != null && nm.IsListening)
+            if (nm != null && nm.IsListening && nm.IsServer && no != null && no.IsSpawned)
             {
-                // MP path: only the server should despawn networked objects
-                if (nm.IsServer)
-                {
-                    if (no != null && no.IsSpawned) no.Despawn(true); else Destroy(orb.gameObject);
-                }
+                no.Despawn(true);
             }
             else
             {
-                // Single-player path
                 Destroy(orb.gameObject);
             }
         }
