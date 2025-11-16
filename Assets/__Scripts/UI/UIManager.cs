@@ -4,6 +4,8 @@ using UnityEngine.UI;
 using TMPro;
 using Unity.Netcode;
 using MyGame.ConnectionSystem.Connection;
+using System.Collections;
+
 
 public class UIManager : MonoBehaviour
 {
@@ -87,6 +89,7 @@ public class UIManager : MonoBehaviour
             newWeaponPanel.SetActive(false);
         }
     }
+#endregion
 
     public void OnStartGameButtonClicked()
     {
@@ -115,7 +118,7 @@ public class UIManager : MonoBehaviour
             connectionManager.OnConnectionFailed -= HandleConnectionFailure;
         }
     }
-    #endregion
+
 
     private GameManager GameManager
     {
@@ -462,4 +465,5 @@ public class UIManager : MonoBehaviour
             levelText.text = $"Nível {level}";
         }
     }
+#endregion
 }
