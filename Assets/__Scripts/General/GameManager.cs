@@ -93,11 +93,12 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private float fireRateMultiplier = 1.05f;
 
     public EnemyStats reaperStats { get; private set; }
-    private float lastReaperDamage = 0f;
-    public float LastReaperDamage => lastReaperDamage;
-
     private bool bossSpawned = false;
     private int lastDifficultyIncreaseMark = 0;
+    
+    // Cache for reaper damage (used when reaper is destroyed before stats are read)
+    private float cachedReaperDamage = 0f;
+    private bool hasCachedReaperDamage = false;
 
     void Awake()
     {
@@ -251,8 +252,7 @@ public class GameManager : NetworkBehaviour
 
         Debug.Log("[GameManager] Server is performing a soft reset.");
 
-        // Reset ability damage tracker for new run
-        AbilityDamageTracker.Reset();
+        // NOTE: AbilityDamageTracker.Reset() moved to StartGame_P2P_Host to avoid clearing stats before save
 
         // --- 1. STOP GAMEPLAY SYSTEMS ---
         if (enemySpawner != null)
@@ -684,8 +684,7 @@ public class GameManager : NetworkBehaviour
         Time.timeScale = 1f;
         uiManager?.ShowEndGamePanel(false);
 
-        // Reset ability damage tracker for new run
-        AbilityDamageTracker.Reset();
+        // NOTE: AbilityDamageTracker.Reset() moved to StartGame_SinglePlayer to avoid clearing stats before save
 
         // --- 1. Clear all players (cameras are automatically destroyed as children) ---
         try { 
@@ -749,6 +748,11 @@ public class GameManager : NetworkBehaviour
 
     private void StartGame_SinglePlayer()
     {
+        // Reset ability damage tracker at the START of a new game (not during soft reset)
+        AbilityDamageTracker.Reset();
+        ClearReaperDamageCache();
+        Debug.Log("[GameManager] AbilityDamageTracker and reaper cache reset for new singleplayer game.");
+
         if (chosenPlayerPrefab == null)
         {
             // Primeiro tenta usar LoadoutSelections (garante defaults válidos)
@@ -791,6 +795,10 @@ public class GameManager : NetworkBehaviour
 
     private void StartGame_P2P_Host()
     {
+        // Reset ability damage tracker at the START of a new game (not during soft reset)
+        AbilityDamageTracker.Reset();
+        ClearReaperDamageCache();
+        Debug.Log("[GameManager] AbilityDamageTracker and reaper cache reset for new multiplayer game.");
 
         // If no selections, fallback: assign default prefab to all connected players
         if (playerUnitSelections.Count == 0)
@@ -817,6 +825,9 @@ public class GameManager : NetworkBehaviour
                     GameObject playerObject = Instantiate(defaultPrefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
                     playerObject.GetComponent<NetworkObject>().SpawnAsPlayerObject(client.ClientId);
                     playerAlive[client.ClientId] = true;
+                    
+                    // Give starting weapon after spawn (important for play again scenarios)
+                    StartCoroutine(GiveStartingWeaponAfterPlayerSpawns(client.ClientId));
                 }
                 InitializeGameClientRpc();
             }
@@ -851,6 +862,9 @@ public class GameManager : NetworkBehaviour
             GameObject playerObject = Instantiate(prefabToUse, playerSpawnPoint.position, playerSpawnPoint.rotation);
             playerObject.GetComponent<NetworkObject>().SpawnAsPlayerObject(entry.Key);
             playerAlive[entry.Key] = true;
+            
+            // Give starting weapon after spawn (important for play again scenarios)
+            StartCoroutine(GiveStartingWeaponAfterPlayerSpawns(entry.Key));
         }
 
         InitializeGameClientRpc();
@@ -924,12 +938,6 @@ public class GameManager : NetworkBehaviour
         {
             enemySpawner?.StartSpawning();
             Debug.Log($"[GameManager] StartSpawning called (isP2P={isP2P}, IsServer={IsServer})");
-        }
-
-        // Fix: Reset timer for singleplayer so boss spawn works
-        if (!isP2P)
-        {
-            currentTime = totalGameTime;
         }
 
         CurrentState = GameState.Playing;
@@ -1086,12 +1094,6 @@ public class GameManager : NetworkBehaviour
         CurrentState = GameState.GameOver;
         if (localPlayer != null) localPlayer.enabled = false;
         Time.timeScale = 0f; // Stop the game completely
-
-        // Cache reaper damage before anything is destroyed
-        if (reaperStats != null)
-        {
-            lastReaperDamage = reaperStats.MaxHealth - reaperStats.CurrentHealth;
-        }
 
         if (!isP2P || IsServer)
         {
@@ -1265,6 +1267,9 @@ public class GameManager : NetworkBehaviour
                         reviveProgress.Remove(downedId);
                         PlayReviveVFXClientRpc(downedClient.PlayerObject.NetworkObjectId);
                         SetDownedVisualClientRpc(downedClient.PlayerObject.NetworkObjectId, false);
+                        
+                        // Sync HP to client after revive
+                        SyncPlayerHpClientRpc(downedClient.PlayerObject.NetworkObjectId, 10, ps.maxHp);
                     }
                 }
                 else
@@ -1323,6 +1328,18 @@ public class GameManager : NetworkBehaviour
     }
 
     [ClientRpc]
+    private void SyncPlayerHpClientRpc(ulong playerNetId, int currentHp, int maxHp, ClientRpcParams clientRpcParams = default)
+    {
+        if (NetworkManager.Singleton == null) return;
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerNetId, out var netObj) || netObj == null) return;
+        var ps = netObj.GetComponent<PlayerStats>();
+        if (ps == null) return;
+        
+        // Sync HP to client using public method
+        ps.ClientSyncHp(currentHp, maxHp);
+    }
+
+    [ClientRpc]
     private void SetDownedVisualClientRpc(ulong playerNetId, bool isDowned)
     {
         if (NetworkManager.Singleton == null) return;
@@ -1375,10 +1392,11 @@ public class GameManager : NetworkBehaviour
         if (!bossSpawned && relevantTime <= 10.0f)
         {
             SpawnBoss();
+            bossSpawned = true;
         }
     }
 
-    private void SpawnBoss()
+     private void SpawnBoss()
     {
         if (bossPrefab == null) return;
         if (bossSpawned) return; // Extra guard
@@ -1433,9 +1451,6 @@ public class GameManager : NetworkBehaviour
         for (int i = 0; i < clients.Count; i++)
         {
             var client = clients[i];
-            // Skip teleporting the host (server's own player)
-            if (client.ClientId == NetworkManager.Singleton.LocalClientId)
-                continue;
             float angle = (count > 1) ? (i * Mathf.PI * 2f / count) : 0f;
             Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
             Vector3 dest = center + offset;
@@ -1526,6 +1541,42 @@ public class GameManager : NetworkBehaviour
     }
 
     // =========================
+    // REAPER DAMAGE CACHING (for multiplayer/respawn scenarios)
+    // =========================
+    public void CacheReaperDamage(float damage)
+    {
+        cachedReaperDamage = damage;
+        hasCachedReaperDamage = true;
+        Debug.Log($"[GameManager] Cached reaper damage: {damage:F0}");
+    }
+
+    public float GetReaperDamage()
+    {
+        if (hasCachedReaperDamage)
+        {
+            Debug.Log($"[GameManager] Returning cached reaper damage: {cachedReaperDamage:F0}");
+            return cachedReaperDamage;
+        }
+        
+        if (reaperStats != null)
+        {
+            float damage = reaperStats.MaxHealth - reaperStats.CurrentHealth;
+            Debug.Log($"[GameManager] Calculated reaper damage from live stats: {damage:F0}");
+            return damage;
+        }
+        
+        Debug.LogWarning("[GameManager] No reaper damage available (neither cached nor live stats)");
+        return 0f;
+    }
+
+    public void ClearReaperDamageCache()
+    {
+        cachedReaperDamage = 0f;
+        hasCachedReaperDamage = false;
+        Debug.Log("[GameManager] Cleared reaper damage cache");
+    }
+
+    // =========================
     // SERVER-AUTHORITATIVE PLAYER DAMAGE (P2P)
     // =========================
     public void ServerApplyPlayerDamage(ulong targetClientId, float amount, Vector3? hitFromWorldPos = null, float? customIFrameDuration = null)
@@ -1545,32 +1596,15 @@ public class GameManager : NetworkBehaviour
         var targetStats = client.PlayerObject.GetComponent<PlayerStats>();
         if (targetStats != null)
         {
+            // Apply damage on server (authority)
             targetStats.ApplyDamage(amount, hitFromWorldPos, customIFrameDuration);
 
+            // Sync HP to client after damage (avoid double application)
             var rpcParams = new ClientRpcParams
             {
                 Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { targetClientId } }
             };
-            ApplyDamageToLocalPlayerClientRpc(amount, hitFromWorldPos.HasValue ? hitFromWorldPos.Value : Vector3.zero, customIFrameDuration.HasValue ? customIFrameDuration.Value : -1f, rpcParams);
+            SyncPlayerHpClientRpc(client.PlayerObject.NetworkObjectId, targetStats.CurrentHp, targetStats.maxHp, rpcParams);
         }
-    }
-
-    [ClientRpc]
-    private void ApplyDamageToLocalPlayerClientRpc(float amount, Vector3 hitFromWorldPos, float iFrameDuration, ClientRpcParams clientRpcParams = default)
-    {
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
-        {
-            var stats = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerStats>();
-            if (stats != null)
-            {
-                float? iframeOpt = (iFrameDuration >= 0f) ? iFrameDuration : (float?)null;
-                stats.ApplyDamage(amount, hitFromWorldPos, iframeOpt);
-            }
-        }
-    }
-
-    public void CacheReaperDamage(float damage)
-    {
-        lastReaperDamage = damage;
     }
 }

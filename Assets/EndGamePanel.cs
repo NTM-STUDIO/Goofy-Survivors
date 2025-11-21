@@ -15,6 +15,7 @@ public class EndGamePanel : MonoBehaviour
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private Button saveButton;
     [SerializeField] private TextMeshProUGUI buttonText; // Reference to button text
+    [SerializeField] private TextMeshProUGUI saveStatusText; // Optional: feedback message (e.g., "Score saved!")
     
     [Header("Ability Stats Display")]
     [Tooltip("ScrollView onde as estatísticas das habilidades serão exibidas")]
@@ -41,10 +42,17 @@ public class EndGamePanel : MonoBehaviour
 
     private void Awake()
     {
+        // Initialize database for THIS client (works in both SP and MP)
         database = FindFirstObjectByType<db>();
         if (database == null)
         {
+            // Create a local DB instance for this client
             database = gameObject.AddComponent<db>();
+            Debug.Log("[EndGamePanel] Created local database instance for this client");
+        }
+        else
+        {
+            Debug.Log("[EndGamePanel] Using existing database instance");
         }
         gameManager = GameManager.Instance;
         
@@ -99,13 +107,34 @@ public class EndGamePanel : MonoBehaviour
         // Clear old visual rows but capture current run stats first
         ClearAbilityStats();
         
+        // Clear previous save status message
+        if (saveStatusText != null)
+        {
+            saveStatusText.gameObject.SetActive(false);
+        }
+        
         UpdateEndGameStats();
+        
+        Debug.Log($"[EndGamePanel] OnEnable - Captured stats: damageDone={damageDone:F0}, abilityCount={abilityDamageTotals?.Count ?? 0}");
 
-        // Auto-save score for existing users (but don't hide the update button)
-        if (!string.IsNullOrEmpty(userId) && isExistingUser && database != null)
+        // Auto-save score for ALL users (both existing and new)
+        if (database != null)
         {
             await AutoSaveScore();
         }
+        else
+        {
+            Debug.LogWarning("[EndGamePanel] Database not available, auto-save skipped");
+        }
+    }
+
+    void OnDisable()
+    {
+        // Clear local cache when panel is hidden (safe to do now since save is complete)
+        Debug.Log("[EndGamePanel] OnDisable - Clearing local stat cache");
+        abilityDamageTotals = null;
+        damageDone = 0f;
+        timeLasted = 0f;
     }
 
     private async Task AutoSaveScore()
@@ -115,37 +144,104 @@ public class EndGamePanel : MonoBehaviour
             Debug.LogWarning("[EndGamePanel] Database not initialized. Cannot auto-save score.");
             return;
         }
+
+        // NOTE: We allow saving with 0 damage to register the player ID in the database
+        Debug.Log($"[EndGamePanel] AutoSave initiated - damageDone={damageDone:F0}");
+
+        // Generate userId if this is a new user
+        if (string.IsNullOrEmpty(userId))
+        {
+            userId = System.Guid.NewGuid().ToString();
+            PlayerPrefs.SetString("PlayerId", userId);
+            isExistingUser = true;
+            
+            // Set default username if empty
+            if (string.IsNullOrEmpty(usernameInput.text))
+            {
+                usernameInput.text = $"Goofer{UnityEngine.Random.Range(1000, 9999)}";
+            }
+            
+            PlayerPrefs.SetString("PlayerUsername", usernameInput.text);
+            PlayerPrefs.Save();
+            
+            Debug.Log($"[EndGamePanel] Created new userId for auto-save: {userId}, username: {usernameInput.text}");
+        }
         
         try
         {
             var userSnapshot = await database.GetUserAsync(userId);
             var totalsToPersist = abilityDamageTotals ?? AbilityDamageTracker.GetTotalsSnapshot();
+            
+            Debug.Log($"[EndGamePanel] AutoSave: damageDone={damageDone:F0}, abilities={totalsToPersist?.Count ?? 0}");
+            
             if (userSnapshot.Exists)
         {
             var userDict = (IDictionary<string, object>)userSnapshot.Value;
             int existingDamage = System.Convert.ToInt32(userDict["damage"]);
 
-            // Only update damage if current score is better
-            if (damageDone > existingDamage)
+            // Update if current score is better OR equal (to update abilities data)
+            if (damageDone >= existingDamage)
             {
                 database.NewGoofer(userId, PlayerPrefs.GetString("PlayerUsername"), (int)damageDone, totalsToPersist);
-                Debug.Log($"Updated score for {PlayerPrefs.GetString("PlayerUsername")}: {(int)damageDone}");
+                
+                if (damageDone > existingDamage)
+                {
+                    Debug.Log($"✅ Updated score for {PlayerPrefs.GetString("PlayerUsername")}: {existingDamage} → {(int)damageDone}");
+                    
+                    // Show feedback to user
+                    if (saveStatusText != null)
+                    {
+                        saveStatusText.text = $"New high score saved! ({(int)damageDone} damage)";
+                        saveStatusText.gameObject.SetActive(true);
+                    }
+                }
+                else
+                {
+                    Debug.Log($"📊 Updated abilities data for {PlayerPrefs.GetString("PlayerUsername")}: {(int)damageDone} damage");
+                    
+                    // Show feedback to user
+                    if (saveStatusText != null)
+                    {
+                        saveStatusText.text = $"Stats updated: {(int)damageDone} damage";
+                        saveStatusText.gameObject.SetActive(true);
+                    }
+                }
             }
             else
             {
-                Debug.Log($"Kept existing score for {PlayerPrefs.GetString("PlayerUsername")}: {existingDamage}");
+                Debug.Log($"⏩ Kept existing score for {PlayerPrefs.GetString("PlayerUsername")}: {existingDamage} (current: {(int)damageDone})");
+                
+                // Show feedback to user
+                if (saveStatusText != null)
+                {
+                    saveStatusText.text = $"Previous best: {existingDamage} damage";
+                    saveStatusText.gameObject.SetActive(true);
+                }
             }
         }
         else
         {
             // First time saving
             database.NewGoofer(userId, PlayerPrefs.GetString("PlayerUsername"), (int)damageDone, totalsToPersist);
-            Debug.Log($"Created new entry for {PlayerPrefs.GetString("PlayerUsername")}: {(int)damageDone}");
+            Debug.Log($"🆕 Created new entry for {PlayerPrefs.GetString("PlayerUsername")}: {(int)damageDone}");
+            
+            // Show feedback to user
+            if (saveStatusText != null)
+            {
+                saveStatusText.text = $"Score saved! Welcome, {PlayerPrefs.GetString("PlayerUsername")}!";
+                saveStatusText.gameObject.SetActive(true);
+            }
+        }
+        
+        // Update button text to reflect that user now exists
+        if (buttonText != null)
+        {
+            buttonText.text = "Update Username";
         }
         }
         catch (System.Exception ex)
         {
-            Debug.LogWarning($"[EndGamePanel] Failed to auto-save score: {ex.Message}");
+            Debug.LogError($"[EndGamePanel] Failed to auto-save score: {ex.Message}\n{ex.StackTrace}");
         }
     }
 
@@ -210,11 +306,43 @@ public class EndGamePanel : MonoBehaviour
                 buttonText.text = "Update Username";
             }
             
-            Debug.Log($"Saved/Updated: {username} with score: {scoreToSave}");
+            // Show success feedback with clear indication of what happened
+            if (saveStatusText != null)
+            {
+                if (!string.IsNullOrEmpty(oldUsername) && oldUsername != username)
+                {
+                    saveStatusText.text = $"Username updated to '{username}'! (Best: {scoreToSave})";
+                }
+                else if (isExistingUser && scoreToSave > (int)damageDone)
+                {
+                    // Score wasn't better, kept the old one
+                    saveStatusText.text = $"High score kept: {scoreToSave} damage";
+                }
+                else if (scoreToSave == (int)damageDone)
+                {
+                    // Current score saved
+                    saveStatusText.text = $"Score saved: {scoreToSave} damage";
+                }
+                else
+                {
+                    // This shouldn't happen but handle edge case
+                    saveStatusText.text = $"Saved! ({scoreToSave} damage)";
+                }
+                saveStatusText.gameObject.SetActive(true);
+            }
+            
+            Debug.Log($"Saved/Updated: {username} with score: {scoreToSave} (current run: {(int)damageDone})");
         }
         catch (System.Exception ex)
         {
             Debug.LogWarning($"[EndGamePanel] Failed to save score: {ex.Message}");
+            
+            // Show error feedback
+            if (saveStatusText != null)
+            {
+                saveStatusText.text = "Failed to save score!";
+                saveStatusText.gameObject.SetActive(true);
+            }
         }
     }
 
@@ -233,11 +361,25 @@ public class EndGamePanel : MonoBehaviour
         int seconds = Mathf.FloorToInt(timeLasted % 60);
         timeLastedText.text = $"Time Survived: {minutes:00}:{seconds:00}";
 
-        // --- Always display cached reaper damage ---
-        damageDone = gameManager.LastReaperDamage;
-        reaperDamageText.text = $"Damage to Reaper: {damageDone:F0}";
-        Debug.Log($"[EndGamePanel] Displaying reaper damage: {damageDone}");
+        // --- Calculate and Display Damage to Reaper ---
+        // Try cached damage first (for multiplayer/destroyed reaper scenarios), then live stats
+        damageDone = gameManager.GetReaperDamage();
+        
+        // In multiplayer, each client calculates their own damage independently
+        Debug.Log($"[EndGamePanel] UpdateEndGameStats - Client damage: {damageDone:F0}");
+        
+        if (damageDone > 0)
+        {
+            reaperDamageText.text = $"Damage to Reaper: {damageDone:F0}";
+        }
+        else
+        {
+            // Allow 0 damage - player still participated and should be registered
+            reaperDamageText.text = $"Damage to Reaper: {damageDone:F0}";
+        }
+        
         abilityDamageTotals = AbilityDamageTracker.GetTotalsSnapshot();
+        Debug.Log($"[EndGamePanel] Captured {abilityDamageTotals?.Count ?? 0} ability stats");
         
         // Popula as estatísticas das habilidades na ScrollView
         PopulateAbilityStats();
@@ -401,10 +543,12 @@ public class EndGamePanel : MonoBehaviour
 
     private void OnPlayAgainRestart()
     {
-        // Clear visual stats but don't reset tracker yet - let new game start first
+        // Clear visual stats but DON'T reset local cache yet
+        // The tracker will be reset by GameManager when the NEW game starts
         ClearAbilityStats();
-        abilityDamageTotals = null;
-        damageDone = 0f;
+        
+        // NOTE: We intentionally keep abilityDamageTotals and damageDone until the panel is disabled
+        // This ensures stats are available for late saves or multiplayer sync
 
         // Ensure the game is not paused
         try { GameManager.Instance.RequestResume(); } catch { }

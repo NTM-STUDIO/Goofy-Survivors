@@ -447,6 +447,40 @@ public class PlayerStats : MonoBehaviour
             if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp);
         }
     }
+
+    // Client-side method to sync HP from server (called via RPC)
+    public void ClientSyncHp(int hp, int max)
+    {
+        currentHp = Mathf.Clamp(hp, 0, max);
+        OnHealthChanged?.Invoke(currentHp, maxHp);
+        
+        // Update UI for local owner
+        var nm = NetworkManager.Singleton;
+        if (nm == null || !nm.IsListening || _isLocalOwner)
+        {
+            var uiManager = FindFirstObjectByType<UIManager>();
+            if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp);
+        }
+    }
+
+    // Client-side method to trigger visual feedback without applying damage (called via RPC)
+    public void TriggerDamageFeedback(Vector3 hitFromWorldPos, float iFrameDuration)
+    {
+        // Visual feedback only
+        if (spriteRenderer != null)
+        {
+            StopCoroutine(nameof(FlashRoutine));
+            StartCoroutine(FlashRoutine());
+        }
+        
+        OnDamaged?.Invoke();
+        
+        if (iFrameDuration > 0f)
+        {
+            StartCoroutine(InvincibilityRoutine(iFrameDuration));
+        }
+    }
+
     private IEnumerator HealthRegenRoutine() { while (true) { yield return new WaitForSeconds(1f); ApplyHealthRegen(); } }
     private void ApplyHealthRegen() { if (hpRegen > 0f && currentHp > 0 && currentHp < maxHp) { Heal(Mathf.CeilToInt(hpRegen)); } }
     #endregion
