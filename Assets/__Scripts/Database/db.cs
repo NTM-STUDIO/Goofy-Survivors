@@ -5,14 +5,31 @@ using Firebase.Extensions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
+/// <summary>
+/// Firebase Database wrapper. Each client (in multiplayer) has its own instance.
+/// This allows each player to save their individual stats independently.
+/// NOTE: This is NOT a singleton - multiple instances can coexist in multiplayer scenarios.
+/// </summary>
 public class db : MonoBehaviour
 {
     public DatabaseReference MDatabase;
 
     void Awake()
     {
-        Debug.Log("Firebase DB Initialized");
-        MDatabase = FirebaseDatabase.DefaultInstance.RootReference;
+        InitializeDatabase();
+    }
+
+    private void InitializeDatabase()
+    {
+        try
+        {
+            MDatabase = FirebaseDatabase.DefaultInstance.RootReference;
+            Debug.Log($"[db] Firebase DB Initialized for client on GameObject: {gameObject.name}");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[db] Failed to initialize Firebase: {ex.Message}");
+        }
     }
 
     public void NewGoofer(string userId, string username, int damage, IReadOnlyDictionary<string, float> abilityDamage = null)
@@ -39,7 +56,19 @@ public class db : MonoBehaviour
             payload["abilities"] = abilityTotals;
         }
 
-        MDatabase.Child("goofers").Child(userId).SetValueAsync(payload);
+        Debug.Log($"[db] Writing to Firebase - User: {username} ({userId}), Damage: {damage}, Abilities: {abilityDamage?.Count ?? 0}");
+        
+        MDatabase.Child("goofers").Child(userId).SetValueAsync(payload).ContinueWith(task =>
+        {
+            if (task.IsFaulted)
+            {
+                Debug.LogError($"[db] Failed to write data for {username}: {task.Exception}");
+            }
+            else if (task.IsCompleted)
+            {
+                Debug.Log($"[db] ✅ Successfully saved data for {username} with {damage} damage");
+            }
+        });
     }
 
     public async Task<bool> UserExists(string userId)

@@ -9,7 +9,7 @@ public class TeamWipeAbility : NetworkBehaviour
     public float enemyWipeRadius = 8.0f;
     public KeyCode activationKey = KeyCode.E;
     private static HashSet<ulong> playersReady = new HashSet<ulong>();
-    private static float readyTimeout = 1.5f;
+    private static float readyTimeout = 5f;
     private static Dictionary<ulong, float> readyTimestamps = new Dictionary<ulong, float>();
 
     void Update()
@@ -73,7 +73,7 @@ public class TeamWipeAbility : NetworkBehaviour
     private void WipeEnemiesNearPlayers(Vector3 posA, Vector3 posB)
     {
         // Find all enemies within radius of either player
-        var allEnemies = GameObject.FindObjectsOfType<EnemyStats>();
+        var allEnemies = GameObject.FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
         foreach (var enemy in allEnemies)
         {
             if (enemy == null) continue;
