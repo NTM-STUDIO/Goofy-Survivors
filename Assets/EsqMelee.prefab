@@ -325,7 +325,7 @@ MonoBehaviour:
   popupSpawnPoint: {fileID: 3257514570938149199}
   baseHealth: 12
   baseDamage: 6
-  moveSpeed: 12
+  moveSpeed: 11
   mutationChance: 0.1
   minMutationBonus: 1
   maxMutationBonus: 1.5

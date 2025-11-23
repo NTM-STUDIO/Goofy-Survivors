@@ -6,7 +6,6 @@ using Unity.Netcode;
 using MyGame.ConnectionSystem.Connection;
 using System.Collections;
 
-
 public class UIManager : MonoBehaviour
 {
     // Fade animation for new weapon panel
@@ -48,11 +47,117 @@ public class UIManager : MonoBehaviour
     [Header("System References")]
     [SerializeField] private AdvancedCameraController advancedCameraController;
 
+    [Header("Midgame Event Animation")]
+    [SerializeField] private GameObject midgameEventPanel;
+    [SerializeField] private TextMeshProUGUI midgameEventText;
+    private Coroutine midgameEventCoroutine;
+
     private ConnectionManager connectionManager;
     private GameManager gameManager;
     private int selectedCharacterIndex = 0;
 
-    #region Unity Lifecycle & Event Subscription
+    /// <summary>
+    /// Focuses camera on the reaper, shows a message above him, then returns control.
+    /// </summary>
+    public IEnumerator FocusOnReaperAndShowBuff(Transform reaper, string buffMessage)
+    {
+        // Center camera on reaper
+        if (advancedCameraController != null && reaper != null)
+        {
+            advancedCameraController.BindAndCenter(reaper, true, true);
+        }
+
+        // Create or move a world-space message above reaper
+        GameObject msgObj = new GameObject("MidgameBuffMessage");
+        msgObj.transform.SetParent(reaper);
+        msgObj.transform.localPosition = Vector3.up * 3.5f;
+        var canvas = msgObj.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.WorldSpace;
+        canvas.sortingOrder = 100;
+        var text = msgObj.AddComponent<TMPro.TextMeshProUGUI>();
+        text.fontSize = 4;
+        text.alignment = TMPro.TextAlignmentOptions.Center;
+        
+        // Use random face emojis, make them larger and decorative
+        string[] faces = new[] { "😈", "🤪", "😎", "🥶", "🤡", "👹", "👺", "😱", "😤", "😵", "😬", "😳", "😜", "😇", "🥳", "😏", "🤖", "👻" };
+        System.Random rng = new System.Random();
+        string emoji1 = faces[rng.Next(faces.Length)];
+        string emoji2 = faces[rng.Next(faces.Length)];
+        string emoji3 = faces[rng.Next(faces.Length)];
+
+        // Use <size> tag to make emojis very large and make buff name bold
+        text.text = $"{buffMessage} <size=200%>{emoji1} {emoji2} {emoji3}</size>";
+        text.color = Color.yellow;
+        
+        // Fade in
+        float fadeIn = 0.5f, hold = 1.5f, fadeOut = 0.5f;
+        text.alpha = 0f;
+        float t = 0f;
+        while (t < fadeIn)
+        {
+            t += Time.unscaledDeltaTime;
+            text.alpha = Mathf.Lerp(0f, 1f, t / fadeIn);
+            yield return null;
+        }
+        text.alpha = 1f;
+        yield return new WaitForSecondsRealtime(hold);
+        
+        // Fade out
+        t = 0f;
+        while (t < fadeOut)
+        {
+            t += Time.unscaledDeltaTime;
+            text.alpha = Mathf.Lerp(1f, 0f, t / fadeOut);
+            yield return null;
+        }
+        text.alpha = 0f;
+        Destroy(msgObj);
+    }
+
+    /// <summary>
+    /// Shows the midgame event animation panel with a message and fades it in/out.
+    /// </summary>
+    public IEnumerator ShowMidgameEvent(string message)
+    {
+        if (midgameEventCoroutine != null)
+            StopCoroutine(midgameEventCoroutine);
+            
+        if (midgameEventPanel != null) midgameEventPanel.SetActive(true);
+        if (midgameEventText != null) midgameEventText.text = message;
+        
+        CanvasGroup cg = midgameEventPanel?.GetComponent<CanvasGroup>();
+        if (cg == null && midgameEventPanel != null) cg = midgameEventPanel.AddComponent<CanvasGroup>();
+        
+        if (cg != null)
+        {
+            cg.alpha = 0f;
+            float fadeIn = 0.7f, hold = 1.2f, fadeOut = 0.7f;
+            float t = 0f;
+            
+            // Fade in
+            while (t < fadeIn)
+            {
+                t += Time.unscaledDeltaTime;
+                cg.alpha = Mathf.Lerp(0f, 1f, t / fadeIn);
+                yield return null;
+            }
+            cg.alpha = 1f;
+            yield return new WaitForSecondsRealtime(hold);
+            
+            // Fade out
+            t = 0f;
+            while (t < fadeOut)
+            {
+                t += Time.unscaledDeltaTime;
+                cg.alpha = Mathf.Lerp(1f, 0f, t / fadeOut);
+                yield return null;
+            }
+            cg.alpha = 0f;
+        }
+        
+        if (midgameEventPanel != null) midgameEventPanel.SetActive(false);
+    }
+
     void Awake()
     {
         connectionManager = ConnectionManager.Instance;
@@ -89,7 +194,6 @@ public class UIManager : MonoBehaviour
             newWeaponPanel.SetActive(false);
         }
     }
-#endregion
 
     public void OnStartGameButtonClicked()
     {
@@ -465,5 +569,5 @@ public class UIManager : MonoBehaviour
             levelText.text = $"Nível {level}";
         }
     }
-#endregion
+    #endregion
 }

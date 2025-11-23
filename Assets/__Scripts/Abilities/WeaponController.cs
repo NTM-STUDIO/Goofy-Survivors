@@ -72,8 +72,6 @@ public class WeaponController : MonoBehaviour
         }
     }
 
-    // --- All other methods are unchanged and complete ---
-    #region Unchanged Full Code
     private void Attack()
     {
         if (WeaponData.archetype == WeaponArchetype.ShadowCloneJutsu)
@@ -106,20 +104,30 @@ public class WeaponController : MonoBehaviour
             Debug.LogError("[ShadowClone] WeaponData or prefab is missing.");
             return;
         }
-        if (weaponManager == null)
-        {
-            Debug.LogError("[ShadowClone] weaponManager reference is missing on WeaponController.");
-            return;
-        }
+
         if (weaponRegistry == null)
         {
             Debug.LogError("[ShadowClone] WeaponRegistry reference is missing on WeaponController. Assign it on PlayerWeaponManager and pass into Initialize().");
             return;
         }
 
-        // In multiplayer, ask the server to spawn a networked clone and wire server-authoritative aura damage.
+        // Get player stats from weapon manager or directly
+        PlayerStats stats = weaponManager != null ? weaponManager.GetComponent<PlayerStats>() : GetComponentInParent<PlayerStats>();
+        if (stats == null)
+        {
+            Debug.LogError("[ShadowClone] Could not find PlayerStats!");
+            return;
+        }
+
+        // In multiplayer, ask the server to spawn a networked clone
         if (GameManager.Instance != null && GameManager.Instance.isP2P)
         {
+            if (weaponManager == null)
+            {
+                Debug.LogError("[ShadowClone] weaponManager reference is missing for multiplayer.");
+                return;
+            }
+
             // Filter out projectiles and the clone weapon itself
             List<WeaponData> owned = weaponManager.GetOwnedWeapons();
             if (owned == null)
@@ -138,21 +146,32 @@ public class WeaponController : MonoBehaviour
             return;
         }
 
-        // Single-player fallback: local only
-        GameObject cloneObj = Instantiate(WeaponData.weaponPrefab, playerStats.transform.position, playerStats.transform.rotation);
+        // Single-player: local only
+        Debug.Log("[ShadowClone] Spawning single-player shadow clone");
+
+        GameObject cloneObj = Instantiate(WeaponData.weaponPrefab, stats.transform.position, stats.transform.rotation);
         ShadowClone cloneScript = cloneObj.GetComponent<ShadowClone>();
         if (cloneScript == null)
         {
-            // Ensure the clone has a ShadowClone component in SP even if the prefab was missing it
             cloneScript = cloneObj.AddComponent<ShadowClone>();
         }
 
-        // Do not allow the shadow clone to fire projectiles: filter them out
-        List<WeaponData> weaponsToClone = weaponManager
-            .GetOwnedWeapons()
-            .Where(w => w.archetype != WeaponArchetype.ShadowCloneJutsu && w.archetype != WeaponArchetype.Projectile)
-            .ToList();
-        cloneScript.Initialize(weaponsToClone, playerStats, weaponRegistry);
+        // Get weapons to clone - filter out projectiles and clone jutsu
+        List<WeaponData> weaponsToClone;
+        if (weaponManager != null)
+        {
+            weaponsToClone = weaponManager
+                .GetOwnedWeapons()
+                .Where(w => w.archetype != WeaponArchetype.ShadowCloneJutsu && w.archetype != WeaponArchetype.Projectile)
+                .ToList();
+        }
+        else
+        {
+            // Fallback: use current weapon only
+            weaponsToClone = new List<WeaponData> { WeaponData };
+        }
+
+        cloneScript.Initialize(weaponsToClone, stats, weaponRegistry);
     }
 
     private void FireLocally()
@@ -189,24 +208,33 @@ public class WeaponController : MonoBehaviour
         int finalAmount = WeaponData.amount + playerStats.projectileCount;
         float angleStep = 360f / Mathf.Max(1, finalAmount);
 
+        // Get the ShadowClone parent (if this is a clone's weapon)
+        ShadowClone parentClone = GetComponentInParent<ShadowClone>();
+
         for (int i = 0; i < finalAmount; i++)
         {
             GameObject orbitingWeaponObj = Instantiate(WeaponData.weaponPrefab, transform.position, Quaternion.identity);
-            // Only parent if not a NetworkObject or if Netcode is listening
-            var netObj = orbitingWeaponObj.GetComponent<Unity.Netcode.NetworkObject>();
-            if (netObj == null || (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening))
+            
+            // CRITICAL: Add tracker to auto-destroy when clone is destroyed
+            if (parentClone != null)
             {
-                orbitingWeaponObj.transform.SetParent(transform, false);
+                var tracker = orbitingWeaponObj.AddComponent<CloneWeaponTracker>();
+                tracker.SetParentClone(parentClone);
             }
-            // Always set the orbit center to this transform (so frying pan orbits the shadow clone)
+            
+            // Parent to this weapon controller
+            orbitingWeaponObj.transform.SetParent(transform, false);
+            
             var orbiter = orbitingWeaponObj.GetComponent<OrbitingWeapon>();
             if (orbiter != null)
             {
                 orbiter.LocalInitialize(transform, i * angleStep, playerStats, WeaponData);
             }
+            
+            Debug.Log($"[WeaponController] Spawned orbiting weapon for clone, added tracker: {orbitingWeaponObj.name}");
         }
     }
-    
+
     private Transform[] GetTargets(int amount)
     {
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
@@ -250,5 +278,33 @@ public class WeaponController : MonoBehaviour
     }
 
     public int GetWeaponId() { return this.weaponId; }
-    #endregion
+
+    private void OnDestroy()
+    {
+        Debug.Log($"[WeaponController] Destroying weapon: {WeaponData?.weaponName}");
+        
+        // If this is a shadow clone's weapon, make sure to clean up any spawned objects
+        if (weaponManager == null) // This indicates it's a clone's weapon
+        {
+            // Clean up any orbiting weapons
+            var orbiters = GetComponentsInChildren<OrbitingWeapon>(true);
+            foreach (var orbiter in orbiters)
+            {
+                if (orbiter != null && orbiter.gameObject != this.gameObject)
+                {
+                    Destroy(orbiter.gameObject);
+                }
+            }
+            
+            // Clean up any aura weapons
+            var auras = GetComponentsInChildren<AuraWeapon>(true);
+            foreach (var aura in auras)
+            {
+                if (aura != null && aura.gameObject != this.gameObject)
+                {
+                    Destroy(aura.gameObject);
+                }
+            }
+        }
+    }
 }

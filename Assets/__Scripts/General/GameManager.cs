@@ -46,6 +46,11 @@ public class GameManager : NetworkBehaviour
     [Header("Timer Settings")]
     [SerializeField] private float totalGameTime = 900f;
     private float currentTime;
+    // === Midgame Event State ===
+    private bool midgameEventTriggered = false;
+    private MutationType globalMidgameMutation = MutationType.None;
+    // Helper to get midpoint time
+    private float MidgameTime => totalGameTime / 2f;
     private NetworkVariable<float> networkCurrentTime = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private float timerUIAccumulator = 0f;
 
@@ -115,25 +120,25 @@ public class GameManager : NetworkBehaviour
     public void HandlePlayAgain()
     {
         Debug.Log($"[GameManager] HandlePlayAgain() called - isP2P: {isP2P}, IsServer: {(isP2P ? IsServer : "N/A")}");
-        
+
         if (!isP2P)
         {
             // Single-player: use soft restart instead of scene reload
             Debug.Log("[GameManager] Single-player 'Play Again' clicked. Performing soft restart.");
             Time.timeScale = 1f;
-            
+
             try
             {
                 uiManager?.ShowEndGamePanel(false);
                 SoftResetSinglePlayerWorld();
-                
+
                 // Ensure loadout selections are valid
                 LoadoutSelections.EnsureValidDefaults();
                 if (LoadoutSelections.SelectedCharacterPrefab != null)
                 {
                     SetChosenPlayerPrefab(LoadoutSelections.SelectedCharacterPrefab);
                 }
-                
+
                 StartGame();
                 Debug.Log("[GameManager] Soft restart completed successfully.");
             }
@@ -181,13 +186,13 @@ public class GameManager : NetworkBehaviour
         }
 
         Debug.Log("[GameManager] Host returning all players to lobby...");
-        
+
         // Find SettingsManager to get lobby scene name
         var settings = FindObjectOfType<SettingsManager>();
         string lobbyScene = settings?.lobbySceneName ?? "P2P";
-        
+
         Debug.Log($"[GameManager] SettingsManager found: {settings != null}, Lobby scene name: {lobbyScene}");
-        
+
         // Verify scene exists in build
         int sceneIndex = SceneManager.GetSceneByName(lobbyScene).buildIndex;
         if (sceneIndex < 0)
@@ -195,13 +200,13 @@ public class GameManager : NetworkBehaviour
             Debug.LogError($"[GameManager] Lobby scene '{lobbyScene}' not found in build settings! Please add it to File > Build Settings > Scenes in Build");
             return;
         }
-        
+
         // Subscribe to scene load event to spawn lobby manager
         nsm.OnLoadEventCompleted += HandleLobbySceneLoadedForRestart;
-        
+
         // Load the lobby scene for all clients
         nsm.LoadScene(lobbyScene, LoadSceneMode.Single);
-        
+
         Debug.Log($"[GameManager] Loading lobby scene: {lobbyScene}");
     }
 
@@ -217,14 +222,14 @@ public class GameManager : NetworkBehaviour
     private void HandleLobbySceneLoadedForRestart(string sceneName, LoadSceneMode mode, System.Collections.Generic.List<ulong> completed, System.Collections.Generic.List<ulong> timedOut)
     {
         Debug.Log($"[GameManager] Lobby scene loaded after restart: {sceneName}");
-        
+
         // Unsubscribe to avoid multiple calls
         var nsm = NetworkManager.Singleton?.SceneManager;
         if (nsm != null)
         {
             nsm.OnLoadEventCompleted -= HandleLobbySceneLoadedForRestart;
         }
-        
+
         // Check if we need to spawn lobby manager
         var settings = FindObjectOfType<SettingsManager>();
         if (settings != null && settings.lobbyManagerPrefab != null && IsServer)
@@ -312,7 +317,7 @@ public class GameManager : NetworkBehaviour
 
         // --- 6. TELL ALL CLIENTS TO PERFORM THEIR LOCAL UI RESET ---
         Client_ResetToLobbyClientRpc();
-        
+
         // --- 7. HOST RESETS UI IMMEDIATELY (while still IsHost/IsServer) ---
         Debug.Log("[GameManager] Host performing local UI reset immediately.");
         ResetLocalUIToLobby();
@@ -347,16 +352,16 @@ public class GameManager : NetworkBehaviour
         yield return new WaitForEndOfFrame();
         yield return null; // Wait one more frame
         yield return new WaitForSeconds(0.5f); // Extra delay for network state
-        
+
         Debug.Log($"[GameManager] ReturnToLobbyAfterDelay - IsHost: {IsHost}, IsServer: {IsServer}, IsClient: {IsClient}");
-        
+
         // Tell the UIManager to switch back to the lobby/character selection UI
         if (uiManager != null)
         {
             uiManager.ShowEndGamePanel(false);
             uiManager.ReturnToLobby();
         }
-        
+
         // Also manually refresh the LobbyUI button visibility after delay
         var lobbyUI = FindObjectOfType<LobbyUI>();
         if (lobbyUI != null && lobbyUI.gameObject.activeInHierarchy)
@@ -589,21 +594,32 @@ public class GameManager : NetworkBehaviour
     private IEnumerator GiveStartingWeaponAfterPlayerSpawns(ulong clientId)
     {
         NetworkObject playerNetworkObject = null;
+        int maxWaitFrames = 300; // Timeout after 5 seconds (300 frames at 60fps)
+        int framesWaited = 0;
 
-        while (playerNetworkObject == null)
+        while (playerNetworkObject == null && framesWaited < maxWaitFrames)
         {
             yield return null;
-            if (NetworkManager.Singleton.SpawnManager != null)
+            framesWaited++;
+
+            if (NetworkManager.Singleton?.SpawnManager != null)
             {
                 playerNetworkObject = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clientId);
             }
+        }
+
+        if (playerNetworkObject == null)
+        {
+            Debug.LogError($"[GameManager] Failed to find player object for Client ID: {clientId} after {maxWaitFrames} frames!");
+            yield break;
         }
 
         Debug.Log($"[GameManager] Found player object for Client ID: {clientId}. Getting PlayerWeaponManager.");
 
         PlayerWeaponManager pwm = playerNetworkObject.GetComponent<PlayerWeaponManager>();
         var sync = playerNetworkObject.GetComponent<LoadoutSync>();
-        if (sync == null) playerNetworkObject.gameObject.AddComponent<LoadoutSync>();
+        if (sync == null)
+            playerNetworkObject.gameObject.AddComponent<LoadoutSync>();
 
         if (pwm != null)
         {
@@ -688,64 +704,95 @@ public class GameManager : NetworkBehaviour
         AbilityDamageTracker.Reset();
 
         // --- 1. Clear all players (cameras are automatically destroyed as children) ---
-        try { 
-            var players = GameObject.FindGameObjectsWithTag("Player"); 
-            foreach (var p in players) 
-                if (p != null) Destroy(p); 
-        } catch { }
+        var players = GameObject.FindGameObjectsWithTag("Player");
+        foreach (var player in players)
+        {
+            if (player != null && player.GetComponent<Movement>() != null)
+            {
+                Destroy(player);
+            }
+        }
 
         // --- 2. Clear all enemies ---
-        try { 
-            var enemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None); 
-            foreach (var e in enemies) 
-                if (e != null && e.gameObject != null) Destroy(e.gameObject); 
-        } catch { }
+        var enemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
+        foreach (var enemy in enemies)
+        {
+            if (enemy != null && enemy.gameObject != null)
+            {
+                Destroy(enemy.gameObject);
+            }
+        }
 
         // --- 3. Clear all projectiles and weapons ---
-        try { 
-            var projs = FindObjectsByType<ProjectileWeapon>(FindObjectsSortMode.None); 
-            foreach (var p in projs) 
-                if (p != null && p.gameObject != null) Destroy(p.gameObject); 
-        } catch { }
-        try { 
-            var orbiters = FindObjectsByType<OrbitingWeapon>(FindObjectsSortMode.None); 
-            foreach (var ow in orbiters) 
-                if (ow != null && ow.gameObject != null) Destroy(ow.gameObject); 
-        } catch { }
-        try { 
-            var auras = FindObjectsByType<AuraWeapon>(FindObjectsSortMode.None); 
-            foreach (var a in auras) 
-                if (a != null && a.gameObject != null) Destroy(a.gameObject); 
-        } catch { }
+        var projs = FindObjectsByType<ProjectileWeapon>(FindObjectsSortMode.None);
+        foreach (var proj in projs)
+        {
+            if (proj != null && proj.gameObject != null)
+            {
+                Destroy(proj.gameObject);
+            }
+        }
+
+        var orbiters = FindObjectsByType<OrbitingWeapon>(FindObjectsSortMode.None);
+        foreach (var orbiter in orbiters)
+        {
+            if (orbiter != null && orbiter.gameObject != null)
+            {
+                Destroy(orbiter.gameObject);
+            }
+        }
+
+        var auras = FindObjectsByType<AuraWeapon>(FindObjectsSortMode.None);
+        foreach (var aura in auras)
+        {
+            if (aura != null && aura.gameObject != null)
+            {
+                Destroy(aura.gameObject);
+            }
+        }
 
         // --- 4. Clear all pickups and UI elements ---
-        try { 
-            var pops = FindObjectsByType<DamagePopup>(FindObjectsSortMode.None); 
-            foreach (var dp in pops) 
-                if (dp != null && dp.gameObject != null) Destroy(dp.gameObject); 
-        } catch { }
-        try { 
-            var orbs = FindObjectsByType<ExperienceOrb>(FindObjectsSortMode.None); 
-            foreach (var o in orbs) 
-                if (o != null && o.gameObject != null) Destroy(o.gameObject); 
-        } catch { }
+        var pops = FindObjectsByType<DamagePopup>(FindObjectsSortMode.None);
+        foreach (var pop in pops)
+        {
+            if (pop != null && pop.gameObject != null)
+            {
+                Destroy(pop.gameObject);
+            }
+        }
+
+        var orbs = FindObjectsByType<ExperienceOrb>(FindObjectsSortMode.None);
+        foreach (var orb in orbs)
+        {
+            if (orb != null && orb.gameObject != null)
+            {
+                Destroy(orb.gameObject);
+            }
+        }
 
         // --- 5. Clear the generated map ---
-        try { 
-            if (mapGenerator != null) 
-                mapGenerator.ClearMap(); 
-        } catch { }
+        if (mapGenerator != null)
+        {
+            mapGenerator.ClearMap();
+        }
 
         // --- 6. Stop coroutines ---
-        try { enemyDespawner?.StopAllCoroutines(); } catch { }
+        if (enemyDespawner != null)
+        {
+            enemyDespawner.StopAllCoroutines();
+        }
 
         // Reset internal state
         CurrentState = GameState.PreGame;
         bossSpawned = false;
         lastDifficultyIncreaseMark = 0;
 
-        try { playerExperience?.ResetState(); } catch { }
+        if (playerExperience != null)
+        {
+            playerExperience.ResetState();
+        }
     }
+
 
     private void StartGame_SinglePlayer()
     {
@@ -887,10 +934,6 @@ public class GameManager : NetworkBehaviour
             {
                 playerObject.AddComponent<ApplyRunesOnSpawn>();
             }
-
-            // Camera is now part of the player prefab, no need to instantiate separately
-            // Singleplayer: Uses AdvancedCameraController in the scene (if needed)
-            // Multiplayer: Each player prefab has its own camera as a child
         }
 
         // --- CORRECTED MAP GENERATION LOGIC ---
@@ -903,12 +946,16 @@ public class GameManager : NetworkBehaviour
                 {
                     GenerateMapClientRpc();
                 }
+                else
+                {
+                    // Clients wait a moment for server to spawn map objects, then generate visual-only elements
+                    StartCoroutine(DelayedMapGenerationForClient());
+                }
             }
             else
             {
                 // In single-player, we just generate the map directly.
-                // It calls the single, unified GenerateMap() method.
-                 mapGenerator.GenerateMap();
+                mapGenerator.GenerateMap();
             }
         }
         else
@@ -951,6 +998,15 @@ public class GameManager : NetworkBehaviour
         if (uiManager) uiManager.OnGameStart();
     }
 
+    private IEnumerator DelayedMapGenerationForClient()
+    {
+        // Wait for network objects to stabilize
+        yield return new WaitForSeconds(1f);
+        if (mapGenerator != null)
+        {
+            mapGenerator.GenerateMap();
+        }
+    }
 
 
     [ClientRpc]
@@ -1210,12 +1266,124 @@ public class GameManager : NetworkBehaviour
 
         UpdateTimerUI(newTime);
 
+        // === MIDGAME EVENT: Pause, spawn reaper, global buff ===
+        if (!midgameEventTriggered && newTime <= MidgameTime && newTime > MidgameTime - 1f) // 1s window to avoid multiple triggers
+        {
+            midgameEventTriggered = true;
+            StartCoroutine(TriggerMidgameEvent());
+        }
+
         if (newTime <= 0)
         {
             if (isP2P) { GameOverClientRpc(); }
             else { GameOver(); }
         }
     }
+    // Coroutine to handle midgame event
+    // Coroutine to handle midgame event
+    private IEnumerator TriggerMidgameEvent()
+    {
+        // Pause the game
+        RequestPause(false);
+
+        // Choose a global mutation type at random and assign it.
+        MutationType[] choices = new[] { MutationType.Health, MutationType.Damage, MutationType.Speed };
+        globalMidgameMutation = choices[UnityEngine.Random.Range(0, choices.Length)];
+
+        // Apply a strong, clearly noticeable buff (double) to all existing enemies
+        var allEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
+        foreach (var e in allEnemies)
+        {
+            ApplyMidgameMutationToEnemy(e);
+        }
+
+        // Spawn the reaper (boss) and get reference
+        GameObject reaperObj = null;
+        if (bossPrefab != null && bossSpawnPoint != null)
+        {
+            reaperObj = Instantiate(bossPrefab, bossSpawnPoint.position + Vector3.up * 10f, bossSpawnPoint.rotation);
+            var netObj = reaperObj.GetComponent<NetworkObject>();
+            if (netObj != null && isP2P && IsServer)
+                netObj.Spawn(true);
+            reaperStats = reaperObj.GetComponent<EnemyStats>();
+            if (reaperStats != null)
+            {
+                ApplyMidgameMutationToEnemy(reaperStats);
+            }
+        }
+
+        // Camera focus and message: make a clear banner saying "Everyone Double <buff>"
+        string buffName = (globalMidgameMutation == MutationType.Health) ? "HP" : (globalMidgameMutation == MutationType.Damage) ? "Damage" : "Speed";
+        string uiMessage = $"Everyone Double <b>{buffName}</b>";
+
+        if (uiManager != null && reaperObj != null)
+            yield return uiManager.FocusOnReaperAndShowBuff(reaperObj.transform, uiMessage);
+        else
+            yield return new WaitForSecondsRealtime(2.5f);
+
+        // Resume game
+        RequestResume();
+
+        Debug.Log("Midgame: Difficulty increased +2 - Enemies are now stronger!");
+    }
+
+    // Helper to apply mutation to an enemy (made public so spawners can use it for future spawns)
+    public void ApplyMidgameMutationToEnemy(EnemyStats enemy)
+    {
+        if (enemy == null) return;
+        // Only apply if not already mutated by this event
+        if (enemy.CurrentMutation != globalMidgameMutation)
+        {
+            // Directly set mutation and update visuals/stats
+            switch (globalMidgameMutation)
+            {
+                case MutationType.Health:
+                    // Double HP
+                    enemy.baseHealth *= 2f;
+                    break;
+                case MutationType.Damage:
+                    // Double damage
+                    enemy.baseDamage *= 2f;
+                    break;
+                case MutationType.Speed:
+                    // Double movement speed
+                    enemy.moveSpeed *= 2f;
+                    break;
+            }
+            // Force mutation type and color
+            var netObj = enemy.GetComponent<NetworkObject>();
+            if (NetworkManager.Singleton.IsServer)
+            {
+                // If using network sync, set mutation via reflection (prop & net var)
+                var prop = typeof(EnemyStats).GetProperty("CurrentMutation", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+                if (prop != null) prop.SetValue(enemy, globalMidgameMutation);
+                var netField = typeof(EnemyStats).GetField("netMutation", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (netField != null)
+                {
+                    var netVar = netField.GetValue(enemy) as Unity.Netcode.NetworkVariable<int>;
+                    if (netVar != null) netVar.Value = (int)globalMidgameMutation;
+                }
+            }
+            else
+            {
+                var prop = enemy.GetType().GetProperty("CurrentMutation", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+                if (prop != null) prop.SetValue(enemy, globalMidgameMutation);
+            }
+            // Update color
+            var renderer = enemy.GetComponentInChildren<SpriteRenderer>();
+            if (renderer != null)
+            {
+                switch (globalMidgameMutation)
+                {
+                    case MutationType.Health: renderer.color = Color.green; break;
+                    case MutationType.Damage: renderer.color = Color.red; break;
+                    case MutationType.Speed: renderer.color = Color.blue; break;
+                }
+            }
+        }
+    }
+    // Expose global mutation for EnemySpawner
+    public MutationType GetGlobalMidgameMutation() => globalMidgameMutation;
 
     private void ServerUpdateRevives()
     {
