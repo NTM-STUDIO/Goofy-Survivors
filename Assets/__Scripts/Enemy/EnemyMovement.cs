@@ -151,23 +151,36 @@ public class EnemyMovement : NetworkBehaviour
     /// </summary>
     private void FindLocalClosestPlayer()
     {
-        if (PlayerManager.Instance == null || PlayerManager.Instance.ActivePlayers.Count == 0)
+        // Lista temporária para busca
+        List<Transform> potentialTargets = new List<Transform>();
+
+        // 1. Tenta pegar do Manager
+        if (PlayerManager.Instance != null && PlayerManager.Instance.ActivePlayers.Count > 0)
         {
-            currentTarget = null;
-            targetRb = null;
-            return;
+            potentialTargets = PlayerManager.Instance.ActivePlayers;
+        }
+        // 2. Fallback: Procura por Tag
+        else
+        {
+            var players = GameObject.FindGameObjectsWithTag("Player");
+            foreach (var p in players) potentialTargets.Add(p.transform);
         }
 
         Transform bestTarget = null;
         float minSqrDist = float.MaxValue;
         Vector3 myPos = transform.position;
 
-        // Itera sobre a lista global de jogadores ativos
-        foreach (Transform t in PlayerManager.Instance.ActivePlayers)
+        foreach (Transform t in potentialTargets)
         {
             if (t == null) continue;
 
-            // Verifica distância ao quadrado (mais rápido)
+            // --- CORREÇÃO AQUI: VERIFICA SE ESTÁ CAÍDO ---
+            var stats = t.GetComponent<PlayerStats>();
+            
+            // Se tiver stats e estiver caído, IGNORA este alvo
+            if (stats != null && stats.IsDowned) continue;
+            // ---------------------------------------------
+
             float sqrDist = (t.position - myPos).sqrMagnitude;
             if (sqrDist < minSqrDist)
             {
@@ -176,18 +189,17 @@ public class EnemyMovement : NetworkBehaviour
             }
         }
 
-        // Se o alvo mudou ou ainda não tínhamos Rigidbody
-        if (bestTarget != currentTarget)
+        // Atualiza o alvo (se for null, o inimigo para)
+        currentTarget = bestTarget;
+        
+        if (currentTarget != null)
         {
-            currentTarget = bestTarget;
-            if (currentTarget != null)
-            {
-                targetRb = currentTarget.GetComponent<Rigidbody>();
-            }
-            else
-            {
-                targetRb = null;
-            }
+            targetRb = currentTarget.GetComponent<Rigidbody>();
+        }
+        else
+        {
+            targetRb = null;
+            // Opcional: Podes mandar o inimigo passear aleatoriamente se não houver alvos
         }
     }
 

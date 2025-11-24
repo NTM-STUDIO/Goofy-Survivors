@@ -19,12 +19,12 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<int> sessionSeed = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     public int SessionSeed => sessionSeed.Value;
 
-    [Header("SUB-MANAGERS (Arraste no Inspector)")]
+    [Header("SUB-MANAGERS")]
     public PlayerSpawnManager spawnManager;
     public DifficultyManager difficultyManager;
     public ReviveManager reviveManager;
     public GameEventManager eventManager;
-    public MapGenerator mapGenerator; // <--- ADICIONADO (IMPORTANTE)
+    public MapGenerator mapGenerator;
     public UIManager uiManager;
 
     public NetworkVariable<float> networkCurrentTime = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -34,6 +34,14 @@ public class GameManager : NetworkBehaviour
     {
         if (Instance != null && Instance != this) Destroy(gameObject);
         else { Instance = this; DontDestroyOnLoad(gameObject); }
+    }
+
+    void Start()
+    {
+        CurrentState = GameState.PreGame;
+        Time.timeScale = 1f;
+        localTime = totalGameTime;
+        if (uiManager != null) { uiManager.ShowEndGamePanel(false); uiManager.ShowPauseMenu(false); }
     }
 
     public override void OnNetworkSpawn()
@@ -47,7 +55,7 @@ public class GameManager : NetworkBehaviour
 
     private void Update()
     {
-        HandleInput(); // <--- Adicionado verificação de Input
+        HandleInput();
 
         if (CurrentState != GameState.Playing) return;
 
@@ -66,89 +74,81 @@ public class GameManager : NetworkBehaviour
 
     private void HandleInput()
     {
-        if (Input.GetKeyDown(KeyCode.Tab))
-            uiManager?.ToggleStatsPanel();
+        if (Input.GetKeyDown(KeyCode.Tab)) uiManager?.ToggleStatsPanel();
 
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (CurrentState == GameState.Playing)
-            {
-                // ESC: Pausa E Mostra Menu (true, true)
-                RequestPause(true, true);
-            }
-            else if (CurrentState == GameState.Paused)
-            {
-                // ESC no Menu: Despausa (fecha menu)
-                RequestPause(false);
-            }
+            if (CurrentState == GameState.Playing) RequestPause(true, true);
+            else if (CurrentState == GameState.Paused) RequestPause(false);
         }
     }
 
     // ========================================================================
-    // PAUSE & STATE LOGIC (CORRIGIDA)
+    // CORE METHODS (START GAME CORRIGIDO)
     // ========================================================================
 
-    /// <summary>
-    /// Pausa ou Despausa o jogo.
-    /// </summary>
-    /// <param name="pause">True para pausar, False para retomar.</param>
-    /// <param name="showMenu">Se True, abre o Menu de Pausa (ESC). Se False, apenas para o tempo (LevelUp/Cinemática).</param>
-    public void RequestPause(bool pause, bool showMenu = false)
+    public void StartGame()
     {
-        // Em P2P, pausar é complexo. Geralmente só permitimos se não for P2P ou se for lógica específica.
-        // Aqui assumimos que pausa localmente o tempo e input.
+        if (CurrentState == GameState.Playing) return;
 
-        Time.timeScale = pause ? 0f : 1f;
+        // 1. Configuração Inicial (Só o Host/Server decide isto)
+        if (isP2P && !IsServer) return; // Segurança para cliente não iniciar jogo
 
-        // Atualiza estado se não for GameOver/Cinematic (para não quebrar fluxo)
-        if (CurrentState != GameState.GameOver && CurrentState != GameState.Cinematic)
+        localTime = totalGameTime;
+
+        // 2. Resetar Managers (Lógica de Servidor)
+        if (spawnManager) spawnManager.StartSpawningProcess(); // Spawna Players
+        if (difficultyManager) difficultyManager.ResetDifficulty();
+        if (reviveManager) reviveManager.ResetReviveState();
+        if (eventManager) eventManager.ResetEvents();
+
+        var enemySpawner = FindObjectOfType<EnemySpawner>();
+        if (enemySpawner) enemySpawner.StartSpawning();
+
+        // 3. AVISAR TODOS OS CLIENTES (incluindo o Host) PARA MUDAR UI
+        if (isP2P)
         {
-            CurrentState = pause ? GameState.Paused : GameState.Playing;
+            StartGameClientRpc();
         }
-
-        // Lógica de UI
-        if (uiManager != null)
+        else
         {
-            if (pause && showMenu)
-            {
-                uiManager.ShowPauseMenu(true);
-            }
-            else
-            {
-                // Se despausar, ou se for pausa sem menu (LevelUp), garantimos que o menu fecha
-                uiManager.ShowPauseMenu(false);
-            }
+            // Singleplayer chama direto
+            StartGameLocalLogic();
         }
-
-        // Bloqueia/Desbloqueia movimento do jogador local
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient?.PlayerObject != null)
-        {
-            var move = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<Movement>();
-            if (move) move.enabled = !pause;
-        }
-    }
-
-    public void RequestPauseForLevelUp()
-    {
-        if (!isP2P) RequestPause(true, false); // False = Não mostra menu
-        else if (IsServer) SetPausedClientRpc(true, false);
-    }
-
-    public void ResumeAfterLevelUp()
-    {
-        if (!isP2P) RequestPause(false);
-        else if (IsServer) SetPausedClientRpc(false, false);
     }
 
     [ClientRpc]
-    private void SetPausedClientRpc(bool paused, bool showMenu)
+    private void StartGameClientRpc()
     {
-        RequestPause(paused, showMenu);
+        StartGameLocalLogic();
+    }
+
+    private void StartGameLocalLogic()
+    {
+        // Esta lógica corre em TODOS (Host e Clientes)
+        Debug.Log("[GameManager] StartGameLocalLogic: Iniciando jogo localmente (UI, Mapa, Estado).");
+
+        CurrentState = GameState.Playing;
+
+        // Gera o Mapa (Visuals locais + Networked objects se for server)
+        if (mapGenerator)
+        {
+            mapGenerator.ClearMap();
+            mapGenerator.GenerateMap();
+        }
+        else
+        {
+            Debug.LogError("GameManager: MapGenerator não atribuído!");
+        }
+
+        // Muda a UI (Esconde Lobby, Mostra HUD)
+        if (uiManager) uiManager.OnGameStart();
     }
 
     // ========================================================================
     // REDIRECTS (FACADE PATTERN)
     // ========================================================================
+    // ... (O resto do código de redirects mantém-se IGUAL, copiei para baixo para facilitar) ...
 
     public float currentEnemyHealthMultiplier => difficultyManager.CurrentHealthMult;
     public float currentEnemyDamageMultiplier => difficultyManager.CurrentDamageMult;
@@ -179,83 +179,15 @@ public class GameManager : NetworkBehaviour
     public void SetChosenPlayerPrefab(GameObject prefab) => spawnManager.SetChosenPrefab(prefab);
     public void SetPlayerSelections_P2P(Dictionary<ulong, GameObject> selections) => spawnManager.SetPlayerSelections(selections);
     public void PlayerDowned(ulong clientId) => reviveManager.NotifyPlayerDowned(clientId);
-    public void ServerApplyPlayerDamage(ulong id, float amount, Vector3? p = null, float? i = null)
-    {
-        // Se for Multiplayer, usa o ReviveManager (como antes)
-        if (isP2P)
-        {
-            if (reviveManager != null)
-            {
-                reviveManager.ServerApplyPlayerDamage(id, amount, p, i);
-            }
-        }
-        // Se for Singleplayer, aplica o dano DIRETAMENTE no jogador local
-        else
-        {
-            // Em SP, ignoramos o 'id' e procuramos o único PlayerStats que existe
-            var playerStats = FindObjectOfType<PlayerStats>();
-            if (playerStats != null)
-            {
-                playerStats.ApplyDamage(amount, p, i);
-            }
-        }
-    }
+    public void ServerApplyPlayerDamage(ulong id, float a, Vector3? p = null, float? i = null) => reviveManager.ServerApplyPlayerDamage(id, a, p, i);
+
     // ========================================================================
-    // CORE METHODS
+    // UI & STATE & LEGACY
     // ========================================================================
 
-    public void StartGame()
-    {
-        if (CurrentState == GameState.Playing) return;
-        localTime = totalGameTime;
-        CurrentState = GameState.Playing;
-
-        if (spawnManager) spawnManager.StartSpawningProcess();
-        if (difficultyManager) difficultyManager.ResetDifficulty();
-        if (reviveManager) reviveManager.ResetReviveState();
-        if (eventManager) eventManager.ResetEvents();
-
-        // GERAÇÃO DO MAPA
-        if (mapGenerator)
-        {
-            mapGenerator.ClearMap();
-            mapGenerator.GenerateMap();
-        }
-        else
-        {
-            Debug.LogError("GameManager: MapGenerator não atribuído no Inspector!");
-        }
-
-        var enemySpawner = FindObjectOfType<EnemySpawner>();
-        if (enemySpawner) enemySpawner.StartSpawning();
-
-        if (uiManager) uiManager.OnGameStart();
-    }
-
-    void Start()
-    {
-        // --- CORREÇÃO CRÍTICA ---
-        // Força o estado inicial para PreGame (Menu/Lobby)
-        CurrentState = GameState.PreGame;
-
-        // Garante que o tempo flui (para animações de UI)
-        Time.timeScale = 1f;
-
-        // Inicializa o tempo local para não ser 0 (evita Game Over imediato se algo falhar)
-        localTime = totalGameTime;
-
-        // Garante que o painel de fim de jogo está escondido
-        if (uiManager != null)
-        {
-            uiManager.ShowEndGamePanel(false);
-            uiManager.ShowPauseMenu(false);
-        }
-
-        Debug.Log("[GameManager] Estado inicial definido para PreGame. Aguardando StartGame().");
-    }
     public float GetRemainingTime() => isP2P ? networkCurrentTime.Value : localTime;
-
     public void SetGameState(GameState newState) => CurrentState = newState;
+    public float GetTotalGameTime() => totalGameTime;
 
     public void GameOver()
     {
@@ -284,12 +216,74 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-   public void SoftResetSinglePlayerWorld()
+    // ========================================================================
+    // PAUSE LOGIC (CORRIGIDA PARA CLIENTES)
+    // ========================================================================
+
+    public void RequestPause(bool pause, bool showMenu = false)
+    {
+        // 1. LÓGICA DE TEMPO (Só o Server ou Singleplayer para o tempo)
+        if (!isP2P || IsServer)
+        {
+            Time.timeScale = pause ? 0f : 1f;
+        }
+        // Clientes: O tempo NUNCA para (TimeScale fica 1), mas o estado muda para permitir UI
+
+        // 2. MUDANÇA DE ESTADO
+        // Se despausar, voltamos sempre a Playing.
+        // Se pausar, vamos para Paused (mesmo que o tempo corra no cliente, o estado UI é Pausado)
+        if (CurrentState != GameState.GameOver && CurrentState != GameState.Cinematic)
+        {
+            CurrentState = pause ? GameState.Paused : GameState.Playing;
+        }
+
+        // 3. LÓGICA DE UI (Menu ESC)
+        if (uiManager != null)
+        {
+            if (pause && showMenu)
+            {
+                uiManager.ShowPauseMenu(true);
+            }
+            else
+            {
+                // Se despausar, ou se for LevelUp (showMenu=false), fecha o menu ESC
+                uiManager.ShowPauseMenu(false);
+            }
+        }
+
+        // 4. BLOQUEIO DE INPUT
+        // Queremos bloquear o boneco do cliente local sempre que ele estiver num menu
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient?.PlayerObject != null)
+        {
+            var move = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<Movement>();
+            // Se pausou (seja menu ou level up), desativa movimento
+            if (move) move.enabled = !pause;
+        }
+    }
+
+    public void RequestPauseForLevelUp()
+    {
+        if (!isP2P) RequestPause(true, false);
+        else if (IsServer) SetPausedClientRpc(true, false);
+    }
+
+    public void ResumeAfterLevelUp()
+    {
+        if (!isP2P) RequestPause(false);
+        else if (IsServer) SetPausedClientRpc(false, false);
+    }
+
+    [ClientRpc]
+    private void SetPausedClientRpc(bool paused, bool showMenu) => RequestPause(paused, showMenu);
+
+    public void RequestPause(bool pause) => RequestPause(pause, true);
+    public void RequestResume() => RequestPause(false);
+
+    public void SoftResetSinglePlayerWorld()
     {
         Time.timeScale = 1f;
         uiManager?.ShowEndGamePanel(false);
 
-        // Limpeza de objetos visuais
         foreach (var p in GameObject.FindGameObjectsWithTag("Player")) Destroy(p);
         foreach (var e in FindObjectsByType<EnemyStats>(FindObjectsSortMode.None)) Destroy(e.gameObject);
         foreach (var p in FindObjectsByType<ProjectileWeapon>(FindObjectsSortMode.None)) Destroy(p.gameObject);
@@ -298,34 +292,17 @@ public class GameManager : NetworkBehaviour
         foreach (var x in FindObjectsByType<ExperienceOrb>(FindObjectsSortMode.None)) Destroy(x.gameObject);
         foreach (var d in FindObjectsByType<DamagePopup>(FindObjectsSortMode.None)) Destroy(d.gameObject);
 
-        // Limpa Mapa
-        if(mapGenerator) mapGenerator.ClearMap();
+        if (mapGenerator) mapGenerator.ClearMap();
         else FindObjectOfType<MapGenerator>()?.ClearMap();
-        
-        // Reseta XP
+
         FindObjectOfType<PlayerExperience>()?.ResetState();
 
-        // --- CORREÇÃO AQUI: RESETAR O ENEMY SPAWNER ---
+        // Reset Spawner
         var spawner = FindObjectOfType<EnemySpawner>();
-        if (spawner != null)
-        {
-            spawner.StopAndReset(); // Isto mete a wave a 0
-        }
-        // ----------------------------------------------
+        if (spawner != null) spawner.StopAndReset();
 
-        // Garante que a dificuldade volta ao base (x1)
         if (difficultyManager != null) difficultyManager.ResetDifficulty();
 
         CurrentState = GameState.PreGame;
     }
-    // ========================================================================
-    // LEGACY / OVERLOAD SUPPORT
-    // ========================================================================
-
-    // Suporte para scripts antigos que chamam apenas RequestPause(bool)
-    // Assume que se chamou de fora, quer mostrar o menu (true)
-    public void RequestPause(bool pause) => RequestPause(pause, true);
-
-    public void RequestResume() => RequestPause(false);
-    public float GetTotalGameTime() => totalGameTime;
 }
