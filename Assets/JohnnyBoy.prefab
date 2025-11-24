@@ -111,7 +111,7 @@ SpriteRenderer:
   m_SortingLayerID: -394448813
   m_SortingLayer: 3
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: b68ca4f941c1025498ede9b5b1036c04, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0617b69aad55d6042ba09cf04e661ea9, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -134,11 +134,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a9f4b87971adc9498ac2f9a339e6133, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  flipMode: 0
-  UpRightSprite: {fileID: 21300000, guid: 512c4a08604afe048a21179e7adf5412, type: 3}
-  UpLeftSprite: {fileID: 21300000, guid: 599f49afbac36a54b98c1a2f6f745bc1, type: 3}
-  DownRightSprite: {fileID: 21300000, guid: 496b596a78c84b44797088d8a71c7efa, type: 3}
-  DownLeftSprite: {fileID: 21300000, guid: 512c4a08604afe048a21179e7adf5412, type: 3}
+  flipMode: 1
+  UpRightSprite: {fileID: 21300000, guid: 0617b69aad55d6042ba09cf04e661ea9, type: 3}
+  UpLeftSprite: {fileID: 21300000, guid: 34234523dd57dae4f9d9f4c4e3a8f601, type: 3}
+  DownRightSprite: {fileID: 21300000, guid: 27517059d35de3b48983543f0a193405, type: 3}
+  DownLeftSprite: {fileID: 21300000, guid: a288afc5de095904ab22cb6ff3a8e799, type: 3}
   firePoint: {fileID: 0}
   velocityThreshold: 0.1
 --- !u!136 &6532990679494418986
@@ -303,7 +303,7 @@ GameObject:
   - component: {fileID: -5859217750854589408}
   - component: {fileID: -2411956963275685616}
   m_Layer: 0
-  m_Name: Pato
+  m_Name: JohnnyBoy
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -367,7 +367,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1732295067
+  GlobalObjectIdHash: 1052914040
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1

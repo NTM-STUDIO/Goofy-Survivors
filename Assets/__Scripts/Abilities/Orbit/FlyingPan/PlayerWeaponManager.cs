@@ -34,6 +34,13 @@ public class PlayerWeaponManager : NetworkBehaviour
     {
         playerStats = GetComponent<PlayerStats>();
         statsTracker = GetComponent<NetworkedPlayerStatsTracker>();
+        
+        // Ensure NetworkedPlayerStatsTracker exists for multiplayer sync
+        if (statsTracker == null)
+        {
+            statsTracker = gameObject.AddComponent<NetworkedPlayerStatsTracker>();
+        }
+        
         // If a loadout-chosen starting weapon exists (single-player), override before Start() adds default
         try
         {

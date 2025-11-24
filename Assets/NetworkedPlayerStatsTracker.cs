@@ -16,7 +16,16 @@ public class NetworkedPlayerStatsTracker : NetworkBehaviour
     public NetworkVariable<float> Duration { get; private set; } = new NetworkVariable<float>(1f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<float> Knockback { get; private set; } = new NetworkVariable<float>(1f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<int> ProjectileCount { get; private set; } = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-    // Add any other stats that need to be visually synced here.
+    
+    // CRITICAL STATS - Added for proper synchronization
+    public NetworkVariable<int> CurrentHp { get; private set; } = new NetworkVariable<int>(100, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public NetworkVariable<int> MaxHp { get; private set; } = new NetworkVariable<int>(100, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public NetworkVariable<float> DamageMultiplier { get; private set; } = new NetworkVariable<float>(1f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public NetworkVariable<float> AttackSpeedMultiplier { get; private set; } = new NetworkVariable<float>(1f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public NetworkVariable<float> CritChance { get; private set; } = new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public NetworkVariable<float> CritDamageMultiplier { get; private set; } = new NetworkVariable<float>(1.5f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public NetworkVariable<float> MovementSpeed { get; private set; } = new NetworkVariable<float>(5f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public NetworkVariable<bool> IsDowned { get; private set; } = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     void Awake()
     {
@@ -36,6 +45,16 @@ public class NetworkedPlayerStatsTracker : NetworkBehaviour
             Duration.Value = localStats.durationMultiplier;
             Knockback.Value = localStats.knockbackMultiplier;
             ProjectileCount.Value = localStats.projectileCount;
+            
+            // Sync critical stats
+            CurrentHp.Value = localStats.CurrentHp;
+            MaxHp.Value = localStats.maxHp;
+            DamageMultiplier.Value = localStats.damageMultiplier;
+            AttackSpeedMultiplier.Value = localStats.attackSpeedMultiplier;
+            CritChance.Value = localStats.critChance;
+            CritDamageMultiplier.Value = localStats.critDamageMultiplier;
+            MovementSpeed.Value = localStats.movementSpeed;
+            IsDowned.Value = localStats.IsDowned;
         }
     }
 }

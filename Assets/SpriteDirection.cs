@@ -1,5 +1,5 @@
 using UnityEngine;
-using Unity.Netcode;
+using System.Collections.Generic; // Necessário para listas
 
 [RequireComponent(typeof(SpriteRenderer))]
 public class RobustIsometricController : MonoBehaviour
@@ -41,7 +41,7 @@ public class RobustIsometricController : MonoBehaviour
 
     // --- Private References ---
     private SpriteRenderer spriteRenderer;
-    private Transform playerTransform; // This will be updated from the PlayerTargetManager
+    private Transform closestTarget; // Armazena o alvo local
     private Sprite currentSprite;
     private float firePointXMagnitude;
     private Vector3 _directionToPlayer; // For Gizmos
@@ -80,16 +80,14 @@ public class RobustIsometricController : MonoBehaviour
         }
         else
         {
-            // --- PERFORMANCE OPTIMIZATION ---
-            // Get the target from the central manager instead of searching every frame.
-            if (PlayerTargetManager.Instance != null)
-            {
-                playerTransform = PlayerTargetManager.Instance.ClosestPlayer;
-            }
-            
-            if (playerTransform == null) return; // If manager finds no player, do nothing.
+            // --- NOVO CÓDIGO DE BUSCA LOCAL ---
+            // Em vez de perguntar ao Manager quem é o alvo global, 
+            // calculamos quem está perto DESTE objeto especificamente.
+            FindClosestPlayerLocally();
 
-            Vector3 directionToPlayer = playerTransform.position - transform.position;
+            if (closestTarget == null) return; 
+
+            Vector3 directionToPlayer = closestTarget.position - transform.position;
             directionToPlayer.y = 0;
             
             if (directionToPlayer.sqrMagnitude < 0.01f) return; // Don't update if too close
@@ -134,6 +132,35 @@ public class RobustIsometricController : MonoBehaviour
             spriteRenderer.sprite = newSprite;
             currentSprite = newSprite;
         }
+    }
+
+    // Função auxiliar rápida para encontrar o jogador mais próximo na lista do PlayerManager
+    private void FindClosestPlayerLocally()
+    {
+        if (PlayerManager.Instance == null || PlayerManager.Instance.ActivePlayers.Count == 0)
+        {
+            closestTarget = null;
+            return;
+        }
+
+        Transform bestTarget = null;
+        float minSqrDist = float.MaxValue;
+        Vector3 myPos = transform.position;
+
+        // Como LateUpdate corre a cada frame, este loop tem de ser rápido.
+        // Iterar uma lista de 2 a 4 jogadores é extremamente leve, não causa lag.
+        foreach (Transform t in PlayerManager.Instance.ActivePlayers)
+        {
+            if (t == null) continue;
+
+            float sqrDist = (t.position - myPos).sqrMagnitude;
+            if (sqrDist < minSqrDist)
+            {
+                minSqrDist = sqrDist;
+                bestTarget = t;
+            }
+        }
+        closestTarget = bestTarget;
     }
 
     private void OnValidate()

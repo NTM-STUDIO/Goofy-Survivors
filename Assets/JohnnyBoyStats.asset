@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: JohnnyBoyStats
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCharacterData
   characterName: JohnnyBoy
-  playerPrefab: {fileID: 4343297250839089127, guid: 7f5e4b69ceb8bf748b6865535d349bf2, type: 3}
+  playerPrefab: {fileID: 5781343528486485951, guid: 17b753099da5bb44ea60a7908a712bd5, type: 3}
   defaultWeaponPrefab: {fileID: 6969291154112545986, guid: 29845c9427df0d94780766f2d257512a, type: 3}
   maxHp: 100
-  hpRegen: 0
+  hpRegen: 1
   damageMultiplier: 1
   critChance: 0.1
   critDamageMultiplier: 2
@@ -26,7 +26,7 @@ MonoBehaviour:
   projectileSpeedMultiplier: 1
   durationMultiplier: 1
   knockbackMultiplier: 1
-  movementSpeed: 17
+  movementSpeed: 16
   luck: 1
   pickupRange: 5
   xpGainMultiplier: 1
@@ -40,6 +40,6 @@ MonoBehaviour:
     value: 0.2
   scalingBonusesPerLevel:
   - stat: 0
-    value: 5
-  - stat: 0
-    value: 0.1
+    value: 15
+  - stat: 1
+    value: 0.3

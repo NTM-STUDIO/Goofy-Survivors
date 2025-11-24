@@ -43,6 +43,9 @@ public class LoadoutPanel : MonoBehaviour
     private HashSet<string> _selectedRuneIds = new HashSet<string>();
     private readonly List<Toggle> _builtToggles = new List<Toggle>();
 
+    // --- NEW: Cache original container sizes to preserve aspect
+    private Dictionary<Image, Vector2> originalContainerSizes = new Dictionary<Image, Vector2>();
+
     void Awake()
     {
         // Contexts for persistence
@@ -112,11 +115,9 @@ public class LoadoutPanel : MonoBehaviour
         }
     }
 
-    // Public API to open/close from other buttons via Inspector
     public void Open()
     {
         gameObject.SetActive(true);
-        // Rebuild if counts differ (e.g., catalog changed) then refresh
         if (runeToggleContainer != null && runeTogglePrefab != null && runeCatalog != null &&
             runeToggleContainer.childCount != runeCatalog.Count)
         {
@@ -125,16 +126,8 @@ public class LoadoutPanel : MonoBehaviour
         RefreshUI();
     }
 
-    // Alias for convenience if you want a specific name in the Inspector
-    public void OpenLoadout()
-    {
-        Open();
-    }
-
-    public void Close()
-    {
-        gameObject.SetActive(false);
-    }
+    public void OpenLoadout() => Open();
+    public void Close() => gameObject.SetActive(false);
 
     private void RefreshUI()
     {
@@ -143,20 +136,19 @@ public class LoadoutPanel : MonoBehaviour
         if (ch != null)
         {
             if (characterNameText) characterNameText.text = ch.characterName;
-            // Show character preview if provided via the prefab's SpriteRenderer or a dedicated portrait field.
+
             if (characterPreviewImage)
             {
                 Sprite preview = null;
-                // Try: look for a SpriteRenderer on the prefab to use its sprite as a portrait
                 if (ch.playerPrefab != null)
                 {
                     var sr = ch.playerPrefab.GetComponentInChildren<SpriteRenderer>();
                     if (sr != null) preview = sr.sprite;
                 }
-                characterPreviewImage.enabled = (preview != null);
-                characterPreviewImage.sprite = preview;
+                SetImageSpritePreserveAspect(characterPreviewImage, preview);
             }
         }
+
         // Weapon display
         if (weaponRegistry != null && weaponRegistry.allWeapons != null && weaponRegistry.allWeapons.Count > 0)
         {
@@ -164,9 +156,8 @@ public class LoadoutPanel : MonoBehaviour
             if (weaponNameText) weaponNameText.text = wd != null ? wd.name : "-";
             if (weaponIconImage)
             {
-                var icon = (wd != null) ? wd.icon : null;
-                weaponIconImage.enabled = (icon != null);
-                weaponIconImage.sprite = icon;
+                Sprite icon = wd != null ? wd.icon : null;
+                SetImageSpritePreserveAspect(weaponIconImage, icon);
             }
         }
 
@@ -183,9 +174,36 @@ public class LoadoutPanel : MonoBehaviour
                     if (t.isOn != desired) t.SetIsOnWithoutNotify(desired);
                 }
             }
-
-            // Apply row interactivity (disable others in rows that already have a selection)
             ApplyRowInteractivityFromSelection();
+        }
+    }
+
+    private void SetImageSpritePreserveAspect(Image image, Sprite sprite)
+    {
+        image.sprite = sprite;
+        image.enabled = sprite != null;
+        if (sprite == null) return;
+
+        RectTransform rt = image.rectTransform;
+
+        // Cache original container size the first time
+        if (!originalContainerSizes.ContainsKey(image))
+            originalContainerSizes[image] = rt.rect.size;
+
+        Vector2 containerSize = originalContainerSizes[image];
+
+        float spriteAspect = sprite.rect.width / sprite.rect.height;
+        float containerAspect = containerSize.x / containerSize.y;
+
+        if (spriteAspect > containerAspect)
+        {
+            rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, containerSize.x);
+            rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, containerSize.x / spriteAspect);
+        }
+        else
+        {
+            rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, containerSize.y);
+            rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, containerSize.y * spriteAspect);
         }
     }
 
@@ -219,22 +237,20 @@ public class LoadoutPanel : MonoBehaviour
 
         if (on)
         {
-            // Row-based exclusivity: if a rune in this row is already selected (and it's not this one), block selection
             int row = rune.rowIndex;
             var alreadyInRow = _selectedRuneIds.FirstOrDefault(id =>
             {
                 var r = runeCatalog.FirstOrDefault(rc => rc != null && rc.runeId == id);
                 return r != null && r.rowIndex == row;
             });
+
             if (!string.IsNullOrEmpty(alreadyInRow) && alreadyInRow != rune.runeId)
             {
-                // Revert this toggle; other runes in the row are unclickable until deselect
                 var t = GetToggleAt(index);
                 if (t != null) t.SetIsOnWithoutNotify(false);
                 return;
             }
 
-            // Enforce global cap when the row has no prior selection
             if (string.IsNullOrEmpty(alreadyInRow) && _selectedRuneIds.Count >= maxSelectedRunes)
             {
                 var t = GetToggleAt(index);
@@ -242,25 +258,19 @@ public class LoadoutPanel : MonoBehaviour
                 return;
             }
 
-            // Accept selection
             _selectedRuneIds.Add(rune.runeId);
-            // Disable other runes in this row (make unclickable/grey)
             SetRowInteractivity(row, false, index);
         }
         else
         {
             _selectedRuneIds.Remove(rune.runeId);
-            // If no selection remains in this row, re-enable all runes in this row
             int row = rune.rowIndex;
             bool anySelectedInRow = _selectedRuneIds.Any(id =>
             {
                 var r = runeCatalog.FirstOrDefault(rc => rc != null && rc.runeId == id);
                 return r != null && r.rowIndex == row;
             });
-            if (!anySelectedInRow)
-            {
-                SetRowInteractivity(row, true, -1);
-            }
+            if (!anySelectedInRow) SetRowInteractivity(row, true, -1);
         }
     }
 
@@ -272,7 +282,6 @@ public class LoadoutPanel : MonoBehaviour
 
     private void ApplyRowInteractivityFromSelection()
     {
-        // For each row present, if there is a selected rune, disable others; else enable all
         var rows = runeCatalog.Where(r => r != null).Select(r => r.rowIndex).Distinct();
         foreach (var row in rows)
         {
@@ -283,7 +292,6 @@ public class LoadoutPanel : MonoBehaviour
             });
             if (anySelectedInRow)
             {
-                // Find selected index to keep enabled
                 int selectedIndex = -1;
                 for (int i = 0; i < runeCatalog.Count; i++)
                 {
@@ -318,27 +326,22 @@ public class LoadoutPanel : MonoBehaviour
 
     public void Apply()
     {
-        // Resolve selections
         PlayerCharacterData ch = (characters != null && characters.Count > 0) ? characters[Wrap(_charIndex, characters.Count)] : null;
         WeaponData wd = (weaponRegistry != null && weaponRegistry.allWeapons != null && weaponRegistry.allWeapons.Count > 0)
             ? weaponRegistry.GetWeaponData(Wrap(_weaponIndex, weaponRegistry.allWeapons.Count))
             : null;
         List<RuneDefinition> runes = runeCatalog.Where(r => r != null && _selectedRuneIds.Contains(r.runeId)).ToList();
 
-        // Update runtime selections
         LoadoutSelections.SetSelections(ch != null ? ch.playerPrefab : null, wd, runes);
-        // Save minimal state
         LoadoutSelections.SaveToPlayerPrefs();
-        // Mark that player has manually configured their loadout
         LoadoutSelections.MarkAsConfigured();
 
-        // Apply character choice to GameManager for SP; in MP this is handled by the lobby/selection flow
         var gm = GameManager.Instance;
         if (gm != null && !gm.isP2P && ch != null && ch.playerPrefab != null)
         {
             gm.SetChosenPlayerPrefab(ch.playerPrefab);
         }
-        // Close panel
+
         gameObject.SetActive(false);
     }
 }

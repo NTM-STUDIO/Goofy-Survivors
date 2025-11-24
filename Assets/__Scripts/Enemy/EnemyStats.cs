@@ -314,6 +314,12 @@ public class EnemyStats : NetworkBehaviour
     {
         if (!gameObject.activeSelf) return;
 
+        // If this is the reaper, cache the damage in GameManager before despawn/destroy
+        if (GameManager.Instance != null && GameManager.Instance.reaperStats == this)
+        {
+            GameManager.Instance.CacheReaperDamage(MaxHealth - CurrentHealth);
+        }
+
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             if (IsServer)
@@ -349,31 +355,40 @@ public class EnemyStats : NetworkBehaviour
         if (totalChance <= 0) return;
 
         float randomValue = UnityEngine.Random.Range(0f, totalChance);
-        foreach (var orb in orbDrops)
+        for (int i = 0; i < orbDrops.Length; i++)
         {
+            var orb = orbDrops[i];
             if (randomValue <= orb.dropChance)
             {
-                bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
-                if (isNetworked && IsServer)
-                {
-                    GameObject spawned = Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
-                    var netObj = spawned.GetComponent<NetworkObject>();
-                    if (netObj == null)
-                    {
-                        netObj = spawned.AddComponent<NetworkObject>();
-                    }
-                    netObj.Spawn(true);
-                }
-                else if (!isNetworked)
-                {
-                    Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
-                }
+                SpawnOrb(orb);
                 return;
             }
-            else 
-            { 
-                randomValue -= orb.dropChance; 
+            else
+            {
+                randomValue -= orb.dropChance;
             }
+        }
+        // If we reach here, no orb was dropped due to rounding or low totalChance. Force drop the first orb as fallback.
+        SpawnOrb(orbDrops[0]);
+
+    }
+
+    private void SpawnOrb(OrbDropConfig orb)
+    {
+        bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        if (isNetworked && IsServer)
+        {
+            GameObject spawned = Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
+            var netObj = spawned.GetComponent<NetworkObject>();
+            if (netObj == null)
+            {
+                netObj = spawned.AddComponent<NetworkObject>();
+            }
+            netObj.Spawn(true);
+        }
+        else if (!isNetworked)
+        {
+            Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
         }
     }
     

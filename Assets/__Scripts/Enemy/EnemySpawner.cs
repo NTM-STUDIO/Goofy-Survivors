@@ -43,6 +43,7 @@ public class EnemySpawner : NetworkBehaviour
     public bool showReplacementLogs = false;
 
     private Camera mainCamera;
+    private GameManager gameManager;
 
     // Cache de posições dos players
     private List<Vector3> playerPositions = new List<Vector3>();
@@ -54,57 +55,42 @@ public class EnemySpawner : NetworkBehaviour
         {
             Debug.LogWarning("EnemySpawner: Main Camera not found initially. Will retry later.");
         }
-    }
 
-    // You can add this method anywhere inside the EnemySpawner class
+        gameManager = GameManager.Instance;
+    }
 
     /// <summary>
     /// Stops all spawning coroutines and cleans up any active enemies.
     /// This is called by the GameManager when the game ends or resets to the lobby.
     /// </summary>
-    public void StopAndReset()
+public void StopAndReset()
     {
-        Debug.Log("[EnemySpawner] StopAndReset called. Stopping all spawning routines and cleaning up enemies.");
+        Debug.Log("[EnemySpawner] StopAndReset called. Resetting waves.");
 
-        // 1. Stop the main spawning coroutine
         if (spawningCoroutine != null)
         {
             StopCoroutine(spawningCoroutine);
             spawningCoroutine = null;
         }
 
-        // 2. Stop any other coroutines just in case
         StopAllCoroutines();
 
-        // 3. Reset the wave index for the next game
-        waveIndex = 0;
+        // --- IMPORTANTE: TEM DE TER ISTO ---
+        waveIndex = 0; 
+        // -----------------------------------
 
-        // 4. Find and destroy all existing enemies
-        // In multiplayer, only the server destroys. In singleplayer, destroy directly.
-        bool shouldDestroyEnemies = (NetworkManager.Singleton == null) || 
-                                   (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer);
-
-        if (shouldDestroyEnemies)
+        // Código de destruir inimigos restantes...
+        EnemyStats[] allEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
+        foreach (var enemy in allEnemies)
         {
-            EnemyStats[] allEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
-            Debug.Log($"[EnemySpawner] Destroying {allEnemies.Length} remaining enemies.");
-
-            foreach (var enemy in allEnemies)
-            {
-                if (enemy == null) continue;
-
-                var netObj = enemy.GetComponent<NetworkObject>();
-                if (netObj != null && netObj.IsSpawned)
-                {
-                    netObj.Despawn(true); // Despawn and destroy the networked object
-                }
-                else
-                {
-                    Destroy(enemy.gameObject);
-                }
-            }
+            if (enemy == null) continue;
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && enemy.GetComponent<NetworkObject>() != null)
+                enemy.GetComponent<NetworkObject>().Despawn(true);
+            else
+                Destroy(enemy.gameObject);
         }
     }
+
     // NOVO: Atualiza posições de todos os players na rede
     private void UpdatePlayerPositions()
     {
@@ -140,7 +126,6 @@ public class EnemySpawner : NetworkBehaviour
                     playerPositions.Add(player.transform.position);
                 }
             }
-            //Debug.Log($"EnemySpawner: Found {playerPositions.Count} active PlayerStats.");
             return;
         }
 
@@ -177,28 +162,6 @@ public class EnemySpawner : NetworkBehaviour
         return sum / playerPositions.Count;
     }
 
-    // NOVO: Encontra o player mais próximo de uma posição
-    private Vector3 GetClosestPlayerPosition(Vector3 position)
-    {
-        if (playerPositions.Count == 0)
-            return Vector3.zero;
-
-        Vector3 closest = playerPositions[0];
-        float closestDist = Vector3.Distance(position, playerPositions[0]);
-
-        for (int i = 1; i < playerPositions.Count; i++)
-        {
-            float dist = Vector3.Distance(position, playerPositions[i]);
-            if (dist < closestDist)
-            {
-                closestDist = dist;
-                closest = playerPositions[i];
-            }
-        }
-
-        return closest;
-    }
-
     private int GetPlayerCountMultiplier()
     {
         // Check if we're in a networked game
@@ -208,15 +171,13 @@ public class EnemySpawner : NetworkBehaviour
             if (NetworkManager.Singleton.IsServer)
             {
                 int playerCount = NetworkManager.Singleton.ConnectedClientsList.Count;
-                return Mathf.Max(1, playerCount); // Ensure at least 1
+                return Mathf.Max(1, playerCount);
             }
         }
 
         // Single-player or not server: return 1
         return 1;
     }
-
-    // Replace your existing StartSpawning() method with this one
 
     public void StartSpawning()
     {
@@ -236,19 +197,17 @@ public class EnemySpawner : NetworkBehaviour
         }
     }
 
-    // Replace your existing ResetForRestart() method with this one
-
     public void ResetForRestart()
     {
-        // This method can now be simplified or removed, as StopAndReset is more complete.
-        // For now, it will just call the new, more robust method.
         StopAndReset();
         Debug.Log("EnemySpawner: ResetForRestart called.");
     }
-    IEnumerator SpawnWaves()
+
+    private IEnumerator SpawnWaves()
     {
         Debug.Log("EnemySpawner: Beginning wave spawning.");
         yield return null; // Espera um frame para garantir que tudo foi inicializado
+        
         while (waveIndex < waves.Count)
         {
             Wave currentWave = waves[waveIndex];
@@ -260,6 +219,7 @@ public class EnemySpawner : NetworkBehaviour
 
             List<int> remainingCounts = new List<int>();
             int totalEnemiesToSpawn = 0;
+            
             foreach (WaveEnemy waveEnemy in currentWave.enemies)
             {
                 // Multiply enemy count by number of players
@@ -271,6 +231,9 @@ public class EnemySpawner : NetworkBehaviour
             if (totalEnemiesToSpawn == 0)
             {
                 Debug.LogWarning($"Wave '{currentWave.waveName}' has no enemies with a positive count.");
+                waveIndex++;
+                yield return new WaitForSeconds(currentWave.timeUntilNextWave);
+                continue;
             }
 
             while (totalEnemiesToSpawn > 0)
@@ -280,6 +243,7 @@ public class EnemySpawner : NetworkBehaviour
 
                 int roll = Random.Range(0, totalEnemiesToSpawn);
                 int cumulative = 0;
+                
                 for (int enemyIndex = 0; enemyIndex < currentWave.enemies.Count; enemyIndex++)
                 {
                     if (remainingCounts[enemyIndex] == 0)
@@ -331,6 +295,16 @@ public class EnemySpawner : NetworkBehaviour
                             // NOVO: Adiciona fade-in que funciona em todos os clientes
                             var fadeEffect = spawned.AddComponent<EnemyFadeEffect>();
                             fadeEffect.StartFadeIn(fadeInDuration);
+
+                            // If the midgame global mutation is active, apply it server-side to the newly spawned enemy
+                            if (GameManager.Instance != null && GameManager.Instance.GetGlobalMidgameMutation() != MutationType.None)
+                            {
+                                var es = spawned.GetComponent<EnemyStats>();
+                                if (es != null)
+                                {
+                                    GameManager.Instance.ApplyMidgameMutationToEnemy(es);
+                                }
+                            }
                         }
                         else
                         {
@@ -338,6 +312,15 @@ public class EnemySpawner : NetworkBehaviour
                             GameObject spawned = Instantiate(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
                             var fadeEffect = spawned.AddComponent<EnemyFadeEffect>();
                             fadeEffect.StartFadeIn(fadeInDuration);
+
+                            if (GameManager.Instance != null && GameManager.Instance.GetGlobalMidgameMutation() != MutationType.None)
+                            {
+                                var es = spawned.GetComponent<EnemyStats>();
+                                if (es != null)
+                                {
+                                    GameManager.Instance.ApplyMidgameMutationToEnemy(es);
+                                }
+                            }
                         }
 
                         remainingCounts[enemyIndex]--;
@@ -355,16 +338,14 @@ public class EnemySpawner : NetworkBehaviour
     }
 
     // --- FUNÇÃO DE POSIÇÃO DE SPAWN TOTALMENTE REESCRITA E CORRIGIDA ---
-    Vector3 GetSpawnPosition3D(SpawnSide side)
+    private Vector3 GetSpawnPosition3D(SpawnSide side)
     {
-        //Debug.Log("Calculating spawn position for side: " + side.ToString());
         if (mainCamera == null) return Vector3.zero;
 
         // Cria um plano infinito na altura do chão.
         Plane groundPlane = new Plane(Vector3.up, new Vector3(0, groundLevelY, 0));
 
         // Obtém os quatro cantos da tela projetados no plano do chão.
-        // Estes pontos definem o quadrilátero de visão no mundo.
         Vector3 worldBottomLeft = GetWorldPointOnPlane(new Vector2(0, 0), groundPlane);
         Vector3 worldBottomRight = GetWorldPointOnPlane(new Vector2(1, 0), groundPlane);
         Vector3 worldTopLeft = GetWorldPointOnPlane(new Vector2(0, 1), groundPlane);
@@ -411,7 +392,7 @@ public class EnemySpawner : NetworkBehaviour
     }
 
     // NOVO: Calcula spawn baseado em TODOS os players, não apenas câmera local
-    Vector3 GetSpawnPositionForAllPlayers(SpawnSide side)
+    private Vector3 GetSpawnPositionForAllPlayers(SpawnSide side)
     {
         if (playerPositions.Count == 0)
         {
@@ -484,7 +465,7 @@ public class EnemySpawner : NetworkBehaviour
     }
 
     // NOVO: Verifica se posição é segura para TODOS os players
-    bool IsSpawnPositionSafe(Vector3 position)
+    private bool IsSpawnPositionSafe(Vector3 position)
     {
         // Verifica colisões físicas
         Collider[] colliders = Physics.OverlapSphere(position, spawnCollisionCheckRadius);
@@ -510,96 +491,9 @@ public class EnemySpawner : NetworkBehaviour
         return true;
     }
 
-    // NOVO: Sistema de fade-in
-    IEnumerator FadeInEnemy(GameObject enemy)
-    {
-        if (enemy == null) yield break;
-
-        Renderer[] renderers = enemy.GetComponentsInChildren<Renderer>();
-        if (renderers.Length == 0) yield break;
-
-        Dictionary<Material, Color> originalColors = new Dictionary<Material, Color>();
-
-        foreach (Renderer rend in renderers)
-        {
-            foreach (Material mat in rend.materials)
-            {
-                if (mat.HasProperty("_Color"))
-                {
-                    Color originalColor = mat.color;
-                    originalColors[mat] = originalColor;
-
-                    Color transparent = originalColor;
-                    transparent.a = 0f;
-                    mat.color = transparent;
-
-                    if (mat.HasProperty("_Mode"))
-                    {
-                        mat.SetFloat("_Mode", 3);
-                        mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-                        mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                        mat.SetInt("_ZWrite", 0);
-                        mat.DisableKeyword("_ALPHATEST_ON");
-                        mat.EnableKeyword("_ALPHABLEND_ON");
-                        mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                        mat.renderQueue = 3000;
-                    }
-                }
-            }
-        }
-
-        float elapsed = 0f;
-        while (elapsed < fadeInDuration)
-        {
-            if (enemy == null) yield break;
-
-            elapsed += Time.deltaTime;
-            float alpha = Mathf.Clamp01(elapsed / fadeInDuration);
-
-            foreach (var kvp in originalColors)
-            {
-                Material mat = kvp.Key;
-                Color originalColor = kvp.Value;
-
-                if (mat != null && mat.HasProperty("_Color"))
-                {
-                    Color newColor = originalColor;
-                    newColor.a = originalColor.a * alpha;
-                    mat.color = newColor;
-                }
-            }
-
-            yield return null;
-        }
-
-        foreach (var kvp in originalColors)
-        {
-            Material mat = kvp.Key;
-            Color originalColor = kvp.Value;
-
-            if (mat != null && mat.HasProperty("_Color"))
-            {
-                mat.color = originalColor;
-
-                if (mat.HasProperty("_Mode"))
-                {
-                    mat.SetFloat("_Mode", 0);
-                    mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                    mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
-                    mat.SetInt("_ZWrite", 1);
-                    mat.DisableKeyword("_ALPHATEST_ON");
-                    mat.DisableKeyword("_ALPHABLEND_ON");
-                    mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                    mat.renderQueue = -1;
-                }
-            }
-        }
-    }
-
     // Função auxiliar para encontrar pontos de interseção de forma robusta
-    Vector3 GetWorldPointOnPlane(Vector2 viewportCoord, Plane plane)
+    private Vector3 GetWorldPointOnPlane(Vector2 viewportCoord, Plane plane)
     {
-        //Debug.Log("EnemySpawner: Getting world point on plane for viewport coord: " + viewportCoord);
         Ray ray = mainCamera.ViewportPointToRay(viewportCoord);
         if (plane.Raycast(ray, out float distance))
         {
@@ -614,15 +508,8 @@ public class EnemySpawner : NetworkBehaviour
 
     /// <summary>
     /// NOVO: Calcula o lado oposto baseado na posição de um inimigo que deu despawn
-    /// 
-    /// Exemplo: Se players estão indo para a direita (→), inimigos à esquerda (←) dão despawn
-    /// e novos inimigos spawnam à direita (→) para manter pressão:
-    /// 
-    ///     🧟 DESPAWN        PLAYERS →→→        🧟 NOVO SPAWN
-    ///     (Left)              ⚔️                  (Right - Oposto!)
-    /// 
     /// </summary>
-    SpawnSide GetOppositeSide(Vector3 despawnedPosition)
+    private SpawnSide GetOppositeSide(Vector3 despawnedPosition)
     {
         if (playerPositions.Count == 0)
         {
@@ -660,7 +547,7 @@ public class EnemySpawner : NetworkBehaviour
     }
 
     // ATUALIZADO: Balanceamento baseado em TODOS os players
-    SpawnSide ChooseBalancedSpawnSide()
+    private SpawnSide ChooseBalancedSpawnSide()
     {
         SpawnSide fallback = (SpawnSide)Random.Range(0, 4);
 
@@ -868,7 +755,7 @@ public class EnemySpawner : NetworkBehaviour
         }
 
         // Spawna o novo inimigo
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
             RuntimeNetworkPrefabRegistry.TryRegister(prefabToSpawn);
             GameObject spawned = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
@@ -882,6 +769,16 @@ public class EnemySpawner : NetworkBehaviour
             // Fade-in (adiciona componente que funciona em todos os clientes)
             var fadeEffect = spawned.AddComponent<EnemyFadeEffect>();
             fadeEffect.StartFadeIn(fadeInDuration);
+
+            // Apply global midgame mutation to replacements as well (server-side)
+            if (GameManager.Instance != null && GameManager.Instance.GetGlobalMidgameMutation() != MutationType.None)
+            {
+                var es = spawned.GetComponent<EnemyStats>();
+                if (es != null)
+                {
+                    GameManager.Instance.ApplyMidgameMutationToEnemy(es);
+                }
+            }
         }
         else
         {
@@ -908,4 +805,3 @@ public class Wave
     public float timeUntilNextWave = 10f;
     public float spawnInterval = 0.5f;
 }
-
