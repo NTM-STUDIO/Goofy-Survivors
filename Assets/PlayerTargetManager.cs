@@ -1,85 +1,62 @@
 using UnityEngine;
 using Unity.Netcode;
+using System.Collections.Generic;
 
-/// <summary>
-/// A highly performant, centralized manager to find and cache the closest player transform.
-/// Other scripts should ask this manager for the player instead of searching themselves.
-/// </summary>
-public class PlayerTargetManager : MonoBehaviour
+public class PlayerManager : NetworkBehaviour
 {
-    // Singleton instance to be accessed by any script.
-    public static PlayerTargetManager Instance { get; private set; }
+    public static PlayerManager Instance { get; private set; }
 
-    [Tooltip("How often the manager scans for the closest player. Higher values are more performant.")]
-    [SerializeField] private float searchInterval = 1f; // Search once per second.
+    // Lista pública que os inimigos consultam
+    public List<Transform> ActivePlayers { get; private set; } = new List<Transform>();
 
-    // The public property that all other scripts will access.
-    public Transform ClosestPlayer { get; private set; }
-
-    private float searchTimer;
+    private float refreshTimer;
 
     private void Awake()
     {
-        // Singleton pattern
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            Instance = this;
-        }
+        if (Instance != null && Instance != this) Destroy(gameObject);
+        else Instance = this;
     }
 
     private void Update()
     {
-        searchTimer -= Time.deltaTime;
-        if (searchTimer <= 0f)
+        // Se for Multiplayer e não for Servidor, não precisa processar isto
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
+
+        refreshTimer -= Time.deltaTime;
+        if (refreshTimer <= 0f)
         {
-            ClosestPlayer = FindClosestActivePlayer();
-            searchTimer = searchInterval;
+            RefreshPlayerList();
+            refreshTimer = 0.5f; // Atualiza a lista a cada 0.5s
         }
     }
 
-    private Transform FindClosestActivePlayer()
+    private void RefreshPlayerList()
     {
-        Transform closest = null;
-        float minSqrDist = float.MaxValue;
-        Vector3 currentPosition = transform.position; // Position doesn't matter much for a global finder
+        ActivePlayers.Clear();
 
-        var nm = NetworkManager.Singleton;
-        if (nm != null && nm.IsListening)
+        // 1. Tenta encontrar via Netcode (Multiplayer)
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            // Networked search
-            foreach (var client in nm.ConnectedClientsList)
+            foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
             {
-                if (client?.PlayerObject == null) continue;
-                var ps = client.PlayerObject.GetComponent<PlayerStats>();
-                if (ps == null || ps.IsDowned) continue;
-
-                float sqrDist = (ps.transform.position - currentPosition).sqrMagnitude;
-                if (sqrDist < minSqrDist)
+                if (client.PlayerObject != null)
                 {
-                    minSqrDist = sqrDist;
-                    closest = ps.transform;
+                    // Verifica se o jogador está vivo (opcional, depende do teu script PlayerStats)
+                    // var stats = client.PlayerObject.GetComponent<PlayerStats>();
+                    // if (stats != null && stats.IsDowned) continue;
+
+                    ActivePlayers.Add(client.PlayerObject.transform);
                 }
             }
         }
+        // 2. Fallback para Singleplayer ou Testes sem Rede (Procura por Tag)
         else
         {
-            // Single-player search
-            var allPlayers = FindObjectsByType<PlayerStats>(FindObjectsSortMode.None);
-            foreach (var ps in allPlayers)
+            GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+            foreach (var p in players)
             {
-                if (ps == null || ps.IsDowned) continue;
-                float sqrDist = (ps.transform.position - currentPosition).sqrMagnitude;
-                if (sqrDist < minSqrDist)
-                {
-                    minSqrDist = sqrDist;
-                    closest = ps.transform;
-                }
+                ActivePlayers.Add(p.transform);
             }
         }
-        return closest;
     }
 }

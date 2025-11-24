@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using System.Collections.Generic; // Necessário para Listas
 
 [RequireComponent(typeof(Rigidbody))]
 public class EnemyMovement : NetworkBehaviour
@@ -11,6 +12,10 @@ public class EnemyMovement : NetworkBehaviour
     [SerializeField] private bool randomizeOnAwake = true;
     [SerializeField, Range(0f, 1f)] private float predictiveChance = 0.6f;
     [SerializeField, Range(0f, 1f)] private float flankChance = 0.3f;
+
+    [Header("Targeting")]
+    [Tooltip("De quanto em quanto tempo o inimigo procura um novo alvo.")]
+    [SerializeField] private float targetUpdateInterval = 1f;
 
     [Header("Prediction")]
     [SerializeField] private float leadTime = 0.5f;
@@ -32,12 +37,16 @@ public class EnemyMovement : NetworkBehaviour
     [SerializeField] private bool useScreenSpaceCorrection = true;
 
     // --- Private Variables ---
-    private Transform player;
-    private Rigidbody playerRb;
+    private Transform currentTarget; // O jogador alvo atual
+    private Rigidbody targetRb;      // O Rigidbody do alvo (para predição)
+
     private Rigidbody rb;
     private EnemyStats stats;
     private float flankSign = 1f;
     private float nextAttackTime = 0f;
+
+    // Variáveis para o sistema de busca individual
+    private float searchTimer;
 
     // Direction that can be set externally by pathfinding
     public Vector3 TargetDirection { get; set; } = Vector3.zero;
@@ -59,6 +68,13 @@ public class EnemyMovement : NetworkBehaviour
         rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
     }
 
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        // Inicializa o timer com um valor aleatório para evitar lag spikes (todos calcularem no mesmo frame)
+        searchTimer = Random.Range(0f, targetUpdateInterval);
+    }
+
     private void FixedUpdate()
     {
         // Only the server should simulate enemy movement.
@@ -70,23 +86,24 @@ public class EnemyMovement : NetworkBehaviour
             return;
         }
 
-        // --- PERFORMANCE OPTIMIZATION ---
-        if (PlayerTargetManager.Instance != null)
+        // --- TARGET UPDATE LOGIC (NOVO) ---
+        // Verifica se está na hora de procurar o jogador mais próximo
+        searchTimer -= Time.fixedDeltaTime;
+        if (searchTimer <= 0f)
         {
-            player = PlayerTargetManager.Instance.ClosestPlayer;
-            if (player != null)
-            {
-                playerRb = player.GetComponent<Rigidbody>();
-            }
+            FindLocalClosestPlayer();
+            searchTimer = targetUpdateInterval;
         }
 
-        if (player == null)
+        // Se não tiver alvo, fica parado
+        if (currentTarget == null)
         {
             rb.linearVelocity = Vector3.zero;
             hasDebugTarget = false;
             return;
         }
 
+        // --- MOVEMENT LOGIC ---
         Vector3 direction;
         if (TargetDirection != Vector3.zero)
         {
@@ -96,6 +113,7 @@ public class EnemyMovement : NetworkBehaviour
         else
         {
             Vector3 enemyPosition = transform.position;
+            // Passamos currentTarget para o método de mira
             Vector3 targetPosition = GetTargetPosition(enemyPosition);
             direction = targetPosition - enemyPosition;
         }
@@ -117,9 +135,8 @@ public class EnemyMovement : NetworkBehaviour
         }
         else
         {
-            // Fallback: simple pre-normalization X nerf (if you still want it off)
             Vector3 dir = new Vector3(direction.x, 0f, direction.z);
-            dir.x *= 0.70710678f; // optional: classic iso factor
+            dir.x *= 0.70710678f;
             velocity = dir.normalized * stats.moveSpeed;
         }
 
@@ -130,95 +147,95 @@ public class EnemyMovement : NetworkBehaviour
     }
 
     /// <summary>
-    /// Compute a world-space velocity (units/sec) that makes the motion appear to have
-    /// equal screen-space speed in the direction of 'worldDir'.
-    /// This estimates the mapping of small world steps in X/Z to screen space and
-    /// then solves a 2x2 system for the needed world delta per second.
+    /// Procura na lista do PlayerManager qual jogador está mais perto DESTE inimigo especificamente.
     /// </summary>
+    private void FindLocalClosestPlayer()
+    {
+        if (PlayerManager.Instance == null || PlayerManager.Instance.ActivePlayers.Count == 0)
+        {
+            currentTarget = null;
+            targetRb = null;
+            return;
+        }
+
+        Transform bestTarget = null;
+        float minSqrDist = float.MaxValue;
+        Vector3 myPos = transform.position;
+
+        // Itera sobre a lista global de jogadores ativos
+        foreach (Transform t in PlayerManager.Instance.ActivePlayers)
+        {
+            if (t == null) continue;
+
+            // Verifica distância ao quadrado (mais rápido)
+            float sqrDist = (t.position - myPos).sqrMagnitude;
+            if (sqrDist < minSqrDist)
+            {
+                minSqrDist = sqrDist;
+                bestTarget = t;
+            }
+        }
+
+        // Se o alvo mudou ou ainda não tínhamos Rigidbody
+        if (bestTarget != currentTarget)
+        {
+            currentTarget = bestTarget;
+            if (currentTarget != null)
+            {
+                targetRb = currentTarget.GetComponent<Rigidbody>();
+            }
+            else
+            {
+                targetRb = null;
+            }
+        }
+    }
+
     private Vector3 ComputeWorldVelocityForEqualScreenSpeed(Vector3 worldDir, Camera cam, float worldSpeed)
     {
-        // Small epsilon (in world units) for finite differencing
-        const float eps = 0.05f;
+        // ... (O teu código matemático mantém-se igual, removi para poupar espaço aqui na resposta, mas deves mantê-lo) ...
+        // Se quiseres que eu o reescreva aqui diz, mas a lógica matemática não precisa de mudar.
 
+        // CÓDIGO ORIGINAL MANTIDO PARA ESTA FUNÇÃO
+        const float eps = 0.05f;
         Vector3 pos = transform.position;
         Vector3 screenPos = cam.WorldToScreenPoint(pos);
-        // sample how a +eps step in world X and world Z maps to screen (pixels)
         Vector3 s_dx = cam.WorldToScreenPoint(pos + new Vector3(eps, 0f, 0f)) - screenPos;
         Vector3 s_dz = cam.WorldToScreenPoint(pos + new Vector3(0f, 0f, eps)) - screenPos;
-        s_dx.z = 0f;
-        s_dz.z = 0f;
+        s_dx.z = 0f; s_dz.z = 0f;
 
-        // if projection is degenerate for some reason, fallback to simple normalized world direction
-        if (s_dx.sqrMagnitude < 1e-8f || s_dz.sqrMagnitude < 1e-8f)
-        {
-            return worldDir.normalized * worldSpeed;
-        }
+        if (s_dx.sqrMagnitude < 1e-8f || s_dz.sqrMagnitude < 1e-8f) return worldDir.normalized * worldSpeed;
 
-        // Build 2x2 matrix A where columns are screen-per-world-unit for X and Z
-        // A = [ s_dx/eps  s_dz/eps ] (each column is a 2-vector)
-        float a11 = s_dx.x / eps;
-        float a21 = s_dx.y / eps;
-        float a12 = s_dz.x / eps;
-        float a22 = s_dz.y / eps;
+        float a11 = s_dx.x / eps; float a21 = s_dx.y / eps;
+        float a12 = s_dz.x / eps; float a22 = s_dz.y / eps;
 
-        // desired screen-direction (pixels) normalized
         Vector3 screenTarget = cam.WorldToScreenPoint(transform.position + worldDir) - screenPos;
         screenTarget.z = 0f;
-        if (screenTarget.sqrMagnitude < 1e-6f)
-        {
-            // extremely close; fallback
-            return worldDir.normalized * worldSpeed;
-        }
+        if (screenTarget.sqrMagnitude < 1e-6f) return worldDir.normalized * worldSpeed;
 
         Vector3 screenDirNorm = screenTarget.normalized;
-
-        // Choose a sensible target *screen speed* (pixels/sec).
-        // We'll choose the baseline as the average pixel speed produced by moving 1 world unit along X and Z,
-        // scaled by the desired worldSpeed (units/sec). This gives a screen speed "baseline" consistent with worldSpeed.
         float pixelsPerWorldX = s_dx.magnitude / eps;
         float pixelsPerWorldZ = s_dz.magnitude / eps;
         float baselinePixelsPerWorld = (pixelsPerWorldX + pixelsPerWorldZ) * 0.5f;
-
-        // desired screen speed in pixels/sec
         float desiredScreenSpeed = baselinePixelsPerWorld * worldSpeed;
 
-        // desired screen velocity (pixels/sec) vector
         Vector2 desiredScreenVel = screenDirNorm * desiredScreenSpeed;
-
-        // We need desiredScreenDelta over one fixed step:
         float dt = Time.fixedDeltaTime;
-        Vector2 desiredScreenDelta = desiredScreenVel * dt; // pixels per fixed step
+        Vector2 desiredScreenDelta = desiredScreenVel * dt;
 
-        // Solve A * worldDelta = desiredScreenDelta
-        // Where worldDelta = [dxUnits; dzUnits] (world units moved this fixed step)
-        // A = 2x2 matrix built above
-        // Compute inverse of A (2x2)
         float det = a11 * a22 - a12 * a21;
+        if (Mathf.Abs(det) < 1e-8f) return worldDir.normalized * worldSpeed;
 
-        if (Mathf.Abs(det) < 1e-8f)
-        {
-            // Degenerate mapping — fallback to normalized world direction
-            return worldDir.normalized * worldSpeed;
-        }
+        float inv11 = a22 / det; float inv12 = -a12 / det;
+        float inv21 = -a21 / det; float inv22 = a11 / det;
 
-        // inverse A
-        float inv11 = a22 / det;
-        float inv12 = -a12 / det;
-        float inv21 = -a21 / det;
-        float inv22 = a11 / det;
-
-        // worldDeltaUnits = A^{-1} * desiredScreenDelta
         float worldDeltaX = inv11 * desiredScreenDelta.x + inv12 * desiredScreenDelta.y;
         float worldDeltaZ = inv21 * desiredScreenDelta.x + inv22 * desiredScreenDelta.y;
 
-        // Now compute world velocity (units/sec) from delta per fixed step
         float worldVelX = worldDeltaX / dt;
         float worldVelZ = worldDeltaZ / dt;
 
-        // Final world velocity vector
         Vector3 result = new Vector3(worldVelX, 0f, worldVelZ);
-
-        // If result is NaN or infinite, fallback
         if (float.IsNaN(result.x) || float.IsNaN(result.z) || float.IsInfinity(result.x) || float.IsInfinity(result.z))
             return worldDir.normalized * worldSpeed;
 
@@ -227,23 +244,31 @@ public class EnemyMovement : NetworkBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Server is authoritative for attacks.
+        // Se for MP e não for Server, sai (Client não processa dano)
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
 
         if (other.CompareTag("Player") && Time.time >= nextAttackTime)
         {
             var targetPs = other.GetComponentInParent<PlayerStats>();
+
+            // Se não tiver vida ou já estiver caído, ignora
             if (targetPs == null || targetPs.IsDowned) return;
 
             nextAttackTime = Time.time + attackCooldown;
 
+            // Tenta obter o ID da rede (para MP). Se não conseguir, manda 0 (para SP).
+            ulong targetId = 0;
             var netObj = other.GetComponentInParent<NetworkObject>();
-            if (netObj != null && GameManager.Instance != null)
+            if (netObj != null) targetId = netObj.OwnerClientId;
+
+            if (GameManager.Instance != null)
             {
                 float dmg = stats.GetAttackDamage();
-                GameManager.Instance.ServerApplyPlayerDamage(netObj.OwnerClientId, dmg, transform.position, null);
+                // Chama o GameManager (que agora já sabe lidar com SP e MP)
+                GameManager.Instance.ServerApplyPlayerDamage(targetId, dmg, transform.position, null);
             }
 
+            // Knockback visual
             Vector3 knockbackDirection = (transform.position - other.transform.position).normalized;
             stats.ApplyKnockback(selfKnockbackForce, selfKnockbackDuration, knockbackDirection);
         }
@@ -251,15 +276,17 @@ public class EnemyMovement : NetworkBehaviour
 
     private Vector3 GetTargetPosition(Vector3 enemyPosition)
     {
-        if (player == null) return enemyPosition;
-        Vector3 playerPosition = player.position;
+        // Usa currentTarget em vez de player
+        if (currentTarget == null) return enemyPosition;
+        Vector3 playerPosition = currentTarget.position;
         Vector3 predicted = playerPosition;
 
         if (behaviour != PursuitBehaviour.Direct)
         {
-            Vector3 velocity = playerRb ? playerRb.linearVelocity : Vector3.zero;
+            // Usa targetRb em vez de playerRb
+            Vector3 velocity = targetRb ? targetRb.linearVelocity : Vector3.zero;
             velocity.y = 0;
-            // A simple fallback if the player is standing still
+
             if (velocity.sqrMagnitude < 0.001f)
             {
                 velocity = (playerPosition - enemyPosition).normalized * stats.moveSpeed;

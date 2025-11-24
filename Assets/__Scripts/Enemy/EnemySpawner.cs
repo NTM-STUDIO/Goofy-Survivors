@@ -63,46 +63,31 @@ public class EnemySpawner : NetworkBehaviour
     /// Stops all spawning coroutines and cleans up any active enemies.
     /// This is called by the GameManager when the game ends or resets to the lobby.
     /// </summary>
-    public void StopAndReset()
+public void StopAndReset()
     {
-        Debug.Log("[EnemySpawner] StopAndReset called. Stopping all spawning routines and cleaning up enemies.");
+        Debug.Log("[EnemySpawner] StopAndReset called. Resetting waves.");
 
-        // 1. Stop the main spawning coroutine
         if (spawningCoroutine != null)
         {
             StopCoroutine(spawningCoroutine);
             spawningCoroutine = null;
         }
 
-        // 2. Stop any other coroutines just in case
         StopAllCoroutines();
 
-        // 3. Reset the wave index for the next game
-        waveIndex = 0;
+        // --- IMPORTANTE: TEM DE TER ISTO ---
+        waveIndex = 0; 
+        // -----------------------------------
 
-        // 4. Find and destroy all existing enemies
-        bool shouldDestroyEnemies = (NetworkManager.Singleton == null) || 
-                                   (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer);
-
-        if (shouldDestroyEnemies)
+        // Código de destruir inimigos restantes...
+        EnemyStats[] allEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
+        foreach (var enemy in allEnemies)
         {
-            EnemyStats[] allEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
-            Debug.Log($"[EnemySpawner] Destroying {allEnemies.Length} remaining enemies.");
-
-            foreach (var enemy in allEnemies)
-            {
-                if (enemy == null) continue;
-
-                var netObj = enemy.GetComponent<NetworkObject>();
-                if (netObj != null && netObj.IsSpawned)
-                {
-                    netObj.Despawn(true);
-                }
-                else
-                {
-                    Destroy(enemy.gameObject);
-                }
-            }
+            if (enemy == null) continue;
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && enemy.GetComponent<NetworkObject>() != null)
+                enemy.GetComponent<NetworkObject>().Despawn(true);
+            else
+                Destroy(enemy.gameObject);
         }
     }
 

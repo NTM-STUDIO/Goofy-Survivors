@@ -31,8 +31,8 @@ public class SpecialUpgradeGiver : MonoBehaviour
 
         // Get cached instances or find them once if not assigned
         gameManager = GameManager.Instance;
-    upgradeManager = UpgradeManager.Instance ?? Object.FindFirstObjectByType<UpgradeManager>();
-    specialUpgradePanel = SpecialUpgradeUI.Instance ?? Object.FindFirstObjectByType<SpecialUpgradeUI>();
+        upgradeManager = UpgradeManager.Instance ?? Object.FindFirstObjectByType<UpgradeManager>();
+        specialUpgradePanel = SpecialUpgradeUI.Instance ?? Object.FindFirstObjectByType<SpecialUpgradeUI>();
 
         if (gameManager == null || upgradeManager == null || specialUpgradePanel == null)
         {
@@ -104,7 +104,10 @@ public class SpecialUpgradeGiver : MonoBehaviour
 
         // Display panel
         specialUpgradePanel.Show(generatedUpgrade, this);
-        gameManager.RequestPause();
+        
+        // --- CORREÇÃO AQUI ---
+        // Pausa (true) e NÃO mostra o menu de ESC (false)
+        gameManager.RequestPause(true, false);
 
         Debug.Log($"✨ Generated {rarityType} upgrade: {chosenData.statToUpgrade} +{finalValue}", this);
     }
@@ -114,7 +117,11 @@ public class SpecialUpgradeGiver : MonoBehaviour
         if (generatedUpgrade == null || triggeredPlayerStats == null)
         {
             Debug.LogError("❌ Missing upgrade or player reference in ApplyUpgradeAndDestroy!", this);
-            gameManager.RequestResume();
+            
+            // --- CORREÇÃO AQUI ---
+            // Despausa se der erro
+            gameManager.RequestPause(false);
+            
             Destroy(gameObject);
             return;
         }
@@ -122,7 +129,10 @@ public class SpecialUpgradeGiver : MonoBehaviour
         ApplyStatToPlayer(triggeredPlayerStats, generatedUpgrade.BaseData.statToUpgrade, generatedUpgrade.Value);
         Debug.Log($"✅ Applied {generatedUpgrade.Rarity.rarity} upgrade: {generatedUpgrade.BaseData.statToUpgrade} +{generatedUpgrade.Value}", this);
 
-        gameManager.RequestResume();
+        // --- CORREÇÃO AQUI ---
+        // Despausa o jogo para continuar
+        gameManager.RequestPause(false);
+        
         Destroy(gameObject);
     }
 
