@@ -114,11 +114,11 @@ public class GameManager : NetworkBehaviour
         if (isLevelingUp) return;
 
         isLevelingUp = true;
-        
+
         playersPendingUpgrade = NetworkManager.Singleton.ConnectedClients.Count;
         Debug.Log($"[GameManager] Level Up de Equipa! À espera de {playersPendingUpgrade} jogadores.");
 
-        SetPausedClientRpc(true, false); 
+        SetPausedClientRpc(true, false);
         ShowLevelUpUIClientRpc();
     }
 
@@ -129,7 +129,6 @@ public class GameManager : NetworkBehaviour
         if (upgradeManager != null) upgradeManager.GenerateAndShowOptions();
     }
 
-    // 2. Chamado pelo UpgradeManager (Carta Clicada)
     [ServerRpc(RequireOwnership = false)]
     public void ConfirmUpgradeSelectionServerRpc()
     {
@@ -138,9 +137,10 @@ public class GameManager : NetworkBehaviour
 
         if (playersPendingUpgrade <= 0)
         {
+            // Só entra aqui quando O ÚLTIMO jogador escolher
             Debug.Log("[GameManager] Todos prontos. Resumindo jogo.");
             CloseLevelUpUIClientRpc();
-            SetPausedClientRpc(false, false);
+            SetPausedClientRpc(false, false); // Isto despausa o jogo
             isLevelingUp = false;
         }
     }
@@ -168,8 +168,8 @@ public class GameManager : NetworkBehaviour
         // 2. Multiplayer
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            if (IsServer) SetPausedClientRpc(pause, showMenu); 
-            else LocalPauseLogic(pause, showMenu); 
+            if (IsServer) SetPausedClientRpc(pause, showMenu);
+            else LocalPauseLogic(pause, showMenu);
         }
         else
         {
@@ -235,7 +235,7 @@ public class GameManager : NetworkBehaviour
         if (isP2P && !IsServer) return;
 
         localTime = totalGameTime;
-        
+
         if (spawnManager) spawnManager.StartSpawningProcess();
         if (difficultyManager) difficultyManager.ResetDifficulty();
         if (reviveManager) reviveManager.ResetReviveState();
@@ -255,12 +255,13 @@ public class GameManager : NetworkBehaviour
         CurrentState = GameState.Playing;
         if (mapGenerator) { mapGenerator.ClearMap(); mapGenerator.GenerateMap(); }
         if (uiManager) uiManager.OnGameStart();
-        
+
         // Reset XP Global
         if (PlayerExperience.Instance != null) PlayerExperience.Instance.ResetState();
     }
 
-    public void GameOver() {
+    public void GameOver()
+    {
         if (CurrentState == GameState.GameOver) return;
         CurrentState = GameState.GameOver;
         Time.timeScale = 0f;
@@ -268,8 +269,10 @@ public class GameManager : NetworkBehaviour
     }
     [ClientRpc] private void GameOverClientRpc() => GameOver();
 
-    public void HandlePlayAgain() {
-        if (!isP2P) {
+    public void HandlePlayAgain()
+    {
+        if (!isP2P)
+        {
             uiManager?.ShowEndGamePanel(false); SoftResetSinglePlayerWorld();
             LoadoutSelections.EnsureValidDefaults(); if (LoadoutSelections.SelectedCharacterPrefab) SetChosenPlayerPrefab(LoadoutSelections.SelectedCharacterPrefab);
             StartGame();
@@ -277,7 +280,8 @@ public class GameManager : NetworkBehaviour
         else if (IsServer) NetworkManager.Singleton.SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
     }
 
-    public void SoftResetSinglePlayerWorld() {
+    public void SoftResetSinglePlayerWorld()
+    {
         Time.timeScale = 1f; uiManager?.ShowEndGamePanel(false);
         foreach (var p in GameObject.FindGameObjectsWithTag("Player")) Destroy(p);
         foreach (var e in FindObjectsByType<EnemyStats>(FindObjectsSortMode.None)) Destroy(e.gameObject);
@@ -285,10 +289,10 @@ public class GameManager : NetworkBehaviour
         foreach (var o in FindObjectsByType<OrbitingWeapon>(FindObjectsSortMode.None)) Destroy(o.gameObject);
         foreach (var x in FindObjectsByType<ExperienceOrb>(FindObjectsSortMode.None)) Destroy(x.gameObject);
         foreach (var d in FindObjectsByType<DamagePopup>(FindObjectsSortMode.None)) Destroy(d.gameObject);
-        
-        if(mapGenerator) mapGenerator.ClearMap(); else FindObjectOfType<MapGenerator>()?.ClearMap();
-        if(PlayerExperience.Instance) PlayerExperience.Instance.ResetState();
-        
+
+        if (mapGenerator) mapGenerator.ClearMap(); else FindObjectOfType<MapGenerator>()?.ClearMap();
+        if (PlayerExperience.Instance) PlayerExperience.Instance.ResetState();
+
         FindObjectOfType<EnemySpawner>()?.StopAndReset();
         if (difficultyManager) difficultyManager.ResetDifficulty();
         CurrentState = GameState.PreGame;
@@ -313,8 +317,9 @@ public class GameManager : NetworkBehaviour
     public void SetChosenPlayerPrefab(GameObject prefab) => spawnManager.SetChosenPrefab(prefab);
     public void SetPlayerSelections_P2P(Dictionary<ulong, GameObject> selections) => spawnManager.SetPlayerSelections(selections);
     public void PlayerDowned(ulong clientId) => reviveManager.NotifyPlayerDowned(clientId);
-    public void ServerApplyPlayerDamage(ulong id, float a, Vector3? p = null, float? i = null) {
-        if(isP2P) reviveManager?.ServerApplyPlayerDamage(id, a, p, i);
+    public void ServerApplyPlayerDamage(ulong id, float a, Vector3? p = null, float? i = null)
+    {
+        if (isP2P) reviveManager?.ServerApplyPlayerDamage(id, a, p, i);
         else FindObjectOfType<PlayerStats>()?.ApplyDamage(a, p, i);
     }
     public float GetRemainingTime() => isP2P ? networkCurrentTime.Value : localTime;

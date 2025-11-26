@@ -1949,8 +1949,8 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   difficultyIncreaseInterval: 30
   strengthMultiplier: 1.1
-  mpPerPlayerMultiplier: 1.5
-  baseProjectileSpeed: 10
+  mpPerPlayerMultiplier: 1.2
+  baseProjectileSpeed: 30
   baseFireRate: 2
   speedMultiplier: 1.05
   fireRateMultiplier: 1.05
@@ -6790,9 +6790,6 @@ MonoBehaviour:
   xpSlider: {fileID: 991131520}
   levelText: {fileID: 991131519}
   upgradeManager: {fileID: 1162585565}
-  currentLevel: 1
-  currentXP: 0
-  xpToNextLevel: 100
   earlyLevelXpBonus: 65
   midGameScalingFactor: 1.14
   lateGameScalingFactor: 1.15

@@ -2,44 +2,11 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Netcode; // Adicionado
+using Unity.Netcode;
 
-public class UpgradeManager : NetworkBehaviour // Mudado de MonoBehaviour para NetworkBehaviour
+public class UpgradeManager : NetworkBehaviour
 {
     public static UpgradeManager Instance { get; private set; }
-
-    private void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-        Instance = this;
-        gameManager = GameManager.Instance;
-    }
-
-    // --- ADICIONA ISTO AO UPGRADEMANAGER.CS ---
-
-    public void ClosePanel()
-    {
-        // Fecha o painel visualmente
-        if (upgradePanel != null)
-        {
-            upgradePanel.SetActive(false);
-
-            
-        }
-
-        // Limpa os botões antigos para não ficarem lá quando abrires da próxima vez
-        if (choicesContainer != null)
-        {
-            foreach (Transform child in choicesContainer)
-            {
-                Destroy(child.gameObject);
-            }
-        }
-    }
 
     [Header("UI References")]
     [SerializeField] private GameObject upgradePanel;
@@ -53,7 +20,7 @@ public class UpgradeManager : NetworkBehaviour // Mudado de MonoBehaviour para N
     [SerializeField] private List<RarityTier> rarityTiers;
 
     private GameManager gameManager;
-    private PlayerStats playerStats;
+    private PlayerStats playerStats; // Referência ao stats do jogador LOCAL
 
     public class GeneratedUpgrade
     {
@@ -65,38 +32,56 @@ public class UpgradeManager : NetworkBehaviour // Mudado de MonoBehaviour para N
     private Queue<int> levelUpQueue = new Queue<int>();
     private bool isUpgradeInProgress = false;
 
-    // ----------------------------
-    // 🚀 INITIALIZATION
-    // ----------------------------
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        gameManager = GameManager.Instance;
+    }
+
     public void Initialize(GameObject playerObject)
     {
         if (playerObject != null)
             playerStats = playerObject.GetComponent<PlayerStats>();
-
-        if (playerStats == null)
-        {
-            Debug.LogError("FATAL ERROR: UpgradeManager could not find PlayerStats!", this);
-            enabled = false;
-        }
     }
 
     // ----------------------------
-    // 🔗 CONEXÃO COM GAME MANAGER (NOVO)
+    // CORREÇÃO AQUI: GARANTIR REFERÊNCIA AO JOGADOR LOCAL
     // ----------------------------
-
-    // Este é o método que o GameManager chama no ClientRpc
     public void GenerateAndShowOptions()
     {
+        // Se não tivermos referência ao stats (comum no Cliente), tentamos encontrar agora
+        if (playerStats == null)
+        {
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
+            {
+                playerStats = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerStats>();
+                Debug.Log("[UpgradeManager] PlayerStats local encontrado dinamicamente.");
+            }
+            else
+            {
+                // Fallback para Singleplayer se a rede não estiver pronta
+                playerStats = FindObjectOfType<PlayerStats>();
+            }
+        }
+
+        if (playerStats == null)
+        {
+            Debug.LogError("[UpgradeManager] ERRO FATAL: Não foi possível encontrar o PlayerStats do jogador local! O menu não vai abrir.");
+            return;
+        }
+
         // Adiciona 1 nível à fila e processa
         EnqueueMultipleLevelUps(1);
     }
 
-    // ----------------------------
-    // 🎚️ LEVEL-UP QUEUE SYSTEM
-    // ----------------------------
     public void EnqueueMultipleLevelUps(int amount)
     {
-        if (playerStats == null || amount <= 0) return;
+        if (playerStats == null) return;
 
         for (int i = 0; i < amount; i++)
             levelUpQueue.Enqueue(1);
@@ -124,37 +109,30 @@ public class UpgradeManager : NetworkBehaviour // Mudado de MonoBehaviour para N
 
             if (gameManager != null)
             {
-                // --- CORREÇÃO AQUI ---
-                
-                // 1. Se for Multiplayer, avisa o servidor
+                // Se for Multiplayer, avisa o servidor
                 if (gameManager.isP2P && NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
                 {
                     gameManager.ConfirmUpgradeSelectionServerRpc();
                 }
-                // 2. Se for Singleplayer, resume o jogo diretamente
+                // Se for Singleplayer, resume direto
                 else
                 {
-                    gameManager.RequestPause(false); // false = Despausar
+                    gameManager.RequestPause(false);
                 }
             }
         }
     }
 
-    // ----------------------------
-    // 🧮 UPGRADE GENERATION
-    // ----------------------------
     private void ShowUpgradeChoices()
     {
         foreach (Transform child in choicesContainer) Destroy(child.gameObject);
 
+        // Usa a sorte do jogador local
         int choicesCount = GetNumberOfChoices(playerStats.luck);
         List<GeneratedUpgrade> choices = GenerateUpgradeChoices(choicesCount);
         DisplayUpgradeChoices(choices);
 
         upgradePanel.SetActive(true);
-
-        // NOTA: Removemos o gameManager.RequestPauseForLevelUp() daqui.
-        // O GameManager JÁ pausou o jogo via RPC antes de chamar este método.
     }
 
     private int GetNumberOfChoices(float currentLuck)
@@ -167,6 +145,9 @@ public class UpgradeManager : NetworkBehaviour // Mudado de MonoBehaviour para N
     private List<GeneratedUpgrade> GenerateUpgradeChoices(int count)
     {
         var generatedChoices = new List<GeneratedUpgrade>();
+        // Se a lista estiver vazia, evita erro
+        if (availableUpgrades == null || availableUpgrades.Count == 0) return generatedChoices;
+
         var availableUpgradesCopy = new List<StatUpgradeData>(availableUpgrades);
 
         for (int i = 0; i < count; i++)
@@ -183,7 +164,6 @@ public class UpgradeManager : NetworkBehaviour // Mudado de MonoBehaviour para N
                 Rarity = DetermineRarity(playerStats.luck)
             };
 
-            // Lógica de sorte
             float luckAsPercentage = playerStats.luck / 500f;
             float rangeDifference = chosenData.baseValueMax - chosenData.baseValueMin;
             float boostAmount = rangeDifference * luckAsPercentage;
@@ -242,7 +222,6 @@ public class UpgradeManager : NetworkBehaviour // Mudado de MonoBehaviour para N
         foreach (var choice in choices)
         {
             UpgradeChoiceUI uiInstance = Instantiate(upgradeChoicePrefab, choicesContainer);
-            // Liga o botão à função ApplyUpgrade
             uiInstance.Setup(choice, this);
             if (firstChoice == null) firstChoice = uiInstance.gameObject;
         }
@@ -273,22 +252,30 @@ public class UpgradeManager : NetworkBehaviour // Mudado de MonoBehaviour para N
             case StatType.XPGainMultiplier: playerStats.IncreaseXPGainMultiplier(value / 100f); break;
         }
 
-        // Processa o próximo da fila ou fecha e avisa o servidor
         ProcessNextUpgrade();
+    }
+
+    // --- MÉTODOS AUXILIARES ---
+    
+    public void ClosePanel()
+    {
+        if (upgradePanel != null) upgradePanel.SetActive(false);
+        if (choicesContainer != null)
+        {
+            foreach (Transform child in choicesContainer) Destroy(child.gameObject);
+        }
     }
 
     public void PresentGuaranteedRarityChoices(RarityTier guaranteedRarity)
     {
-        if (guaranteedRarity == null)
-        {
-            Debug.LogError("Guaranteed rarity is null!");
-            return;
-        }
-
-        // Para itens garantidos, ainda precisamos pausar, mas cuidado em MP
-        // Se isto for um baú local, o GameManager deve tratar da pausa
-
+        if (guaranteedRarity == null) return;
+        
+        // NOTA: Isto deve ser chamado via GameManager para sincronizar pausa se for necessário
         foreach (Transform child in choicesContainer) Destroy(child.gameObject);
+
+        // Garante stats
+        if (playerStats == null && NetworkManager.Singleton.LocalClient?.PlayerObject != null)
+            playerStats = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerStats>();
 
         int choicesCount = 1;
         List<GeneratedUpgrade> choices = GenerateGuaranteedUpgradeChoices(choicesCount, guaranteedRarity);
@@ -299,6 +286,8 @@ public class UpgradeManager : NetworkBehaviour // Mudado de MonoBehaviour para N
     private List<GeneratedUpgrade> GenerateGuaranteedUpgradeChoices(int count, RarityTier guaranteedRarity)
     {
         var generatedChoices = new List<GeneratedUpgrade>();
+        if (availableUpgrades == null || availableUpgrades.Count == 0) return generatedChoices;
+        
         var availableUpgradesCopy = new List<StatUpgradeData>(availableUpgrades);
 
         for (int i = 0; i < count; i++)
@@ -315,7 +304,8 @@ public class UpgradeManager : NetworkBehaviour // Mudado de MonoBehaviour para N
                 Rarity = guaranteedRarity
             };
 
-            float luckAsPercentage = playerStats.luck / 100f;
+            float luckValue = (playerStats != null) ? playerStats.luck : 0f;
+            float luckAsPercentage = luckValue / 100f;
             float rangeDifference = chosenData.baseValueMax - chosenData.baseValueMin;
             float boostAmount = rangeDifference * luckAsPercentage;
             float luckAdjustedMin = chosenData.baseValueMin + boostAmount;

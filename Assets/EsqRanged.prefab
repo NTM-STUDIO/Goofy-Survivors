@@ -342,7 +342,7 @@ MonoBehaviour:
   shootRange: 35
   idealRange: 30
   retreatDistance: 17
-  spreadAngleDegrees: 45
+  spreadAngleDegrees: 20
   visualsZAngleOffset: 90
 --- !u!114 &5601596419032903263
 MonoBehaviour:
