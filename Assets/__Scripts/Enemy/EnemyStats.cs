@@ -373,34 +373,27 @@ public class EnemyStats : NetworkBehaviour
 
     }
 
-  private void SpawnOrb(OrbDropConfig orb)
+    private void SpawnOrb(OrbDropConfig orb)
     {
         bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
 
-        // MULTIPLAYER: Só o servidor pode Spawnar
-        if (isNetworked)
+        // MULTIPLAYER (Só o Server spawna)
+        if (isNetworked && IsServer)
         {
-            if (IsServer)
-            {
-                GameObject spawned = Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
-                var orbScript = spawned.GetComponent<ExperienceOrb>();
-                
-                // Configura valor (se necessário, mas o prefab já deve ter um valor base)
-                // orbScript.Setup(10); 
+            GameObject spawned = Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
+            var netObj = spawned.GetComponent<NetworkObject>();
 
-                var netObj = spawned.GetComponent<NetworkObject>();
-                if (netObj != null)
-                {
-                    netObj.Spawn(true); // <--- OBRIGATÓRIO PARA O CLIENTE VER
-                }
-                else
-                {
-                    Debug.LogError($"[EnemyStats] O Prefab '{orb.orbPrefab.name}' não tem NetworkObject!");
-                }
+            if (netObj != null)
+            {
+                netObj.Spawn(true); // ISTO FAZ APARECER PARA TODOS
+            }
+            else
+            {
+                Debug.LogError($"[EnemyStats] O Prefab da Orbe '{orb.orbPrefab.name}' não tem NetworkObject! Adiciona no Editor.");
             }
         }
         // SINGLEPLAYER
-        else
+        else if (!isNetworked)
         {
             Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
         }

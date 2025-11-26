@@ -3,7 +3,11 @@ using Unity.Netcode;
 
 public class ExperienceOrb : NetworkBehaviour
 {
-    public NetworkVariable<int> netXpValue = new NetworkVariable<int>(10);
+    // Variável de Rede (Para Multiplayer)
+    private readonly NetworkVariable<int> netXpValue = new NetworkVariable<int>(10);
+    
+    // Variável Local (Para Singleplayer e cache)
+    [SerializeField] private int xpValue = 10;
 
     [Header("Settings")]
     public float collectionDistance = 1.5f;
@@ -17,7 +21,27 @@ public class ExperienceOrb : NetworkBehaviour
 
     public void Setup(int amount)
     {
-        if (IsServer) netXpValue.Value = amount;
+        xpValue = amount; // Define localmente
+        
+        // Se for servidor, define na rede para os clientes saberem
+        if (NetworkManager.Singleton != null && IsServer) 
+        {
+            netXpValue.Value = amount;
+        }
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        // Quando o objeto nasce no cliente, atualiza o valor local com o do servidor
+        xpValue = netXpValue.Value;
+        
+        // Ouve alterações futuras (caso o valor mude)
+        netXpValue.OnValueChanged += (prev, curr) => xpValue = curr;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        netXpValue.OnValueChanged -= (prev, curr) => xpValue = curr;
     }
 
     void Update()
@@ -44,11 +68,11 @@ public class ExperienceOrb : NetworkBehaviour
         if (collected) return;
         collected = true;
 
-        // Esconde visualmente logo (para não parecer lagado)
-        foreach(var r in GetComponentsInChildren<Renderer>()) r.enabled = false;
-        foreach(var c in GetComponentsInChildren<Collider>()) c.enabled = false;
+        // 1. Esconde visualmente imediatamente
+        DisableVisuals();
 
-        if (NetworkManager.Singleton.IsListening)
+        // 2. Lógica Multiplayer
+        if (GameManager.Instance.isP2P && NetworkManager.Singleton.IsListening)
         {
             if (IsServer)
             {
@@ -56,23 +80,28 @@ public class ExperienceOrb : NetworkBehaviour
             }
             else
             {
-                // Se for cliente, pede ao servidor.
-                // O IsSpawned previne o erro "NullReference __endSendServerRpc"
                 if (IsSpawned) RequestCollectServerRpc();
-                else Destroy(gameObject); // Se não estiver na rede, mata localmente
+                else Destroy(gameObject);
             }
         }
+        // 3. Lógica Singleplayer
         else
         {
-            // Singleplayer fallback
-            if (attractionTarget != null)
+            // Chama o GameManager diretamente (ele redireciona para o PlayerExperience Global)
+            // Passamos o valor BRUTO (xpValue), o PlayerExperience aplica os multiplicadores
+            if (GameManager.Instance != null)
             {
-                var ps = attractionTarget.GetComponentInParent<PlayerStats>();
-                var px = FindObjectOfType<PlayerExperience>();
-                if (ps != null && px != null) px.AddXP(netXpValue.Value * ps.xpGainMultiplier);
+                GameManager.Instance.DistributeSharedXP(xpValue);
             }
+            
             Destroy(gameObject);
         }
+    }
+
+    private void DisableVisuals()
+    {
+        foreach(var r in GetComponentsInChildren<Renderer>()) r.enabled = false;
+        foreach(var c in GetComponentsInChildren<Collider>()) c.enabled = false;
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -84,11 +113,13 @@ public class ExperienceOrb : NetworkBehaviour
 
     private void DistributeAndDestroy()
     {
+        // Servidor entrega o XP bruto à equipa
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.DistributeSharedXP(netXpValue.Value);
+            GameManager.Instance.DistributeSharedXP(xpValue);
         }
         
+        // Despawn da rede
         if (IsSpawned) NetworkObject.Despawn(true);
         else Destroy(gameObject);
     }

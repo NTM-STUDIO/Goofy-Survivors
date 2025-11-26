@@ -161,11 +161,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExperienceOrb
   ShowTopMostFoldoutHeaderGroup: 1
-  netXpValue:
-    m_InternalValue: 10
-  smoothTime: 0.1
+  xpValue: 5000
   collectionDistance: 2
   maxSpeed: 100
+  smoothTime: 0.1
 --- !u!54 &373153327874312386
 Rigidbody:
   m_ObjectHideFlags: 0

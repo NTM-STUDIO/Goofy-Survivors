@@ -15,37 +15,27 @@ public class DifficultyManager : NetworkBehaviour
     [SerializeField] private float speedMultiplier = 1.05f;
     [SerializeField] private float fireRateMultiplier = 1.05f;
 
-    // Propriedades Públicas
+    // Propriedades Públicas (Lidas pelo GameManager e Inimigos)
     public float CurrentHealthMult { get; private set; } = 1f;
     public float CurrentDamageMult { get; private set; } = 1f;
     public float CurrentProjectileSpeed { get; private set; } = 10f;
     public float CurrentFireRate { get; private set; } = 2f;
     public float CurrentSightRange { get; private set; } = 999f;
 
+    // Multiplicador de Dificuldade por nº de Jogadores
     public NetworkVariable<float> mpDifficultyMultiplier = new NetworkVariable<float>(1f);
     public float MpDifficultyMultiplier => mpDifficultyMultiplier.Value;
 
-    // XP
+    // Multiplicador de XP de Equipa
     public NetworkVariable<float> netSharedXpMult = new NetworkVariable<float>(1f);
     public float SharedXpMultiplier => netSharedXpMult.Value;
 
-    // Mutação
+    // (Mutação removida, usamos apenas stats brutos agora)
     public MutationType GlobalMutation { get; private set; } = MutationType.None;
 
     private int lastInterval = 0;
 
-    public void ApplyMidgameBoost(float multiplier)
-    {
-        CurrentHealthMult *= multiplier;
-        CurrentDamageMult *= multiplier;
-
-        // Opcional: Aumentar um pouco a velocidade ou spawn rate também
-        CurrentFireRate = Mathf.Max(0.1f, CurrentFireRate / 1.2f);
-
-        Debug.Log($"[DifficultyManager] MIDGAME BOOST! HP e Dano multiplicados por {multiplier}");
-    }
-
-public void ResetDifficulty()
+    public void ResetDifficulty()
     {
         // Volta tudo aos valores base
         CurrentHealthMult = 1f;
@@ -53,15 +43,13 @@ public void ResetDifficulty()
         CurrentProjectileSpeed = baseProjectileSpeed;
         CurrentFireRate = baseFireRate;
         
-        // Se tiveres variáveis privadas de controle, reseta-as também
-        // lastInterval = 0; 
-        
+        lastInterval = 0; 
         GlobalMutation = MutationType.None;
 
         if (IsServer)
         {
             netSharedXpMult.Value = 1f;
-            // RecomputeMpMultiplier(); // Mantém isto se for MP
+            RecomputeMpMultiplier();
         }
         
         Debug.Log("[DifficultyManager] Dificuldade resetada para x1.");
@@ -69,6 +57,7 @@ public void ResetDifficulty()
 
     private void Update()
     {
+        // Só o servidor controla a dificuldade ao longo do tempo
         if (!IsServer || GameManager.Instance.CurrentState != GameManager.GameState.Playing) return;
 
         float timeElapsed = GameManager.Instance.totalGameTime - GameManager.Instance.GetRemainingTime();
@@ -89,36 +78,32 @@ public void ResetDifficulty()
         CurrentFireRate = Mathf.Max(0.2f, CurrentFireRate / fireRateMultiplier);
     }
 
+    // Chamado pelo GameEventManager nos eventos de Midgame/Endgame
+    public void ApplyMidgameBoost(float multiplier)
+    {
+        CurrentHealthMult *= multiplier;
+        CurrentDamageMult *= multiplier;
+
+        // Opcional: Aumentar spawn rate (reduzindo o intervalo de tiro/spawn)
+        CurrentFireRate = Mathf.Max(0.1f, CurrentFireRate / 1.2f);
+
+        Debug.Log($"[DifficultyManager] MIDGAME BOOST! HP e Dano multiplicados por {multiplier}");
+    }
+
+    // Mantido para compatibilidade, mas não aplica cores/tipos específicos
     public void SetMidgameMutation(MutationType type) => GlobalMutation = type;
 
+    // Mantido para compatibilidade com EnemySpawner, mas agora confia nos multiplicadores globais
     public void ApplyMutationToEnemy(EnemyStats enemy)
     {
-        if (GlobalMutation == MutationType.None || enemy == null) return;
-        if (enemy.CurrentMutation == GlobalMutation) return;
-
-        // Lógica de aplicação visual e stats
-        var renderer = enemy.GetComponentInChildren<SpriteRenderer>();
-
-        switch (GlobalMutation)
-        {
-            case MutationType.Health:
-                enemy.baseHealth *= 2f;
-                if (renderer) renderer.color = Color.green;
-                break;
-            case MutationType.Damage:
-                enemy.baseDamage *= 2f;
-                if (renderer) renderer.color = Color.red;
-                break;
-            case MutationType.Speed:
-                enemy.moveSpeed *= 2f;
-                if (renderer) renderer.color = Color.blue;
-                break;
-        }
-
-        // Tenta setar a propriedade via reflection se necessário, ou diretamente se for public
-        var prop = typeof(EnemyStats).GetProperty("CurrentMutation");
-        if (prop != null) prop.SetValue(enemy, GlobalMutation);
+        if (enemy == null) return;
+        
+        // Aqui podes forçar a atualização de stats num inimigo vivo se necessário,
+        // mas geralmente os inimigos leem o GameManager.currentEnemyHealthMultiplier no Start().
+        // Se quiseres curar ou buffar inimigos já vivos, faz aqui.
     }
+
+    // --- XP LOGIC ---
 
     public void RequestModifySharedXp(float amount)
     {
@@ -129,16 +114,20 @@ public void ResetDifficulty()
     [ServerRpc(RequireOwnership = false)]
     private void ModifyXpServerRpc(float amount) => netSharedXpMult.Value += amount;
 
+    // Chamado pelo GameManager quando alguém apanha um orbe
     public void DistributeXpServer(float amount)
     {
-        DistributeXpClientRpc(amount * SharedXpMultiplier);
+        // 1. Aplica o multiplicador de partilha (se houver)
+        float finalXp = amount * SharedXpMultiplier;
+
+        // 2. Adiciona ao Sistema Global de XP
+        if (PlayerExperience.Instance != null)
+        {
+            PlayerExperience.Instance.AddGlobalXP(finalXp);
+        }
     }
 
-    [ClientRpc]
-    private void DistributeXpClientRpc(float amount)
-    {
-        FindObjectOfType<PlayerExperience>()?.AddXPFromServerScaled(amount);
-    }
+    // --- UI & UTILS ---
 
     public void PresentRarity(string rarityName)
     {
@@ -162,6 +151,7 @@ public void ResetDifficulty()
         {
             NetworkManager.Singleton.OnClientConnectedCallback += (id) => RecomputeMpMultiplier();
             NetworkManager.Singleton.OnClientDisconnectCallback += (id) => RecomputeMpMultiplier();
+            RecomputeMpMultiplier();
         }
     }
 
