@@ -3,23 +3,21 @@ using Unity.Netcode;
 
 public class NetworkPlayerVisuals : NetworkBehaviour
 {
-    [Header("Components")]
     [SerializeField] private SpriteRenderer spriteRenderer;
-    [SerializeField] private Rigidbody rb;
-
-    // Variável de rede para sincronizar a direção (True = Direita, False = Esquerda)
+    
+    // Variável de rede: True = Direita, False = Esquerda
+    // Permissão de escrita: Owner (o dono do jogador controla a sua direção)
     private NetworkVariable<bool> isFacingRight = new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     private void Awake()
     {
         if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-        if (rb == null) rb = GetComponent<Rigidbody>();
     }
 
     public override void OnNetworkSpawn()
     {
-        // Subscreve à mudança de valor para atualizar visualmente quando muda na rede
         isFacingRight.OnValueChanged += OnFacingDirectionChanged;
+        UpdateSpriteFlip(isFacingRight.Value); // Atualiza estado inicial
     }
 
     public override void OnNetworkDespawn()
@@ -29,18 +27,18 @@ public class NetworkPlayerVisuals : NetworkBehaviour
 
     private void Update()
     {
-        // Só o Dono (o jogador local) decide para onde olha
         if (IsOwner)
         {
-            float moveX = Input.GetAxisRaw("Horizontal"); // Ou rb.velocity.x
+            // Deteta input local e atualiza a variável de rede
+            float moveX = Input.GetAxisRaw("Horizontal");
 
             if (moveX > 0.1f && !isFacingRight.Value)
             {
-                isFacingRight.Value = true; // Olha para a direita
+                isFacingRight.Value = true;
             }
             else if (moveX < -0.1f && isFacingRight.Value)
             {
-                isFacingRight.Value = false; // Olha para a esquerda
+                isFacingRight.Value = false;
             }
         }
     }
@@ -52,17 +50,10 @@ public class NetworkPlayerVisuals : NetworkBehaviour
 
     private void UpdateSpriteFlip(bool facingRight)
     {
-        // Opção A: Usar FlipX do SpriteRenderer
         if (spriteRenderer != null)
         {
-            spriteRenderer.flipX = !facingRight; // Assume que o sprite original olha para a direita
+            // Assume que o sprite original olha para a direita. Se for o contrário, remove o '!'
+            spriteRenderer.flipX = !facingRight; 
         }
-
-        // Opção B: Se usares Scale (descomenta se preferires este e comenta o de cima)
-        /*
-        Vector3 scale = transform.localScale;
-        scale.x = facingRight ? Mathf.Abs(scale.x) : -Mathf.Abs(scale.x);
-        transform.localScale = scale;
-        */
     }
 }

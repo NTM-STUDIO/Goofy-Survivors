@@ -74,13 +74,13 @@ public class MapConsumable : NetworkBehaviour
             }
             chestScript.OpenChest(pwmLocal);
             var ps = pwmLocal.GetComponent<PlayerStats>();
-            if (ps != null) { try { OnAnyConsumableCollected?.Invoke(ps); } catch {} }
+            if (ps != null) { try { OnAnyConsumableCollected?.Invoke(ps); } catch { } }
         }
         else
         {
             DropRandomItem();
             var ps = other.GetComponentInParent<PlayerStats>();
-            if (ps != null) { try { OnAnyConsumableCollected?.Invoke(ps); } catch {} }
+            if (ps != null) { try { OnAnyConsumableCollected?.Invoke(ps); } catch { } }
         }
 
         Destroy(gameObject);
@@ -106,7 +106,7 @@ public class MapConsumable : NetworkBehaviour
             }
             chestScript.OpenChest(pwm);
             var ps = pwm.GetComponent<PlayerStats>();
-            if (ps != null) { try { OnAnyConsumableCollected?.Invoke(ps); } catch {} }
+            if (ps != null) { try { OnAnyConsumableCollected?.Invoke(ps); } catch { } }
         }
         else
         {
@@ -114,7 +114,7 @@ public class MapConsumable : NetworkBehaviour
             if (NetworkManager.Singleton != null && NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerNetId, out var playerNO2) && playerNO2 != null)
             {
                 var ps = playerNO2.GetComponent<PlayerStats>();
-                if (ps != null) { try { OnAnyConsumableCollected?.Invoke(ps); } catch {} }
+                if (ps != null) { try { OnAnyConsumableCollected?.Invoke(ps); } catch { } }
             }
         }
 
@@ -129,7 +129,7 @@ public class MapConsumable : NetworkBehaviour
             return;
 
         float totalWeight = possibleDrops.Sum(d => d.weight);
-        float random = Random.Range(0f, totalWeight);
+        float random = UnityEngine.Random.Range(0f, totalWeight);
 
         foreach (var drop in possibleDrops)
         {
@@ -137,7 +137,22 @@ public class MapConsumable : NetworkBehaviour
             {
                 if (drop.itemPrefab != null)
                 {
-                    Instantiate(drop.itemPrefab, transform.position, Quaternion.identity);
+                    // 1. Instancia o objeto
+                    GameObject spawnedItem = Instantiate(drop.itemPrefab, transform.position, Quaternion.identity);
+
+                    // 2. SE FOR MULTIPLAYER (SERVER), TEMOS DE SPAWNAR NA REDE
+                    if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && IsServer)
+                    {
+                        var netObj = spawnedItem.GetComponent<NetworkObject>();
+                        if (netObj != null)
+                        {
+                            netObj.Spawn(true); // <--- ISTO FAZ O DROP APARECER PARA TODOS
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[MapConsumable] O drop '{drop.itemPrefab.name}' não tem NetworkObject! Adiciona no Prefab.");
+                        }
+                    }
                 }
                 return;
             }

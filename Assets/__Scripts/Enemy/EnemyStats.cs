@@ -27,7 +27,7 @@ public class EnemyStats : NetworkBehaviour
     public float baseHealth = 100;
     public float baseDamage = 10;
     public float moveSpeed = 3f;
-    
+
     [Header("Mutations")]
     [Range(0f, 1f)]
     [SerializeField] private float mutationChance = 0.1f;
@@ -80,7 +80,7 @@ public class EnemyStats : NetworkBehaviour
             originalColor = enemyRenderer.color;
         }
         currentKnockbackResistance = knockbackResistance;
-        
+
         originalBaseHealth = baseHealth;
         originalBaseDamage = baseDamage;
         originalMoveSpeed = moveSpeed;
@@ -142,7 +142,7 @@ public class EnemyStats : NetworkBehaviour
     {
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            if (!IsServer) 
+            if (!IsServer)
             {
                 TakeDamageServerRpc(damage, isCritical);
                 return;
@@ -201,7 +201,7 @@ public class EnemyStats : NetworkBehaviour
             if (flashCoroutine != null) StopCoroutine(flashCoroutine);
             flashCoroutine = StartCoroutine(FlashColor());
         }
-        
+
         if (CurrentHealth <= 0)
         {
             Die();
@@ -269,7 +269,7 @@ public class EnemyStats : NetworkBehaviour
 
         return stolenType;
     }
-    
+
     private void ApplyMutation()
     {
         if (UnityEngine.Random.value > mutationChance) return;
@@ -293,7 +293,7 @@ public class EnemyStats : NetworkBehaviour
     {
         enemyRenderer.color = Color.red;
         yield return new WaitForSeconds(0.15f);
-        
+
         if (CurrentMutation != MutationType.None)
         {
             switch (CurrentMutation)
@@ -309,7 +309,7 @@ public class EnemyStats : NetworkBehaviour
         }
         flashCoroutine = null;
     }
-    
+
     public void Die()
     {
         if (!gameObject.activeSelf) return;
@@ -373,30 +373,44 @@ public class EnemyStats : NetworkBehaviour
 
     }
 
-    private void SpawnOrb(OrbDropConfig orb)
+  private void SpawnOrb(OrbDropConfig orb)
     {
         bool isNetworked = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
-        if (isNetworked && IsServer)
+
+        // MULTIPLAYER: Só o servidor pode Spawnar
+        if (isNetworked)
         {
-            GameObject spawned = Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
-            var netObj = spawned.GetComponent<NetworkObject>();
-            if (netObj == null)
+            if (IsServer)
             {
-                netObj = spawned.AddComponent<NetworkObject>();
+                GameObject spawned = Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
+                var orbScript = spawned.GetComponent<ExperienceOrb>();
+                
+                // Configura valor (se necessário, mas o prefab já deve ter um valor base)
+                // orbScript.Setup(10); 
+
+                var netObj = spawned.GetComponent<NetworkObject>();
+                if (netObj != null)
+                {
+                    netObj.Spawn(true); // <--- OBRIGATÓRIO PARA O CLIENTE VER
+                }
+                else
+                {
+                    Debug.LogError($"[EnemyStats] O Prefab '{orb.orbPrefab.name}' não tem NetworkObject!");
+                }
             }
-            netObj.Spawn(true);
         }
-        else if (!isNetworked)
+        // SINGLEPLAYER
+        else
         {
             Instantiate(orb.orbPrefab, transform.position, Quaternion.identity);
         }
     }
-    
+
     public void ApplyKnockback(float knockbackForce, float duration, Vector3 direction)
     {
         if (!isActiveAndEnabled || CurrentHealth <= 0f) return;
         if (isUnknockable || IsKnockedBack || knockbackForce <= 0) return;
-        
+
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             if (!IsServer)
@@ -405,17 +419,17 @@ public class EnemyStats : NetworkBehaviour
                 return;
             }
         }
-        
+
         if (!isActiveAndEnabled) return;
 
         float resistanceMultiplier = 1f - currentKnockbackResistance;
         float effectiveForce = knockbackForce * resistanceMultiplier;
         float effectiveDuration = duration * resistanceMultiplier;
         if (effectiveDuration <= 0.01f) return;
-        
+
         if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
         knockbackCoroutine = StartCoroutine(KnockbackRoutine(effectiveForce, effectiveDuration, direction));
-        
+
         if (resistanceIncreasePerHit > 0)
         {
             currentKnockbackResistance += resistanceIncreasePerHit;
@@ -432,7 +446,7 @@ public class EnemyStats : NetworkBehaviour
     private IEnumerator KnockbackRoutine(float force, float duration, Vector3 direction)
     {
         IsKnockedBack = true;
-        direction.y = 0; 
+        direction.y = 0;
         rb.linearVelocity = Vector3.zero;
         rb.AddForce(direction.normalized * force, ForceMode.Impulse);
         yield return new WaitForSeconds(duration);

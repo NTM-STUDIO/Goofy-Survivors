@@ -1,52 +1,40 @@
 using UnityEngine;
 using Unity.Netcode;
 
-// Use 3D components by default; prefab can add them. We don't hard-require here to avoid conflicts with existing setups.
-// If missing at runtime, we'll still operate via transform movement once attraction starts.
-public class ExperienceOrb : MonoBehaviour
+public class ExperienceOrb : NetworkBehaviour
 {
-    [Header("Orb Properties")]
-    public int xpValue = 10;
+    public NetworkVariable<int> netXpValue = new NetworkVariable<int>(10);
 
-    [Header("Fluid Movement")]
-    public float smoothTime = 0.1f;
-    public float collectionDistance = 2f;
+    [Header("Settings")]
+    public float collectionDistance = 1.5f;
     public float maxSpeed = 50f;
+    public float smoothTime = 0.1f;
 
     private Transform attractionTarget;
     private bool isAttracted = false;
-    private Vector3 currentVelocity = Vector3.zero;
+    private Vector3 currentVelocity;
     private bool collected = false;
 
+    public void Setup(int amount)
+    {
+        if (IsServer) netXpValue.Value = amount;
+    }
 
     void Update()
     {
         if (!isAttracted || attractionTarget == null) return;
-        
-        // 2. Use Vector3.Distance for 3D space
+
+        transform.position = Vector3.SmoothDamp(transform.position, attractionTarget.position, ref currentVelocity, smoothTime, maxSpeed);
+
         if (Vector3.Distance(transform.position, attractionTarget.position) < collectionDistance)
         {
-            if (!collected) CollectOrb();
-            return;
+            CollectOrb();
         }
-
-        // This SmoothDamp function is already 3D, so it works perfectly.
-        // The orb will fly through the air towards the player.
-        transform.position = Vector3.SmoothDamp(
-            transform.position,
-            attractionTarget.position,
-            ref currentVelocity,
-            smoothTime,
-            maxSpeed
-        );
     }
 
-    /// <summary>
-    /// Called by the player's pickup radius when the orb enters the pickup area.
-    /// </summary>
     public void StartAttraction(Transform target)
     {
-        if (isAttracted || target == null) return;
+        if (isAttracted) return;
         isAttracted = true;
         attractionTarget = target;
     }
@@ -56,54 +44,52 @@ public class ExperienceOrb : MonoBehaviour
         if (collected) return;
         collected = true;
 
-    // Proactively disable pickup collider/visuals immediately to prevent duplicates while the network despawn propagates
-    var col = GetComponent<Collider>();
-    if (col != null) col.enabled = false;
-    var col2d = GetComponent<Collider2D>();
-    if (col2d != null) col2d.enabled = false;
-    var rend = GetComponentInChildren<Renderer>();
-    if (rend != null) rend.enabled = false;
+        // Esconde visualmente logo (para não parecer lagado)
+        foreach(var r in GetComponentsInChildren<Renderer>()) r.enabled = false;
+        foreach(var c in GetComponentsInChildren<Collider>()) c.enabled = false;
 
-        var nm = Unity.Netcode.NetworkManager.Singleton;
-        var playerStats = attractionTarget.GetComponentInParent<PlayerStats>();
-
-        if (playerStats == null)
+        if (NetworkManager.Singleton.IsListening)
         {
-            Debug.LogWarning("ExperienceOrb: Missing PlayerStats on attraction target's parent.", attractionTarget);
-            Destroy(gameObject);
-            return;
-        }
-
-        // Multiplayer: server awards shared XP to everyone and despawns orb
-        if (nm != null && nm.IsListening)
-        {
-            if (Unity.Netcode.NetworkManager.Singleton.IsServer)
+            if (IsServer)
             {
-                var gm = FindFirstObjectByType<GameManager>();
-                if (gm != null)
-                {
-                    // Pass raw XP; GameManager will scale by shared team multiplier on server
-                    gm.DistributeSharedXP(xpValue);
-                }
-
-                // Despawn if spawned; otherwise destroy locally to avoid Netcode errors
-                var netObj = GetComponent<Unity.Netcode.NetworkObject>();
-                if (netObj != null && netObj.IsSpawned) netObj.Despawn(true); else Destroy(gameObject);
+                DistributeAndDestroy();
             }
             else
             {
-                // Clients do nothing; server will despawn
+                // Se for cliente, pede ao servidor.
+                // O IsSpawned previne o erro "NullReference __endSendServerRpc"
+                if (IsSpawned) RequestCollectServerRpc();
+                else Destroy(gameObject); // Se não estiver na rede, mata localmente
             }
-            return;
         }
-
-        // Single-player: apply directly and destroy
-        var playerExperience = FindFirstObjectByType<PlayerExperience>();
-        if (playerExperience != null)
+        else
         {
-            float finalXp = xpValue * playerStats.xpGainMultiplier;
-            playerExperience.AddXP(finalXp);
+            // Singleplayer fallback
+            if (attractionTarget != null)
+            {
+                var ps = attractionTarget.GetComponentInParent<PlayerStats>();
+                var px = FindObjectOfType<PlayerExperience>();
+                if (ps != null && px != null) px.AddXP(netXpValue.Value * ps.xpGainMultiplier);
+            }
+            Destroy(gameObject);
         }
-        Destroy(gameObject);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestCollectServerRpc()
+    {
+        if (!IsSpawned) return;
+        DistributeAndDestroy();
+    }
+
+    private void DistributeAndDestroy()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.DistributeSharedXP(netXpValue.Value);
+        }
+        
+        if (IsSpawned) NetworkObject.Despawn(true);
+        else Destroy(gameObject);
     }
 }

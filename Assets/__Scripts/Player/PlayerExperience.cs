@@ -1,22 +1,23 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Unity.Netcode;
 
-public class PlayerExperience : MonoBehaviour
+public class PlayerExperience : NetworkBehaviour
 {
     [Header("UI References")]
     [SerializeField] private Slider xpSlider;
     [SerializeField] private TMP_Text levelText;
 
-    [Header("System References")]
+    [Header("System")]
     [SerializeField] private UpgradeManager upgradeManager;
 
-    [Header("Experience State")]
+    [Header("State")]
     [SerializeField] private int currentLevel = 1;
     [SerializeField] private float currentXP = 0;
     [SerializeField] private float xpToNextLevel = 100;
 
-    [Header("XP Curve Settings")]
+    // Settings de Curva de XP...
     [SerializeField] private float earlyLevelXpBonus = 60f;
     [SerializeField] private float midGameScalingFactor = 1.1f;
     [SerializeField] private float lateGameScalingFactor = 1.01f;
@@ -26,21 +27,16 @@ public class PlayerExperience : MonoBehaviour
 
     public void Initialize(GameObject playerObject)
     {
-        if (upgradeManager == null || xpSlider == null || levelText == null)
+        if (upgradeManager == null) upgradeManager = FindObjectOfType<UpgradeManager>();
+        
+        // Tenta encontrar UI no UIManager se as referências locais falharem
+        if (xpSlider == null && GameManager.Instance.uiManager != null)
         {
-            Debug.LogError("PlayerExperience missing references!", this);
-            enabled = false;
-            return;
+            // Nota: Se não tiveres acesso direto às variaveis do UIManager, 
+            // o UpdateUI abaixo trata disso através de métodos públicos.
         }
 
         playerStats = playerObject.GetComponent<PlayerStats>();
-        if (playerStats == null)
-        {
-            Debug.LogError("PlayerExperience: Could not find PlayerStats on player!", this);
-            enabled = false;
-            return;
-        }
-
         UpdateUI();
     }
 
@@ -52,107 +48,88 @@ public class PlayerExperience : MonoBehaviour
         UpdateUI();
     }
 
+    // Recebe XP localmente (Singleplayer)
     public void AddXP(float xp)
     {
         if (!enabled) return;
+        
+        float multiplier = (playerStats != null) ? playerStats.xpGainMultiplier : 1f;
+        float finalXp = xp * multiplier;
 
-        // Aplica multiplicador
-        currentXP += xp * (playerStats != null ? playerStats.xpGainMultiplier : 1f);
-
-        int levelUps = 0;
-
-        // Conta quantos níveis sobem
-        while (currentXP >= xpToNextLevel)
+        if (GameManager.Instance.isP2P)
         {
-            currentXP -= xpToNextLevel;
-            currentLevel++;
-            levelUps++;
-
-            if (playerStats != null)
-                playerStats.ApplyLevelUpScaling();
-
-            // Ajusta XP necessário
-            if (currentLevel <= 10) xpToNextLevel += earlyLevelXpBonus;
-            else if (currentLevel <= 25) xpToNextLevel *= midGameScalingFactor;
-            else if (currentLevel <= 35) xpToNextLevel *= lateGameScalingFactor;
-            else xpToNextLevel *= endGameScalingFactor;
-
-            xpToNextLevel = Mathf.FloorToInt(xpToNextLevel);
+            if (IsServer) ProcessXPGain(finalXp);
         }
-
-        // Só chama UpgradeManager **uma vez** com o total de level-ups
-        if (levelUps > 0 && upgradeManager != null)
+        else
         {
-            // Synchronized global pause (server drives via ClientRpc)
-            var gm = GameManager.Instance;
-            gm?.RequestPauseForLevelUp();
-            upgradeManager.EnqueueMultipleLevelUps(levelUps);
+            ProcessXPGain(finalXp);
         }
-
-        UpdateUI();
     }
 
-    // Called when XP has already been scaled by the server's shared team multiplier in P2P
+    // Recebe XP do Servidor (Multiplayer)
     public void AddXPFromServerScaled(float scaledXp)
     {
         if (!enabled) return;
+        ProcessXPGain(scaledXp);
+    }
 
-        currentXP += scaledXp; // do NOT apply local xp multiplier here
+    private void ProcessXPGain(float amount)
+    {
+        currentXP += amount;
+        int levelsGained = 0;
 
-        int levelUps = 0;
         while (currentXP >= xpToNextLevel)
         {
             currentXP -= xpToNextLevel;
             currentLevel++;
-            levelUps++;
+            levelsGained++;
 
-            if (playerStats != null)
-                playerStats.ApplyLevelUpScaling();
+            if (playerStats != null) playerStats.ApplyLevelUpScaling();
 
+            // Curva XP
             if (currentLevel <= 10) xpToNextLevel += earlyLevelXpBonus;
             else if (currentLevel <= 25) xpToNextLevel *= midGameScalingFactor;
             else if (currentLevel <= 35) xpToNextLevel *= lateGameScalingFactor;
             else xpToNextLevel *= endGameScalingFactor;
-
             xpToNextLevel = Mathf.FloorToInt(xpToNextLevel);
         }
 
-        if (levelUps > 0 && upgradeManager != null)
-        {
-            var gm = GameManager.Instance;
-            gm?.RequestPauseForLevelUp();
-            upgradeManager.EnqueueMultipleLevelUps(levelUps);
-        }
-
         UpdateUI();
-    }
 
-    private void LevelUp()
-    {
-        currentXP -= xpToNextLevel;
-        currentLevel++;
-
-        if (playerStats != null)
-            playerStats.ApplyLevelUpScaling();
-
-        if (currentLevel <= 10)
-            xpToNextLevel += earlyLevelXpBonus;
-        else if (currentLevel <= 25)
-            xpToNextLevel *= midGameScalingFactor;
-        else if (currentLevel <= 35)
-            xpToNextLevel *= lateGameScalingFactor;
-        else
-            xpToNextLevel *= endGameScalingFactor;
-
-        xpToNextLevel = Mathf.FloorToInt(xpToNextLevel);
+        if (levelsGained > 0)
+        {
+            if (GameManager.Instance.isP2P)
+            {
+                if (IsServer) GameManager.Instance.TriggerTeamLevelUp();
+            }
+            else
+            {
+                if (upgradeManager != null)
+                {
+                    GameManager.Instance.RequestPauseForLevelUp();
+                    upgradeManager.EnqueueMultipleLevelUps(levelsGained);
+                }
+            }
+        }
     }
 
     private void UpdateUI()
     {
-        if (xpSlider == null || levelText == null) return;
-
-        levelText.text = $"Lvl: {currentLevel}";
-        xpSlider.maxValue = xpToNextLevel;
-        xpSlider.value = currentXP;
+        // Tenta atualizar via UIManager primeiro (mais seguro em MP)
+        if (GameManager.Instance.uiManager != null)
+        {
+            GameManager.Instance.uiManager.UpdateXPBar(currentXP, xpToNextLevel);
+            GameManager.Instance.uiManager.UpdateLevelText(currentLevel);
+        }
+        // Fallback local
+        else
+        {
+            if (xpSlider != null)
+            {
+                xpSlider.maxValue = xpToNextLevel;
+                xpSlider.value = currentXP;
+            }
+            if (levelText != null) levelText.text = $"Lvl: {currentLevel}";
+        }
     }
 }

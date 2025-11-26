@@ -4760,6 +4760,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2c581171a338f2499108ade1fbe05bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeManager
+  ShowTopMostFoldoutHeaderGroup: 1
   upgradePanel: {fileID: 991131518}
   upgradeChoicePrefab: {fileID: 9209661984835970440, guid: dd9061c775bee354f8222a6395caf098, type: 3}
   choicesContainer: {fileID: 991131517}
@@ -6785,6 +6786,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d167982b0508c75449a25953ee2b7bc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   xpSlider: {fileID: 991131520}
   levelText: {fileID: 991131519}
   upgradeManager: {fileID: 1162585565}
@@ -7708,10 +7710,8 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   reviveRadius: 2.5
   reviveTime: 5
+  reviveBeam: {fileID: 0}
   reviveSprite: {fileID: 21300000, guid: faad5318c27ba4345981689458656aa5, type: 3}
-  reviveVfxYOffset: 2
-  reviveVfxSortingLayer: VFX
-  reviveVfxDuration: 0.8
   reviveColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &2088191651
 GameObject:

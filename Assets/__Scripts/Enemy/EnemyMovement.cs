@@ -254,21 +254,19 @@ public class EnemyMovement : NetworkBehaviour
         return result;
     }
 
-    private void OnTriggerEnter(Collider other)
+   private void OnTriggerEnter(Collider other)
     {
-        // Se for MP e não for Server, sai (Client não processa dano)
+        // Se for Multiplayer e eu não for o Servidor, ignoro (apenas o servidor calcula dano)
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
 
         if (other.CompareTag("Player") && Time.time >= nextAttackTime)
         {
             var targetPs = other.GetComponentInParent<PlayerStats>();
-
-            // Se não tiver vida ou já estiver caído, ignora
             if (targetPs == null || targetPs.IsDowned) return;
 
             nextAttackTime = Time.time + attackCooldown;
 
-            // Tenta obter o ID da rede (para MP). Se não conseguir, manda 0 (para SP).
+            // Tenta obter o ID. Se for SP, o netObj pode ser null, enviamos 0.
             ulong targetId = 0;
             var netObj = other.GetComponentInParent<NetworkObject>();
             if (netObj != null) targetId = netObj.OwnerClientId;
@@ -276,16 +274,15 @@ public class EnemyMovement : NetworkBehaviour
             if (GameManager.Instance != null)
             {
                 float dmg = stats.GetAttackDamage();
-                // Chama o GameManager (que agora já sabe lidar com SP e MP)
+                // Chama o GameManager (que agora tem a lógica SP/MP separada)
                 GameManager.Instance.ServerApplyPlayerDamage(targetId, dmg, transform.position, null);
             }
 
-            // Knockback visual
+            // Knockback funciona localmente no physics
             Vector3 knockbackDirection = (transform.position - other.transform.position).normalized;
             stats.ApplyKnockback(selfKnockbackForce, selfKnockbackDuration, knockbackDirection);
         }
     }
-
     private Vector3 GetTargetPosition(Vector3 enemyPosition)
     {
         // Usa currentTarget em vez de player
