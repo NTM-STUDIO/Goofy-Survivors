@@ -302,6 +302,7 @@ GameObject:
   - component: {fileID: 1471733981330585159}
   - component: {fileID: -5859217750854589408}
   - component: {fileID: -2411956963275685616}
+  - component: {fileID: 476431355898181283}
   m_Layer: 0
   m_Name: Pato
   m_TagString: Player
@@ -408,6 +409,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51ab94343354c7045a23e17c3b9d997b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  IsDownedNetVar:
+    m_InternalValue: 0
   hasBeltBuffItem: 0
   stolenBuffDuration: 10
   beltHealthBonus: 0.2
@@ -543,6 +547,19 @@ MonoBehaviour:
   activationDistance: 3
   enemyWipeRadius: 8
   activationKey: 101
+--- !u!114 &476431355898181283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5781343528486485951}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46206e5bc7606fa4ea81b56218d10fde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &8711001021886645921
 GameObject:
   m_ObjectHideFlags: 0

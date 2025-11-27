@@ -20,8 +20,9 @@ public class LoadoutSync : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        // Only the owning client sends their selection up
-        if (IsOwner && IsClient && !IsServer)
+        // The owning client should send their selection up. Host (IsServer) also
+        // needs to apply its own selection, so do this for any owner client.
+        if (IsOwner && IsClient)
         {
             // Aguardar 1 frame para garantir que DefaultLoadoutInitializer.Awake() já rodou
             StartCoroutine(SendLoadoutAfterDelay());
@@ -38,10 +39,19 @@ public class LoadoutSync : NetworkBehaviour
         Debug.Log($"[LoadoutSync] Weapon: {LoadoutSelections.SelectedWeapon?.name ?? "NULL"}");
         Debug.Log($"[LoadoutSync] Runes: {LoadoutSelections.SelectedRunes?.Count ?? 0}");
         
-        TrySendSelectionToServer();
+        // Use the public helper which handles both host (apply locally) and client (ServerRpc)
+        RequestSendSelectionToServer();
     }
 
     private void TrySendSelectionToServer()
+    {
+        var payload = BuildSelectionPayload();
+        Debug.Log($"[LoadoutSync] Submitting to server: weaponId={payload.weaponId}, charIndex={payload.characterIndex}, runes={payload.runeIdsCsv}");
+        SubmitSelectionServerRpc(payload.weaponId, payload.characterIndex, payload.runeIdsCsv);
+    }
+
+    // Build compact payload from current LoadoutSelections
+    private (int weaponId, int characterIndex, string runeIdsCsv) BuildSelectionPayload()
     {
         int weaponId = -1;
         if (LoadoutSelections.WeaponRegistryContext != null && LoadoutSelections.SelectedWeapon != null)
@@ -53,19 +63,39 @@ public class LoadoutSync : NetworkBehaviour
         {
             characterIndex = LoadoutSelections.CharacterPrefabsContext.IndexOf(LoadoutSelections.SelectedCharacterPrefab);
         }
-        // Send rune IDs by string
         var runeIds = (LoadoutSelections.SelectedRunes != null)
             ? LoadoutSelections.SelectedRunes.Where(r => r != null && !string.IsNullOrEmpty(r.runeId)).Select(r => r.runeId).ToArray()
             : Array.Empty<string>();
         string runeIdsCsv = string.Join("|", runeIds);
+        return (weaponId, characterIndex, runeIdsCsv);
+    }
 
-        Debug.Log($"[LoadoutSync] Submitting to server: weaponId={weaponId}, charIndex={characterIndex}, runes={runeIdsCsv}");
-        
-        SubmitSelectionServerRpc(weaponId, characterIndex, runeIdsCsv);
+    // Public helper: request immediate send of current selection to server.
+    // Works for normal clients (via ServerRpc) and for hosts (applies directly on server side).
+    public void RequestSendSelectionToServer()
+    {
+        if (!IsClient) return;
+        var payload = BuildSelectionPayload();
+        if (IsServer)
+        {
+            // Host: apply directly as if server received it from OwnerClientId
+            ProcessReceivedSelection(payload.weaponId, payload.characterIndex, payload.runeIdsCsv, OwnerClientId);
+        }
+        else
+        {
+            SubmitSelectionServerRpc(payload.weaponId, payload.characterIndex, payload.runeIdsCsv);
+        }
     }
 
     [ServerRpc]
-    private void SubmitSelectionServerRpc(int weaponId, int characterIndex, string runeIdsCsv)
+    private void SubmitSelectionServerRpc(int weaponId, int characterIndex, string runeIdsCsv, ServerRpcParams rpcParams = default)
+    {
+        ulong sender = rpcParams.Receive.SenderClientId;
+        ProcessReceivedSelection(weaponId, characterIndex, runeIdsCsv, sender);
+    }
+
+    // Centralized server-side processing for a received selection from clientId.
+    private void ProcessReceivedSelection(int weaponId, int characterIndex, string runeIdsCsv, ulong senderClientId)
     {
         List<string> runeList;
         if (string.IsNullOrEmpty(runeIdsCsv))
@@ -79,15 +109,73 @@ public class LoadoutSync : NetworkBehaviour
         var sel = new SyncedSelection
         {
             weaponId = weaponId,
-            runeIds = runeList != null ? runeList : new List<string>()
-            , characterIndex = characterIndex
+            runeIds = runeList != null ? runeList : new List<string>(),
+            characterIndex = characterIndex
         };
-        ServerSelections[OwnerClientId] = sel;
+        ServerSelections[senderClientId] = sel;
 
-        Debug.Log($"[LoadoutSync] Server received loadout from client {OwnerClientId}: weaponId={weaponId}, charIndex={characterIndex}, runes={runeList.Count}");
+        Debug.Log($"[LoadoutSync] Server received loadout from client {senderClientId}: weaponId={weaponId}, charIndex={characterIndex}, runes={runeList.Count}");
 
         // Apply immediately if components available
-        ApplySelectionOnServer(sel);
+        // Try to apply on the NetworkObject instance for this sender if present
+        try
+        {
+            var spawnMgr = NetworkManager.Singleton?.SpawnManager;
+            if (spawnMgr != null)
+            {
+                var playerNO = spawnMgr.GetPlayerNetworkObject(senderClientId);
+                if (playerNO != null)
+                {
+                    var comp = playerNO.GetComponent<LoadoutSync>();
+                    if (comp != null)
+                    {
+                        comp.ApplySelectionOnServer(sel);
+                    }
+                }
+                else
+                {
+                    // Fallback: try to apply on this object if it matches sender
+                    if (OwnerClientId == senderClientId)
+                    {
+                        ApplySelectionOnServer(sel);
+                    }
+                }
+            }
+            else
+            {
+                if (IsServer && OwnerClientId == senderClientId)
+                {
+                    ApplySelectionOnServer(sel);
+                }
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[LoadoutSync] Failed to apply selection on server: {ex.Message}");
+        }
+
+        // Ensure the server gives the starting weapon in case it already ran earlier
+        try
+        {
+            var spawnMgr2 = NetworkManager.Singleton?.SpawnManager;
+            if (spawnMgr2 != null)
+            {
+                var playerNO2 = spawnMgr2.GetPlayerNetworkObject(senderClientId);
+                if (playerNO2 != null)
+                {
+                    var pwm = playerNO2.GetComponent<PlayerWeaponManager>();
+                    if (pwm != null)
+                    {
+                        Debug.Log($"[LoadoutSync] Instructing server to (re)give starting weapon for client {senderClientId}");
+                        pwm.Server_GiveStartingWeapon();
+                    }
+                }
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[LoadoutSync] Failed to reapply starting weapon: {ex.Message}");
+        }
     }
 
     private void ApplySelectionOnServer(SyncedSelection sel)

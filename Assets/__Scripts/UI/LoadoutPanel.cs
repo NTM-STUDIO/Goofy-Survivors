@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Netcode;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
@@ -340,6 +341,16 @@ public class LoadoutPanel : MonoBehaviour
         if (gm != null && !gm.isP2P && ch != null && ch.playerPrefab != null)
         {
             gm.SetChosenPlayerPrefab(ch.playerPrefab);
+        }
+        // If we're in multiplayer and the player object already exists, send selection now
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
+        {
+            var playerObj = NetworkManager.Singleton.LocalClient.PlayerObject.gameObject;
+            var sync = playerObj.GetComponent<LoadoutSync>();
+            if (sync != null)
+            {
+                sync.RequestSendSelectionToServer();
+            }
         }
 
         gameObject.SetActive(false);
