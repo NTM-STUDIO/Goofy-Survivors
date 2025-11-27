@@ -352,43 +352,49 @@ public void StopAndReset()
         Vector3 worldTopRight = GetWorldPointOnPlane(new Vector2(1, 1), groundPlane);
 
         Vector3 spawnPoint = Vector3.zero;
-        Vector3 offsetDirection = Vector3.zero;
 
-        // Em vez de uma caixa, usamos as bordas reais do quadrilátero de visão.
+        // Escolhe um ponto ao longo da borda solicitada
         switch (side)
         {
             case SpawnSide.Left:
-                // Escolhe um ponto aleatório ao longo da borda esquerda.
                 spawnPoint = Vector3.Lerp(worldBottomLeft, worldTopLeft, Random.value);
-                // Calcula uma direção para fora, perpendicular a essa borda.
-                offsetDirection = (worldTopLeft - worldBottomLeft).normalized;
-                offsetDirection = new Vector3(-offsetDirection.z, 0, offsetDirection.x); // Rotaciona 90 graus
                 break;
-
             case SpawnSide.Right:
-                // Escolhe um ponto aleatório ao longo da borda direita.
                 spawnPoint = Vector3.Lerp(worldBottomRight, worldTopRight, Random.value);
-                offsetDirection = (worldTopRight - worldBottomRight).normalized;
-                offsetDirection = new Vector3(offsetDirection.z, 0, -offsetDirection.x);
                 break;
-
             case SpawnSide.Top:
-                // Escolhe um ponto aleatório ao longo da borda superior.
                 spawnPoint = Vector3.Lerp(worldTopLeft, worldTopRight, Random.value);
-                offsetDirection = (worldTopRight - worldTopLeft).normalized;
-                offsetDirection = new Vector3(offsetDirection.z, 0, -offsetDirection.x);
                 break;
-
             case SpawnSide.Bottom:
-                // Escolhe um ponto aleatório ao longo da borda inferior.
                 spawnPoint = Vector3.Lerp(worldBottomLeft, worldBottomRight, Random.value);
-                offsetDirection = (worldBottomRight - worldBottomLeft).normalized;
-                offsetDirection = new Vector3(-offsetDirection.z, 0, offsetDirection.x);
                 break;
         }
 
-        // Aplica o buffer na direção correta para fora da tela.
-        return spawnPoint + offsetDirection.normalized * spawnBuffer;
+        // Calcula direção "para fora" de maneira robusta usando a orientação da câmera
+        Vector3 camRight = mainCamera.transform.right;
+        Vector3 camForward = mainCamera.transform.forward;
+        camRight.y = 0f; camForward.y = 0f;
+        if (camRight.sqrMagnitude < 0.0001f) camRight = Vector3.right;
+        if (camForward.sqrMagnitude < 0.0001f) camForward = Vector3.forward;
+
+        Vector3 offsetDir = Vector3.zero;
+        switch (side)
+        {
+            case SpawnSide.Left:
+                offsetDir = -camRight;
+                break;
+            case SpawnSide.Right:
+                offsetDir = camRight;
+                break;
+            case SpawnSide.Top:
+                offsetDir = camForward;
+                break;
+            case SpawnSide.Bottom:
+                offsetDir = -camForward;
+                break;
+        }
+
+        return spawnPoint + offsetDir.normalized * spawnBuffer;
     }
 
     // NOVO: Calcula spawn baseado em TODOS os players, não apenas câmera local
@@ -421,8 +427,24 @@ public void StopAndReset()
             playerBounds.Encapsulate(pos);
         }
 
-        // Expande bounds para garantir spawn fora da vista
-        playerBounds.Expand(spawnBuffer * 2f);
+        // AUMENTADO: Expande significativamente os bounds para garantir spawn em toda a volta
+        // Isso evita que inimigos spawnem apenas nos cantos
+        const float minSpread = 50f; // Aumentado de 10f para 50f
+        Vector3 size = playerBounds.size;
+        Vector3 newSize = size;
+        newSize.x = Mathf.Max(newSize.x, minSpread);
+        newSize.z = Mathf.Max(newSize.z, minSpread);
+        if (newSize != size)
+        {
+            playerBounds.SetMinMax(playerBounds.center - newSize * 0.5f, playerBounds.center + newSize * 0.5f);
+        }
+
+        // Expande os bounds pelo buffer para garantir spawn fora da vista
+        playerBounds.Expand(new Vector3(spawnBuffer * 2f, 0f, spawnBuffer * 2f));
+
+        // NOVO: Range extra para spawnar além dos bounds dos players
+        // Isso garante que inimigos apareçam em toda a extensão de cada lado
+        const float extraSpawnRange = 40f;
 
         Vector3 spawnPoint = Vector3.zero;
 
@@ -432,7 +454,7 @@ public void StopAndReset()
                 spawnPoint = new Vector3(
                     playerBounds.min.x - spawnBuffer,
                     groundLevelY,
-                    Random.Range(playerBounds.min.z, playerBounds.max.z)
+                    Random.Range(playerBounds.min.z - extraSpawnRange, playerBounds.max.z + extraSpawnRange)
                 );
                 break;
 
@@ -440,13 +462,13 @@ public void StopAndReset()
                 spawnPoint = new Vector3(
                     playerBounds.max.x + spawnBuffer,
                     groundLevelY,
-                    Random.Range(playerBounds.min.z, playerBounds.max.z)
+                    Random.Range(playerBounds.min.z - extraSpawnRange, playerBounds.max.z + extraSpawnRange)
                 );
                 break;
 
             case SpawnSide.Top:
                 spawnPoint = new Vector3(
-                    Random.Range(playerBounds.min.x, playerBounds.max.x),
+                    Random.Range(playerBounds.min.x - extraSpawnRange, playerBounds.max.x + extraSpawnRange),
                     groundLevelY,
                     playerBounds.max.z + spawnBuffer
                 );
@@ -454,7 +476,7 @@ public void StopAndReset()
 
             case SpawnSide.Bottom:
                 spawnPoint = new Vector3(
-                    Random.Range(playerBounds.min.x, playerBounds.max.x),
+                    Random.Range(playerBounds.min.x - extraSpawnRange, playerBounds.max.x + extraSpawnRange),
                     groundLevelY,
                     playerBounds.min.z - spawnBuffer
                 );
