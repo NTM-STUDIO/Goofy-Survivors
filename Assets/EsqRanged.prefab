@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4177505665298317376}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: GameObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -43,7 +43,7 @@ GameObject:
   - component: {fileID: 7030938786625457844}
   - component: {fileID: 809436061795207691}
   - component: {fileID: 5867644205551216357}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Visuals
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -178,7 +178,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 548238546038513927}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: FirePoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -214,7 +214,7 @@ GameObject:
   - component: {fileID: 6297376134751599430}
   - component: {fileID: 3865741410058004988}
   - component: {fileID: 5601596419032903263}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: EsqRanged
   m_TagString: Enemy
   m_Icon: {fileID: 0}

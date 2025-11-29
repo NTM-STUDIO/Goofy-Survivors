@@ -176,7 +176,7 @@ public class EnemyMovement : NetworkBehaviour
 
             // --- CORREÇÃO AQUI: VERIFICA SE ESTÁ CAÍDO ---
             var stats = t.GetComponent<PlayerStats>();
-            
+
             // Se tiver stats e estiver caído, IGNORA este alvo
             if (stats != null && stats.IsDowned) continue;
             // ---------------------------------------------
@@ -191,7 +191,7 @@ public class EnemyMovement : NetworkBehaviour
 
         // Atualiza o alvo (se for null, o inimigo para)
         currentTarget = bestTarget;
-        
+
         if (currentTarget != null)
         {
             targetRb = currentTarget.GetComponent<Rigidbody>();
@@ -254,34 +254,73 @@ public class EnemyMovement : NetworkBehaviour
         return result;
     }
 
-   private void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-        // Se for Multiplayer e eu não for o Servidor, ignoro (apenas o servidor calcula dano)
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
+        // Verifica se é um Jogador
+        if (!other.CompareTag("Player")) return;
 
-        if (other.CompareTag("Player") && Time.time >= nextAttackTime)
+        var targetPs = other.GetComponentInParent<PlayerStats>();
+        if (targetPs == null || targetPs.IsDowned) return;
+
+        // --- LÓGICA SINGLEPLAYER ---
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
         {
-            var targetPs = other.GetComponentInParent<PlayerStats>();
-            if (targetPs == null || targetPs.IsDowned) return;
-
-            nextAttackTime = Time.time + attackCooldown;
-
-            // Tenta obter o ID. Se for SP, o netObj pode ser null, enviamos 0.
-            ulong targetId = 0;
-            var netObj = other.GetComponentInParent<NetworkObject>();
-            if (netObj != null) targetId = netObj.OwnerClientId;
-
-            if (GameManager.Instance != null)
+            if (Time.time >= nextAttackTime)
             {
+                nextAttackTime = Time.time + attackCooldown;
                 float dmg = stats.GetAttackDamage();
-                // Chama o GameManager (que agora tem a lógica SP/MP separada)
-                GameManager.Instance.ServerApplyPlayerDamage(targetId, dmg, transform.position, null);
-            }
 
-            // Knockback funciona localmente no physics
-            Vector3 knockbackDirection = (transform.position - other.transform.position).normalized;
-            stats.ApplyKnockback(selfKnockbackForce, selfKnockbackDuration, knockbackDirection);
+                // Em SP mandamos ID 0 ou ignoramos o ID
+                if (GameManager.Instance != null)
+                    GameManager.Instance.ServerApplyPlayerDamage(0, dmg, transform.position, null);
+
+                // Knockback Físico Local
+                Vector3 kbDir = (transform.position - other.transform.position).normalized;
+                stats.ApplyKnockback(selfKnockbackForce, selfKnockbackDuration, kbDir);
+            }
+            return;
         }
+
+        // --- LÓGICA MULTIPLAYER (CLIENT AUTHORITATIVE) ---
+        // Só processamos a colisão se formos o PRÓPRIO JOGADOR que foi tocado.
+        // Isto elimina os "hits fantasmas" porque só conta o que tu vês no teu ecrã.
+        var netObj = other.GetComponentInParent<NetworkObject>();
+
+        if (netObj != null && netObj.IsLocalPlayer)
+        {
+            // Verificação local de cooldown para não spamar a rede desnecessariamente
+            // (Nota: O servidor faz a verificação final de segurança)
+            if (Time.time >= nextAttackTime)
+            {
+                // Pede ao servidor para aplicar o dano
+                RequestPlayerDamageServerRpc(netObj.OwnerClientId);
+
+                // Atualiza cooldown localmente para evitar spam imediato
+                nextAttackTime = Time.time + attackCooldown;
+
+                // Knockback visual imediato no cliente (opcional, mas melhora o feel)
+                Vector3 kbDir = (transform.position - other.transform.position).normalized;
+                stats.ApplyKnockback(selfKnockbackForce, selfKnockbackDuration, kbDir);
+            }
+        }
+    }
+
+    // --- NOVO: O Cliente pede para levar dano ---
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestPlayerDamageServerRpc(ulong targetClientId)
+    {
+        // O Servidor verifica o Cooldown para evitar spam/batota
+        if (Time.time < nextAttackTime) return;
+
+        // Aplica o dano através do GameManager
+        if (GameManager.Instance != null)
+        {
+            float dmg = stats.GetAttackDamage();
+            GameManager.Instance.ServerApplyPlayerDamage(targetClientId, dmg, transform.position, null);
+        }
+
+        // Reseta o cooldown no servidor
+        nextAttackTime = Time.time + attackCooldown;
     }
     private Vector3 GetTargetPosition(Vector3 enemyPosition)
     {

@@ -32,6 +32,26 @@ public class UpgradeManager : NetworkBehaviour
     private Queue<int> levelUpQueue = new Queue<int>();
     private bool isUpgradeInProgress = false;
 
+    // --- ADICIONAR ISTO AO UPGRADEMANAGER.CS ---
+
+    public void ForceReset()
+    {
+        // 1. Limpa a fila de níveis pendentes
+        levelUpQueue.Clear();
+        isUpgradeInProgress = false;
+
+        // 2. Fecha o painel visualmente
+        if (upgradePanel != null) upgradePanel.SetActive(false);
+
+        // 3. Destrói as cartas que estavam lá (para não duplicar no próximo nível)
+        if (choicesContainer != null)
+        {
+            foreach (Transform child in choicesContainer) Destroy(child.gameObject);
+        }
+        
+        Debug.Log("[UpgradeManager] Estado resetado com sucesso.");
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)

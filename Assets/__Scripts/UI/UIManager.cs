@@ -77,7 +77,7 @@ public class UIManager : MonoBehaviour
         var text = msgObj.AddComponent<TMPro.TextMeshProUGUI>();
         text.fontSize = 4;
         text.alignment = TMPro.TextAlignmentOptions.Center;
-        
+
         // Use random face emojis, make them larger and decorative
         string[] faces = new[] { "😈", "🤪", "😎", "🥶", "🤡", "👹", "👺", "😱", "😤", "😵", "😬", "😳", "😜", "😇", "🥳", "😏", "🤖", "👻" };
         System.Random rng = new System.Random();
@@ -88,7 +88,7 @@ public class UIManager : MonoBehaviour
         // Use <size> tag to make emojis very large and make buff name bold
         text.text = $"{buffMessage} <size=200%>{emoji1} {emoji2} {emoji3}</size>";
         text.color = Color.yellow;
-        
+
         // Fade in
         float fadeIn = 0.5f, hold = 1.5f, fadeOut = 0.5f;
         text.alpha = 0f;
@@ -101,7 +101,7 @@ public class UIManager : MonoBehaviour
         }
         text.alpha = 1f;
         yield return new WaitForSecondsRealtime(hold);
-        
+
         // Fade out
         t = 0f;
         while (t < fadeOut)
@@ -121,19 +121,19 @@ public class UIManager : MonoBehaviour
     {
         if (midgameEventCoroutine != null)
             StopCoroutine(midgameEventCoroutine);
-            
+
         if (midgameEventPanel != null) midgameEventPanel.SetActive(true);
         if (midgameEventText != null) midgameEventText.text = message;
-        
+
         CanvasGroup cg = midgameEventPanel?.GetComponent<CanvasGroup>();
         if (cg == null && midgameEventPanel != null) cg = midgameEventPanel.AddComponent<CanvasGroup>();
-        
+
         if (cg != null)
         {
             cg.alpha = 0f;
             float fadeIn = 0.7f, hold = 1.2f, fadeOut = 0.7f;
             float t = 0f;
-            
+
             // Fade in
             while (t < fadeIn)
             {
@@ -143,7 +143,7 @@ public class UIManager : MonoBehaviour
             }
             cg.alpha = 1f;
             yield return new WaitForSecondsRealtime(hold);
-            
+
             // Fade out
             t = 0f;
             while (t < fadeOut)
@@ -154,7 +154,7 @@ public class UIManager : MonoBehaviour
             }
             cg.alpha = 0f;
         }
-        
+
         if (midgameEventPanel != null) midgameEventPanel.SetActive(false);
     }
 
@@ -346,10 +346,10 @@ public class UIManager : MonoBehaviour
         // Check if the current player is the host.
         bool isHost = NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost;
         bool isServer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
-        
+
         // IsHost = IsServer && IsClient, so if we're server we should be host in this context
         bool shouldShowButton = isHost || isServer;
-        
+
         Debug.Log($"[UIManager.SetupLobbyUI] NetworkManager exists: {NetworkManager.Singleton != null}, IsHost: {isHost}, IsServer: {isServer}, Showing button: {shouldShowButton}");
 
         // Only show the "Start Game" button if the player is the host.
@@ -529,7 +529,7 @@ public class UIManager : MonoBehaviour
     public void PlayAgainButton()
     {
         Debug.Log("[UIManager] PlayAgainButton() called - delegating to GameManager.HandlePlayAgain()");
-        
+
         // This button now calls the GameManager's central handler.
         if (GameManager != null)
         {
@@ -545,6 +545,29 @@ public class UIManager : MonoBehaviour
     public void ShowPauseMenu(bool show)
     {
         pauseMenu?.SetActive(show);
+    }
+
+    // --- ADICIONAR ISTO AO UIMANAGER.CS ---
+
+    public void ForceCloseGameplayPanels()
+    {
+        // 1. Pára todas as animações (Fades de armas, mensagens, etc)
+        StopAllCoroutines();
+
+        // 2. Fecha painéis específicos que pausam o jogo
+        if (newWeaponPanel != null)
+        {
+            newWeaponPanel.SetActive(false);
+            // Reseta o alpha para garantir que na próxima vez aparece bem
+            if (newWeaponPanelCanvasGroup != null) newWeaponPanelCanvasGroup.alpha = 0f;
+        }
+
+        if (midgameEventPanel != null) midgameEventPanel.SetActive(false);
+        if (pauseMenu != null) pauseMenu.SetActive(false);
+        if (endGamePanel != null) endGamePanel.SetActive(false);
+
+        // 3. Reativa o HUD normal
+        if (inGameHudContainer != null) inGameHudContainer.SetActive(true);
     }
 
     public void ToggleStatsPanel()

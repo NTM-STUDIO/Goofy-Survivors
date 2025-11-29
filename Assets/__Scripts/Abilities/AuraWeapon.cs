@@ -74,12 +74,12 @@ public class AuraWeapon : NetworkBehaviour
         }
 
         // Resolve weapon data and tracker/stats owner for visuals and server logic
-    TryResolveWeaponDataFromId();
+        TryResolveWeaponDataFromId();
         TryResolveStatsOwner();
 
         if (debugLog)
         {
-            Debug.Log($"[AuraWeapon] OnNetworkSpawn IsServer={IsServer} wid={weaponIdNet.Value} ownerNO={statsOwnerNetId.Value} hasWD={(weaponData!=null)}");
+            Debug.Log($"[AuraWeapon] OnNetworkSpawn IsServer={IsServer} wid={weaponIdNet.Value} ownerNO={statsOwnerNetId.Value} hasWD={(weaponData != null)}");
         }
 
         // In MP we don't want to disable visuals on server unless explicitly chosen, but default is false.
@@ -184,7 +184,7 @@ public class AuraWeapon : NetworkBehaviour
             TryResolveStatsOwner();
         }
 
-    // --- CONTINUOUS STAT UPDATES ---
+        // --- CONTINUOUS STAT UPDATES ---
         // Update the aura's size every frame to reflect any changes in stats (tracker preferred for remote owners).
         float sizeMult = 1f;
         if (tracker != null) sizeMult = tracker.ProjectileSize.Value;
@@ -328,6 +328,27 @@ public class AuraWeapon : NetworkBehaviour
         damageTickCooldown = weaponData.cooldown / finalAttackSpeed;
     }
 
+    [Header("Visual Positioning")]
+    // O teu valor antigo era 1.5f, podes ajustar aqui
+    [SerializeField] private float yOffset = 0f;
+
+    // Adiciona este LateUpdate ao AuraWeapon.cs
+    void LateUpdate()
+    {
+        // Se a Aura tiver um Pai (o Jogador)
+        if (transform.parent != null)
+        {
+            // Cria o vetor com o teu offset
+            Vector3 targetLocalPos = new Vector3(0, yOffset, 0);
+
+            // Se a posição estiver errada (devido a lag de rede ou animações), força o sítio certo
+            if (transform.localPosition != targetLocalPos)
+            {
+                transform.localPosition = targetLocalPos;
+                transform.localRotation = Quaternion.identity; // Garante que não roda com o boneco
+            }
+        }
+    }
     private PlayerStats ResolveOwnerPlayerStats()
     {
         if (playerStats != null) return playerStats;
@@ -510,7 +531,7 @@ public class AuraWeapon : NetworkBehaviour
             {
                 // For each enemy, perform a new, independent damage calculation.
                 DamageResult damageResult = playerStats.CalculateDamage(weaponData.damage);
-                
+
                 // SP path has direct playerStats
                 enemy.TakeDamageFromAttacker(damageResult.damage, damageResult.isCritical, playerStats);
 

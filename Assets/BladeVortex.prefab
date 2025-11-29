@@ -104,6 +104,7 @@ MonoBehaviour:
   debugLog: 1
   hideVisualsOnServer: 0
   useColliderRadiusInMP: 1
+  yOffset: 0
 --- !u!136 &8965158105383660420
 CapsuleCollider:
   m_ObjectHideFlags: 0

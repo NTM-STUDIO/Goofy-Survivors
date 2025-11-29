@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4061152465452895605}
   - component: {fileID: 7731825142610764712}
-  m_Layer: 8
+  m_Layer: 1
   m_Name: blueorb_0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -100,7 +100,7 @@ GameObject:
   - component: {fileID: -3238998079161030230}
   - component: {fileID: 373153327874312386}
   - component: {fileID: 632534098338968811}
-  m_Layer: 8
+  m_Layer: 1
   m_Name: RedOrb
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 1880927956876971757}
   - component: {fileID: 4719598060223026307}
   - component: {fileID: 4993268136660888013}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Visuals
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -171,7 +171,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3257514570938149199}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: DamagePop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -207,7 +207,7 @@ GameObject:
   - component: {fileID: 6562184088800466058}
   - component: {fileID: 6297376134751599430}
   - component: {fileID: 215032439087966243}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: EsqMelee
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -386,5 +386,5 @@ MonoBehaviour:
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
   SwitchTransformSpaceWhenParented: 0
-  Interpolate: 1
+  Interpolate: 0
   SlerpPosition: 0

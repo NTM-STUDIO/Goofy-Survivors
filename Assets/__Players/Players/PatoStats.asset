@@ -31,7 +31,9 @@ MonoBehaviour:
   pickupRange: 10
   xpGainMultiplier: 1
   pierceCount: 1
-  startingBonuses: []
+  startingBonuses:
+  - stat: 12
+    value: 5
   scalingBonusesPerLevel:
   - stat: 12
     value: 0.5

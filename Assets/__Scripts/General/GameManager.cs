@@ -260,6 +260,155 @@ public class GameManager : NetworkBehaviour
         if (PlayerExperience.Instance != null) PlayerExperience.Instance.ResetState();
     }
 
+    // ========================================================================
+    // AÇÕES DE FIM DE JOGO
+    // ========================================================================
+
+    // OPÇÃO 1: Começar de novo imediatamente (Soft Restart)
+    public void ActionPlayAgain()
+    {
+        // Segurança: Apenas o Host pode decidir reiniciar o jogo em MP
+        if (isP2P && !IsServer) return;
+
+        Debug.Log("[GameManager] Play Again acionado. Limpando e Reiniciando...");
+
+        // 1. Limpa o mapa e objetos
+        CleanupGameWorld();
+
+        // 2. Garante que os Loadouts estão prontos (para SP)
+        if (!isP2P)
+        {
+            LoadoutSelections.EnsureValidDefaults();
+            if (LoadoutSelections.SelectedCharacterPrefab != null)
+                SetChosenPlayerPrefab(LoadoutSelections.SelectedCharacterPrefab);
+        }
+
+        // 3. Chama o StartGame imediatamente
+        StartGame();
+    }
+
+    // OPÇÃO 2: Voltar ao Lobby/Menu (Resetar mas ficar à espera)
+    public void ActionLeaveToLobby()
+    {
+        // Se for Cliente em MP, apenas se desconecta e sai
+        if (isP2P && !IsServer)
+        {
+            NetworkManager.Singleton.Shutdown();
+            SceneManager.LoadScene("Splash"); // Ou o nome da tua cena de menu
+            return;
+        }
+
+        Debug.Log("[GameManager] Leave to Lobby acionado. Limpando e aguardando.");
+
+        // 1. Limpa o mapa e objetos
+        CleanupGameWorld();
+
+        // 2. Define o estado para PreGame (Lobby)
+        CurrentState = GameState.PreGame;
+
+        // 3. Diz ao UI Manager para mostrar o Lobby
+        if (uiManager != null)
+        {
+            uiManager.ReturnToLobby(); // Certifica-te que tens este método no UIManager
+        }
+
+        // Em Multiplayer Host, isto mantém a sala aberta mas volta ao ecrã de seleção
+        if (isP2P && IsServer)
+        {
+            // Opcional: Mandar RPC para clientes voltarem ao lobby visualmente
+            ReturnToLobbyClientRpc();
+        }
+    }
+
+    [ClientRpc]
+    private void ReturnToLobbyClientRpc()
+    {
+        if (IsHost) return; // O Host já fez a limpeza localmente
+
+        // Limpa lixo visual local que não é NetworkObject (ex: Damage Popups)
+        foreach (var d in FindObjectsByType<DamagePopup>(FindObjectsSortMode.None))
+            Destroy(d.gameObject);
+
+        // Atualiza a UI
+        if (uiManager != null) uiManager.ReturnToLobby();
+
+        // Atualiza o estado local
+        CurrentState = GameState.PreGame;
+    }
+
+    // --- FUNÇÃO AUXILIAR DE LIMPEZA (USADA PELOS DOIS) ---
+    private void CleanupGameWorld()
+    {
+        // 1. Parar Spawners e Corrotinas
+        if (uiManager) uiManager.ShowEndGamePanel(false);
+        var enemySpawner = FindObjectOfType<EnemySpawner>();
+        if (enemySpawner) enemySpawner.StopAndReset();
+
+        // 2. Destruir Inimigos e Jogadores
+        // Se for Server, usa Despawn. Se for SP, usa Destroy.
+        bool isServer = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
+
+        // Limpar Jogadores (Para serem spawnados de novo no StartGame)
+        if (isP2P && isServer)
+        {
+            foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                if (client.PlayerObject != null) client.PlayerObject.Despawn(true);
+            }
+        }
+        else
+        {
+            foreach (var p in GameObject.FindGameObjectsWithTag("Player")) Destroy(p);
+        }
+
+        // Limpar Inimigos e Objetos
+        foreach (var e in FindObjectsByType<EnemyStats>(FindObjectsSortMode.None))
+            DestroyNetworkOrLocal(e.gameObject);
+
+        foreach (var p in FindObjectsByType<ProjectileWeapon>(FindObjectsSortMode.None))
+            DestroyNetworkOrLocal(p.gameObject);
+
+        foreach (var o in FindObjectsByType<OrbitingWeapon>(FindObjectsSortMode.None))
+            DestroyNetworkOrLocal(o.gameObject);
+
+        foreach (var a in FindObjectsByType<AuraWeapon>(FindObjectsSortMode.None))
+            DestroyNetworkOrLocal(a.gameObject);
+
+        foreach (var x in FindObjectsByType<ExperienceOrb>(FindObjectsSortMode.None))
+            DestroyNetworkOrLocal(x.gameObject);
+
+        foreach (var d in FindObjectsByType<DamagePopup>(FindObjectsSortMode.None))
+            Destroy(d.gameObject); // Popups são sempre locais
+
+        // 3. Resetar Managers
+        if (mapGenerator) mapGenerator.ClearMap();
+        else FindObjectOfType<MapGenerator>()?.ClearMap();
+
+        if (difficultyManager) difficultyManager.ResetDifficulty();
+        if (reviveManager) reviveManager.ResetReviveState();
+        if (eventManager) eventManager.ResetEvents();
+
+        // Reset XP
+        FindObjectOfType<PlayerExperience>()?.ResetState();
+
+        Time.timeScale = 1f; // Garante que o tempo volta ao normal
+    }
+
+    // Helper para destruir corretamente em MP ou SP
+    private void DestroyNetworkOrLocal(GameObject obj)
+    {
+        if (obj == null) return;
+        var netObj = obj.GetComponent<NetworkObject>();
+        if (netObj != null && netObj.IsSpawned && NetworkManager.Singleton.IsServer)
+        {
+            netObj.Despawn(true);
+        }
+        else
+        {
+            Destroy(obj);
+        }
+    }
+
     public void GameOver()
     {
         if (CurrentState == GameState.GameOver) return;
@@ -282,20 +431,44 @@ public class GameManager : NetworkBehaviour
 
     public void SoftResetSinglePlayerWorld()
     {
-        Time.timeScale = 1f; uiManager?.ShowEndGamePanel(false);
+        // 1. GARANTIR QUE O TEMPO VOLTA AO NORMAL
+        Time.timeScale = 1f;
+
+        // 2. LIMPEZA DE UI (Fecha painéis de armas, upgrades, etc)
+        if (uiManager != null)
+        {
+            uiManager.ForceCloseGameplayPanels(); // <--- CHAMA O NOVO MÉTODO
+            uiManager.ShowEndGamePanel(false);
+        }
+
+        // 3. LIMPEZA DO UPGRADE MANAGER (Limpa fila de níveis)
+        var upgradeManager = FindObjectOfType<UpgradeManager>();
+        if (upgradeManager != null)
+        {
+            upgradeManager.ForceReset(); // <--- CHAMA O NOVO MÉTODO
+        }
+
+        // ... (O resto do teu código de destruir inimigos e mapa continua aqui) ...
+
         foreach (var p in GameObject.FindGameObjectsWithTag("Player")) Destroy(p);
         foreach (var e in FindObjectsByType<EnemyStats>(FindObjectsSortMode.None)) Destroy(e.gameObject);
         foreach (var p in FindObjectsByType<ProjectileWeapon>(FindObjectsSortMode.None)) Destroy(p.gameObject);
         foreach (var o in FindObjectsByType<OrbitingWeapon>(FindObjectsSortMode.None)) Destroy(o.gameObject);
+        foreach (var a in FindObjectsByType<AuraWeapon>(FindObjectsSortMode.None)) Destroy(a.gameObject);
         foreach (var x in FindObjectsByType<ExperienceOrb>(FindObjectsSortMode.None)) Destroy(x.gameObject);
         foreach (var d in FindObjectsByType<DamagePopup>(FindObjectsSortMode.None)) Destroy(d.gameObject);
 
-        if (mapGenerator) mapGenerator.ClearMap(); else FindObjectOfType<MapGenerator>()?.ClearMap();
-        if (PlayerExperience.Instance) PlayerExperience.Instance.ResetState();
+        if (mapGenerator) mapGenerator.ClearMap();
+        else FindObjectOfType<MapGenerator>()?.ClearMap();
 
+        FindObjectOfType<PlayerExperience>()?.ResetState();
         FindObjectOfType<EnemySpawner>()?.StopAndReset();
+
         if (difficultyManager) difficultyManager.ResetDifficulty();
+        if (eventManager) eventManager.ResetEvents(); // Não esqueças de resetar os eventos do Boss
+
         CurrentState = GameState.PreGame;
+        Debug.Log("[GameManager] Soft Reset concluído. UI e Estados limpos.");
     }
 
     // --- REDIRECTS ---
