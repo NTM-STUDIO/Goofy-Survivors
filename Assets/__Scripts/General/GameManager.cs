@@ -70,8 +70,7 @@ public class GameManager : NetworkBehaviour
 
         if (GetRemainingTime() <= 0)
         {
-            if (isP2P) GameOverClientRpc();
-            else GameOver();
+            TriggerGameOver();
         }
     }
 
@@ -409,13 +408,7 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    public void GameOver()
-    {
-        if (CurrentState == GameState.GameOver) return;
-        CurrentState = GameState.GameOver;
-        Time.timeScale = 0f;
-        if (uiManager) uiManager.ShowEndGamePanel(true);
-    }
+
     [ClientRpc] private void GameOverClientRpc() => GameOver();
 
     public void HandlePlayAgain()
@@ -429,6 +422,50 @@ public class GameManager : NetworkBehaviour
         else if (IsServer) NetworkManager.Singleton.SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
     }
 
+    public void TriggerGameOver()
+    {
+        // Se for Multiplayer
+        if (isP2P)
+        {
+            // Só o Servidor pode decretar o fim do jogo
+            if (IsServer)
+            {
+                GameOverClientRpc(); // Avisa toda a gente (incluindo a si próprio)
+            }
+        }
+        // Se for Singleplayer
+        else
+        {
+            PerformGameOverLocal();
+        }
+    }
+
+
+
+    // 3. LÓGICA LOCAL (UI e Parar Tempo)
+    private void PerformGameOverLocal()
+    {
+        if (CurrentState == GameState.GameOver) return;
+
+        Debug.Log("[GameManager] GAME OVER!");
+        CurrentState = GameState.GameOver;
+
+        // Pára o tempo
+        Time.timeScale = 0f;
+
+        // Mostra Painel
+        if (uiManager) uiManager.ShowEndGamePanel(true);
+
+        // Opcional: Desativa controlos locais
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient?.PlayerObject != null)
+        {
+            var move = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<Movement>();
+            if (move) move.enabled = false;
+        }
+    }
+
+    // MANTÉM ESTE PARA COMPATIBILIDADE (Se algum script antigo ainda o chamar)
+    public void GameOver() => TriggerGameOver();
     public void SoftResetSinglePlayerWorld()
     {
         // 1. GARANTIR QUE O TEMPO VOLTA AO NORMAL
