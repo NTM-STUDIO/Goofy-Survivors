@@ -18,6 +18,7 @@ public enum WeaponArchetype
     Orbit,
     Laser,
     Shield,
+    Melee,
     ShadowCloneJutsu
 }
 

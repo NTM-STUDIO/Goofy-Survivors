@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
-using Unity.Netcode; // Necessário
+using Unity.Netcode;
 
 public class WeaponController : MonoBehaviour
 {
@@ -13,6 +13,11 @@ public class WeaponController : MonoBehaviour
     private WeaponRegistry weaponRegistry;
     private bool isWeaponOwner;
     private float currentCooldown;
+
+    void Awake()
+    {
+        // Debug.Log($"[WC-AWAKE] WeaponController for '{this.gameObject.name}' created.");
+    }
 
     public void Initialize(int id, WeaponData data, PlayerWeaponManager manager, PlayerStats stats, bool owner, WeaponRegistry registry)
     {
@@ -72,23 +77,136 @@ public class WeaponController : MonoBehaviour
             Transform[] targets = GetTargets(finalAmount);
             weaponManager.PerformAttack(weaponId, targets);
         }
-        else
+        else if (isWeaponOwner)
         {
             // SINGLEPLAYER: Dispara localmente
-            if (isWeaponOwner)
-            {
-                if (WeaponData.archetype == WeaponArchetype.Orbit)
-                {
-                    SpawnOrbitingWeaponsAroundSelf();
-                }
-                else if (WeaponData.archetype == WeaponArchetype.Projectile)
-                {
-                    FireLocally();
-                }
-            }
+            FireLocally();
         }
     }
 
+    private void FireLocally()
+    {
+        // --- 1. PROJÉTEIS ---
+        if (WeaponData.archetype == WeaponArchetype.Projectile)
+        {
+            int finalAmount = WeaponData.amount + playerStats.projectileCount;
+            Transform[] targets = GetTargets(finalAmount);
+            DamageResult damageResult = playerStats.CalculateDamage(WeaponData.damage);
+
+            float finalSpeed = WeaponData.speed * playerStats.projectileSpeedMultiplier;
+            float finalDuration = WeaponData.duration * playerStats.durationMultiplier;
+            float finalKnockback = WeaponData.knockback * playerStats.knockbackMultiplier;
+            float finalSize = WeaponData.area * playerStats.projectileSizeMultiplier;
+
+            int wId = weaponRegistry != null ? weaponRegistry.GetWeaponId(WeaponData) : -1;
+
+            foreach (var target in targets)
+            {
+                Vector3 direction = (target != null) ? (target.position - playerStats.transform.position).normalized : UnityEngine.Random.insideUnitCircle.normalized;
+                direction.y = 0;
+                Vector3 spawnPos = playerStats.transform.position + Vector3.up * 2f;
+
+                GameObject projectileObj = Instantiate(WeaponData.weaponPrefab, spawnPos, Quaternion.identity);
+
+                // Remove NetworkObject em SP
+                SafelyRemoveNetworkObject(projectileObj);
+
+                var projectile = projectileObj.GetComponent<ProjectileWeapon>();
+                if (projectile != null)
+                {
+                    projectile.ConfigureSource(wId, WeaponData.weaponName);
+                    projectile.Initialize(target, direction, damageResult.damage, damageResult.isCritical, finalSpeed, finalDuration, finalKnockback, finalSize);
+                    projectile.SetOwnerLocal(playerStats);
+                }
+            }
+        }
+        // --- 2. ORBITAIS ---
+        else if (WeaponData.archetype == WeaponArchetype.Orbit)
+        {
+            SpawnOrbitingWeaponsAroundSelf();
+        }
+        // --- 3. MELEE (PITCHFORK) ---
+        else if (WeaponData.archetype == WeaponArchetype.Melee)
+        {
+            PerformMeleeAttack();
+        }
+    }
+
+  // --- LÓGICA MELEE (PITCHFORK) ---
+// ... (Métodos anteriores iguais) ...
+// ... (restante código igual) ...
+
+    // --- LÓGICA MELEE (PITCHFORK) ---
+ // ... (restante código)
+
+    // --- LÓGICA MELEE (PITCHFORK) ---
+    private void PerformMeleeAttack()
+    {
+        // 1. Instancia
+        // Usamos Y + 1.5 para a altura
+        Vector3 spawnPos = transform.position + new Vector3(0, 1.5f, 0);
+        GameObject weaponObj = Instantiate(WeaponData.weaponPrefab, spawnPos, Quaternion.identity);
+        
+        SafelyRemoveNetworkObject(weaponObj);
+
+        // 2. Define o Pai e Reseta Rotação Local
+        weaponObj.transform.SetParent(transform); 
+        weaponObj.transform.localPosition = new Vector3(0, 1.5f, 0); // Garante posição relativa
+        
+        // --- O PAI FICA COM ROTAÇÃO ZERO ---
+        weaponObj.transform.localRotation = Quaternion.identity; 
+
+        // 3. Calcula Direção
+        Vector3 direction = GetDirectionToClosestEnemy(); 
+        direction.y = 0; 
+
+        // 4. Inicializa
+        var meleeScript = weaponObj.GetComponent<MeleePitchfork>();
+        if (meleeScript != null)
+        {
+            meleeScript.Initialize(direction, playerStats, WeaponData);
+        }
+    }
+    
+    // ... (restante código igual) ...
+    private Vector3 GetDirectionToClosestEnemy()
+    {
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+
+        if (enemies.Length == 0)
+        {
+            // Se não houver inimigos, aponta para onde o jogador está a andar ou a olhar
+            if (playerStats.TryGetComponent<Rigidbody>(out var rb) && rb.linearVelocity.sqrMagnitude > 0.1f)
+            {
+                return rb.linearVelocity.normalized;
+            }
+            return Vector3.right; // Fallback padrão (Direita)
+        }
+
+        Transform closestEnemy = null;
+        float minDistance = float.MaxValue;
+        Vector3 myPos = transform.position;
+
+        // Procura o mais próximo manualmente (mais rápido que ordenar a lista toda)
+        foreach (GameObject enemy in enemies)
+        {
+            if (enemy == null) continue;
+            float dist = (enemy.transform.position - myPos).sqrMagnitude;
+            if (dist < minDistance)
+            {
+                minDistance = dist;
+                closestEnemy = enemy.transform;
+            }
+        }
+
+        if (closestEnemy != null)
+        {
+            // Retorna o vetor normalizado na direção do inimigo
+            return (closestEnemy.position - myPos).normalized;
+        }
+
+        return Vector3.right;
+    }
     private void SpawnShadowClone()
     {
         if (WeaponData == null || WeaponData.weaponPrefab == null) return;
@@ -117,10 +235,9 @@ public class WeaponController : MonoBehaviour
 
         // SINGLEPLAYER
         GameObject cloneObj = Instantiate(WeaponData.weaponPrefab, stats.transform.position, stats.transform.rotation);
-        
-        // --- CORREÇÃO SP: Limpa NetworkObject ---
+
+        // Remove NetworkObject
         SafelyRemoveNetworkObject(cloneObj);
-        // ----------------------------------------
 
         ShadowClone cloneScript = cloneObj.GetComponent<ShadowClone>();
         if (cloneScript == null) cloneScript = cloneObj.AddComponent<ShadowClone>();
@@ -149,59 +266,25 @@ public class WeaponController : MonoBehaviour
 
         for (int i = 0; i < finalAmount; i++)
         {
+            // 1. Instancia sem pai
             GameObject orbitingWeaponObj = Instantiate(WeaponData.weaponPrefab, transform.position, Quaternion.identity);
-            
-            // --- CORREÇÃO SP: Limpa NetworkObject ---
+
+            // 2. Remove NetworkObject ANTES de definir o pai
             SafelyRemoveNetworkObject(orbitingWeaponObj);
-            // ----------------------------------------
 
             if (parentClone != null)
             {
                 var tracker = orbitingWeaponObj.AddComponent<CloneWeaponTracker>();
                 tracker.SetParentClone(parentClone);
             }
-            
+
+            // 3. Define pai (Seguro agora)
             orbitingWeaponObj.transform.SetParent(transform, false);
-            
+
             var orbiter = orbitingWeaponObj.GetComponent<OrbitingWeapon>();
-            if (orbiter != null) orbiter.LocalInitialize(transform, i * angleStep, playerStats, WeaponData);
-        }
-    }
-
-    private void FireLocally()
-    {
-        if (WeaponData.archetype == WeaponArchetype.Projectile)
-        {
-            int finalAmount = WeaponData.amount + playerStats.projectileCount;
-            Transform[] targets = GetTargets(finalAmount);
-            DamageResult damageResult = playerStats.CalculateDamage(WeaponData.damage);
-            
-            float finalSpeed = WeaponData.speed * playerStats.projectileSpeedMultiplier;
-            float finalDuration = WeaponData.duration * playerStats.durationMultiplier;
-            float finalKnockback = WeaponData.knockback * playerStats.knockbackMultiplier;
-            float finalSize = WeaponData.area * playerStats.projectileSizeMultiplier;
-            
-            int wId = weaponRegistry != null ? weaponRegistry.GetWeaponId(WeaponData) : -1;
-
-            foreach (var target in targets)
+            if (orbiter != null)
             {
-                Vector3 direction = (target != null) ? (target.position - playerStats.transform.position).normalized : new Vector3(Random.insideUnitCircle.normalized.x, 0, Random.insideUnitCircle.normalized.y);
-                direction.y = 0;
-                Vector3 spawnPosWithOffset = playerStats.transform.position + Vector3.up * 2f;
-                
-                GameObject projectileObj = Instantiate(WeaponData.weaponPrefab, spawnPosWithOffset, Quaternion.identity);
-                
-                // --- CORREÇÃO SP: Limpa NetworkObject ---
-                SafelyRemoveNetworkObject(projectileObj);
-                // ----------------------------------------
-
-                var projectile = projectileObj.GetComponent<ProjectileWeapon>();
-                if (projectile != null)
-                {
-                    projectile.ConfigureSource(wId, WeaponData.weaponName);
-                    projectile.Initialize(target, direction, damageResult.damage, damageResult.isCritical, finalSpeed, finalDuration, finalKnockback, finalSize);
-                    projectile.SetOwnerLocal(playerStats);
-                }
+                orbiter.LocalInitialize(transform, i * angleStep, playerStats, WeaponData);
             }
         }
     }
@@ -215,14 +298,14 @@ public class WeaponController : MonoBehaviour
         {
             // SINGLEPLAYER:
             Transform parent = weaponManager != null ? weaponManager.transform : (transform.parent != null ? transform.parent : transform);
-            
+
             // 1. Instancia sem pai
             GameObject auraObj = Instantiate(WeaponData.weaponPrefab, parent.position, Quaternion.identity);
-            
-            // 2. CORREÇÃO CRÍTICA PARA AURA: Destruir NetworkObject imediatamente
+
+            // 2. Remove NetworkObject IMEDIATAMENTE (Segredo do fix)
             SafelyRemoveNetworkObject(auraObj);
 
-            // 3. Define pai (Agora seguro)
+            // 3. Define pai (Seguro agora)
             auraObj.transform.SetParent(parent);
 
             AuraWeapon aura = auraObj.GetComponent<AuraWeapon>();
@@ -238,9 +321,12 @@ public class WeaponController : MonoBehaviour
     // --- FUNÇÃO AUXILIAR DE SEGURANÇA ---
     private void SafelyRemoveNetworkObject(GameObject obj)
     {
+        // Se estivermos em Singleplayer puro, remove o NetworkObject para não dar erro ao mudar de pai ou instanciar
         if (GameManager.Instance != null && !GameManager.Instance.isP2P)
         {
             var netObj = obj.GetComponent<NetworkObject>();
+            // DestroyImmediate é necessário porque o Destroy normal demora 1 frame
+            // e o código a seguir (SetParent) executaria antes do componente sumir.
             if (netObj != null) DestroyImmediate(netObj);
         }
     }
@@ -250,7 +336,7 @@ public class WeaponController : MonoBehaviour
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
         Transform[] targets = new Transform[amount];
         if (enemies.Length == 0) return targets;
-        
+
         switch (WeaponData.targetingStyle)
         {
             case TargetingStyle.Closest:
@@ -268,18 +354,19 @@ public class WeaponController : MonoBehaviour
         return targets;
     }
 
+
     public int GetWeaponId() { return this.weaponId; }
 
     private void OnDestroy()
     {
-        if (weaponManager == null) 
+        if (weaponManager == null)
         {
             var orbiters = GetComponentsInChildren<OrbitingWeapon>(true);
             foreach (var orbiter in orbiters)
             {
                 if (orbiter != null && orbiter.gameObject != this.gameObject) Destroy(orbiter.gameObject);
             }
-            
+
             var auras = GetComponentsInChildren<AuraWeapon>(true);
             foreach (var aura in auras)
             {
