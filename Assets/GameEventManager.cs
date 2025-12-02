@@ -8,17 +8,18 @@ public class GameEventManager : NetworkBehaviour
     [SerializeField] private GameObject bossPrefab;
     [SerializeField] private Transform bossSpawnPoint; 
     
-    [Header("Midgame Cinematic (DISABLED)")]
+    [Header("Midgame Cinematic")]
     [SerializeField] private float cinematicDuration = 5.0f;
+    // Forçamos a câmara para Y=44 no código, este vector serve para X e Z
     [SerializeField] private Vector3 bossCameraOffset = new Vector3(0, 0, -12); 
     [SerializeField] private float cameraTransitionSpeed = 1.5f;
 
     [Header("Spawn Offsets")]
-    [Tooltip("Offset for midgame (Disabled for now)")]
-    [SerializeField] private Vector3 spawnOffsetMidgame = new Vector3(100f, 2f, 100f);
+    [Tooltip("Offset added to BossSpawn tag for MIDGAME only")]
+    [SerializeField] private Vector3 spawnOffsetMidgame = new Vector3(100f, 0f, 100f); // Y será ignorado e forçado a 13
     
-    [Tooltip("Fixed Y height for ENDGAME spawn")]
-    [SerializeField] private float endgameSpawnHeight = 13f;
+    [Tooltip("Fixed Y height for BOTH spawns (Midgame and Endgame)")]
+    [SerializeField] private float spawnHeightY = 13f;
     
     [Header("Difficulty")]
     [SerializeField] private float difficultyMultiplier = 2.0f;
@@ -41,31 +42,32 @@ public class GameEventManager : NetworkBehaviour
     }
 
     public void CacheBossDamage(float dmg) => cachedBossDamage = dmg;
-    public float GetBossDamage() => (bossStats != null) ? bossStats.MaxHealth - bossStats.CurrentHealth : cachedBossDamage;
+    
+    public float GetBossDamage()
+    {
+        if (bossStats != null) return bossStats.MaxHealth - bossStats.CurrentHealth;
+        return cachedBossDamage;
+    }
+    
     public void ClearBossCache() => cachedBossDamage = 0;
 
     private void Update()
     {
+        // Singleplayer ou Server executa a lógica de tempo
         if (GameManager.Instance.isP2P && !IsServer) return;
 
         float timeRemaining = GameManager.Instance.GetRemainingTime();
         float totalTime = GameManager.Instance.totalGameTime;
         float midTime = totalTime / 2f;
 
-        // ====================================================================
-        // EVENTO 1: MIDGAME (COMENTADO / DESATIVADO TEMPORARIAMENTE)
-        // ====================================================================
-        /*
+        // --- EVENTO 1: MIDGAME ---
         if (!midgameTriggered && timeRemaining <= midTime)
         {
             midgameTriggered = true;
             StartCoroutine(Sequence_Midgame());
         }
-        */
 
-        // ====================================================================
-        // EVENTO 2: ENDGAME (ATIVO)
-        // ====================================================================
+        // --- EVENTO 2: ENDGAME (10s Finais) ---
         if (!endgameTriggered && timeRemaining <= 10.0f && timeRemaining > 0f)
         {
             endgameTriggered = true;
@@ -73,33 +75,57 @@ public class GameEventManager : NetworkBehaviour
         }
     }
 
-    /* 
-    // MIDGAME SEQUENCE COMENTADA
+    // ========================================================================
+    // EVENTO 1: MIDGAME
+    // ========================================================================
     private IEnumerator Sequence_Midgame()
     {
-        Debug.Log("[GameEventManager] MIDGAME: Starting cinematic...");
+        Debug.Log("[GameEventManager] MIDGAME: Iniciando cinemática...");
+
+        // 1. Pick Random Boost Type
         int boostType = Random.Range(0, 3);
+        
+        // 2. Apply Difficulty
         if (GameManager.Instance.difficultyManager != null)
             GameManager.Instance.difficultyManager.ApplyMidgameBoost(difficultyMultiplier);
 
+        // 3. Determine Text
         string buffText = "PERIGO!";
-        switch(boostType) { case 0: buffText = "DOUBLE HP"; break; case 1: buffText = "DOUBLE DAMAGE"; break; case 2: buffText = "DOUBLE SPEED"; break; }
+        switch(boostType)
+        {
+            case 0: buffText = "DOUBLE HP"; break;
+            case 1: buffText = "DOUBLE DAMAGE"; break;
+            case 2: buffText = "DOUBLE SPEED"; break;
+        }
 
+        // 4. Spawn Boss (TRUE = Midgame Offset)
         GameObject tempBoss = SpawnBossInternal(true);
         ulong bossId = 99999; 
-        if (tempBoss != null && tempBoss.TryGetComponent<NetworkObject>(out var no)) bossId = no.NetworkObjectId;
 
+        if (tempBoss != null)
+        {
+            if (tempBoss.TryGetComponent<NetworkObject>(out var no)) bossId = no.NetworkObjectId;
+        }
+
+        // 5. Play Cinematic
         if (GameManager.Instance.isP2P) PlayMidgameCinematicClientRpc(bossId, buffText);
         else yield return StartCoroutine(PlayMidgameCinematicLocal(tempBoss ? tempBoss.transform : null, buffText));
 
         if (GameManager.Instance.isP2P) yield return new WaitForSecondsRealtime(cinematicDuration);
 
-        if (tempBoss != null) {
-            if (GameManager.Instance.isP2P && IsServer && tempBoss.TryGetComponent<NetworkObject>(out var no2)) no2.Despawn(true); 
-            else Destroy(tempBoss);
+        // 6. Despawn Boss
+        if (tempBoss != null)
+        {
+            if (GameManager.Instance.isP2P && IsServer && tempBoss.TryGetComponent<NetworkObject>(out var no))
+            {
+                no.Despawn(true); 
+            }
+            else
+            {
+                Destroy(tempBoss);
+            }
         }
     }
-    */
 
     // ========================================================================
     // EVENTO 2: ENDGAME
@@ -108,7 +134,7 @@ public class GameEventManager : NetworkBehaviour
     {
         Debug.Log("[GameEventManager] ENDGAME: Final boss spawns!");
 
-        // Spawn Boss (FALSE = ENDGAME MODE = Force Y 13)
+        // Spawn Boss (FALSE = Endgame/No Offset)
         GameObject finalBoss = SpawnBossInternal(false);
         
         if (finalBoss != null)
@@ -141,13 +167,14 @@ public class GameEventManager : NetworkBehaviour
 
         if (useMidgameOffset)
         {
-            // MIDGAME (Desativado, mas a lógica está aqui)
+            // MIDGAME: Tag + OffsetX/Z + FORCE Y 13
             finalPos = basePos + spawnOffsetMidgame;
+            finalPos.y = spawnHeightY; // <--- FORÇA Y 13 AQUI
         }
         else
         {
-            // ENDGAME: Usa X e Z da Tag, mas FORÇA Y = 13
-            finalPos = new Vector3(basePos.x, endgameSpawnHeight, basePos.z);
+            // ENDGAME: Tag X/Z + FORCE Y 13
+            finalPos = new Vector3(basePos.x, spawnHeightY, basePos.z);
         }
 
         if (GameManager.Instance.isP2P && IsServer)
@@ -181,12 +208,89 @@ public class GameEventManager : NetworkBehaviour
         return Camera.main;
     }
 
-    /*
+    // --- CLIENT LOGIC (MIDGAME) ---
+
     [ClientRpc]
-    private void PlayMidgameCinematicClientRpc(ulong bossId, string buffText) { ... }
-    
-    private IEnumerator PlayMidgameCinematicLocal(Transform bossTransform, string buffText) { ... }
-    */
+    private void PlayMidgameCinematicClientRpc(ulong bossId, string buffText)
+    {
+        Transform target = null;
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(bossId, out var bossObj))
+            target = bossObj.transform;
+        
+        StartCoroutine(PlayMidgameCinematicLocal(target, buffText));
+    }
+
+    private IEnumerator PlayMidgameCinematicLocal(Transform bossTransform, string buffText)
+    {
+        GameManager.Instance.RequestPause(true, false); 
+        GameManager.Instance.SetGameState(GameManager.GameState.Cinematic);
+
+        if (bossTransform != null)
+        {
+            var visuals = bossTransform.GetComponent<BossVisuals>();
+            visuals?.SetupVisuals(buffText);
+        }
+
+        Camera cam = GetLocalPlayerCamera();
+
+        if (cam != null)
+        {
+            var camScript = cam.GetComponent<MonoBehaviour>(); 
+            if (GameManager.Instance.uiManager != null)
+            {
+                var advCam = FindObjectOfType<AdvancedCameraController>();
+                if (advCam != null && advCam.enabled)
+                {
+                    cameraControllerScript = advCam;
+                    cameraControllerScript.enabled = false; 
+                }
+            }
+
+            Vector3 originalPos = cam.transform.position;
+            
+            // Force Camera Y to 44 during cinematic
+            Vector3 bossPos = bossTransform != null ? bossTransform.position : Vector3.zero;
+            Vector3 targetPos = new Vector3(
+                bossPos.x + bossCameraOffset.x, 
+                44f, 
+                bossPos.z + bossCameraOffset.z
+            );
+            
+            // GO
+            float timer = 0;
+            while(timer < 1f)
+            {
+                timer += Time.unscaledDeltaTime * cameraTransitionSpeed;
+                cam.transform.position = Vector3.Lerp(originalPos, targetPos, Mathf.SmoothStep(0f, 1f, timer));
+                yield return null;
+            }
+
+            // STAY
+            yield return new WaitForSecondsRealtime(cinematicDuration - 2.0f); 
+
+            // RETURN
+            timer = 0;
+            while(timer < 1f)
+            {
+                timer += Time.unscaledDeltaTime * cameraTransitionSpeed;
+                cam.transform.position = Vector3.Lerp(targetPos, originalPos, Mathf.SmoothStep(0f, 1f, timer));
+                yield return null;
+            }
+            
+            cam.transform.position = originalPos;
+
+            if (cameraControllerScript != null) cameraControllerScript.enabled = true;
+        }
+        else
+        {
+            yield return new WaitForSecondsRealtime(cinematicDuration);
+        }
+
+        if (bossTransform != null) bossTransform.GetComponent<BossVisuals>()?.StopVisuals();
+
+        GameManager.Instance.RequestPause(false); 
+        GameManager.Instance.SetGameState(GameManager.GameState.Playing);
+    }
 
     // --- CLIENT LOGIC (ENDGAME) ---
 

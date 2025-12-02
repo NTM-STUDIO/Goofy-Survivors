@@ -2142,10 +2142,10 @@ MonoBehaviour:
   bossPrefab: {fileID: 3436535658513195518, guid: 5cb7a38816e0cad4c92375cb991fce1f, type: 3}
   bossSpawnPoint: {fileID: 0}
   cinematicDuration: 4
-  bossCameraOffset: {x: 0, y: 0, z: 0}
+  bossCameraOffset: {x: 0, y: -13, z: 0}
   cameraTransitionSpeed: 1.5
   spawnOffsetMidgame: {x: 100, y: 2, z: 100}
-  endgameSpawnHeight: 13
+  spawnHeightY: 13
   difficultyMultiplier: 2
 --- !u!1 &462373231
 GameObject:
@@ -2748,7 +2748,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   isP2P: 0
-  totalGameTime: 180
+  totalGameTime: 22
   sessionSeed:
     m_InternalValue: 0
   spawnManager: {fileID: 715600227}
