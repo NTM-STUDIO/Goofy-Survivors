@@ -13,6 +13,7 @@ public class WeaponController : MonoBehaviour
     private WeaponRegistry weaponRegistry;
     private bool isWeaponOwner;
     private float currentCooldown;
+    private bool meleeSpawned = false; // Flag para armas melee permanentes
 
     void Awake()
     {
@@ -66,6 +67,17 @@ public class WeaponController : MonoBehaviour
         if (WeaponData.archetype == WeaponArchetype.ShadowCloneJutsu)
         {
             SpawnShadowClone();
+            return;
+        }
+
+        // Melee é sempre local (a arma fica anexada ao jogador)
+        if (WeaponData.archetype == WeaponArchetype.Melee)
+        {
+            if (!meleeSpawned)
+            {
+                PerformMeleeAttack();
+                meleeSpawned = true;
+            }
             return;
         }
 
@@ -125,11 +137,7 @@ public class WeaponController : MonoBehaviour
         {
             SpawnOrbitingWeaponsAroundSelf();
         }
-        // --- 3. MELEE (PITCHFORK) ---
-        else if (WeaponData.archetype == WeaponArchetype.Melee)
-        {
-            PerformMeleeAttack();
-        }
+        // Nota: Melee é tratado no Attack() diretamente
     }
 
   // --- LÓGICA MELEE (PITCHFORK) ---

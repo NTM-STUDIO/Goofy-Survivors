@@ -12,14 +12,21 @@ public class MeleePitchfork : NetworkBehaviour
     [Header("Settings")]
     [SerializeField] private float stabDistance = 2.5f; 
     [SerializeField] private AnimationCurve stabCurve = new AnimationCurve(new Keyframe(0, 0), new Keyframe(0.5f, 1), new Keyframe(1, 0));
+    [SerializeField] private float rotationSpeed = 10f; // Velocidade de rotação suave para o inimigo
 
     // Ajuste extra se o sprite estiver virado para cima (põe 90 ou -90 aqui)
     [SerializeField] private float visualRotationOffset = 0f; 
 
     private PlayerStats ownerStats;
     private WeaponData weaponData;
-    private List<GameObject> hitEnemies = new List<GameObject>(); 
+    private HashSet<GameObject> hitEnemiesThisStab = new HashSet<GameObject>(); 
     private bool isSinglePlayer;
+    private bool isInitialized = false;
+    private float sizeScale = 1f;
+    private float stabDuration = 0.3f;
+    private float finalDistance = 2.5f;
+    private float attackCooldown = 0f;
+    private float currentAngle = 0f;
 
     public void Initialize(Vector3 direction, PlayerStats stats, WeaponData data)
     {
@@ -29,69 +36,139 @@ public class MeleePitchfork : NetworkBehaviour
 
         if (visualTransform == null) 
         {
-            // Tenta encontrar o primeiro filho se não arrastaste nada
             if (transform.childCount > 0) visualTransform = transform.GetChild(0);
-            else visualTransform = transform; // Fallback (vai rodar o pai se não houver filho)
+            else visualTransform = transform;
         }
 
-        // --- AQUI ESTÁ A CORREÇÃO DO Z ---
-        if (direction != Vector3.zero)
-        {
-            // 1. Calcula o ângulo 2D (X e Z do mundo -> X e Y do ângulo)
-            float angle = Mathf.Atan2(direction.z, direction.x) * Mathf.Rad2Deg;
-            
-            // 2. Aplica APENAS no Z do Visual. X e Y ficam a 0 (ou 90 se ajustares no inspector).
-            // Isto roda o sprite como um relógio.
-            visualTransform.localRotation = Quaternion.Euler(0, 0, angle + visualRotationOffset);
-        }
-
-        // 2. Escala
-        float sizeScale = weaponData.area * (stats != null ? stats.projectileSizeMultiplier : 1f);
+        // Calcula escala baseada nos stats
+        sizeScale = weaponData.area * (stats != null ? stats.projectileSizeMultiplier : 1f);
         visualTransform.localScale = Vector3.one * sizeScale;
 
-        // 3. Velocidade e Alcance
+        // Calcula duração do ataque baseada no attack speed
         float speedStats = (stats != null) ? Mathf.Max(0.1f, stats.attackSpeedMultiplier) : 1f;
-        float duration = weaponData.duration / speedStats;
-        float finalDist = stabDistance * sizeScale;
+        stabDuration = weaponData.duration / speedStats;
+        finalDistance = stabDistance * sizeScale;
 
-        StartCoroutine(StabRoutine(duration, finalDist));
-        Destroy(gameObject, duration + 0.1f);
+        // Ângulo inicial na direção passada
+        if (direction != Vector3.zero)
+        {
+            currentAngle = Mathf.Atan2(direction.z, direction.x) * Mathf.Rad2Deg;
+            visualTransform.localRotation = Quaternion.Euler(0, 0, currentAngle + visualRotationOffset);
+        }
+
+        isInitialized = true;
+        
+        // Começa a atacar infinitamente
+        StartCoroutine(InfiniteAttackLoop());
     }
 
-    private IEnumerator StabRoutine(float duration, float distance)
+    private void Update()
+    {
+        if (!isInitialized || visualTransform == null) return;
+
+        // Encontra o inimigo mais próximo e roda suavemente para ele
+        Transform closestEnemy = FindClosestEnemy();
+        
+        if (closestEnemy != null)
+        {
+            Vector3 dirToEnemy = closestEnemy.position - transform.position;
+            dirToEnemy.y = 0;
+            
+            if (dirToEnemy.sqrMagnitude > 0.01f)
+            {
+                float targetAngle = Mathf.Atan2(dirToEnemy.z, dirToEnemy.x) * Mathf.Rad2Deg;
+                currentAngle = Mathf.LerpAngle(currentAngle, targetAngle, Time.deltaTime * rotationSpeed);
+                visualTransform.localRotation = Quaternion.Euler(0, 0, currentAngle + visualRotationOffset);
+            }
+        }
+        else
+        {
+            // Se não há inimigos, aponta na direção do movimento do jogador
+            if (ownerStats != null && ownerStats.TryGetComponent<Rigidbody>(out var rb))
+            {
+                Vector3 vel = rb.linearVelocity;
+                vel.y = 0;
+                if (vel.sqrMagnitude > 0.1f)
+                {
+                    float targetAngle = Mathf.Atan2(vel.z, vel.x) * Mathf.Rad2Deg;
+                    currentAngle = Mathf.LerpAngle(currentAngle, targetAngle, Time.deltaTime * rotationSpeed);
+                    visualTransform.localRotation = Quaternion.Euler(0, 0, currentAngle + visualRotationOffset);
+                }
+            }
+        }
+    }
+
+    private Transform FindClosestEnemy()
+    {
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        if (enemies.Length == 0) return null;
+
+        Transform closest = null;
+        float minDist = float.MaxValue;
+        Vector3 myPos = transform.position;
+
+        foreach (GameObject enemy in enemies)
+        {
+            if (enemy == null) continue;
+            float dist = (enemy.transform.position - myPos).sqrMagnitude;
+            if (dist < minDist)
+            {
+                minDist = dist;
+                closest = enemy.transform;
+            }
+        }
+
+        return closest;
+    }
+
+    private IEnumerator InfiniteAttackLoop()
+    {
+        while (true)
+        {
+            // Espera pelo cooldown do ataque
+            float cooldown = weaponData.cooldown / (ownerStats != null ? ownerStats.attackSpeedMultiplier : 1f);
+            yield return new WaitForSeconds(cooldown);
+
+            // Limpa lista de inimigos atingidos para este stab
+            hitEnemiesThisStab.Clear();
+
+            // Executa a animação de stab
+            yield return StartCoroutine(StabRoutine());
+        }
+    }
+
+    private IEnumerator StabRoutine()
     {
         float timer = 0f;
         Vector3 startLocalPos = Vector3.zero;
 
-        while (timer < duration)
+        while (timer < stabDuration)
         {
             timer += Time.deltaTime;
-            float progress = timer / duration;
+            float progress = timer / stabDuration;
             float curveVal = stabCurve.Evaluate(progress);
 
-            // --- MOVIMENTO ---
-            // Como rodámos o Z do Visual, a direção "Frente" do sprite é o eixo X local (Right).
-            // Isto faz a arma ir para a frente na direção do ângulo.
-            visualTransform.localPosition = startLocalPos + (Vector3.right * curveVal * distance);
+            // Move o visual na direção local (frente = right porque rodamos em Z)
+            visualTransform.localPosition = startLocalPos + (Vector3.right * curveVal * finalDistance);
 
             yield return null;
         }
+
+        // Volta à posição inicial
+        visualTransform.localPosition = startLocalPos;
     }
 
-    // Nota: O Collider DEVE estar no objeto que tem este script (o Pai) 
-    // ou usas um script extra no filho para passar a colisão. 
-    // Se o Collider estiver no filho, o OnTriggerEnter aqui no pai NÃO funciona automaticamente.
     private void OnTriggerEnter(Collider other)
     {
         if (weaponData == null || ownerStats == null) return;
-        if (hitEnemies.Contains(other.gameObject)) return;
+        if (hitEnemiesThisStab.Contains(other.gameObject)) return;
 
         if (other.CompareTag("Enemy"))
         {
             var enemy = other.GetComponent<EnemyStats>();
             if (enemy != null)
             {
-                hitEnemies.Add(other.gameObject);
+                hitEnemiesThisStab.Add(other.gameObject);
                 DamageResult dmg = ownerStats.CalculateDamage(weaponData.damage);
 
                 if (isSinglePlayer || IsServer)
