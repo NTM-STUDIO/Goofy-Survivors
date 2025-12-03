@@ -60,7 +60,8 @@ public class GameManager : NetworkBehaviour
     {
         HandleInput();
 
-        if (CurrentState != GameState.Playing) return;
+        // Only run timer logic during Playing or Cinematic states
+        if (CurrentState != GameState.Playing && CurrentState != GameState.Cinematic) return;
 
         float dt = Time.deltaTime;
         if (isP2P) { if (IsServer) networkCurrentTime.Value -= dt; }
@@ -409,7 +410,7 @@ public class GameManager : NetworkBehaviour
     }
 
 
-    [ClientRpc] private void GameOverClientRpc() => GameOver();
+    [ClientRpc] private void GameOverClientRpc() => PerformGameOverLocal();
 
     public void HandlePlayAgain()
     {
@@ -424,6 +425,8 @@ public class GameManager : NetworkBehaviour
 
     public void TriggerGameOver()
     {
+        if (CurrentState == GameState.GameOver) return;
+
         // Se for Multiplayer
         if (isP2P)
         {
