@@ -354,7 +354,13 @@ public class OrbitingWeapon : NetworkBehaviour
                 DamageResult damageResult = playerStats.CalculateDamage(weaponData.damage);
                 enemyStats.TakeDamageFromAttacker(damageResult.damage, damageResult.isCritical, playerStats);
 
-                AbilityDamageTracker.RecordDamage(GetAbilityLabel(), damageResult.damage, gameObject);
+                string abilityLabel = GetAbilityLabel();
+                AbilityDamageTracker.RecordDamage(abilityLabel, damageResult.damage, gameObject, playerStats);
+                // Notifica o client owner em multiplayer
+                if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && IsServer)
+                {
+                    playerStats.RecordAbilityDamageClientRpc(abilityLabel, damageResult.damage, gameObject.GetHashCode());
+                }
 
                 if (!enemyStats.CompareTag("Reaper"))
                 {

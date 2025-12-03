@@ -307,7 +307,16 @@ public class AuraWeapon : NetworkBehaviour
                 else
                     enemy.TakeDamage(damageResult.damage, damageResult.isCritical);
 
-                AbilityDamageTracker.RecordDamage(GetAbilityLabel(), damageResult.damage, gameObject);
+                if (attacker != null)
+                {
+                    string abilityLabel = GetAbilityLabel();
+                    AbilityDamageTracker.RecordDamage(abilityLabel, damageResult.damage, gameObject, attacker);
+                    // Notifica o client owner em multiplayer
+                    if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && IsServer)
+                    {
+                        attacker.RecordAbilityDamageClientRpc(abilityLabel, damageResult.damage, gameObject.GetHashCode());
+                    }
+                }
 
                 if (weaponData.knockback > 0 && !enemy.CompareTag("Reaper"))
                 {
@@ -535,7 +544,12 @@ public class AuraWeapon : NetworkBehaviour
                 // SP path has direct playerStats
                 enemy.TakeDamageFromAttacker(damageResult.damage, damageResult.isCritical, playerStats);
 
-                AbilityDamageTracker.RecordDamage(GetAbilityLabel(), damageResult.damage, gameObject);
+                if (playerStats != null)
+                {
+                    string abilityLabel = GetAbilityLabel();
+                    AbilityDamageTracker.RecordDamage(abilityLabel, damageResult.damage, gameObject, playerStats);
+                    // Nota: Em single-player não precisa de ClientRpc
+                }
 
                 if (finalKnockback > 0 && !enemy.CompareTag("Reaper"))
                 {

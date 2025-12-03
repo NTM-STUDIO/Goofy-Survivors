@@ -127,7 +127,16 @@ public class ServerAura : MonoBehaviour
                 enemy.TakeDamageFromAttacker(dmg.damage, dmg.isCritical, playerStats);
                 hitCount++;
 
-                AbilityDamageTracker.RecordDamage(GetAbilityLabel(), dmg.damage, gameObject);
+                if (playerStats != null)
+                {
+                    string abilityLabel = GetAbilityLabel();
+                    AbilityDamageTracker.RecordDamage(abilityLabel, dmg.damage, gameObject, playerStats);
+                    // Notifica o client owner em multiplayer
+                    if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+                    {
+                        playerStats.RecordAbilityDamageClientRpc(abilityLabel, dmg.damage, gameObject.GetHashCode());
+                    }
+                }
 
                 if (knockback > 0 && !enemy.CompareTag("Reaper"))
                 {

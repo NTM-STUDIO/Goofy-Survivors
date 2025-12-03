@@ -151,6 +151,24 @@ public class PlayerStats : NetworkBehaviour
             RecordReaperDamage(damage);
         }
     }
+
+    /// <summary>
+    /// ClientRpc to notify the owner client to record ability damage.
+    /// Called by server when this player deals damage with an ability.
+    /// </summary>
+    [ClientRpc]
+    public void RecordAbilityDamageClientRpc(string abilityKey, float damage, int sourceObjectHash)
+    {
+        // Only the owner should record their own damage
+        if (IsOwner || (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening))
+        {
+            // Precisamos de uma referência ao GameObject da fonte
+            // Em vez de enviar o GameObject (que não pode ser serializado em RPC),
+            // registramos diretamente usando o abilityKey
+            AbilityDamageTracker.RecordDamageDirectly(abilityKey, damage, this);
+        }
+    }
+
     public event Action OnDamaged;
     public event Action OnHealed;
     public event Action OnDeath;

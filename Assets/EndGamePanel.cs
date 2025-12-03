@@ -368,12 +368,19 @@ public class EndGamePanel : MonoBehaviour
         {
             damageDone = localPlayer.totalReaperDamageDealt;
             Debug.Log($"[EndGamePanel] UpdateEndGameStats - Player Reaper damage: {damageDone:F0}");
+            
+            // Obter estatísticas de habilidade apenas deste jogador
+            abilityDamageTotals = AbilityDamageTracker.GetPlayerTotalsSnapshot(localPlayer);
+            Debug.Log($"[EndGamePanel] Captured {abilityDamageTotals?.Count ?? 0} ability stats for local player");
         }
         else
         {
             // Fallback to old system (combined Reaper damage) if player not found
             damageDone = gameManager.GetReaperDamage();
             Debug.LogWarning($"[EndGamePanel] Could not find local PlayerStats, using combined Reaper damage fallback: {damageDone:F0}");
+            
+            // Fallback para estatísticas combinadas
+            abilityDamageTotals = AbilityDamageTracker.GetTotalsSnapshot();
         }
         
         if (damageDone > 0)
@@ -386,11 +393,34 @@ public class EndGamePanel : MonoBehaviour
             reaperDamageText.text = $"Damage to Reaper: {damageDone:F0}";
         }
         
-        abilityDamageTotals = AbilityDamageTracker.GetTotalsSnapshot();
-        Debug.Log($"[EndGamePanel] Captured {abilityDamageTotals?.Count ?? 0} ability stats");
-        
         // Popula as estatísticas das habilidades na ScrollView
         PopulateAbilityStats();
+    }
+
+    /// <summary>
+    /// Obtém o PlayerStats do jogador local (owner em multiplayer ou único em single-player)
+    /// </summary>
+    private PlayerStats GetLocalPlayerStats()
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            // Multiplayer: procura pelo jogador que é owner local
+            var allPlayers = FindObjectsByType<PlayerStats>(FindObjectsSortMode.None);
+            foreach (var player in allPlayers)
+            {
+                var netObj = player.GetComponent<NetworkObject>();
+                if (netObj != null && netObj.IsOwner)
+                {
+                    return player;
+                }
+            }
+        }
+        else
+        {
+            // Single-player: retorna o primeiro PlayerStats encontrado
+            return FindFirstObjectByType<PlayerStats>();
+        }
+        return null;
     }
 
     /// <summary>
@@ -448,13 +478,29 @@ public class EndGamePanel : MonoBehaviour
 
         if (abilityDamageTotals == null)
         {
-            abilityDamageTotals = AbilityDamageTracker.GetTotalsSnapshot();
+            Debug.Log("[EndGamePanel] abilityDamageTotals é null, tentando obter...");
+            // Se ainda não capturamos, obtemos as stats do jogador local
+            PlayerStats localPlayer = GetLocalPlayerStats();
+            if (localPlayer != null)
+            {
+                Debug.Log($"[EndGamePanel] Jogador local encontrado, obtendo stats...");
+                abilityDamageTotals = AbilityDamageTracker.GetPlayerTotalsSnapshot(localPlayer);
+                Debug.Log($"[EndGamePanel] Stats obtidas: {abilityDamageTotals?.Count ?? 0} habilidades");
+            }
+            else
+            {
+                Debug.LogWarning("[EndGamePanel] Jogador local NÃO encontrado!");
+                abilityDamageTotals = AbilityDamageTracker.GetTotalsSnapshot();
+            }
         }
 
         if (abilityDamageTotals == null || abilityDamageTotals.Count == 0)
         {
+            Debug.LogWarning($"[EndGamePanel] Nenhuma stat de habilidade para exibir! (null={abilityDamageTotals == null}, count={abilityDamageTotals?.Count ?? 0})");
             return;
         }
+        
+        Debug.Log($"[EndGamePanel] Populando {abilityDamageTotals.Count} habilidades na UI");
 
 
         // Ordena as habilidades por dano (maior para menor) e cria uma row para cada uma
@@ -537,31 +583,6 @@ public class EndGamePanel : MonoBehaviour
             }
         }
         spawnedRows.Clear();
-    }
-
-    /// <summary>
-    /// Gets the local player's PlayerStats component
-    /// </summary>
-    private PlayerStats GetLocalPlayerStats()
-    {
-        // Try multiplayer first
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
-        {
-            if (NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
-            {
-                var stats = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerStats>();
-                if (stats != null) return stats;
-            }
-        }
-        
-        // Fallback to singleplayer
-        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-        if (playerObj != null)
-        {
-            return playerObj.GetComponent<PlayerStats>();
-        }
-        
-        return null;
     }
 
     /// <summary>

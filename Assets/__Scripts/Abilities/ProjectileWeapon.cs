@@ -174,7 +174,17 @@ public class ProjectileWeapon : NetworkBehaviour
                 else
                     enemyStats.TakeDamage(damage, wasCritical);
 
-                    AbilityDamageTracker.RecordDamage(GetAbilityLabel(), damage, gameObject);
+                if (attacker != null)
+                {
+                    string abilityLabel = GetAbilityLabel();
+                    // Server registra localmente
+                    AbilityDamageTracker.RecordDamage(abilityLabel, damage, gameObject, attacker);
+                    // Notifica o client owner para registrar também
+                    if (isNetworked)
+                    {
+                        attacker.RecordAbilityDamageClientRpc(abilityLabel, damage, gameObject.GetHashCode());
+                    }
+                }
 
                 if (knockbackForce > 0 && !other.CompareTag("Reaper"))
                 {
