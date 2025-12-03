@@ -2142,7 +2142,7 @@ MonoBehaviour:
   bossPrefab: {fileID: 3436535658513195518, guid: 5cb7a38816e0cad4c92375cb991fce1f, type: 3}
   bossSpawnPoint: {fileID: 0}
   cinematicDuration: 4
-  bossCameraOffset: {x: 0, y: -13, z: 0}
+  bossCameraOffset: {x: -45, y: 0, z: -45}
   cameraTransitionSpeed: 1.5
   spawnOffsetMidgame: {x: 100, y: 2, z: 100}
   spawnHeightY: 13
@@ -2575,13 +2575,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 567395344}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.00036193233, y: -0.00032175798, z: 0.00040532084, w: 0.9999998}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 480, y: 480, z: 480}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0.041, y: -0.037, z: 0.046}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &567395349
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2648,7 +2648,7 @@ MonoBehaviour:
   m_MaxPacketQueueSize: 512
   m_MaxPayloadSize: 6144
   m_HeartbeatTimeoutMS: 500
-  m_ConnectTimeoutMS: 5000
+  m_ConnectTimeoutMS: 1000
   m_MaxConnectAttempts: 10
   m_DisconnectTimeoutMS: 30000
   ConnectionData:
@@ -2679,7 +2679,7 @@ MonoBehaviour:
     Prefabs:
       NetworkPrefabsLists:
       - {fileID: 11400000, guid: adbdada5c55d0694faf8f1841059c3e6, type: 2}
-    TickRate: 60
+    TickRate: 30
     ClientConnectionBufferTimeout: 5
     ConnectionApproval: 1
     ConnectionData: 
@@ -3073,7 +3073,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 729974982}
-  - component: {fileID: 729974983}
   - component: {fileID: 729974981}
   m_Layer: 0
   m_Name: Map
@@ -3095,24 +3094,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  networkedAssets:
-  - assetPrefab: {fileID: 1010114737999647873, guid: 400cca9a532574a48875d09870502710, type: 3}
-    weight: 5
-  - assetPrefab: {fileID: 2745972941608320513, guid: ff73d214ee77c384b9df26ce0a06af07, type: 3}
-    weight: 94
-  - assetPrefab: {fileID: 485895516535105435, guid: 5922ebbfd4d78944e8dc01825f225fe0, type: 3}
-    weight: 1
+  networkedAssets: []
   networkedDensity: 0.0005
-  decorationAssets:
-  - assetPrefab: {fileID: 7593117020678281446, guid: cc5fe909f8431a3459f0bd28352c1d66, type: 3}
-    weight: 99
-  - assetPrefab: {fileID: 383518980796734899, guid: 3c470efbfdb7fc2489ee1cbd65392cda, type: 3}
-    weight: 1
-  decorationDensity: 0.01
-  mapWidth: 3000
-  mapHeight: 3000
-  chunkSize: 55
-  viewDistance: 2
+  decorationAssets: []
+  decorationDensity: 0.05
+  mapWidth: 1000
+  mapHeight: 1000
+  chunkSize: 40
+  viewDistance: 1
 --- !u!4 &729974982
 Transform:
   m_ObjectHideFlags: 0
@@ -3128,31 +3117,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: -20, z: 0}
---- !u!114 &729974983
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 729974980}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3974964947
-  InScenePlacedSourceGlobalObjectIdHash: 0
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 0
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!1 &749284190
 GameObject:
   m_ObjectHideFlags: 0
@@ -4525,10 +4489,6 @@ PrefabInstance:
     - target: {fileID: 6866353692314441283, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
       propertyPath: m_Name
       value: Canvas
-      objectReference: {fileID: 0}
-    - target: {fileID: 6866353692314441283, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
-      propertyPath: m_IsActive
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6954425667509783251, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
       propertyPath: m_IsActive
