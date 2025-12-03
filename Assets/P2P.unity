@@ -3100,14 +3100,14 @@ MonoBehaviour:
     weight: 10
   - assetPrefab: {fileID: 485895516535105435, guid: 5922ebbfd4d78944e8dc01825f225fe0, type: 3}
     weight: 1
-  networkedDensity: 0.00005
+  - assetPrefab: {fileID: 2745972941608320513, guid: ff73d214ee77c384b9df26ce0a06af07, type: 3}
+    weight: 500
+  networkedDensity: 0.005
   decorationAssets:
   - assetPrefab: {fileID: 7593117020678281446, guid: cc5fe909f8431a3459f0bd28352c1d66, type: 3}
     weight: 90
-  - assetPrefab: {fileID: 2745972941608320513, guid: ff73d214ee77c384b9df26ce0a06af07, type: 3}
-    weight: 9
   - assetPrefab: {fileID: 383518980796734899, guid: 3c470efbfdb7fc2489ee1cbd65392cda, type: 3}
-    weight: 1
+    weight: 0.5
   decorationDensity: 0.01
   mapWidth: 1000
   mapHeight: 1000
