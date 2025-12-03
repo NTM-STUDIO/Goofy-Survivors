@@ -26,6 +26,7 @@ public class NetworkedPlayerStatsTracker : NetworkBehaviour
     public NetworkVariable<float> CritDamageMultiplier { get; private set; } = new NetworkVariable<float>(1.5f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<float> MovementSpeed { get; private set; } = new NetworkVariable<float>(5f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     public NetworkVariable<bool> IsDowned { get; private set; } = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    public NetworkVariable<float> TotalDamageDealt { get; private set; } = new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     void Awake()
     {
@@ -55,6 +56,7 @@ public class NetworkedPlayerStatsTracker : NetworkBehaviour
             CritDamageMultiplier.Value = localStats.critDamageMultiplier;
             MovementSpeed.Value = localStats.movementSpeed;
             IsDowned.Value = localStats.IsDowned;
+            TotalDamageDealt.Value = localStats.totalDamageDealt;
         }
     }
 }

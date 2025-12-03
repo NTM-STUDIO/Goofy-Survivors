@@ -144,7 +144,17 @@ public class EnemyStats : NetworkBehaviour
         {
             if (!IsServer)
             {
-                TakeDamageServerRpc(damage, isCritical);
+                // Get attacker's NetworkObjectId to send to server
+                ulong attackerNetId = 0;
+                if (attacker != null)
+                {
+                    var attackerNetObj = attacker.GetComponent<NetworkObject>();
+                    if (attackerNetObj != null)
+                    {
+                        attackerNetId = attackerNetObj.NetworkObjectId;
+                    }
+                }
+                TakeDamageServerRpc(damage, isCritical, attackerNetId);
                 return;
             }
 
@@ -178,6 +188,12 @@ public class EnemyStats : NetworkBehaviour
                 flashCoroutine = StartCoroutine(FlashColor());
             }
 
+            // Record damage for the attacker if available
+            if (attacker != null && damage > 0f)
+            {
+                attacker.RecordDamageDealt(damage);
+            }
+
             if (newHealth <= 0f)
             {
                 Die();
@@ -202,6 +218,12 @@ public class EnemyStats : NetworkBehaviour
             flashCoroutine = StartCoroutine(FlashColor());
         }
 
+        // Record damage for the attacker if available (Singleplayer)
+        if (attacker != null && damage > 0f)
+        {
+            attacker.RecordDamageDealt(damage);
+        }
+
         if (CurrentHealth <= 0)
         {
             Die();
@@ -209,9 +231,64 @@ public class EnemyStats : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void TakeDamageServerRpc(float damage, bool isCritical)
+    private void TakeDamageServerRpc(float damage, bool isCritical, ulong attackerNetId = 0)
     {
-        TakeDamage(damage, isCritical);
+        // Reconstruct attacker reference from NetworkObjectId
+        PlayerStats attacker = null;
+        if (attackerNetId != 0 && NetworkManager.Singleton != null && NetworkManager.Singleton.SpawnManager != null)
+        {
+            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(attackerNetId, out var attackerNetObj))
+            {
+                attacker = attackerNetObj.GetComponent<PlayerStats>();
+            }
+        }
+        
+        // Apply damage with proper attacker attribution
+        ApplyDamageServer(damage, isCritical, attacker);
+    }
+
+    private void ApplyDamageServer(float damage, bool isCritical, PlayerStats attacker)
+    {
+        if (netCurrentHealth.Value <= 0f)
+        {
+            if (MaxHealth > 0f && CurrentHealth == 0f)
+            {
+                netMaxHealth.Value = MaxHealth;
+                netCurrentHealth.Value = MaxHealth;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        OnEnemyDamaged?.Invoke(this);
+        if (damage > 0f) OnEnemyDamagedWithAmount?.Invoke(this, damage, attacker);
+
+        float newHealth = netCurrentHealth.Value - damage;
+        netCurrentHealth.Value = newHealth;
+
+        if (damagePopupPrefab != null)
+        {
+            Instantiate(damagePopupPrefab, popupSpawnPoint.position, Quaternion.identity).GetComponent<DamagePopup>().Setup(Mathf.RoundToInt(damage), isCritical);
+        }
+
+        if (enemyRenderer != null)
+        {
+            if (flashCoroutine != null) StopCoroutine(flashCoroutine);
+            flashCoroutine = StartCoroutine(FlashColor());
+        }
+
+        // Record damage for the attacker if available
+        if (attacker != null && damage > 0f)
+        {
+            attacker.RecordDamageDealt(damage);
+        }
+
+        if (newHealth <= 0f)
+        {
+            Die();
+        }
     }
 
     private void OnNetworkHealthChanged(float oldValue, float newValue)

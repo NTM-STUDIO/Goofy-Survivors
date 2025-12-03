@@ -361,21 +361,29 @@ public class EndGamePanel : MonoBehaviour
         int seconds = Mathf.FloorToInt(timeLasted % 60);
         timeLastedText.text = $"Time Survived: {minutes:00}:{seconds:00}";
 
-        // --- Calculate and Display Damage to Reaper ---
-        // Try cached damage first (for multiplayer/destroyed reaper scenarios), then live stats
-        damageDone = gameManager.GetReaperDamage();
-        
-        // In multiplayer, each client calculates their own damage independently
-        Debug.Log($"[EndGamePanel] UpdateEndGameStats - Client damage: {damageDone:F0}");
+        // --- Calculate and Display Total Damage Dealt ---
+        // Get local player's total damage (properly tracked per-player now)
+        PlayerStats localPlayer = GetLocalPlayerStats();
+        if (localPlayer != null)
+        {
+            damageDone = localPlayer.totalDamageDealt;
+            Debug.Log($"[EndGamePanel] UpdateEndGameStats - Player total damage: {damageDone:F0}");
+        }
+        else
+        {
+            // Fallback to old system (Reaper damage) if player not found
+            damageDone = gameManager.GetReaperDamage();
+            Debug.LogWarning($"[EndGamePanel] Could not find local PlayerStats, using Reaper damage fallback: {damageDone:F0}");
+        }
         
         if (damageDone > 0)
         {
-            reaperDamageText.text = $"Damage to Reaper: {damageDone:F0}";
+            reaperDamageText.text = $"Total Damage Dealt: {damageDone:F0}";
         }
         else
         {
             // Allow 0 damage - player still participated and should be registered
-            reaperDamageText.text = $"Damage to Reaper: {damageDone:F0}";
+            reaperDamageText.text = $"Total Damage Dealt: {damageDone:F0}";
         }
         
         abilityDamageTotals = AbilityDamageTracker.GetTotalsSnapshot();
@@ -529,6 +537,31 @@ public class EndGamePanel : MonoBehaviour
             }
         }
         spawnedRows.Clear();
+    }
+
+    /// <summary>
+    /// Gets the local player's PlayerStats component
+    /// </summary>
+    private PlayerStats GetLocalPlayerStats()
+    {
+        // Try multiplayer first
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            if (NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
+            {
+                var stats = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PlayerStats>();
+                if (stats != null) return stats;
+            }
+        }
+        
+        // Fallback to singleplayer
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+        {
+            return playerObj.GetComponent<PlayerStats>();
+        }
+        
+        return null;
     }
 
     /// <summary>

@@ -78,6 +78,7 @@ public class PlayerStats : NetworkBehaviour
     [HideInInspector] public float pickupRange;
     [HideInInspector] public float xpGainMultiplier;
     [HideInInspector] public int pierceCount;
+    [HideInInspector] public float totalDamageDealt;
 
     [Header("Health & Invincibility")]
     [SerializeField] private int currentHp;
@@ -98,6 +99,17 @@ public class PlayerStats : NetworkBehaviour
     public string OriginalSortingLayer => _originalSortingLayer;
 
     public event Action<int, int> OnHealthChanged;
+
+    /// <summary>
+    /// Records damage dealt by this player. Called by EnemyStats when damage is applied.
+    /// </summary>
+    public void RecordDamageDealt(float damage)
+    {
+        if (damage > 0f)
+        {
+            totalDamageDealt += damage;
+        }
+    }
     public event Action OnDamaged;
     public event Action OnHealed;
     public event Action OnDeath;
@@ -307,6 +319,7 @@ public class PlayerStats : NetworkBehaviour
         pickupRange = characterData.pickupRange;
         xpGainMultiplier = characterData.xpGainMultiplier;
         pierceCount = (int)characterData.pierceCount;
+        totalDamageDealt = 0f;
         
         foreach (var bonus in characterData.startingBonuses) ApplyStatBonus(bonus);
         
