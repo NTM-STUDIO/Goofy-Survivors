@@ -89,13 +89,13 @@ public class GameEventManager : NetworkBehaviour
         if (GameManager.Instance.difficultyManager != null)
             GameManager.Instance.difficultyManager.ApplyMidgameBoost(difficultyMultiplier);
 
-        // 3. Determine Text
+        // 3. Determine Text (em português!)
         string buffText = "PERIGO!";
         switch(boostType)
         {
-            case 0: buffText = "DOUBLE HP"; break;
-            case 1: buffText = "DOUBLE DAMAGE"; break;
-            case 2: buffText = "DOUBLE SPEED"; break;
+            case 0: buffText = "VIDA"; break;
+            case 1: buffText = "DANO"; break;
+            case 2: buffText = "VELOCIDADE"; break;
         }
 
         // 4. Spawn Boss (TRUE = Midgame Offset)
@@ -108,12 +108,37 @@ public class GameEventManager : NetworkBehaviour
         }
 
         // 5. Play Cinematic
-        if (GameManager.Instance.isP2P) PlayMidgameCinematicClientRpc(bossId, buffText);
-        else yield return StartCoroutine(PlayMidgameCinematicLocal(tempBoss ? tempBoss.transform : null, buffText));
+        if (GameManager.Instance.isP2P)
+        {
+            // Pequeno delay para garantir que o boss está spawned na rede
+            yield return new WaitForSecondsRealtime(0.1f);
+            
+            // Envia para TODOS os clientes (incluindo o host)
+            PlayMidgameCinematicClientRpc(bossId, buffText);
+            
+            // Espera pela duração da cinemática
+            yield return new WaitForSecondsRealtime(cinematicDuration);
+        }
+        else
+        {
+            yield return StartCoroutine(PlayMidgameCinematicLocal(tempBoss ? tempBoss.transform : null, buffText));
+        }
 
-        if (GameManager.Instance.isP2P) yield return new WaitForSecondsRealtime(cinematicDuration);
+        // 6. Stop Visuals ANTES de destruir o boss (em todos os clientes)
+        if (tempBoss != null)
+        {
+            if (GameManager.Instance.isP2P && IsServer)
+            {
+                StopBossVisualsClientRpc(bossId);
+            }
+            else
+            {
+                var visuals = tempBoss.GetComponent<BossVisuals>();
+                if (visuals != null) visuals.StopVisuals();
+            }
+        }
 
-        // 6. Despawn Boss
+        // 7. Despawn Boss
         if (tempBoss != null)
         {
             if (GameManager.Instance.isP2P && IsServer && tempBoss.TryGetComponent<NetworkObject>(out var no))
@@ -143,8 +168,32 @@ public class GameEventManager : NetworkBehaviour
             ulong bossId = 0;
             if (finalBoss.TryGetComponent<NetworkObject>(out var no)) bossId = no.NetworkObjectId;
             
-            if (GameManager.Instance.isP2P) ShowEndgameMessageClientRpc(bossId);
-            else ShowEndgameMessageLocal(finalBoss.transform);
+            // Inicia o tracking de dano para emojis nos milestones
+            var visuals = finalBoss.GetComponent<BossVisuals>();
+            if (visuals != null && bossStats != null)
+            {
+                visuals.StartDamageTracking(bossStats);
+            }
+            
+            // Teleporta todos os jogadores para o BossSpawnPoint (perto do host)
+            Vector3 tpPosition = bossSpawnPoint != null ? bossSpawnPoint.position : finalBoss.transform.position;
+            
+            if (GameManager.Instance.isP2P)
+            {
+                // Teleporta todos os clientes para a posição do boss spawn
+                TeleportAllPlayersClientRpc(tpPosition, bossId);
+            }
+            else
+            {
+                // Singleplayer: teleporta o jogador local
+                TeleportLocalPlayer(tpPosition);
+                
+                // Inicia tracking de dano
+                if (visuals != null && bossStats != null)
+                {
+                    visuals.StartDamageTracking(bossStats);
+                }
+            }
         }
 
         yield return null;
@@ -192,19 +241,46 @@ public class GameEventManager : NetworkBehaviour
 
     private Camera GetLocalPlayerCamera()
     {
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
+        // Multiplayer: encontra a câmara do player LOCAL deste cliente
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && 
+            NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
         {
-            Camera playerCam = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponentInChildren<Camera>();
-            if (playerCam != null) return playerCam;
+            var localPlayerObj = NetworkManager.Singleton.LocalClient.PlayerObject;
+            Camera playerCam = localPlayerObj.GetComponentInChildren<Camera>();
+            
+            if (playerCam != null)
+            {
+                Debug.Log($"[GameEventManager] Câmara encontrada no player local (MP): {localPlayerObj.name}");
+                return playerCam;
+            }
+            else
+            {
+                Debug.LogWarning($"[GameEventManager] Player local encontrado ({localPlayerObj.name}) mas sem câmara!");
+            }
         }
 
+        // Singleplayer: encontra por tag
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null)
         {
             Camera playerCam = playerObj.GetComponentInChildren<Camera>();
-            if (playerCam != null) return playerCam;
+            if (playerCam != null)
+            {
+                Debug.Log($"[GameEventManager] Câmara encontrada por tag (SP): {playerObj.name}");
+                return playerCam;
+            }
+            else
+            {
+                Debug.LogWarning($"[GameEventManager] Player encontrado ({playerObj.name}) mas sem câmara como child!");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[GameEventManager] Nenhum objeto com tag 'Player' encontrado!");
         }
 
+        // Último fallback
+        Debug.LogWarning("[GameEventManager] A usar Camera.main como fallback!");
         return Camera.main;
     }
 
@@ -213,15 +289,36 @@ public class GameEventManager : NetworkBehaviour
     [ClientRpc]
     private void PlayMidgameCinematicClientRpc(ulong bossId, string buffText)
     {
+        Debug.Log($"[GameEventManager] PlayMidgameCinematicClientRpc chamado. IsHost: {IsHost}, IsClient: {IsClient}, BossId: {bossId}");
+        
         Transform target = null;
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(bossId, out var bossObj))
+        {
             target = bossObj.transform;
+            Debug.Log($"[GameEventManager] Boss encontrado na rede: {target.name}");
+        }
+        else
+        {
+            Debug.LogWarning($"[GameEventManager] Boss com ID {bossId} não encontrado na rede!");
+        }
         
         StartCoroutine(PlayMidgameCinematicLocal(target, buffText));
     }
 
+    [ClientRpc]
+    private void StopBossVisualsClientRpc(ulong bossId)
+    {
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(bossId, out var bossObj))
+        {
+            var visuals = bossObj.GetComponent<BossVisuals>();
+            if (visuals != null) visuals.StopVisuals();
+        }
+    }
+
     private IEnumerator PlayMidgameCinematicLocal(Transform bossTransform, string buffText)
     {
+        Debug.Log($"[GameEventManager] PlayMidgameCinematicLocal iniciado. IsHost: {IsHost}, IsClient: {IsClient}");
+        
         GameManager.Instance.RequestPause(true, false); 
         GameManager.Instance.SetGameState(GameManager.GameState.Cinematic);
 
@@ -235,15 +332,18 @@ public class GameEventManager : NetworkBehaviour
 
         if (cam != null)
         {
-            var camScript = cam.GetComponent<MonoBehaviour>(); 
-            if (GameManager.Instance.uiManager != null)
+            Debug.Log($"[GameEventManager] Câmara obtida: {cam.name}, posição: {cam.transform.position}");
+            
+            // Desativa o controller da câmara no player local
+            var advCam = cam.GetComponentInParent<AdvancedCameraController>();
+            if (advCam == null) advCam = cam.GetComponent<AdvancedCameraController>();
+            if (advCam == null) advCam = FindObjectOfType<AdvancedCameraController>();
+            
+            if (advCam != null && advCam.enabled)
             {
-                var advCam = FindObjectOfType<AdvancedCameraController>();
-                if (advCam != null && advCam.enabled)
-                {
-                    cameraControllerScript = advCam;
-                    cameraControllerScript.enabled = false; 
-                }
+                cameraControllerScript = advCam;
+                cameraControllerScript.enabled = false;
+                Debug.Log("[GameEventManager] AdvancedCameraController desativado");
             }
 
             Vector3 originalPos = cam.transform.position;
@@ -255,6 +355,8 @@ public class GameEventManager : NetworkBehaviour
                 44f, 
                 bossPos.z + bossCameraOffset.z
             );
+            
+            Debug.Log($"[GameEventManager] Movendo câmara de {originalPos} para {targetPos}");
             
             // GO
             float timer = 0;
@@ -279,10 +381,15 @@ public class GameEventManager : NetworkBehaviour
             
             cam.transform.position = originalPos;
 
-            if (cameraControllerScript != null) cameraControllerScript.enabled = true;
+            if (cameraControllerScript != null) 
+            {
+                cameraControllerScript.enabled = true;
+                Debug.Log("[GameEventManager] AdvancedCameraController reativado");
+            }
         }
         else
         {
+            Debug.LogWarning("[GameEventManager] Câmara é NULL! A esperar sem mover...");
             yield return new WaitForSecondsRealtime(cinematicDuration);
         }
 
@@ -295,22 +402,51 @@ public class GameEventManager : NetworkBehaviour
     // --- CLIENT LOGIC (ENDGAME) ---
 
     [ClientRpc]
-    private void ShowEndgameMessageClientRpc(ulong bossId)
+    private void TeleportAllPlayersClientRpc(Vector3 tpPosition, ulong bossId)
     {
-        Transform target = null;
+        // Inicia tracking de dano em todos os clientes
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(bossId, out var bossObj))
-            target = bossObj.transform;
+        {
+            var visuals = bossObj.GetComponent<BossVisuals>();
+            var stats = bossObj.GetComponent<EnemyStats>();
+            if (visuals != null && stats != null)
+            {
+                visuals.StartDamageTracking(stats);
+            }
+        }
         
-        ShowEndgameMessageLocal(target);
+        // Teleporta o jogador local para a posição
+        TeleportLocalPlayer(tpPosition);
     }
 
-    private void ShowEndgameMessageLocal(Transform bossTransform)
+    private void TeleportLocalPlayer(Vector3 position)
     {
-        if (bossTransform != null)
+        GameObject localPlayer = null;
+        
+        // Multiplayer: encontra o jogador local
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient?.PlayerObject != null)
         {
-            var visuals = bossTransform.GetComponent<BossVisuals>();
-            visuals?.SetupVisuals("FINAL BOSS\nSURVIVE!");
-            StartCoroutine(HideVisualsAfterDelay(visuals, 3.0f));
+            localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject.gameObject;
+        }
+        // Singleplayer: encontra por tag
+        else
+        {
+            localPlayer = GameObject.FindGameObjectWithTag("Player");
+        }
+        
+        if (localPlayer != null)
+        {
+            // Offset para não spawnar todos no mesmo ponto exato
+            Vector3 randomOffset = new Vector3(
+                Random.Range(-3f, 3f),
+                0f,
+                Random.Range(-3f, 3f)
+            );
+            
+            // Teleporta o jogador
+            localPlayer.transform.position = position + randomOffset;
+            
+            Debug.Log($"[GameEventManager] Jogador teleportado para {position + randomOffset}");
         }
     }
 
