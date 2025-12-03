@@ -188,22 +188,26 @@ public class EnemyStats : NetworkBehaviour
                 flashCoroutine = StartCoroutine(FlashColor());
             }
 
-            // Record damage for the attacker if available
-            if (attacker != null && damage > 0f)
+        // Record damage for the attacker if available (notify owner via ClientRpc in multiplayer)
+        if (attacker != null && damage > 0f)
+        {
+            attacker.RecordDamageClientRpc(damage);
+            
+            // Also record Reaper damage separately if this is the boss
+            if (CompareTag("Reaper"))
             {
-                attacker.RecordDamageDealt(damage);
+                attacker.RecordReaperDamageClientRpc(damage);
             }
-
-            if (newHealth <= 0f)
-            {
-                Die();
-            }
-            return;
         }
 
-        if (CurrentHealth <= 0) return;
+        if (newHealth <= 0f)
+        {
+            Die();
+        }
+        return;
+    }
 
-        OnEnemyDamaged?.Invoke(this);
+    if (CurrentHealth <= 0) return;        OnEnemyDamaged?.Invoke(this);
         if (damage > 0f) OnEnemyDamagedWithAmount?.Invoke(this, damage, attacker);
         CurrentHealth -= damage;
 
@@ -222,6 +226,12 @@ public class EnemyStats : NetworkBehaviour
         if (attacker != null && damage > 0f)
         {
             attacker.RecordDamageDealt(damage);
+            
+            // Also record Reaper damage separately if this is the boss
+            if (CompareTag("Reaper"))
+            {
+                attacker.RecordReaperDamage(damage);
+            }
         }
 
         if (CurrentHealth <= 0)
@@ -279,10 +289,16 @@ public class EnemyStats : NetworkBehaviour
             flashCoroutine = StartCoroutine(FlashColor());
         }
 
-        // Record damage for the attacker if available
+        // Record damage for the attacker if available (notify owner via ClientRpc)
         if (attacker != null && damage > 0f)
         {
-            attacker.RecordDamageDealt(damage);
+            attacker.RecordDamageClientRpc(damage);
+            
+            // Also record Reaper damage separately if this is the boss
+            if (CompareTag("Reaper"))
+            {
+                attacker.RecordReaperDamageClientRpc(damage);
+            }
         }
 
         if (newHealth <= 0f)

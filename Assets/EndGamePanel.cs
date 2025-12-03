@@ -361,29 +361,29 @@ public class EndGamePanel : MonoBehaviour
         int seconds = Mathf.FloorToInt(timeLasted % 60);
         timeLastedText.text = $"Time Survived: {minutes:00}:{seconds:00}";
 
-        // --- Calculate and Display Total Damage Dealt ---
-        // Get local player's total damage (properly tracked per-player now)
+        // --- Calculate and Display Damage to Reaper (Individual per player) ---
+        // Get local player's Reaper damage (properly tracked per-player now)
         PlayerStats localPlayer = GetLocalPlayerStats();
         if (localPlayer != null)
         {
-            damageDone = localPlayer.totalDamageDealt;
-            Debug.Log($"[EndGamePanel] UpdateEndGameStats - Player total damage: {damageDone:F0}");
+            damageDone = localPlayer.totalReaperDamageDealt;
+            Debug.Log($"[EndGamePanel] UpdateEndGameStats - Player Reaper damage: {damageDone:F0}");
         }
         else
         {
-            // Fallback to old system (Reaper damage) if player not found
+            // Fallback to old system (combined Reaper damage) if player not found
             damageDone = gameManager.GetReaperDamage();
-            Debug.LogWarning($"[EndGamePanel] Could not find local PlayerStats, using Reaper damage fallback: {damageDone:F0}");
+            Debug.LogWarning($"[EndGamePanel] Could not find local PlayerStats, using combined Reaper damage fallback: {damageDone:F0}");
         }
         
         if (damageDone > 0)
         {
-            reaperDamageText.text = $"Total Damage Dealt: {damageDone:F0}";
+            reaperDamageText.text = $"Damage to Reaper: {damageDone:F0}";
         }
         else
         {
             // Allow 0 damage - player still participated and should be registered
-            reaperDamageText.text = $"Total Damage Dealt: {damageDone:F0}";
+            reaperDamageText.text = $"Damage to Reaper: {damageDone:F0}";
         }
         
         abilityDamageTotals = AbilityDamageTracker.GetTotalsSnapshot();

@@ -257,7 +257,7 @@ GameObject:
   - component: {fileID: 5987089602670832690}
   m_Layer: 4
   m_Name: Reaper
-  m_TagString: Untagged
+  m_TagString: Reaper
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -348,6 +348,7 @@ MonoBehaviour:
   randomizeOnAwake: 1
   predictiveChance: 0.6
   flankChance: 0.3
+  targetUpdateInterval: 1
   leadTime: 0.5
   flankOffset: 2
   flankFalloffDistance: 2

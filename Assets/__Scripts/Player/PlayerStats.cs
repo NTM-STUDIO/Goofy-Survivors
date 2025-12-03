@@ -79,6 +79,7 @@ public class PlayerStats : NetworkBehaviour
     [HideInInspector] public float xpGainMultiplier;
     [HideInInspector] public int pierceCount;
     [HideInInspector] public float totalDamageDealt;
+    [HideInInspector] public float totalReaperDamageDealt;
 
     [Header("Health & Invincibility")]
     [SerializeField] private int currentHp;
@@ -102,12 +103,52 @@ public class PlayerStats : NetworkBehaviour
 
     /// <summary>
     /// Records damage dealt by this player. Called by EnemyStats when damage is applied.
+    /// In multiplayer, this should be called via RecordDamageClientRpc to update the owner's stats.
     /// </summary>
     public void RecordDamageDealt(float damage)
     {
         if (damage > 0f)
         {
             totalDamageDealt += damage;
+        }
+    }
+
+    /// <summary>
+    /// Records damage dealt specifically to the Reaper boss.
+    /// </summary>
+    public void RecordReaperDamage(float damage)
+    {
+        if (damage > 0f)
+        {
+            totalReaperDamageDealt += damage;
+        }
+    }
+
+    /// <summary>
+    /// ClientRpc to notify the owner client to record damage dealt.
+    /// Called by server when this player deals damage to an enemy.
+    /// </summary>
+    [ClientRpc]
+    public void RecordDamageClientRpc(float damage)
+    {
+        // Only the owner should record their own damage
+        if (IsOwner || (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening))
+        {
+            RecordDamageDealt(damage);
+        }
+    }
+
+    /// <summary>
+    /// ClientRpc to notify the owner client to record damage dealt to Reaper.
+    /// Called by server when this player deals damage to the Reaper boss.
+    /// </summary>
+    [ClientRpc]
+    public void RecordReaperDamageClientRpc(float damage)
+    {
+        // Only the owner should record their own damage
+        if (IsOwner || (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening))
+        {
+            RecordReaperDamage(damage);
         }
     }
     public event Action OnDamaged;
@@ -320,6 +361,7 @@ public class PlayerStats : NetworkBehaviour
         xpGainMultiplier = characterData.xpGainMultiplier;
         pierceCount = (int)characterData.pierceCount;
         totalDamageDealt = 0f;
+        totalReaperDamageDealt = 0f;
         
         foreach (var bonus in characterData.startingBonuses) ApplyStatBonus(bonus);
         
