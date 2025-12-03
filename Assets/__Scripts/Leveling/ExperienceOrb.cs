@@ -5,6 +5,7 @@ public class ExperienceOrb : NetworkBehaviour
 {
     // Variável de Rede (Para Multiplayer)
     private readonly NetworkVariable<int> netXpValue = new NetworkVariable<int>(10);
+    private readonly NetworkVariable<bool> netCollected = new NetworkVariable<bool>(false); // Sincroniza estado de coleta
     
     // Variável Local (Para Singleplayer e cache)
     [SerializeField] private int xpValue = 10;
@@ -17,7 +18,7 @@ public class ExperienceOrb : NetworkBehaviour
     private Transform attractionTarget;
     private bool isAttracted = false;
     private Vector3 currentVelocity;
-    private bool collected = false;
+    private bool localCollected = false; // Flag local para singleplayer
 
     public void Setup(int amount)
     {
@@ -37,15 +38,30 @@ public class ExperienceOrb : NetworkBehaviour
         
         // Ouve alterações futuras (caso o valor mude)
         netXpValue.OnValueChanged += (prev, curr) => xpValue = curr;
+        
+        // Quando o orbe é coletado na rede, esconde-o em todos os clientes
+        netCollected.OnValueChanged += OnCollectedChanged;
     }
 
     public override void OnNetworkDespawn()
     {
         netXpValue.OnValueChanged -= (prev, curr) => xpValue = curr;
+        netCollected.OnValueChanged -= OnCollectedChanged;
+    }
+
+    private void OnCollectedChanged(bool prev, bool curr)
+    {
+        if (curr && !prev)
+        {
+            // O servidor marcou como coletado, esconde em todos os clientes
+            DisableVisuals();
+        }
     }
 
     void Update()
     {
+        // Se já foi coletado (via rede ou local), não faz nada
+        if (IsCollected) return;
         if (!isAttracted || attractionTarget == null) return;
 
         transform.position = Vector3.SmoothDamp(transform.position, attractionTarget.position, ref currentVelocity, smoothTime, maxSpeed);
@@ -56,6 +72,11 @@ public class ExperienceOrb : NetworkBehaviour
         }
     }
 
+    // Propriedade que verifica se está coletado (rede ou local)
+    private bool IsCollected => (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening) 
+                                 ? netCollected.Value 
+                                 : localCollected;
+
     public void StartAttraction(Transform target)
     {
         if (isAttracted) return;
@@ -65,30 +86,36 @@ public class ExperienceOrb : NetworkBehaviour
 
     private void CollectOrb()
     {
-        if (collected) return;
-        collected = true;
+        // Verifica se já foi coletado para evitar duplicados
+        if (IsCollected) return;
 
-        // 1. Esconde visualmente imediatamente
-        DisableVisuals();
-
-        // 2. Lógica Multiplayer
+        // 1. Lógica Multiplayer
         if (GameManager.Instance.isP2P && NetworkManager.Singleton.IsListening)
         {
             if (IsServer)
             {
+                // Marca como coletado na rede PRIMEIRO (previne race conditions)
+                netCollected.Value = true;
                 DistributeAndDestroy();
             }
             else
             {
+                // Cliente pede ao servidor para coletar
+                // Esconde localmente para feedback imediato
+                DisableVisuals();
                 if (IsSpawned) RequestCollectServerRpc();
-                else Destroy(gameObject);
             }
         }
-        // 3. Lógica Singleplayer
+        // 2. Lógica Singleplayer
         else
         {
-            // Chama o GameManager diretamente (ele redireciona para o PlayerExperience Global)
-            // Passamos o valor BRUTO (xpValue), o PlayerExperience aplica os multiplicadores
+            if (localCollected) return;
+            localCollected = true;
+            
+            // Esconde visualmente imediatamente
+            DisableVisuals();
+
+            // Chama o GameManager diretamente
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.DistributeSharedXP(xpValue);
@@ -108,6 +135,11 @@ public class ExperienceOrb : NetworkBehaviour
     private void RequestCollectServerRpc()
     {
         if (!IsSpawned) return;
+        
+        // Verifica se já foi coletado (previne duplicados de múltiplos clientes)
+        if (netCollected.Value) return;
+        
+        netCollected.Value = true;
         DistributeAndDestroy();
     }
 

@@ -81,18 +81,36 @@ public class PlayerExperience : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         // Sincroniza UI quando os valores mudam na rede
-        netCurrentXP.OnValueChanged += (prev, curr) => UpdateUI();
-        netCurrentLevel.OnValueChanged += (prev, curr) => UpdateUI();
-        netXpToNextLevel.OnValueChanged += (prev, curr) => UpdateUI();
+        netCurrentXP.OnValueChanged += OnXPChanged;
+        netCurrentLevel.OnValueChanged += OnLevelChanged;
+        netXpToNextLevel.OnValueChanged += OnXPToNextChanged;
 
+        Debug.Log($"[PlayerExperience] OnNetworkSpawn - IsServer:{IsServer} - XP:{netCurrentXP.Value} Level:{netCurrentLevel.Value}");
+        UpdateUI();
+    }
+
+    private void OnXPChanged(float prev, float curr)
+    {
+        Debug.Log($"[PlayerExperience] XP Changed: {prev:F1} -> {curr:F1} (IsServer:{IsServer})");
+        UpdateUI();
+    }
+
+    private void OnLevelChanged(int prev, int curr)
+    {
+        Debug.Log($"[PlayerExperience] Level Changed: {prev} -> {curr} (IsServer:{IsServer})");
+        UpdateUI();
+    }
+
+    private void OnXPToNextChanged(float prev, float curr)
+    {
         UpdateUI();
     }
 
     public override void OnNetworkDespawn()
     {
-        netCurrentXP.OnValueChanged -= (prev, curr) => UpdateUI();
-        netCurrentLevel.OnValueChanged -= (prev, curr) => UpdateUI();
-        netXpToNextLevel.OnValueChanged -= (prev, curr) => UpdateUI();
+        netCurrentXP.OnValueChanged -= OnXPChanged;
+        netCurrentLevel.OnValueChanged -= OnLevelChanged;
+        netXpToNextLevel.OnValueChanged -= OnXPToNextChanged;
     }
 
     public void ResetState()

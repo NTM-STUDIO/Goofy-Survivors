@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
@@ -19,8 +20,15 @@ public class UpgradeManager : NetworkBehaviour
     [Header("Rarity Settings")]
     [SerializeField] private List<RarityTier> rarityTiers;
 
+    [Header("Multiplayer Timer")]
+    [SerializeField] private float mpChoiceTimeout = 5f; // Tempo limite para escolher em MP
+
     private GameManager gameManager;
     private PlayerStats playerStats; // Referência ao stats do jogador LOCAL
+    private Coroutine autoChoiceCoroutine;
+    private List<GeneratedUpgrade> currentChoices = new List<GeneratedUpgrade>();
+    private bool hasChosenThisRound = false; // Se já escolheu nesta ronda
+    private GeneratedUpgrade pendingUpgrade = null; // Upgrade escolhido a aguardar aplicação
 
     public class GeneratedUpgrade
     {
@@ -36,6 +44,16 @@ public class UpgradeManager : NetworkBehaviour
 
     public void ForceReset()
     {
+        // 0. Cancela timer de escolha automática
+        if (autoChoiceCoroutine != null)
+        {
+            StopCoroutine(autoChoiceCoroutine);
+            autoChoiceCoroutine = null;
+        }
+        currentChoices.Clear();
+        hasChosenThisRound = false;
+        pendingUpgrade = null;
+
         // 1. Limpa a fila de níveis pendentes
         levelUpQueue.Clear();
         isUpgradeInProgress = false;
@@ -147,12 +165,55 @@ public class UpgradeManager : NetworkBehaviour
     {
         foreach (Transform child in choicesContainer) Destroy(child.gameObject);
 
+        // Reset flags para nova ronda
+        hasChosenThisRound = false;
+        pendingUpgrade = null;
+
         // Usa a sorte do jogador local
         int choicesCount = GetNumberOfChoices(playerStats.luck);
-        List<GeneratedUpgrade> choices = GenerateUpgradeChoices(choicesCount);
-        DisplayUpgradeChoices(choices);
+        currentChoices = GenerateUpgradeChoices(choicesCount);
+        DisplayUpgradeChoices(currentChoices);
 
         upgradePanel.SetActive(true);
+
+        // Em Multiplayer, inicia timer de 5s (sempre espera os 5s completos)
+        if (gameManager != null && gameManager.isP2P)
+        {
+            if (autoChoiceCoroutine != null) StopCoroutine(autoChoiceCoroutine);
+            autoChoiceCoroutine = StartCoroutine(MPTimerCoroutine());
+        }
+    }
+
+    private IEnumerator MPTimerCoroutine()
+    {
+        // Espera os 5 segundos completos (tempo real, não afetado por Time.timeScale)
+        float elapsed = 0f;
+        while (elapsed < mpChoiceTimeout)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        // Tempo esgotado
+        if (!hasChosenThisRound)
+        {
+            // Não escolheu - dá aleatório
+            Debug.Log("[UpgradeManager] Tempo esgotado! Escolhendo upgrade aleatório...");
+            if (currentChoices != null && currentChoices.Count > 0)
+            {
+                int randomIndex = Random.Range(0, currentChoices.Count);
+                pendingUpgrade = currentChoices[randomIndex];
+            }
+        }
+
+        // Aplica o upgrade (escolhido ou aleatório)
+        if (pendingUpgrade != null)
+        {
+            ApplyUpgradeInternal(pendingUpgrade);
+        }
+        
+        // Limpa UI e processa próximo
+        FinalizeCurrentUpgrade();
     }
 
     private int GetNumberOfChoices(float currentLuck)
@@ -250,8 +311,35 @@ public class UpgradeManager : NetworkBehaviour
             EventSystem.current.SetSelectedGameObject(firstChoice);
     }
 
+    // Chamado quando o jogador clica numa carta
     public void ApplyUpgrade(GeneratedUpgrade upgrade)
     {
+        // Em MP, guarda a escolha e esconde as cartas (mas espera o timer acabar)
+        if (gameManager != null && gameManager.isP2P)
+        {
+            if (hasChosenThisRound) return; // Já escolheu, ignora
+            
+            hasChosenThisRound = true;
+            pendingUpgrade = upgrade;
+            
+            // Esconde as cartas visualmente para dar feedback
+            foreach (Transform child in choicesContainer) 
+                Destroy(child.gameObject);
+            
+            Debug.Log("[UpgradeManager] Escolha registada. Aguardando fim do timer...");
+            return; // NÃO aplica ainda, o timer irá aplicar
+        }
+
+        // Em Singleplayer, aplica imediatamente
+        ApplyUpgradeInternal(upgrade);
+        ProcessNextUpgrade();
+    }
+
+    // Aplica o upgrade aos stats do jogador
+    private void ApplyUpgradeInternal(GeneratedUpgrade upgrade)
+    {
+        if (upgrade == null || playerStats == null) return;
+        
         float value = upgrade.Value;
         switch (upgrade.BaseData.statToUpgrade)
         {
@@ -271,8 +359,39 @@ public class UpgradeManager : NetworkBehaviour
             case StatType.PickupRange: playerStats.IncreasePickupRange(value * playerStats.pickupRange - playerStats.pickupRange); break;
             case StatType.XPGainMultiplier: playerStats.IncreaseXPGainMultiplier(value / 100f); break;
         }
+        
+        Debug.Log($"[UpgradeManager] Upgrade aplicado: {upgrade.BaseData.statToUpgrade} +{value:F1}");
+    }
 
-        ProcessNextUpgrade();
+    // Chamado após o timer acabar em MP
+    private void FinalizeCurrentUpgrade()
+    {
+        // Limpa UI
+        upgradePanel.SetActive(false);
+        foreach (Transform child in choicesContainer) Destroy(child.gameObject);
+        EventSystem.current.SetSelectedGameObject(null);
+
+        // Reset
+        hasChosenThisRound = false;
+        pendingUpgrade = null;
+        currentChoices.Clear();
+        autoChoiceCoroutine = null;
+
+        // Verifica se há mais níveis na fila
+        if (levelUpQueue.Count > 0)
+        {
+            levelUpQueue.Dequeue();
+            ShowUpgradeChoices();
+        }
+        else
+        {
+            // Acabaram-se os upgrades, avisa o servidor
+            isUpgradeInProgress = false;
+            if (gameManager != null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+            {
+                gameManager.ConfirmUpgradeSelectionServerRpc();
+            }
+        }
     }
 
     // --- MÉTODOS AUXILIARES ---

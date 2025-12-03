@@ -164,10 +164,11 @@ public void StopAndReset()
 
     private int GetPlayerCountMultiplier()
     {
-        // Check if we're in a networked game
+        // Em multiplayer, cada jogador recebe a wave completa
+        // Isso significa: 2 jogadores = 2x inimigos (wave completa para cada um)
+        // O XP é compartilhado, então ambos sobem de nível juntos
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
-            // In multiplayer, count connected clients
             if (NetworkManager.Singleton.IsServer)
             {
                 int playerCount = NetworkManager.Singleton.ConnectedClientsList.Count;
@@ -175,7 +176,7 @@ public void StopAndReset()
             }
         }
 
-        // Single-player or not server: return 1
+        // Single-player: wave normal
         return 1;
     }
 

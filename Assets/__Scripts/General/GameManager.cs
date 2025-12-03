@@ -29,6 +29,10 @@ public class GameManager : NetworkBehaviour
 
     public NetworkVariable<float> networkCurrentTime = new NetworkVariable<float>(0);
     private float localTime;
+    
+    // Sincronização periódica do tempo para clientes
+    private float timeSyncInterval = 2f; // Sincroniza a cada 2 segundos
+    private float lastTimeSync = 0f;
 
     private int playersPendingUpgrade = 0;
     private bool isLevelingUp = false;
@@ -64,14 +68,55 @@ public class GameManager : NetworkBehaviour
         if (CurrentState != GameState.Playing && CurrentState != GameState.Cinematic) return;
 
         float dt = Time.deltaTime;
-        if (isP2P) { if (IsServer) networkCurrentTime.Value -= dt; }
+        if (isP2P) 
+        { 
+            if (IsServer) 
+            {
+                networkCurrentTime.Value -= dt;
+                
+                // Força sincronização periódica para combater drift
+                if (Time.time - lastTimeSync > timeSyncInterval)
+                {
+                    lastTimeSync = Time.time;
+                    ForceTimeSyncClientRpc(networkCurrentTime.Value);
+                }
+            }
+        }
         else { localTime -= dt; }
 
         if (uiManager) uiManager.UpdateTimerText(GetRemainingTime());
 
-        if (GetRemainingTime() <= 0)
+        // Só o servidor decide quando o jogo acaba
+        if (isP2P)
         {
-            TriggerGameOver();
+            if (IsServer && GetRemainingTime() <= 0)
+            {
+                TriggerGameOver();
+            }
+        }
+        else
+        {
+            if (GetRemainingTime() <= 0)
+            {
+                TriggerGameOver();
+            }
+        }
+    }
+
+    [ClientRpc]
+    private void ForceTimeSyncClientRpc(float serverTime)
+    {
+        // Clientes recebem o tempo autoritativo do servidor
+        // Não precisamos fazer nada especial pois o NetworkVariable já sincroniza,
+        // mas isto garante que qualquer drift é corrigido periodicamente
+        if (!IsServer)
+        {
+            // Se a diferença for maior que 0.5 segundos, loga para debug
+            float diff = Mathf.Abs(networkCurrentTime.Value - serverTime);
+            if (diff > 0.5f)
+            {
+                Debug.Log($"[GameManager] Corrigindo drift de tempo: {diff:F2}s");
+            }
         }
     }
 
@@ -79,7 +124,8 @@ public class GameManager : NetworkBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Tab)) uiManager?.ToggleStatsPanel();
 
-        if (Input.GetKeyDown(KeyCode.Escape))
+        // ESC só funciona em Singleplayer
+        if (Input.GetKeyDown(KeyCode.Escape) && !isP2P)
         {
             if (CurrentState == GameState.Playing) RequestPause(true, true);
             else if (CurrentState == GameState.Paused && !isLevelingUp) RequestPause(false);
@@ -118,6 +164,7 @@ public class GameManager : NetworkBehaviour
         playersPendingUpgrade = NetworkManager.Singleton.ConnectedClients.Count;
         Debug.Log($"[GameManager] Level Up de Equipa! À espera de {playersPendingUpgrade} jogadores.");
 
+        // Pausa o jogo para todos durante o level up
         SetPausedClientRpc(true, false);
         ShowLevelUpUIClientRpc();
     }
@@ -137,10 +184,10 @@ public class GameManager : NetworkBehaviour
 
         if (playersPendingUpgrade <= 0)
         {
-            // Só entra aqui quando O ÚLTIMO jogador escolher
+            // Todos escolheram (ou o timer acabou) - despausa
             Debug.Log("[GameManager] Todos prontos. Resumindo jogo.");
             CloseLevelUpUIClientRpc();
-            SetPausedClientRpc(false, false); // Isto despausa o jogo
+            SetPausedClientRpc(false, false);
             isLevelingUp = false;
         }
     }
@@ -158,14 +205,19 @@ public class GameManager : NetworkBehaviour
 
     public void RequestPause(bool pause, bool showMenu = false)
     {
-        // 1. Singleplayer
+        // 1. Singleplayer - pausa normalmente
         if (!isP2P)
         {
             LocalPauseLogic(pause, showMenu);
             return;
         }
 
-        // 2. Multiplayer
+        // 2. Multiplayer - NÃO permite pausar manualmente (só level up usa SetPausedClientRpc internamente)
+        // Ignora pedidos de pausa em MP
+        Debug.Log($"[GameManager] Pausa ignorada em MP (pause={pause}, showMenu={showMenu})");
+        return;
+        
+        /* CÓDIGO ANTIGO - Removido para MP
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             if (IsServer) SetPausedClientRpc(pause, showMenu);
@@ -175,7 +227,7 @@ public class GameManager : NetworkBehaviour
         {
             // Fallback (Rede caiu)
             LocalPauseLogic(pause, showMenu);
-        }
+        } */
     }
 
     private void LocalPauseLogic(bool pause, bool showMenu)

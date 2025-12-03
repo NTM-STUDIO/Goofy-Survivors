@@ -471,7 +471,11 @@ public class UIManager : MonoBehaviour
         newWeaponPanelCanvasGroup.alpha = 0f;
         weaponNameText.text = weaponData.weaponName;
         weaponSpriteImage.sprite = weaponData.icon;
-        if (GameManager != null) GameManager.RequestPauseForLevelUp();
+        
+        // Só pausa em Singleplayer
+        if (GameManager != null && !GameManager.isP2P) 
+            GameManager.RequestPauseForLevelUp();
+            
         newWeaponPanelFadeCoroutine = StartCoroutine(FadeCanvasGroup(newWeaponPanelCanvasGroup, 0f, 1f, 1f));
     }
 
@@ -482,7 +486,10 @@ public class UIManager : MonoBehaviour
         if (newWeaponPanelCanvasGroup == null)
             newWeaponPanelCanvasGroup = newWeaponPanel.GetComponent<CanvasGroup>();
         newWeaponPanelFadeCoroutine = StartCoroutine(FadeOutAndDeactivateNewWeaponPanel());
-        if (GameManager != null) GameManager.ResumeAfterLevelUp();
+        
+        // Só despausa em Singleplayer
+        if (GameManager != null && !GameManager.isP2P) 
+            GameManager.ResumeAfterLevelUp();
     }
 
     private IEnumerator FadeOutAndDeactivateNewWeaponPanel()
