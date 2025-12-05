@@ -12,6 +12,7 @@ public class ProjectileWeapon : NetworkBehaviour
     private bool wasCritical;
     private float speed;
     private float knockbackForce;
+    private float knockbackPenetration; // How much enemy knockback resistance to ignore (0-1)
     private float lifetime;
 
     private int sourceWeaponId = -1;
@@ -76,12 +77,14 @@ public class ProjectileWeapon : NetworkBehaviour
     /// In SP, it's called by PlayerWeaponManager.
     /// In P2P, it's called by a ClientRpc from PlayerWeaponManager.
     /// </summary>
-    public void Initialize(Transform targetEnemy, Vector3 initialDirection, float finalDamage, bool isCritical, float finalSpeed, float finalDuration, float finalKnockback, float finalSize)
+    /// <param name="knockbackPen">How much of enemy knockback resistance to penetrate (0-1). Higher knockbackMultiplier = more penetration.</param>
+    public void Initialize(Transform targetEnemy, Vector3 initialDirection, float finalDamage, bool isCritical, float finalSpeed, float finalDuration, float finalKnockback, float finalSize, float knockbackPen = 0f)
     {
         this.damage = finalDamage;
         this.wasCritical = isCritical;
         this.speed = finalSpeed;
         this.knockbackForce = finalKnockback;
+        this.knockbackPenetration = knockbackPen;
         this.lifetime = finalDuration > 0 ? finalDuration : 3f; // Use duration, fallback to 3s
         transform.localScale *= finalSize;
         moveDir = initialDirection.normalized;
@@ -190,7 +193,8 @@ public class ProjectileWeapon : NetworkBehaviour
                 {
                     Vector3 knockbackDirection = (other.transform.position - transform.position).normalized;
                     knockbackDirection.y = 0;
-                    enemyStats.ApplyKnockback(knockbackForce, 0.4f, knockbackDirection);
+                    // Pass knockback penetration to ignore enemy resistance
+                    enemyStats.ApplyKnockback(knockbackForce, 0.4f, knockbackDirection, knockbackPenetration);
                 }
 
                 // The server despawns the projectile for everyone when networked; otherwise destroy locally.

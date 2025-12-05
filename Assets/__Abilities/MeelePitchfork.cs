@@ -177,7 +177,9 @@ public class MeleePitchfork : NetworkBehaviour
                     
                     // Empurra na direção do visual (para onde a arma aponta)
                     float kb = weaponData.knockback * ownerStats.knockbackMultiplier;
-                    if (kb > 0) enemy.ApplyKnockback(kb, 0.2f, visualTransform.right);
+                    // Knockback penetration scales with knockback multiplier bonus
+                    float knockbackPen = Mathf.Clamp01((ownerStats.knockbackMultiplier - 1f) * 0.5f);
+                    if (kb > 0) enemy.ApplyKnockback(kb, 0.2f, visualTransform.right, knockbackPen);
                 }
             }
         }

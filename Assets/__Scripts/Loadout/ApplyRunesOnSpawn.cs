@@ -58,7 +58,7 @@ public class ApplyRunesOnSpawn : NetworkBehaviour
             case StatType.AttackSpeedMultiplier: ps.IncreaseAttackSpeedMultiplier(bonus.value); break;
             case StatType.ProjectileCount: ps.IncreaseProjectileCount(Mathf.RoundToInt(bonus.value)); break;
             case StatType.ProjectileSizeMultiplier: ps.IncreaseProjectileSizeMultiplier(bonus.value); break;
-            case StatType.ProjectileSpeedMultiplier: ps.IncreaseProjectileSpeedMultiplier(bonus.value); break;
+            case StatType.CooldownReduction: ps.IncreaseCooldownReduction(bonus.value); break;
             case StatType.DurationMultiplier: ps.IncreaseDurationMultiplier(bonus.value); break;
             case StatType.KnockbackMultiplier: ps.IncreaseKnockbackMultiplier(bonus.value); break;
             case StatType.MovementSpeed: ps.IncreaseMovementSpeed(bonus.value); break;

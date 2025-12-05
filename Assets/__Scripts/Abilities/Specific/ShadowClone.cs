@@ -18,6 +18,20 @@ public class ShadowClone : MonoBehaviour
 
     void Start()
     {
+        // CRITICAL: Ensure clone is NOT parented to player
+        if (transform.parent != null)
+        {
+            Debug.LogWarning($"[ShadowClone] Was parented to {transform.parent.name}, unparenting now!");
+            Vector3 worldPos = transform.position;
+            Quaternion worldRot = transform.rotation;
+            transform.SetParent(null, true);
+            transform.position = worldPos;
+            transform.rotation = worldRot;
+        }
+        
+        // Disable any movement/player components that might be on the prefab
+        DisablePlayerComponents();
+        
         if (weaponContainer == null)
         {
             weaponContainer = new GameObject("WeaponContainer").transform;
@@ -25,6 +39,64 @@ public class ShadowClone : MonoBehaviour
             weaponContainer.localPosition = Vector3.zero;
         }
         Destroy(gameObject, lifetime);
+    }
+
+    /// <summary>
+    /// Disables player-specific components that shouldn't run on a clone (movement, input, etc.)
+    /// </summary>
+    private void DisablePlayerComponents()
+    {
+        // Disable Movement script if present (prevents clone from moving with player input)
+        var movement = GetComponent<Movement>();
+        if (movement != null)
+        {
+            movement.enabled = false;
+            Debug.Log("[ShadowClone] Disabled Movement component");
+        }
+        
+        // Disable Rigidbody velocity (freeze in place)
+        var rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+            Debug.Log("[ShadowClone] Set Rigidbody to kinematic");
+        }
+        
+        // Disable PlayerStats if present (clone uses owner's stats, not its own)
+        var stats = GetComponent<PlayerStats>();
+        if (stats != null)
+        {
+            stats.enabled = false;
+            Debug.Log("[ShadowClone] Disabled PlayerStats component");
+        }
+        
+        // Disable any NetworkBehaviour components (clone is local-only in SP)
+        var networkBehaviours = GetComponents<Unity.Netcode.NetworkBehaviour>();
+        foreach (var nb in networkBehaviours)
+        {
+            if (nb != null)
+            {
+                nb.enabled = false;
+            }
+        }
+        
+        // Disable TwoSpriteIsometricController if present
+        var isoController = GetComponent<TwoSpriteIsometricController>();
+        if (isoController != null)
+        {
+            isoController.enabled = false;
+            Debug.Log("[ShadowClone] Disabled TwoSpriteIsometricController");
+        }
+        
+        // Disable NetworkPlayerVisuals if present
+        var netVisuals = GetComponent<NetworkPlayerVisuals>();
+        if (netVisuals != null)
+        {
+            netVisuals.enabled = false;
+            Debug.Log("[ShadowClone] Disabled NetworkPlayerVisuals");
+        }
     }
 
     /// <summary>

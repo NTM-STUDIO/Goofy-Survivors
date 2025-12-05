@@ -10,12 +10,12 @@ public enum StatType
     DamageMultiplier,
     CritChance,
     CritDamageMultiplier,
-    AttackSpeedMultiplier,
+    CooldownReduction,       // NEW: Reduces cooldown between attacks (0.1 = 10% CDR)
+    AttackSpeedMultiplier,   // CHANGED: Now controls projectile travel speed AND aura/melee tick/animation speed
     ProjectileCount,
     ProjectileSizeMultiplier,
-    ProjectileSpeedMultiplier,
     DurationMultiplier,
-    KnockbackMultiplier,
+    KnockbackMultiplier,     // CHANGED: Now penetrates enemy knockback resistance
     MovementSpeed,
     Luck,
     PickupRange,

@@ -41,7 +41,7 @@ public class UpgradeChoiceUI : MonoBehaviour
         // These types are percentages
         if (type == StatType.DamageMultiplier || type == StatType.CritChance ||
             type == StatType.CritDamageMultiplier || type == StatType.AttackSpeedMultiplier ||
-            type == StatType.ProjectileSizeMultiplier || type == StatType.ProjectileSpeedMultiplier ||
+            type == StatType.ProjectileSizeMultiplier || type == StatType.CooldownReduction ||
             type == StatType.DurationMultiplier || type == StatType.KnockbackMultiplier ||
             type == StatType.XPGainMultiplier)
         {

@@ -15,6 +15,6 @@ MonoBehaviour:
   statToUpgrade: 9
   upgradeName: Duration
   upgradeDescription: 
-  icon: {fileID: -3925895545554303150, guid: bbe8a6aebdfd7c34a8fbe08b2de5bdde, type: 3}
+  icon: {fileID: 21300000, guid: bbe8a6aebdfd7c34a8fbe08b2de5bdde, type: 3}
   baseValueMin: 10
   baseValueMax: 15

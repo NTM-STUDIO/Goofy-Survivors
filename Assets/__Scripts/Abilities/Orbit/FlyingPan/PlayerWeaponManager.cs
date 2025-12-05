@@ -549,10 +549,12 @@ public class PlayerWeaponManager : NetworkBehaviour
             projComp.SetOwnerNetworkId(this.NetworkObjectId);
         }
         // Compute final values on the server using authoritative stats to ensure consistency on all clients
-        float finalSpeed = data.speed * playerStats.projectileSpeedMultiplier;
+        float finalSpeed = data.speed * playerStats.attackSpeedMultiplier;  // Attack Speed controls projectile travel speed
         float finalDuration = data.duration * playerStats.durationMultiplier;
         float finalKnockback = data.knockback * playerStats.knockbackMultiplier;
         float finalSize = data.area * playerStats.projectileSizeMultiplier;
+        // Knockback penetration scales with knockback multiplier bonus (0 at 1x, up to ~0.5 at 2x)
+        float knockbackPen = Mathf.Clamp01((playerStats.knockbackMultiplier - 1f) * 0.5f);
         InitializeProjectileClientRpc(
             projNO.NetworkObjectId,
             direction,
@@ -563,12 +565,13 @@ public class PlayerWeaponManager : NetworkBehaviour
             finalSpeed,
             finalDuration,
             finalKnockback,
-            finalSize
+            finalSize,
+            knockbackPen
         );
     }
 
     [ClientRpc]
-    private void InitializeProjectileClientRpc(ulong networkObjectId, Vector3 direction, float damage, bool isCritical, int weaponId, string weaponName, float finalSpeed, float finalDuration, float finalKnockback, float finalSize)
+    private void InitializeProjectileClientRpc(ulong networkObjectId, Vector3 direction, float damage, bool isCritical, int weaponId, string weaponName, float finalSpeed, float finalDuration, float finalKnockback, float finalSize, float knockbackPen)
     {
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkObjectId, out NetworkObject netObj))
         {
@@ -577,7 +580,7 @@ public class PlayerWeaponManager : NetworkBehaviour
             {
                 projectile.ConfigureSource(weaponId, weaponName);
                 // Server already computed the final values using the owner's stats; just apply
-                projectile.Initialize(null, direction, damage, isCritical, finalSpeed, finalDuration, finalKnockback, finalSize);
+                projectile.Initialize(null, direction, damage, isCritical, finalSpeed, finalDuration, finalKnockback, finalSize, knockbackPen);
             }
         }
     }
@@ -634,7 +637,9 @@ public class PlayerWeaponManager : NetworkBehaviour
     // Spawn the clone near the player, not on top and NOT parented (so it doesn't follow)
     Vector2 rand = UnityEngine.Random.insideUnitCircle.normalized * 1.5f;
     Vector3 spawnPos = transform.position + new Vector3(rand.x, 0, rand.y);
-    GameObject cloneObj = Instantiate(cloneData.weaponPrefab, spawnPos, transform.rotation);
+    GameObject cloneObj = Instantiate(cloneData.weaponPrefab, spawnPos, transform.rotation, null);
+    // Ensure clone is at root level
+    cloneObj.transform.SetParent(null);
         var cloneNO = cloneObj.GetComponent<NetworkObject>();
         if (cloneNO == null)
         {
@@ -733,10 +738,12 @@ public class PlayerWeaponManager : NetworkBehaviour
     {
         DamageResult damageResult = playerStats.CalculateDamage(data.damage);
         Transform firePoint = transform;
-        float finalSpeed = data.speed * playerStats.projectileSpeedMultiplier;
+        float finalSpeed = data.speed * playerStats.attackSpeedMultiplier;  // Attack Speed controls projectile travel speed
         float finalDuration = data.duration * playerStats.durationMultiplier;
         float finalKnockback = data.knockback * playerStats.knockbackMultiplier;
         float finalSize = data.area * playerStats.projectileSizeMultiplier;
+        // Knockback penetration scales with knockback multiplier bonus (0 at 1x, up to ~0.5 at 2x)
+        float knockbackPen = Mathf.Clamp01((playerStats.knockbackMultiplier - 1f) * 0.5f);
         int weaponId = weaponRegistry != null ? weaponRegistry.GetWeaponId(data) : -1;
         
         foreach (var target in targets)
@@ -753,7 +760,7 @@ public class PlayerWeaponManager : NetworkBehaviour
             if (projectile != null)
             {
                 projectile.ConfigureSource(weaponId, data.weaponName);
-                projectile.Initialize(target, direction, damageResult.damage, damageResult.isCritical, finalSpeed, finalDuration, finalKnockback, finalSize);
+                projectile.Initialize(target, direction, damageResult.damage, damageResult.isCritical, finalSpeed, finalDuration, finalKnockback, finalSize, knockbackPen);
                 // Attribute owner locally for attacker-aware effects in SP
                 projectile.SetOwnerLocal(playerStats);
             }

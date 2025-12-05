@@ -492,7 +492,14 @@ public class EnemyStats : NetworkBehaviour
         }
     }
 
-    public void ApplyKnockback(float knockbackForce, float duration, Vector3 direction)
+    /// <summary>
+    /// Applies knockback to the enemy.
+    /// </summary>
+    /// <param name="knockbackForce">Base knockback force</param>
+    /// <param name="duration">Knockback duration</param>
+    /// <param name="direction">Direction of knockback</param>
+    /// <param name="penetration">How much of the enemy's knockback resistance to ignore (0-1). Higher = more penetration.</param>
+    public void ApplyKnockback(float knockbackForce, float duration, Vector3 direction, float penetration = 0f)
     {
         if (!isActiveAndEnabled || CurrentHealth <= 0f) return;
         if (isUnknockable || IsKnockedBack || knockbackForce <= 0) return;
@@ -501,14 +508,17 @@ public class EnemyStats : NetworkBehaviour
         {
             if (!IsServer)
             {
-                ApplyKnockbackServerRpc(knockbackForce, duration, direction);
+                ApplyKnockbackServerRpc(knockbackForce, duration, direction, penetration);
                 return;
             }
         }
 
         if (!isActiveAndEnabled) return;
 
-        float resistanceMultiplier = 1f - currentKnockbackResistance;
+        // Penetration reduces the enemy's effective resistance
+        // penetration of 1.0 = ignore all resistance, 0.5 = ignore half resistance
+        float effectiveResistance = currentKnockbackResistance * (1f - Mathf.Clamp01(penetration));
+        float resistanceMultiplier = 1f - effectiveResistance;
         float effectiveForce = knockbackForce * resistanceMultiplier;
         float effectiveDuration = duration * resistanceMultiplier;
         if (effectiveDuration <= 0.01f) return;
@@ -524,9 +534,9 @@ public class EnemyStats : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void ApplyKnockbackServerRpc(float knockbackForce, float duration, Vector3 direction)
+    private void ApplyKnockbackServerRpc(float knockbackForce, float duration, Vector3 direction, float penetration)
     {
-        ApplyKnockback(knockbackForce, duration, direction);
+        ApplyKnockback(knockbackForce, duration, direction, penetration);
     }
 
     private IEnumerator KnockbackRoutine(float force, float duration, Vector3 direction)

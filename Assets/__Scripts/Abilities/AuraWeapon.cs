@@ -322,7 +322,9 @@ public class AuraWeapon : NetworkBehaviour
                 {
                     Vector3 dir = (enemy.transform.position - transform.position); dir.y = 0f; dir.Normalize();
                     float knockbackMult = tracker != null ? tracker.Knockback.Value : (playerStats != null ? playerStats.knockbackMultiplier : 1f);
-                    enemy.ApplyKnockback(weaponData.knockback * knockbackMult, 0.1f, dir);
+                    // Knockback penetration scales with knockback multiplier bonus (0 at 1x, up to ~0.5 at 2x)
+                    float knockbackPen = Mathf.Clamp01((knockbackMult - 1f) * 0.5f);
+                    enemy.ApplyKnockback(weaponData.knockback * knockbackMult, 0.1f, dir, knockbackPen);
                 }
                 hitCount++;
             }
@@ -555,7 +557,9 @@ public class AuraWeapon : NetworkBehaviour
                 {
                     Vector3 knockbackDirection = (enemy.transform.position - transform.position).normalized;
                     knockbackDirection.y = 0;
-                    enemy.ApplyKnockback(finalKnockback, 0.1f, knockbackDirection);
+                    // Knockback penetration scales with knockback multiplier bonus
+                    float knockbackPen = Mathf.Clamp01((playerStats.knockbackMultiplier - 1f) * 0.5f);
+                    enemy.ApplyKnockback(finalKnockback, 0.1f, knockbackDirection, knockbackPen);
                 }
             }
         }

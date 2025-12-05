@@ -15,6 +15,6 @@ MonoBehaviour:
   statToUpgrade: 3
   upgradeName: Critical Hit Chance
   upgradeDescription: 
-  icon: {fileID: -8895097146571576193, guid: 19c26cd9a678586418e5b66f393ee6f0, type: 3}
+  icon: {fileID: 21300000, guid: 19c26cd9a678586418e5b66f393ee6f0, type: 3}
   baseValueMin: 4
   baseValueMax: 8

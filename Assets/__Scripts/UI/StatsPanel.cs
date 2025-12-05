@@ -17,7 +17,7 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI attackSpeedMultiplierText;
     [SerializeField] private TextMeshProUGUI projectileCountText;
     [SerializeField] private TextMeshProUGUI projectileSizeMultiplierText;
-    [SerializeField] private TextMeshProUGUI projectileSpeedMultiplierText;
+    [SerializeField] private TextMeshProUGUI cooldownReductionText;
     [SerializeField] private TextMeshProUGUI durationMultiplierText;
     [SerializeField] private TextMeshProUGUI knockbackMultiplierText;
     [SerializeField] private TextMeshProUGUI movementSpeedText;
@@ -81,7 +81,7 @@ public class StatsPanel : MonoBehaviour
         attackSpeedMultiplierText.text = $"Attack Speed: {playerStats.attackSpeedMultiplier * 100:F0}%";
         projectileCountText.text = $"Projectiles: {playerStats.projectileCount}";
         projectileSizeMultiplierText.text = $"Area/Size: {playerStats.projectileSizeMultiplier * 100:F0}%";
-        projectileSpeedMultiplierText.text = $"Proj. Speed: {playerStats.projectileSpeedMultiplier * 100:F0}%";
+        cooldownReductionText.text = $"CDR: {playerStats.cooldownReduction * 100:F0}%";
         durationMultiplierText.text = $"Duration: {playerStats.durationMultiplier * 100:F0}%";
         knockbackMultiplierText.text = $"Knockback: {playerStats.knockbackMultiplier * 100:F0}%";
         movementSpeedText.text = $"Move Speed: {playerStats.movementSpeed}";

@@ -113,6 +113,8 @@ public class ServerAura : MonoBehaviour
         float radiusSqr = radius * radius;
         float knockbackMult = tracker != null ? tracker.Knockback.Value : (playerStats != null ? playerStats.knockbackMultiplier : 1f);
         float knockback = weaponData.knockback * knockbackMult;
+        // Knockback penetration scales with knockback multiplier bonus (0 at 1x, up to ~0.5 at 2x)
+        float knockbackPen = Mathf.Clamp01((knockbackMult - 1f) * 0.5f);
         int hitCount = 0;
         Vector3 ownerPos = ownerTransform.position; ownerPos.y = 0f;
 
@@ -141,7 +143,7 @@ public class ServerAura : MonoBehaviour
                 if (knockback > 0 && !enemy.CompareTag("Reaper"))
                 {
                     Vector3 dir = (enemy.transform.position - ownerTransform.position); dir.y = 0f; dir.Normalize();
-                    enemy.ApplyKnockback(knockback, 0.1f, dir);
+                    enemy.ApplyKnockback(knockback, 0.1f, dir, knockbackPen);
                 }
             }
         }

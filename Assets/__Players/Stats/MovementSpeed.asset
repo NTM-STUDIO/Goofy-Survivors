@@ -15,6 +15,6 @@ MonoBehaviour:
   statToUpgrade: 11
   upgradeName: Movement Speed
   upgradeDescription: 
-  icon: {fileID: -5447403752590868552, guid: 7b2c28d91c991cd47bf25e8d3b8ea53b, type: 3}
+  icon: {fileID: 21300000, guid: 7b2c28d91c991cd47bf25e8d3b8ea53b, type: 3}
   baseValueMin: 5
   baseValueMax: 10

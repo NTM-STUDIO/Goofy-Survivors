@@ -58,7 +58,9 @@ public class WeaponController : MonoBehaviour
         if (currentCooldown <= 0f)
         {
             Attack();
-            currentCooldown = WeaponData.cooldown / Mathf.Max(0.01f, playerStats.attackSpeedMultiplier);
+            // CDR reduces cooldown: 0.3 CDR = 30% faster = cooldown * (1 - 0.3) = cooldown * 0.7
+            float cdrMultiplier = 1f - Mathf.Clamp(playerStats.cooldownReduction, 0f, 0.9f);
+            currentCooldown = WeaponData.cooldown * Mathf.Max(0.1f, cdrMultiplier);
         }
     }
 
@@ -105,10 +107,13 @@ public class WeaponController : MonoBehaviour
             Transform[] targets = GetTargets(finalAmount);
             DamageResult damageResult = playerStats.CalculateDamage(WeaponData.damage);
 
-            float finalSpeed = WeaponData.speed * playerStats.projectileSpeedMultiplier;
+            // Attack Speed now controls projectile travel speed
+            float finalSpeed = WeaponData.speed * playerStats.attackSpeedMultiplier;
             float finalDuration = WeaponData.duration * playerStats.durationMultiplier;
             float finalKnockback = WeaponData.knockback * playerStats.knockbackMultiplier;
             float finalSize = WeaponData.area * playerStats.projectileSizeMultiplier;
+            // Knockback penetration scales with knockback multiplier bonus (0 at 1x, up to ~0.5 at 2x)
+            float knockbackPen = Mathf.Clamp01((playerStats.knockbackMultiplier - 1f) * 0.5f);
 
             int wId = weaponRegistry != null ? weaponRegistry.GetWeaponId(WeaponData) : -1;
 
@@ -127,7 +132,7 @@ public class WeaponController : MonoBehaviour
                 if (projectile != null)
                 {
                     projectile.ConfigureSource(wId, WeaponData.weaponName);
-                    projectile.Initialize(target, direction, damageResult.damage, damageResult.isCritical, finalSpeed, finalDuration, finalKnockback, finalSize);
+                    projectile.Initialize(target, direction, damageResult.damage, damageResult.isCritical, finalSpeed, finalDuration, finalKnockback, finalSize, knockbackPen);
                     projectile.SetOwnerLocal(playerStats);
                 }
             }
@@ -174,8 +179,7 @@ public class WeaponController : MonoBehaviour
         {
             meleeScript.Initialize(direction, playerStats, WeaponData);
         }
-    }
-    
+}    
     // ... (restante código igual) ...
     private Vector3 GetDirectionToClosestEnemy()
     {
@@ -241,8 +245,17 @@ public class WeaponController : MonoBehaviour
             return;
         }
 
-        // SINGLEPLAYER
-        GameObject cloneObj = Instantiate(WeaponData.weaponPrefab, stats.transform.position, stats.transform.rotation);
+        // SINGLEPLAYER - Spawn clone at player position but NOT as a child
+        // Use world space position, spawn at root
+        Vector3 spawnPos = stats.transform.position;
+        Quaternion spawnRot = stats.transform.rotation;
+        
+        GameObject cloneObj = Instantiate(WeaponData.weaponPrefab);
+        cloneObj.transform.SetParent(null, true);  // Ensure at root, keep world position
+        cloneObj.transform.position = spawnPos;
+        cloneObj.transform.rotation = spawnRot;
+        
+        Debug.Log($"[ShadowClone] Spawned at {cloneObj.transform.position}, parent: {(cloneObj.transform.parent != null ? cloneObj.transform.parent.name : "NULL (root)")}");
 
         // Remove NetworkObject
         SafelyRemoveNetworkObject(cloneObj);

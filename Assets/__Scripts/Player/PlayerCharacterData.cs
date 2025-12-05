@@ -28,11 +28,15 @@ public class PlayerCharacterData : ScriptableObject
     [Range(0f, 1f)]
     public float critChance = 0.05f;
     public float critDamageMultiplier = 2.0f;
+    [Range(0f, 0.9f)]
+    [Tooltip("Cooldown Reduction: 0.1 = 10% faster cooldowns. Max 90%.")]
+    public float cooldownReduction = 0f;
+    [Tooltip("Attack Speed: affects projectile travel speed and aura/melee tick/animation speed.")]
     public float attackSpeedMultiplier = 1.0f;
     public int projectileCount = 1;
     public float projectileSizeMultiplier = 1.0f;
-    public float projectileSpeedMultiplier = 1.0f;
     public float durationMultiplier = 1.0f;
+    [Tooltip("Knockback power - higher values penetrate enemy knockback resistance.")]
     public float knockbackMultiplier = 1.0f;
     public float movementSpeed = 5.0f;
     public float luck = 0f;

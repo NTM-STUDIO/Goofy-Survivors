@@ -15,6 +15,6 @@ MonoBehaviour:
   statToUpgrade: 14
   upgradeName: XP Gain
   upgradeDescription: 
-  icon: {fileID: 7653998179898489512, guid: 3bdd946736cafb045a5a46612f3067d6, type: 3}
+  icon: {fileID: 21300000, guid: 3bdd946736cafb045a5a46612f3067d6, type: 3}
   baseValueMin: 30
   baseValueMax: 45

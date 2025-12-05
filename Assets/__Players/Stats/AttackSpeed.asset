@@ -15,6 +15,6 @@ MonoBehaviour:
   statToUpgrade: 5
   upgradeName: Attack Speed
   upgradeDescription: 
-  icon: {fileID: 1164777188793213590, guid: e42646aabc3f0ab4bb12b4a6d65d0fc9, type: 3}
+  icon: {fileID: 21300000, guid: e42646aabc3f0ab4bb12b4a6d65d0fc9, type: 3}
   baseValueMin: 8
   baseValueMax: 13

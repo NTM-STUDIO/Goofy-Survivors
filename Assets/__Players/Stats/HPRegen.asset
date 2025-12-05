@@ -15,6 +15,6 @@ MonoBehaviour:
   statToUpgrade: 1
   upgradeName: Health Regen
   upgradeDescription: 
-  icon: {fileID: -5398036037791036906, guid: 71f174630728e7246b43bcacf545bf19, type: 3}
+  icon: {fileID: 21300000, guid: 71f174630728e7246b43bcacf545bf19, type: 3}
   baseValueMin: 1
   baseValueMax: 2

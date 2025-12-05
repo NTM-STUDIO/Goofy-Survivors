@@ -67,12 +67,12 @@ public class PlayerStats : NetworkBehaviour
     [HideInInspector] public float damageMultiplier;
     [HideInInspector] public float critChance;
     [HideInInspector] public float critDamageMultiplier;
-    [HideInInspector] public float attackSpeedMultiplier;
+    [HideInInspector] public float cooldownReduction;      // NEW: reduces cooldown between attacks (0-0.9 = 0%-90%)
+    [HideInInspector] public float attackSpeedMultiplier;  // CHANGED: now affects projectile speed AND aura/melee tick speed
     [HideInInspector] public int projectileCount;
     [HideInInspector] public float projectileSizeMultiplier;
-    [HideInInspector] public float projectileSpeedMultiplier;
     [HideInInspector] public float durationMultiplier;
-    [HideInInspector] public float knockbackMultiplier;
+    [HideInInspector] public float knockbackMultiplier;    // CHANGED: now penetrates enemy knockback resistance
     [HideInInspector] public float movementSpeed;
     [HideInInspector] public float luck;
     [HideInInspector] public float pickupRange;
@@ -367,10 +367,10 @@ public class PlayerStats : NetworkBehaviour
         damageMultiplier = characterData.damageMultiplier;
         critChance = characterData.critChance;
         critDamageMultiplier = characterData.critDamageMultiplier;
+        cooldownReduction = characterData.cooldownReduction;
         attackSpeedMultiplier = characterData.attackSpeedMultiplier;
         projectileCount = characterData.projectileCount;
         projectileSizeMultiplier = characterData.projectileSizeMultiplier;
-        projectileSpeedMultiplier = characterData.projectileSpeedMultiplier;
         durationMultiplier = characterData.durationMultiplier;
         knockbackMultiplier = characterData.knockbackMultiplier;
         movementSpeed = characterData.movementSpeed;
@@ -468,10 +468,10 @@ public class PlayerStats : NetworkBehaviour
             case StatType.DamageMultiplier: damageMultiplier += bonus.value; break;
             case StatType.CritChance: critChance += bonus.value; break;
             case StatType.CritDamageMultiplier: critDamageMultiplier += bonus.value; break;
+            case StatType.CooldownReduction: cooldownReduction = Mathf.Clamp(cooldownReduction + bonus.value, 0f, 0.9f); break;
             case StatType.AttackSpeedMultiplier: attackSpeedMultiplier += bonus.value; break;
             case StatType.ProjectileCount: projectileCount += (int)bonus.value; break;
             case StatType.ProjectileSizeMultiplier: projectileSizeMultiplier += bonus.value; break;
-            case StatType.ProjectileSpeedMultiplier: projectileSpeedMultiplier += bonus.value; break;
             case StatType.DurationMultiplier: durationMultiplier += bonus.value; break;
             case StatType.KnockbackMultiplier: knockbackMultiplier += bonus.value; break;
             case StatType.MovementSpeed: movementSpeed += bonus.value; break;
@@ -487,10 +487,10 @@ public class PlayerStats : NetworkBehaviour
     public void IncreaseDamageMultiplier(float amount) { damageMultiplier += amount; }
     public void IncreaseCritChance(float amount) { critChance += amount; }
     public void IncreaseCritDamageMultiplier(float amount) { critDamageMultiplier += amount; }
+    public void IncreaseCooldownReduction(float amount) { cooldownReduction = Mathf.Clamp(cooldownReduction + amount, 0f, 0.9f); }
     public void IncreaseAttackSpeedMultiplier(float amount) { attackSpeedMultiplier += amount; }
     public void IncreaseProjectileCount(int amount) { projectileCount += amount; }
     public void IncreaseProjectileSizeMultiplier(float amount) { projectileSizeMultiplier += amount; }
-    public void IncreaseProjectileSpeedMultiplier(float amount) { projectileSpeedMultiplier += amount; }
     public void IncreaseDurationMultiplier(float amount) { durationMultiplier += amount; }
     public void IncreaseKnockbackMultiplier(float amount) { knockbackMultiplier += amount; }
     public void IncreaseMovementSpeed(float amount) { movementSpeed += amount; }

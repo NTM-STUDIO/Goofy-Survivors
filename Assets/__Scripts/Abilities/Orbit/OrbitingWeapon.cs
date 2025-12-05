@@ -106,7 +106,7 @@ public class OrbitingWeapon : NetworkBehaviour
                 // If we have server spawn time, compute angle with elapsed time; else use provided startAngle
                 if (netSpawnTime.Value > 0.0)
                 {
-                    float rotationSpeed = weaponData.speed * statsTracker.ProjectileSpeed.Value;
+                    float rotationSpeed = weaponData.speed * statsTracker.AttackSpeedMultiplier.Value;  // Attack Speed controls orbit speed
                     double elapsed = NetworkManager.Singleton.ServerTime.Time - netSpawnTime.Value;
                     this.currentAngle = startAngle + (float)elapsed * rotationSpeed;
                     if (this.currentAngle > 360f || this.currentAngle < -360f) this.currentAngle = Mathf.Repeat(this.currentAngle, 360f);
@@ -197,7 +197,7 @@ public class OrbitingWeapon : NetworkBehaviour
             {
                 this.lifetime = weaponData.duration * statsTracker.Duration.Value;
                 // Sync angle based on server spawn time for consistent phase
-                float rotationSpeed = weaponData.speed * statsTracker.ProjectileSpeed.Value;
+                float rotationSpeed = weaponData.speed * statsTracker.AttackSpeedMultiplier.Value;  // Attack Speed controls orbit speed
                 double elapsed = nm.ServerTime.Time - netSpawnTime.Value;
                 this.currentAngle = netStartAngle.Value + (float)elapsed * rotationSpeed;
                 if (this.currentAngle > 360f || this.currentAngle < -360f) this.currentAngle = Mathf.Repeat(this.currentAngle, 360f);
@@ -297,7 +297,7 @@ public class OrbitingWeapon : NetworkBehaviour
 
         // --- DYNAMIC STAT CALCULATION ---
         float finalSize = weaponData.area * GetProjectileSizeMultiplier();
-        float rotationSpeed = weaponData.speed * GetProjectileSpeedMultiplier();
+        float rotationSpeed = weaponData.speed * GetAttackSpeedMultiplier();  // Attack Speed controls orbit/rotation speed
         float orbitRadius = finalSize * 16f;
 
         // Apply visual stats every frame
@@ -366,9 +366,11 @@ public class OrbitingWeapon : NetworkBehaviour
                 {
                     // Use the synced tracker to get the knockback value.
                     float knockbackForce = weaponData.knockback * GetKnockbackMultiplier();
+                    // Knockback penetration scales with knockback multiplier bonus
+                    float knockbackPen = Mathf.Clamp01((GetKnockbackMultiplier() - 1f) * 0.5f);
                     Vector3 knockbackDir = (other.transform.position - orbitCenter.position).normalized;
                     knockbackDir.y = 0;
-                    enemyStats.ApplyKnockback(knockbackForce, 0.4f, knockbackDir);
+                    enemyStats.ApplyKnockback(knockbackForce, 0.4f, knockbackDir, knockbackPen);
                 }
             }
         }
@@ -407,11 +409,11 @@ public class OrbitingWeapon : NetworkBehaviour
         return playerStats != null ? playerStats.projectileSizeMultiplier : 1f;
     }
 
-    private float GetProjectileSpeedMultiplier()
+    private float GetAttackSpeedMultiplier()
     {
         if (isP2P)
-            return statsTracker != null ? statsTracker.ProjectileSpeed.Value : 1f;
-        return playerStats != null ? playerStats.projectileSpeedMultiplier : 1f;
+            return statsTracker != null ? statsTracker.AttackSpeedMultiplier.Value : 1f;
+        return playerStats != null ? playerStats.attackSpeedMultiplier : 1f;
     }
 
     private float GetDurationMultiplier()
