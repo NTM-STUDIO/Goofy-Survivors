@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: -78935388408389742}
   - component: {fileID: 8983365130009803366}
   - component: {fileID: 8965158105383660420}
+  - component: {fileID: 3186595030535058111}
   m_Layer: 0
   m_Name: BladeVortex
   m_TagString: Ability
@@ -128,6 +129,23 @@ CapsuleCollider:
   m_Height: 1.67
   m_Direction: 1
   m_Center: {x: 0.72, y: 3, z: 1.04}
+--- !u!114 &3186595030535058111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6260151671241025186}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IsGlobal: 0
+  priority: 1
+  blendDistance: 0
+  weight: 1
+  sharedProfile: {fileID: 11400000, guid: b5384e8ef08246840966b4455a7bd756, type: 2}
 --- !u!1 &6942697660582106786
 GameObject:
   m_ObjectHideFlags: 0
