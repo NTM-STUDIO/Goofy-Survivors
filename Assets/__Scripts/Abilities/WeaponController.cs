@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
 using Unity.Netcode;
+using System.Reflection;
 
 public class WeaponController : MonoBehaviour
 {
@@ -14,6 +15,8 @@ public class WeaponController : MonoBehaviour
     private bool isWeaponOwner;
     private float currentCooldown;
     private bool meleeSpawned = false; // Flag para armas melee permanentes
+
+    public bool IsReady => currentCooldown <= 0f;
 
     void Awake()
     {
@@ -84,7 +87,7 @@ public class WeaponController : MonoBehaviour
         }
 
         // Lógica de Disparo
-        if (weaponManager != null && GameManager.Instance.isP2P)
+        if (weaponManager != null && GameManager.Instance != null && GameManager.Instance.isP2P)
         {
             // MULTIPLAYER: Pede ao Manager
             int finalAmount = WeaponData.amount + playerStats.projectileCount;
@@ -160,7 +163,7 @@ public class WeaponController : MonoBehaviour
         Vector3 spawnPos = transform.position + new Vector3(0, 1.5f, 0);
         GameObject weaponObj = Instantiate(WeaponData.weaponPrefab, spawnPos, Quaternion.identity);
         
-        SafelyRemoveNetworkObject(weaponObj);
+        SafelyRemoveNetworkObject(weaponObj, true);
 
         // 2. Define o Pai e Reseta Rotação Local
         weaponObj.transform.SetParent(transform); 
@@ -245,25 +248,41 @@ public class WeaponController : MonoBehaviour
             return;
         }
 
-        // SINGLEPLAYER - Spawn clone at player position but NOT as a child
+        // SINGLEPLAYER - Spawn clone at player position with small random offset
+        // Check for existing clone limit
+        PlayerWeaponManager effectiveManager = weaponManager != null ? weaponManager : stats.GetComponent<PlayerWeaponManager>();
+        if (effectiveManager != null && effectiveManager.ActiveShadowCloneLocal != null)
+        {
+            if (effectiveManager.ActiveShadowCloneLocal.gameObject != null)
+                Destroy(effectiveManager.ActiveShadowCloneLocal.gameObject);
+            effectiveManager.ActiveShadowCloneLocal = null;
+        }
+
         // Use world space position, spawn at root
-        Vector3 spawnPos = stats.transform.position;
+        Vector2 randomOffset = UnityEngine.Random.insideUnitCircle.normalized * 1.5f;
+        Vector3 spawnPos = stats.transform.position + new Vector3(randomOffset.x, 0, randomOffset.y);
         Quaternion spawnRot = stats.transform.rotation;
         
-        GameObject cloneObj = Instantiate(WeaponData.weaponPrefab);
-        cloneObj.transform.SetParent(null, true);  // Ensure at root, keep world position
-        cloneObj.transform.position = spawnPos;
-        cloneObj.transform.rotation = spawnRot;
+        Debug.Log($"[WeaponController] Spawning ShadowClone at {spawnPos} (Player at {stats.transform.position})");
+        GameObject cloneObj = Instantiate(WeaponData.weaponPrefab, spawnPos, spawnRot);
         
-        Debug.Log($"[ShadowClone] Spawned at {cloneObj.transform.position}, parent: {(cloneObj.transform.parent != null ? cloneObj.transform.parent.name : "NULL (root)")}");
-
+        if (cloneObj.transform.parent != null)
+        {
+            cloneObj.transform.SetParent(null, true);  // Ensure at root
+        }
+        
         // Remove NetworkObject
         SafelyRemoveNetworkObject(cloneObj);
 
         ShadowClone cloneScript = cloneObj.GetComponent<ShadowClone>();
         if (cloneScript == null) cloneScript = cloneObj.AddComponent<ShadowClone>();
+        
+        // Register new clone
+        if (effectiveManager != null) effectiveManager.ActiveShadowCloneLocal = cloneScript;
 
         List<WeaponData> weaponsToClone;
+
+        // Primeiro tenta obter via weaponManager (normal)
         if (weaponManager != null)
         {
             weaponsToClone = weaponManager
@@ -273,10 +292,26 @@ public class WeaponController : MonoBehaviour
         }
         else
         {
-            weaponsToClone = new List<WeaponData> { WeaponData };
+            // fallback: tenta obter PlayerWeaponManager a partir do PlayerStats (stats pode ser o player)
+            var playerWeaponManager = stats.GetComponent<PlayerWeaponManager>();
+            if (playerWeaponManager != null)
+            {
+                weaponsToClone = playerWeaponManager
+                    .GetOwnedWeapons()
+                    .Where(w => w.archetype != WeaponArchetype.ShadowCloneJutsu && w.archetype != WeaponArchetype.Projectile)
+                    .ToList();
+            }
+            else
+            {
+                // último recurso: clona apenas a própria skill (ShadowCloneJutsu) para evitar nulo
+                weaponsToClone = new List<WeaponData> { WeaponData };
+            }
         }
 
         cloneScript.Initialize(weaponsToClone, stats, weaponRegistry);
+        
+        if (effectiveManager != null)
+            effectiveManager.ActiveShadowCloneLocal = cloneScript;
     }
 
     private void SpawnOrbitingWeaponsAroundSelf()
@@ -299,8 +334,8 @@ public class WeaponController : MonoBehaviour
                 tracker.SetParentClone(parentClone);
             }
 
-            // 3. Define pai (Seguro agora)
-            orbitingWeaponObj.transform.SetParent(transform, false);
+            // 3. NÃO definir pai para evitar exceção do NetworkObject em SP (orbiting handle movement itself)
+            // orbitingWeaponObj.transform.SetParent(transform, false);
 
             var orbiter = orbitingWeaponObj.GetComponent<OrbitingWeapon>();
             if (orbiter != null)
@@ -323,11 +358,17 @@ public class WeaponController : MonoBehaviour
             // 1. Instancia sem pai
             GameObject auraObj = Instantiate(WeaponData.weaponPrefab, parent.position, Quaternion.identity);
 
-            // 2. Remove NetworkObject IMEDIATAMENTE (Segredo do fix)
-            SafelyRemoveNetworkObject(auraObj);
+            // 2. Remove NetworkObject
+            SafelyRemoveNetworkObject(auraObj); // Will use Destroy (deferred) if inside physics callback
 
-            // 3. Define pai (Seguro agora)
-            auraObj.transform.SetParent(parent);
+            // 3. Define pai com atraso para garantir que NetworkObject já foi destruído
+            // Isso evita "NotListeningException" se removemos via Destroy() num frame de física
+            if (this != null && this.gameObject.activeInHierarchy) {
+                StartCoroutine(ParentAfterDelay(auraObj, parent));
+            } else {
+                // Fallback se não puder iniciar coroutine (raro)
+                try { auraObj.transform.SetParent(parent); } catch {}
+            }
 
             AuraWeapon aura = auraObj.GetComponent<AuraWeapon>();
             if (aura != null) { aura.Initialize(playerStats, WeaponData); }
@@ -339,16 +380,72 @@ public class WeaponController : MonoBehaviour
         }
     }
 
+    private System.Collections.IEnumerator ParentAfterDelay(GameObject child, Transform parent)
+    {
+        // Espera um frame para o Destroy(component) processar e remover o NetworkObject
+        yield return null;
+        if (child != null && parent != null)
+        {
+            child.transform.SetParent(parent);
+            child.transform.localPosition = Vector3.zero; // Opcional: Centrar
+        }
+    }
+
     // --- FUNÇÃO AUXILIAR DE SEGURANÇA ---
-    private void SafelyRemoveNetworkObject(GameObject obj)
+    private void SafelyRemoveNetworkObject(GameObject obj, bool immediate = false)
     {
         // Se estivermos em Singleplayer puro, remove o NetworkObject para não dar erro ao mudar de pai ou instanciar
         if (GameManager.Instance != null && !GameManager.Instance.isP2P)
         {
             var netObj = obj.GetComponent<NetworkObject>();
-            // DestroyImmediate é necessário porque o Destroy normal demora 1 frame
-            // e o código a seguir (SetParent) executaria antes do componente sumir.
-            if (netObj != null) DestroyImmediate(netObj);
+            if (netObj != null)
+            {
+                // Se outro componente no objeto declarar [RequireComponent(typeof(NetworkObject))],
+                // Unity não permite remover o componente (provoca o erro que vimos).
+                // Verificamos por dependências e, se existirem, apenas desativamos o NetworkObject em vez de removê-lo.
+                bool hasRequireDependency = false;
+                var components = obj.GetComponents<Component>();
+                foreach (var comp in components)
+                {
+                    if (comp == null) continue;
+                    var compType = comp.GetType();
+                    // Skip the NetworkObject itself
+                    if (compType == typeof(NetworkObject)) continue;
+
+                    var reqAttrs = compType.GetCustomAttributes(typeof(RequireComponent), true) as RequireComponent[];
+                    if (reqAttrs == null || reqAttrs.Length == 0) continue;
+
+                    foreach (var req in reqAttrs)
+                    {
+                        if (req == null) continue;
+                        // Use reflection to inspect fields of the attribute (m_Type0/m_Type1/m_Type2)
+                        var fields = req.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                        foreach (var f in fields)
+                        {
+                            if (!typeof(System.Type).IsAssignableFrom(f.FieldType)) continue;
+                            var val = f.GetValue(req) as System.Type;
+                            if (val == typeof(NetworkObject))
+                            {
+                                hasRequireDependency = true;
+                                break;
+                            }
+                        }
+                        if (hasRequireDependency) break;
+                    }
+                    if (hasRequireDependency) break;
+                }
+
+                if (!hasRequireDependency)
+                {
+                    if (immediate) DestroyImmediate(netObj);
+                    else Destroy(netObj);
+                }
+                else
+                {
+                    // Não podemos remover o componente por causa de dependências; apenas desativamos para evitar lógica de rede
+                    try { netObj.enabled = false; } catch { }
+                }
+            }
         }
     }
 

@@ -207,7 +207,9 @@ public class EnemyStats : NetworkBehaviour
         return;
     }
 
-    if (CurrentHealth <= 0) return;        OnEnemyDamaged?.Invoke(this);
+        if (CurrentHealth <= 0) return;
+        
+        OnEnemyDamaged?.Invoke(this);
         if (damage > 0f) OnEnemyDamagedWithAmount?.Invoke(this, damage, attacker);
         CurrentHealth -= damage;
 

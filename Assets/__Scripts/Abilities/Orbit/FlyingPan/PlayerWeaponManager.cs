@@ -26,8 +26,15 @@ public class PlayerWeaponManager : NetworkBehaviour
 
     // Local single-player references
     private readonly Dictionary<int, GameObject> localShieldObjects = new Dictionary<int, GameObject>();
+    
+    // Shadow Clone Tracking
+    private NetworkObject activeShadowCloneServer; // Server-side reference (MP)
+    public ShadowClone ActiveShadowCloneLocal { get; set; } // Local reference (SP)
 
     private bool shieldSubscribed = false;
+
+    // Event notifying when a weapon is added locally
+    public event System.Action<WeaponData> OnWeaponAdded;
 
     #region Initialization and Lifecycle
     void Awake()
@@ -629,6 +636,14 @@ public class PlayerWeaponManager : NetworkBehaviour
     private void RequestSpawnShadowCloneServerRpc(int cloneWeaponId, int[] weaponIdsToClone)
     {
         if (!IsServer) return;
+        
+        // Enforce limit: 1 Clone per player
+        if (activeShadowCloneServer != null && activeShadowCloneServer.IsSpawned)
+        {
+            activeShadowCloneServer.Despawn(true); // Despawn server-side and destroy
+            activeShadowCloneServer = null;
+        }
+
         WeaponData cloneData = weaponRegistry.GetWeaponData(cloneWeaponId);
         if (cloneData == null || cloneData.weaponPrefab == null) return;
 
@@ -648,6 +663,7 @@ public class PlayerWeaponManager : NetworkBehaviour
             return;
         }
         cloneNO.Spawn(true);
+        activeShadowCloneServer = cloneNO;
 
         // For each aura in the cloned list, create a NETWORKED AuraWeapon attached to the clone (server applies damage)
         foreach (var wid in weaponIdsToClone)
@@ -730,6 +746,28 @@ public class PlayerWeaponManager : NetworkBehaviour
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(ownerNetId, out var found)) ownerNO = found;
 
         // Auras are network-spawned by the server; nothing to do here for auras.
+        
+        // FIX: Initialize the ShadowClone functionality on client side so it knows who to follow
+        var cloneScript = cloneNO.GetComponent<ShadowClone>();
+        if (cloneScript != null && ownerNO != null)
+        {
+            PlayerStats stats = ownerNO.GetComponent<PlayerStats>();
+            if (stats != null)
+            {
+                // Reconstruct weapon list from IDs
+                List<WeaponData> weapons = new List<WeaponData>();
+                if (weaponRegistry != null && weaponIdsToClone != null)
+                {
+                    foreach (int id in weaponIdsToClone)
+                    {
+                        var w = weaponRegistry.GetWeaponData(id);
+                        if (w != null) weapons.Add(w);
+                    }
+                }
+                
+                cloneScript.Initialize(weapons, stats, weaponRegistry);
+            }
+        }
     }
     #endregion
 
@@ -817,6 +855,9 @@ public class PlayerWeaponManager : NetworkBehaviour
         controller.Initialize(weaponId, weaponData, this, playerStats, isOwner, weaponRegistry);
         
         localWeaponControllers.Add(controller);
+        
+        // Notify listeners (e.g. active Shadow Clones)
+        OnWeaponAdded?.Invoke(weaponData);
     }
 
     private void InitializeExistingWeaponsForLateJoin()
