@@ -2750,7 +2750,7 @@ MonoBehaviour:
   isP2P: 0
   totalGameTime: 180
   sessionSeed:
-    m_InternalValue: 0
+    m_InternalValue: 1
   spawnManager: {fileID: 715600227}
   difficultyManager: {fileID: 438673636}
   reviveManager: {fileID: 2072456960}
@@ -3097,20 +3097,20 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   networkedAssets:
   - assetPrefab: {fileID: 1010114737999647873, guid: 400cca9a532574a48875d09870502710, type: 3}
-    weight: 24
+    weight: 0.1
   - assetPrefab: {fileID: 485895516535105435, guid: 5922ebbfd4d78944e8dc01825f225fe0, type: 3}
     weight: 0.01
   - assetPrefab: {fileID: 2745972941608320513, guid: ff73d214ee77c384b9df26ce0a06af07, type: 3}
-    weight: 12
-  networkedDensity: 0.005
+    weight: 10
+  networkedDensity: 0.01
   decorationAssets:
   - assetPrefab: {fileID: 7593117020678281446, guid: cc5fe909f8431a3459f0bd28352c1d66, type: 3}
     weight: 90
   - assetPrefab: {fileID: 383518980796734899, guid: 3c470efbfdb7fc2489ee1cbd65392cda, type: 3}
     weight: 0.5
   decorationDensity: 0.01
-  mapWidth: 10000
-  mapHeight: 10000
+  mapWidth: 1000
+  mapHeight: 1000
   chunkSize: 40
   viewDistance: 2
 --- !u!4 &729974982
@@ -6142,6 +6142,7 @@ MonoBehaviour:
   spawnCollisionCheckRadius: 1
   fadeInDuration: 0.5
   showReplacementLogs: 0
+  evolutionInterval: 30
 --- !u!1 &1722353127
 GameObject:
   m_ObjectHideFlags: 0
