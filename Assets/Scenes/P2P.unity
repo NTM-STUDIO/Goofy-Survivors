@@ -3097,7 +3097,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   networkedAssets:
   - assetPrefab: {fileID: 1010114737999647873, guid: 400cca9a532574a48875d09870502710, type: 3}
-    weight: 0.6
+    weight: 24
   - assetPrefab: {fileID: 485895516535105435, guid: 5922ebbfd4d78944e8dc01825f225fe0, type: 3}
     weight: 0.01
   - assetPrefab: {fileID: 2745972941608320513, guid: ff73d214ee77c384b9df26ce0a06af07, type: 3}
