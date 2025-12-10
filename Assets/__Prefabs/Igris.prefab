@@ -230,6 +230,7 @@ GameObject:
   - component: {fileID: 970832936446384357}
   - component: {fileID: 4928855642863439827}
   - component: {fileID: 795319797629034320}
+  - component: {fileID: 5750950513774518489}
   m_Layer: 0
   m_Name: Visuals (1)
   m_TagString: Enemy
@@ -275,7 +276,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -876546973899608171, guid: c37452856ba0e3b4abb3d4f46d494167, type: 3}
+  - {fileID: 2100000, guid: c7db07a78a0b3d14eb6682f0f0cdeb5d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -379,6 +380,21 @@ CapsuleCollider:
   m_Height: 16.636175
   m_Direction: 2
   m_Center: {x: -0.058990207, y: 1.71, z: 6.451638}
+--- !u!114 &5750950513774518489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7889685272071273777}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78a52d7d696b0d049a0a80709b276b1e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bloomIntensity: 1.97
+  emissionColor: {r: 0, g: 1, b: 0.9083636, a: 1}
+  emissionPower: 6.18
 --- !u!1 &9116392235869641759
 GameObject:
   m_ObjectHideFlags: 0
@@ -432,14 +448,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2909326390
-  InScenePlacedSourceGlobalObjectIdHash: 0
+  GlobalObjectIdHash: 2619295852
+  InScenePlacedSourceGlobalObjectIdHash: 2909326390
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
@@ -462,6 +478,7 @@ MonoBehaviour:
   randomizeOnAwake: 1
   predictiveChance: 0.6
   flankChance: 0.3
+  targetUpdateInterval: 1
   leadTime: 0.5
   flankOffset: 2
   flankFalloffDistance: 2
@@ -469,8 +486,7 @@ MonoBehaviour:
   selfKnockbackForce: 20
   selfKnockbackDuration: 1
   showGizmos: 1
-  tryNerfHorizontal: 0
-  horizontalNerfMultiplier: 0.56
+  useScreenSpaceCorrection: 1
 --- !u!54 &6562184088800466058
 Rigidbody:
   m_ObjectHideFlags: 0

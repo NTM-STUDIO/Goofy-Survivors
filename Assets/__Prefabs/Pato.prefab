@@ -423,10 +423,10 @@ MonoBehaviour:
   damageMultiplier: 0
   critChance: 0
   critDamageMultiplier: 0
+  cooldownReduction: 0
   attackSpeedMultiplier: 0
   projectileCount: 0
   projectileSizeMultiplier: 0
-  projectileSpeedMultiplier: 0
   durationMultiplier: 0
   knockbackMultiplier: 0
   movementSpeed: 0
@@ -434,6 +434,8 @@ MonoBehaviour:
   pickupRange: 0
   xpGainMultiplier: 0
   pierceCount: 0
+  totalDamageDealt: 0
+  totalReaperDamageDealt: 0
   currentHp: 0
   invincibilityDuration: 0.4
   invincible: 0
@@ -630,7 +632,7 @@ Camera:
   far clip plane: 150
   field of view: 55
   orthographic: 1
-  orthographic size: 20
+  orthographic size: 30
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -712,7 +714,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   target: {fileID: 0}
-  orthoMinSize: 25
+  orthoMinSize: 30
   orthoMaxSize: 30
   perspMinFov: 25
   perspMaxFov: 60

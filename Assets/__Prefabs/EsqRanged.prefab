@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 7030938786625457844}
   - component: {fileID: 809436061795207691}
   - component: {fileID: 5867644205551216357}
+  - component: {fileID: 6323540227365989987}
   m_Layer: 7
   m_Name: Visuals
   m_TagString: Enemy
@@ -88,7 +89,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10308, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: c7db07a78a0b3d14eb6682f0f0cdeb5d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -169,6 +170,21 @@ CapsuleCollider:
   m_Height: 16.636173
   m_Direction: 2
   m_Center: {x: -0.058990218, y: 1.496378, z: 6.451638}
+--- !u!114 &6323540227365989987
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5047278066370704736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78a52d7d696b0d049a0a80709b276b1e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bloomIntensity: 0.9
+  emissionColor: {r: 0.078849986, g: 0, b: 0.11320752, a: 1}
+  emissionPower: 0
 --- !u!1 &6881057679845740801
 GameObject:
   m_ObjectHideFlags: 0
@@ -278,14 +294,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1636982426
-  InScenePlacedSourceGlobalObjectIdHash: 0
+  GlobalObjectIdHash: 1856379022
+  InScenePlacedSourceGlobalObjectIdHash: 1636982426
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
