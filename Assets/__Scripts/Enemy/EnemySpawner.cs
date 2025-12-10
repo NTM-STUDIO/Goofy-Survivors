@@ -203,17 +203,8 @@ public void StopAndReset()
             if (NetworkManager.Singleton.IsServer)
             {
                 int playerCount = NetworkManager.Singleton.ConnectedClientsList.Count;
-                Debug.Log($"[EnemySpawner] GetPlayerCountMultiplier: IsServer=true, ConnectedClients={playerCount}");
                 return Mathf.Max(1, playerCount);
             }
-            else
-            {
-                Debug.Log("[EnemySpawner] GetPlayerCountMultiplier: Não é servidor, retornando 1");
-            }
-        }
-        else
-        {
-            Debug.Log("[EnemySpawner] GetPlayerCountMultiplier: NetworkManager não está a ouvir, retornando 1 (Singleplayer)");
         }
 
         // Single-player: wave normal
@@ -255,9 +246,8 @@ public void StopAndReset()
             Debug.Log("Starting Wave: " + (currentWave.waveName != "" ? currentWave.waveName : (waveIndex + 1).ToString()));
 
             // Calculate multiplier based on number of connected players
-            // RECALCULA a cada wave para suportar jogadores que entrem/saiam
             int playerMultiplier = GetPlayerCountMultiplier();
-            Debug.Log($"[EnemySpawner] Wave {waveIndex}: playerMultiplier = {playerMultiplier}");
+            Debug.Log($"EnemySpawner: Player multiplier is {playerMultiplier}");
 
             List<int> remainingCounts = new List<int>();
             int totalEnemiesToSpawn = 0;
@@ -268,10 +258,7 @@ public void StopAndReset()
                 int clampedCount = Mathf.Max(0, waveEnemy.enemyCount * playerMultiplier);
                 remainingCounts.Add(clampedCount);
                 totalEnemiesToSpawn += clampedCount;
-                Debug.Log($"[EnemySpawner] Enemy {waveEnemy.enemyPrefab?.name}: base={waveEnemy.enemyCount}, final={clampedCount}");
             }
-
-            Debug.Log($"[EnemySpawner] Total enemies to spawn this wave: {totalEnemiesToSpawn}");
 
             if (totalEnemiesToSpawn == 0)
             {
