@@ -305,14 +305,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2103521596
-  InScenePlacedSourceGlobalObjectIdHash: 0
+  GlobalObjectIdHash: 1523618053
+  InScenePlacedSourceGlobalObjectIdHash: 2103521596
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
@@ -349,6 +349,10 @@ MonoBehaviour:
   orbDrops:
   - orbPrefab: {fileID: 8326750618715067698, guid: b16da58f35868b846a58e1a345e542c0, type: 3}
     dropChance: 100
+  CurrentGenes:
+    SpeedMultiplier: 0
+    HealthMultiplier: 0
+    DamageMultiplier: 0
 --- !u!114 &1768071669699037903
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -408,6 +412,7 @@ GameObject:
   - component: {fileID: 7944771917478177986}
   - component: {fileID: 1699042113148614376}
   - component: {fileID: 2536424878690195499}
+  - component: {fileID: 4720355360068461760}
   m_Layer: 0
   m_Name: Zappy
   m_TagString: Enemy
@@ -454,7 +459,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -876546973899608171, guid: c37452856ba0e3b4abb3d4f46d494167, type: 3}
+  - {fileID: 2100000, guid: c7db07a78a0b3d14eb6682f0f0cdeb5d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -558,3 +563,18 @@ MonoBehaviour:
   manualOverrideDirection: 0
   manualQuadrant: 2
   applyOverridesEveryFrame: 1
+--- !u!114 &4720355360068461760
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4514065415740954002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78a52d7d696b0d049a0a80709b276b1e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bloomIntensity: 0.79
+  emissionColor: {r: 1, g: 1, b: 1, a: 1}
+  emissionPower: 5.45

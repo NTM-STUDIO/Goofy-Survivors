@@ -123,7 +123,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78a52d7d696b0d049a0a80709b276b1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bloomIntensity: 2.12
+  bloomIntensity: 4.76
   emissionColor: {r: 0, g: 1, b: 0.5411823, a: 1}
   emissionPower: 0.03
 --- !u!1 &6414582260825821178

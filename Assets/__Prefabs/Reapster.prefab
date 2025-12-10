@@ -112,7 +112,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 406942511
+  GlobalObjectIdHash: 4216073786
   InScenePlacedSourceGlobalObjectIdHash: 1059610266
   DeferredDespawnTick: 0
   Ownership: 1
@@ -180,6 +180,10 @@ MonoBehaviour:
   resistanceIncreasePerHit: 0.1
   maxResistance: 0.8
   orbDrops: []
+  CurrentGenes:
+    SpeedMultiplier: 0
+    HealthMultiplier: 0
+    DamageMultiplier: 0
 --- !u!114 &2119665405729002742
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -614,9 +618,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78a52d7d696b0d049a0a80709b276b1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bloomIntensity: 1.65
+  bloomIntensity: 1.9
   emissionColor: {r: 0.13694468, g: 0, b: 0.5943396, a: 1}
-  emissionPower: 7.99
+  emissionPower: 27
 --- !u!1 &8713598675865355298
 GameObject:
   m_ObjectHideFlags: 0

@@ -106,7 +106,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 154833957
+  GlobalObjectIdHash: 365187318
   InScenePlacedSourceGlobalObjectIdHash: 51784457
   DeferredDespawnTick: 0
   Ownership: 1
@@ -150,6 +150,10 @@ MonoBehaviour:
   orbDrops:
   - orbPrefab: {fileID: 8326750618715067698, guid: cf8c502583dc846429ef24883c06c64e, type: 3}
     dropChance: 100
+  CurrentGenes:
+    SpeedMultiplier: 0
+    HealthMultiplier: 0
+    DamageMultiplier: 0
 --- !u!114 &1206469369555080901
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -354,6 +358,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78a52d7d696b0d049a0a80709b276b1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bloomIntensity: 1.61
-  emissionColor: {r: 0, g: 1, b: 0.77228, a: 1}
-  emissionPower: 1.31
+  bloomIntensity: 2.98
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
+  emissionPower: 27.17

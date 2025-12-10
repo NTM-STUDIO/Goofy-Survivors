@@ -124,6 +124,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4039407430364483504}
   - component: {fileID: 5578774135293464776}
+  - component: {fileID: 2511799039808297070}
   m_Layer: 3
   m_Name: ChestSprite
   m_TagString: Chest
@@ -169,7 +170,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10308, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: c7db07a78a0b3d14eb6682f0f0cdeb5d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -201,3 +202,18 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &2511799039808297070
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8334016912728966066}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78a52d7d696b0d049a0a80709b276b1e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bloomIntensity: 1
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
+  emissionPower: 1
