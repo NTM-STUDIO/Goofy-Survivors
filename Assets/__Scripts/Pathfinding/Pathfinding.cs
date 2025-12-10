@@ -8,7 +8,6 @@ public class Pathfinding : MonoBehaviour
 
     private void Awake()
     {
-        // Singleton pattern
         if (Instance == null)
         {
             Instance = this;

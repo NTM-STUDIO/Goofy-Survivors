@@ -70,6 +70,15 @@ public class EnemyStats : NetworkBehaviour
     private readonly NetworkVariable<float> netBaseDamage = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private readonly NetworkVariable<float> netMoveSpeed = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private readonly NetworkVariable<int> netMutation = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    // GENERIC GENES SYNC
+    private readonly NetworkVariable<EnemyGenes> netGenes = new NetworkVariable<EnemyGenes>(
+        EnemyGenes.Default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    
+    // Genetic metrics
+    public EnemyGenes CurrentGenes;
+    public float DamageDealt { get; private set; }
+    public float TimeAlive { get; private set; }
+    private float startTime;
 
     void Awake()
     {
@@ -107,6 +116,7 @@ public class EnemyStats : NetworkBehaviour
                 netBaseDamage.Value = baseDamage;
                 netMoveSpeed.Value = moveSpeed;
                 netMutation.Value = (int)CurrentMutation;
+                netGenes.Value = CurrentGenes; // Sync initial genes
             }
             else
             {
@@ -115,9 +125,14 @@ public class EnemyStats : NetworkBehaviour
                 baseDamage = netBaseDamage.Value;
                 moveSpeed = netMoveSpeed.Value;
                 CurrentMutation = (MutationType)netMutation.Value;
+                CurrentGenes = netGenes.Value;
+                
+                // Visuals for client
+                UpdateGeneVisuals();
 
                 netCurrentHealth.OnValueChanged += OnNetworkHealthChanged;
                 netMutation.OnValueChanged += OnNetworkMutationChanged;
+                netGenes.OnValueChanged += OnGenesChanged; // Listen for late changes
             }
         }
         else
@@ -125,7 +140,13 @@ public class EnemyStats : NetworkBehaviour
             float finalHealth = baseHealth * (GameManager.Instance != null ? GameManager.Instance.currentEnemyHealthMultiplier : 1f);
             MaxHealth = finalHealth;
             CurrentHealth = finalHealth;
+            // SP: Apply genes immediately
+            // Note: ApplyGenes should have been called by spawner before Start if possible, 
+            // but we ensure visual update here just in case.
+            UpdateGeneVisuals();
         }
+        
+        startTime = Time.time;
     }
 
     public void TakeDamage(float damage, bool isCritical)
@@ -176,6 +197,9 @@ public class EnemyStats : NetworkBehaviour
 
             float newHealth = netCurrentHealth.Value - damage;
             netCurrentHealth.Value = newHealth;
+            
+            // GENETIC TRACKING
+            DamageDealt += damage;
 
             if (damagePopupPrefab != null)
             {
@@ -188,30 +212,34 @@ public class EnemyStats : NetworkBehaviour
                 flashCoroutine = StartCoroutine(FlashColor());
             }
 
-        // Record damage for the attacker if available (notify owner via ClientRpc in multiplayer)
-        if (attacker != null && damage > 0f)
-        {
-            attacker.RecordDamageClientRpc(damage);
-            
-            // Also record Reaper damage separately if this is the boss
-            if (CompareTag("Reaper"))
+            // Record damage for the attacker if available (notify owner via ClientRpc in multiplayer)
+            if (attacker != null && damage > 0f)
             {
-                attacker.RecordReaperDamageClientRpc(damage);
+                attacker.RecordDamageClientRpc(damage);
+                
+                // Also record Reaper damage separately if this is the boss
+                if (CompareTag("Reaper"))
+                {
+                    attacker.RecordReaperDamageClientRpc(damage);
+                }
             }
+
+            if (newHealth <= 0f)
+            {
+                Die();
+            }
+            return;
         }
 
-        if (newHealth <= 0f)
-        {
-            Die();
-        }
-        return;
-    }
-
+        // SINGLEPLAYER
         if (CurrentHealth <= 0) return;
         
         OnEnemyDamaged?.Invoke(this);
         if (damage > 0f) OnEnemyDamagedWithAmount?.Invoke(this, damage, attacker);
         CurrentHealth -= damage;
+        
+        // GENETIC TRACKING
+        DamageDealt += damage;
 
         if (damagePopupPrefab != null)
         {
@@ -276,6 +304,9 @@ public class EnemyStats : NetworkBehaviour
 
         OnEnemyDamaged?.Invoke(this);
         if (damage > 0f) OnEnemyDamagedWithAmount?.Invoke(this, damage, attacker);
+
+        // GENETIC TRACKING
+        DamageDealt += damage;
 
         float newHealth = netCurrentHealth.Value - damage;
         netCurrentHealth.Value = newHealth;
@@ -408,6 +439,13 @@ public class EnemyStats : NetworkBehaviour
     public void Die()
     {
         if (!gameObject.activeSelf) return;
+        
+        // Report Fitness to Genetic Manager (if active)
+        TimeAlive = Time.time - startTime;
+        if (EnemySpawner.Instance != null)
+        {
+            EnemySpawner.Instance.ReportEnemyFitness(CurrentGenes, DamageDealt, TimeAlive);
+        }
 
         // If this is the reaper, cache the damage in GameManager before despawn/destroy
         if (GameManager.Instance != null && GameManager.Instance.reaperStats == this)
@@ -559,6 +597,62 @@ public class EnemyStats : NetworkBehaviour
         {
             if (netCurrentHealth != null) netCurrentHealth.OnValueChanged -= OnNetworkHealthChanged;
             if (netMutation != null) netMutation.OnValueChanged -= OnNetworkMutationChanged;
+            if (netGenes != null) netGenes.OnValueChanged -= OnGenesChanged;
+        }
+    }
+
+    // --- GENETIC METHODS ---
+    public void ApplyGenes(EnemyGenes genes)
+    {
+        CurrentGenes = genes;
+        
+        // Apply Multipliers
+        // NOTE: Base stats might already include difficulty multipliers from GameManager.
+        // We multiply ON TOP of them.
+        
+        float oldHealth = baseHealth;
+        float oldSpeed = moveSpeed;
+        float oldDamage = baseDamage;
+        
+        // Health
+        // Update both base and max, keeping ratio if mid-life (though usually applied at spawn)
+        float hpMult = genes.HealthMultiplier;
+        if (hpMult > 0.01f) // Valid gene
+        {
+            baseHealth *= hpMult;
+            MaxHealth *= hpMult;
+            CurrentHealth *= hpMult;
+        }
+
+        // Speed
+        moveSpeed *= genes.SpeedMultiplier;
+
+        // Damage
+        baseDamage *= genes.DamageMultiplier;
+        
+        // LOG: Show genetic modifications
+        if (genes.HealthMultiplier > 1.01f || genes.SpeedMultiplier > 1.01f || genes.DamageMultiplier > 1.01f)
+        {
+            Debug.Log($"[GENETIC] {gameObject.name} evolved! HP: {oldHealth:F1}→{baseHealth:F1} ({genes.HealthMultiplier:F2}x), " +
+                      $"Speed: {oldSpeed:F1}→{moveSpeed:F1} ({genes.SpeedMultiplier:F2}x), " +
+                      $"Dmg: {oldDamage:F1}→{baseDamage:F1} ({genes.DamageMultiplier:F2}x) | Dominant: {genes.GetDominantTrait()}");
+        }
+
+        UpdateGeneVisuals();
+    }
+
+    private void OnGenesChanged(EnemyGenes oldVal, EnemyGenes newVal)
+    {
+        CurrentGenes = newVal;
+        UpdateGeneVisuals();
+    }
+
+    private void UpdateGeneVisuals()
+    {
+        if (enemyRenderer != null)
+        {
+            // Reset to original before tinting to avoid double tinting layers
+             enemyRenderer.color = originalColor * CurrentGenes.GetGeneColor();
         }
     }
 }
