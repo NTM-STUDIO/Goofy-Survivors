@@ -239,7 +239,7 @@ MonoBehaviour:
   thinkInterval: 0.15
   detectionRadius: 12
   attackRange: 2.5
-  followDistance: 40
+  followDistance: 20
   moveSpeedMultiplier: 1
   enemyLayer:
     serializedVersion: 2

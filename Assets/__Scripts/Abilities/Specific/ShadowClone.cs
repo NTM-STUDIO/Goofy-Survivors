@@ -34,13 +34,7 @@ public class ShadowClone : MonoBehaviour
 
     void Start()
     {
-        // CRITICAL: Ensure clone is NOT parented to player
-        if (transform.parent != null)
-        {
-            Debug.LogWarning($"[ShadowClone] Was parented to {transform.parent.name}, unparenting now!");
-            transform.SetParent(null, true);
-        }
-        
+        Debug.Log($"[ShadowClone] Created with Lifetime: {lifetime}s. Will self-destruct at {Time.time + lifetime}");
         Destroy(gameObject, lifetime);
     }
 
