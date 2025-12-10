@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa0f7c53b22e0d6419d95ec6ebf38b4a, type: 3}
   m_Name: Cooldown
   m_EditorClassIdentifier: 
-  statToUpgrade: 5
+  statToUpgrade: 8
   upgradeName: Cooldown Reduction
   upgradeDescription: 
   icon: {fileID: 21300000, guid: 6086559bd6dfa1e4a93b70748fdf091a, type: 3}
-  baseValueMin: 1
-  baseValueMax: 5
+  baseValueMin: 4
+  baseValueMax: 6
