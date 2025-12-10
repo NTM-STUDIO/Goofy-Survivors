@@ -53,6 +53,8 @@ public class GameEventManager : NetworkBehaviour
 
     private void Update()
     {
+        if (GameManager.Instance == null) return;
+
         // Singleplayer ou Server executa a lógica de tempo
         if (GameManager.Instance.isP2P && !IsServer) return;
 

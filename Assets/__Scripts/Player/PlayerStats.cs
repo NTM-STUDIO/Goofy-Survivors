@@ -278,6 +278,9 @@ public class PlayerStats : NetworkBehaviour
     // --- HANDLE DEATH ---
     private void HandleDeath()
     {
+        // Don't handle death for Shadow Clone (handled by its own script)
+        if (GetComponent<ShadowClone>() != null) return;
+
         Debug.Log("Player died.");
         OnDeath?.Invoke();
 
@@ -317,6 +320,17 @@ public class PlayerStats : NetworkBehaviour
     public void ApplyDamage(float amount, Vector3? hitFromWorldPos = null, float? customIFrameDuration = null) 
     { 
         if (amount <= 0f || invincible || currentHp <= 0) return; 
+
+        // If this is a Shadow Clone, delegate damage handling to it and STOP here to avoid messing up UI/Network
+        var clone = GetComponent<ShadowClone>();
+        if (clone != null)
+        {
+            clone.TakeDamage(amount);
+            
+            // Visual feedback is okay, but NO networked state changes or UI updates for main player
+            if (spriteRenderer != null) { StopCoroutine(nameof(FlashRoutine)); StartCoroutine(FlashRoutine()); } 
+            return;
+        }
         
         int damageInt = Mathf.CeilToInt(amount); 
         currentHp = Mathf.Clamp(currentHp - damageInt, 0, maxHp); 
@@ -399,7 +413,11 @@ public class PlayerStats : NetworkBehaviour
 
     private void UpdateUI()
     {
+        // Don't update main UI if this is a Shadow Clone
+        if (GetComponent<ShadowClone>() != null) return;
+
         var nm = NetworkManager.Singleton;
+        // In MP, checks IsOwner (and listener). In SP, usually passes as _isLocalOwner is true.
         if (nm == null || !nm.IsListening || _isLocalOwner)
         {
             var uiManager = FindFirstObjectByType<UIManager>();

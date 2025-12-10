@@ -2,227 +2,176 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+/// <summary>
+/// Despawns enemies that are too far from all players.
+/// Uses radius-based detection only (no camera checks).
+/// </summary>
 public class EnemyDespawner : MonoBehaviour
 {
     [Header("Despawn Settings")]
     [Tooltip("The radius around the player. Enemies outside this radius will be removed.")]
-    [SerializeField] private float despawnRadius = 60f;
+    [SerializeField] private float despawnRadius = 70f;
     [Tooltip("How often (in seconds) to check for enemies to remove.")]
-    [SerializeField] private float checkInterval = 3f;
+    [SerializeField] private float checkInterval = 2f;
     
     [Header("Visual Settings")]
-    [Tooltip("Duração do fade-out antes de despawn")]
-    [SerializeField] private float fadeOutDuration = 0.5f;
-    [Tooltip("Verificar se inimigo está fora da tela antes de despawn")]
-    [SerializeField] private bool requireOffScreen = true;
+    [Tooltip("Duração do fade-out antes de despawn (0 = instantâneo)")]
+    [SerializeField] private float fadeOutDuration = 0.3f;
 
-    [Header("Gizmo Settings")]
+    [Header("Debug")]
     [SerializeField] private bool showGizmo = true;
+    [SerializeField] private bool showDebugLogs = false;
 
     // Internal References
-    private Transform playerTransform; // This will be given to us by the GameManager
+    private Transform playerTransform;
     [SerializeField] private EnemySpawner enemySpawner;
-    private Camera mainCamera;
     private HashSet<GameObject> despawningEnemies = new HashSet<GameObject>();
 
-    void Start()
-    {
-        mainCamera = Camera.main;
-    }
-
     /// <summary>
-    /// The GameManager calls this and provides the newly spawned player object.
+    /// Called by PlayerSpawnManager after the player is spawned.
     /// </summary>
     public void Initialize(GameObject playerObject)
     {
-        // If running under Netcode and the network is active, only the server should run despawner logic.
-        if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening && !Unity.Netcode.NetworkManager.Singleton.IsServer)
+        // Only server runs despawn logic in multiplayer
+        if (Unity.Netcode.NetworkManager.Singleton != null && 
+            Unity.Netcode.NetworkManager.Singleton.IsListening && 
+            !Unity.Netcode.NetworkManager.Singleton.IsServer)
         {
-            // disable this component on clients to avoid local-only despawning.
             enabled = false;
             return;
         }
 
-        if (playerObject != null)
+        if (playerObject == null)
         {
-            playerTransform = playerObject.transform;
-        }
-        else
-        {
-            Debug.LogError("FATAL ERROR: EnemyDespawner received a null player object! Despawner will not work.", this);
+            Debug.LogError("[EnemyDespawner] Received null player! Despawner disabled.", this);
             enabled = false;
             return;
         }
 
+        playerTransform = playerObject.transform;
 
         if (enemySpawner == null)
         {
-            Debug.LogError("FATAL ERROR: EnemyDespawner could not find the EnemySpawner in the scene!", this);
-            enabled = false;
-            return;
+            enemySpawner = FindObjectOfType<EnemySpawner>();
+            if (enemySpawner == null)
+            {
+                Debug.LogError("[EnemyDespawner] EnemySpawner not found! Despawner disabled.", this);
+                enabled = false;
+                return;
+            }
         }
 
-        // Only start the core logic after a successful initialization.
-        StartCoroutine(DespawnEnemiesCoroutine());
-        Debug.Log("EnemyDespawner Initialized successfully.");
+        StartCoroutine(DespawnLoop());
+        Debug.Log("[EnemyDespawner] Initialized successfully.");
     }
 
-    IEnumerator DespawnEnemiesCoroutine()
+    IEnumerator DespawnLoop()
     {
         while (true)
         {
             yield return new WaitForSeconds(checkInterval);
-            DespawnFarEnemies();
+            CheckAndDespawnFarEnemies();
         }
     }
 
-    void DespawnFarEnemies()
+    void CheckAndDespawnFarEnemies()
     {
         if (playerTransform == null || enemySpawner == null) return;
 
         EnemyStats[] allEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
+        int despawnedCount = 0;
+
         foreach (EnemyStats enemy in allEnemies)
         {
             if (enemy == null || despawningEnemies.Contains(enemy.gameObject)) continue;
 
-            // Check if enemy is far from ALL players (multiplayer support)
             if (IsEnemyFarFromAllPlayers(enemy.transform.position))
             {
-                // NOVO: Verifica se está fora da tela (opcional)
-                if (requireOffScreen && !IsCompletelyOffScreen(enemy.gameObject))
-                {
-                    continue; // Ainda visível, não despawnar
-                }
-
-                // Inicia despawn com fade-out
-                StartCoroutine(DespawnWithFade(enemy.gameObject));
+                despawnedCount++;
+                StartCoroutine(DespawnEnemy(enemy.gameObject));
             }
+        }
+
+        if (showDebugLogs && despawnedCount > 0)
+        {
+            Debug.Log($"[EnemyDespawner] Despawned {despawnedCount} enemies outside radius ({despawnRadius})");
         }
     }
 
     /// <summary>
-    /// NOVO: Verifica se o inimigo está completamente fora da tela de TODOS os players
+    /// Returns true if enemy is outside despawn radius of ALL players.
     /// </summary>
-    private bool IsCompletelyOffScreen(GameObject enemy)
+    private bool IsEnemyFarFromAllPlayers(Vector3 enemyPosition)
     {
-        if (mainCamera == null) 
+        // Multiplayer: check all connected players
+        if (Unity.Netcode.NetworkManager.Singleton != null && 
+            Unity.Netcode.NetworkManager.Singleton.IsListening && 
+            Unity.Netcode.NetworkManager.Singleton.IsServer)
         {
-            mainCamera = Camera.main;
-            if (mainCamera == null) return true; // Se não há câmera, considera fora da tela
-        }
-
-        // Verifica posição principal do inimigo
-        Vector3 viewportPoint = mainCamera.WorldToViewportPoint(enemy.transform.position);
-        
-        // Margem extra para garantir que está REALMENTE fora da tela
-        float margin = 0.2f;
-        
-        bool isOffScreen = viewportPoint.z < 0f || 
-                          viewportPoint.x < -margin || 
-                          viewportPoint.x > 1f + margin || 
-                          viewportPoint.y < -margin || 
-                          viewportPoint.y > 1f + margin;
-        
-        // Verifica também bounds se tiver renderer
-        if (isOffScreen)
-        {
-            Renderer[] renderers = enemy.GetComponentsInChildren<Renderer>();
-            foreach (Renderer rend in renderers)
+            foreach (var client in Unity.Netcode.NetworkManager.Singleton.ConnectedClientsList)
             {
-                if (rend == null) continue;
+                if (client?.PlayerObject == null) continue;
                 
-                // Verifica se alguma parte do renderer está visível
-                Plane[] planes = GeometryUtility.CalculateFrustumPlanes(mainCamera);
-                if (GeometryUtility.TestPlanesAABB(planes, rend.bounds))
+                float distance = Vector3.Distance(client.PlayerObject.transform.position, enemyPosition);
+                if (distance <= despawnRadius)
                 {
-                    return false; // Ainda parcialmente visível
+                    return false; // At least one player is close
                 }
             }
+            return true; // All players are far
         }
         
-        return isOffScreen;
+        // Singleplayer: check local player
+        if (playerTransform != null)
+        {
+            return Vector3.Distance(playerTransform.position, enemyPosition) > despawnRadius;
+        }
+        
+        return false;
     }
 
-    /// <summary>
-    /// NOVO: Despawn com fade-out suave para evitar pop-out visual
-    /// </summary>
-    IEnumerator DespawnWithFade(GameObject enemy)
+    IEnumerator DespawnEnemy(GameObject enemy)
     {
         if (enemy == null) yield break;
 
-        // Marca como em processo de despawn
         despawningEnemies.Add(enemy);
 
-        // Coleta renderers
-        Renderer[] renderers = enemy.GetComponentsInChildren<Renderer>();
-        
-        if (renderers.Length > 0 && fadeOutDuration > 0f)
+        // Optional fade-out
+        if (fadeOutDuration > 0f)
         {
-            Dictionary<Material, Color> originalColors = new Dictionary<Material, Color>();
-            
-            // Guarda cores originais e ativa transparência
-            foreach (Renderer rend in renderers)
-            {
-                foreach (Material mat in rend.materials)
-                {
-                    if (mat.HasProperty("_Color"))
-                    {
-                        originalColors[mat] = mat.color;
-                        
-                        // Ativa modo transparente
-                        if (mat.HasProperty("_Mode"))
-                        {
-                            mat.SetFloat("_Mode", 3);
-                            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-                            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                            mat.SetInt("_ZWrite", 0);
-                            mat.EnableKeyword("_ALPHABLEND_ON");
-                            mat.renderQueue = 3000;
-                        }
-                    }
-                }
-            }
-            
-            // Fade gradual
+            SpriteRenderer[] sprites = enemy.GetComponentsInChildren<SpriteRenderer>();
             float elapsed = 0f;
-            while (elapsed < fadeOutDuration)
+            
+            while (elapsed < fadeOutDuration && enemy != null)
             {
-                if (enemy == null) yield break;
-                
                 elapsed += Time.deltaTime;
-                float alpha = 1f - Mathf.Clamp01(elapsed / fadeOutDuration);
+                float alpha = 1f - (elapsed / fadeOutDuration);
                 
-                foreach (var kvp in originalColors)
+                foreach (var sprite in sprites)
                 {
-                    Material mat = kvp.Key;
-                    Color originalColor = kvp.Value;
-                    
-                    if (mat != null && mat.HasProperty("_Color"))
+                    if (sprite != null)
                     {
-                        Color newColor = originalColor;
-                        newColor.a = originalColor.a * alpha;
-                        mat.color = newColor;
+                        Color c = sprite.color;
+                        c.a = alpha;
+                        sprite.color = c;
                     }
                 }
-                
                 yield return null;
             }
         }
-        
-        // Remove da lista de despawning
+
         despawningEnemies.Remove(enemy);
 
-        // NOVO: Destroi o inimigo completamente
         if (enemy != null)
         {
-            // Se for networked, despawn via NetworkObject
+            // Destroy (networked or local)
             if (Unity.Netcode.NetworkManager.Singleton != null && 
                 Unity.Netcode.NetworkManager.Singleton.IsServer)
             {
                 var netObj = enemy.GetComponent<Unity.Netcode.NetworkObject>();
                 if (netObj != null && netObj.IsSpawned)
                 {
-                    netObj.Despawn(true); // true = destroy
+                    netObj.Despawn(true);
                 }
                 else
                 {
@@ -233,8 +182,8 @@ public class EnemyDespawner : MonoBehaviour
             {
                 Destroy(enemy);
             }
-            
-            // Notifica o spawner para criar um novo inimigo
+
+            // Spawn replacement
             if (enemySpawner != null)
             {
                 enemySpawner.SpawnReplacementEnemy(enemy);
@@ -242,57 +191,17 @@ public class EnemyDespawner : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Checks if an enemy is outside the despawn radius of ALL players.
-    /// In multiplayer, only despawn if the enemy is far from EVERY player.
-    /// </summary>
-    private bool IsEnemyFarFromAllPlayers(Vector3 enemyPosition)
-    {
-        // Check if we're in multiplayer mode
-        if (Unity.Netcode.NetworkManager.Singleton != null && 
-            Unity.Netcode.NetworkManager.Singleton.IsListening && 
-            Unity.Netcode.NetworkManager.Singleton.IsServer)
-        {
-            // Multiplayer: Check all connected players
-            foreach (var client in Unity.Netcode.NetworkManager.Singleton.ConnectedClientsList)
-            {
-                if (client?.PlayerObject == null) continue;
-                
-                float distance = Vector3.Distance(client.PlayerObject.transform.position, enemyPosition);
-                
-                // If ANY player is within range, don't despawn
-                if (distance <= despawnRadius)
-                {
-                    return false;
-                }
-            }
-            
-            // All players are out of range, can despawn
-            return true;
-        }
-        else
-        {
-            // Single player: Check only the local player
-            if (playerTransform != null)
-            {
-                return Vector3.Distance(playerTransform.position, enemyPosition) > despawnRadius;
-            }
-            
-            return false;
-        }
-    }
-
     void OnDrawGizmosSelected()
     {
         if (!showGizmo) return;
 
-        // Check if we're in multiplayer mode with active network
+        Gizmos.color = new Color(1f, 0f, 0f, 0.3f);
+
+        // Multiplayer
         if (Unity.Netcode.NetworkManager.Singleton != null && 
             Unity.Netcode.NetworkManager.Singleton.IsListening && 
             Unity.Netcode.NetworkManager.Singleton.IsServer)
         {
-            // Draw despawn radius for all connected players
-            Gizmos.color = Color.red;
             foreach (var client in Unity.Netcode.NetworkManager.Singleton.ConnectedClientsList)
             {
                 if (client?.PlayerObject != null)
@@ -301,22 +210,19 @@ public class EnemyDespawner : MonoBehaviour
                 }
             }
         }
+        // Singleplayer / Editor
         else
         {
-            // Single player mode: Try to find the player in the editor for gizmo drawing
-            if (playerTransform == null)
+            Transform target = playerTransform;
+            if (target == null)
             {
                 GameObject player = GameObject.FindGameObjectWithTag("Player");
-                if (player != null)
-                {
-                    playerTransform = player.transform;
-                }
+                if (player != null) target = player.transform;
             }
             
-            if (playerTransform != null)
+            if (target != null)
             {
-                Gizmos.color = Color.red;
-                Gizmos.DrawWireSphere(playerTransform.position, despawnRadius);
+                Gizmos.DrawWireSphere(target.position, despawnRadius);
             }
         }
     }

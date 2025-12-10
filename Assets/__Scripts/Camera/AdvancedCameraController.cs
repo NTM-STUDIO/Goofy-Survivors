@@ -9,7 +9,7 @@ public class AdvancedCameraController : NetworkBehaviour
     [SerializeField] private Transform target;
 
     [Header("Orthographic Settings")]
-    [SerializeField] private float orthoMinSize = 10f;
+    [SerializeField] private float orthoMinSize = 30f;
     [SerializeField] private float orthoMaxSize = 20f;
 
     [Header("Perspective Settings")]
@@ -83,7 +83,7 @@ public class AdvancedCameraController : NetworkBehaviour
     {
         // --- Set the default starting state ---
         cam.orthographic = true;
-        cam.orthographicSize = 20; // Default ortho zoom is 20
+        cam.orthographicSize = 30; // Default ortho zoom is 20
 
         // If target was assigned (either manually or auto-assigned to parent), calculate offset
         if (target != null)

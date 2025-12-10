@@ -48,6 +48,33 @@ public class EnemySpawner : NetworkBehaviour
     // Cache de posições dos players
     private List<Vector3> playerPositions = new List<Vector3>();
 
+    public static EnemySpawner Instance;
+
+    // --- GENETIC ALGORITHM VARIABLES ---
+    [Header("Genetic Evolution")]
+    public float evolutionInterval = 30f; // Evolve every 30s or per wave
+    private float lastEvolutionTime;
+
+    // Constraints
+    private const float MAX_MULTIPLIER = 3.0f; // Cap stats at 3x base
+    private const float MUTATION_RATE = 0.2f;
+    private const float MUTATION_STRENGTH = 0.15f;
+
+    private List<EnemyGenes> genePool = new List<EnemyGenes>();
+    private List<GeneFitnessData> currentGenerationFitness = new List<GeneFitnessData>();
+    private EnemyGenes currentBestGenes = EnemyGenes.Default;
+
+    private struct GeneFitnessData
+    {
+        public EnemyGenes Genes;
+        public float Fitness;
+    }
+
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+    }
+
     void Start()
     {
         mainCamera = Camera.main;
@@ -57,7 +84,11 @@ public class EnemySpawner : NetworkBehaviour
         }
 
         gameManager = GameManager.Instance;
+        
+        // Initialize Genes
+        InitializeGeneticAlgorithm();
     }
+    
 
     /// <summary>
     /// Stops all spawning coroutines and cleans up any active enemies.
@@ -319,6 +350,16 @@ public void StopAndReset()
                                     GameManager.Instance.ApplyMidgameMutationToEnemy(es);
                                 }
                             }
+                            
+                            // GENETIC: Apply Stats (Server)
+                            if (spawned != null)
+                            {
+                                var stats = spawned.GetComponent<EnemyStats>();
+                                if (stats != null)
+                                {
+                                    stats.ApplyGenes(GetGeneFromPool());
+                                }
+                            }
                         }
                         else
                         {
@@ -333,6 +374,16 @@ public void StopAndReset()
                                 if (es != null)
                                 {
                                     GameManager.Instance.ApplyMidgameMutationToEnemy(es);
+                                }
+                            }
+                            
+                            // GENETIC: Apply Stats (Singleplayer)
+                            if (spawned != null)
+                            {
+                                var stats = spawned.GetComponent<EnemyStats>();
+                                if (stats != null)
+                                {
+                                    stats.ApplyGenes(GetGeneFromPool());
                                 }
                             }
                         }
@@ -822,6 +873,122 @@ public void StopAndReset()
             var fadeEffect = spawned.AddComponent<EnemyFadeEffect>();
             fadeEffect.StartFadeIn(fadeInDuration);
         }
+    }
+    
+    // --- GENETIC ALGORITHM LOGIC ---
+
+    private void InitializeGeneticAlgorithm()
+    {
+        // Start with a pool of default genes
+        for (int i = 0; i < 10; i++)
+        {
+            genePool.Add(EnemyGenes.Default);
+        }
+        lastEvolutionTime = Time.time;
+    }
+
+    private EnemyGenes GetGeneFromPool()
+    {
+        if (genePool.Count == 0) return EnemyGenes.Default;
+        return genePool[Random.Range(0, genePool.Count)];
+    }
+
+    public void ReportEnemyFitness(EnemyGenes genes, float damageDealt, float timeAlive)
+    {
+        // Fitness Function:
+        // We want enemies that deal damage OR survive long enough to be annoying.
+        // Weight: Damage is more important (threat). Survival is secondary.
+        // Example: Fitness = Damage * 2 + Survival
+        
+        float fitness = (damageDealt * 2.0f) + (timeAlive * 0.5f);
+        
+        currentGenerationFitness.Add(new GeneFitnessData { Genes = genes, Fitness = fitness });
+        
+        // LOG: Report individual fitness
+        Debug.Log($"[GENETIC] Enemy died - Fitness: {fitness:F1} (Dmg: {damageDealt:F1}, Alive: {timeAlive:F1}s) | " +
+                  $"Genes: HP={genes.HealthMultiplier:F2}x, Spd={genes.SpeedMultiplier:F2}x, Dmg={genes.DamageMultiplier:F2}x");
+    }
+
+    private void Update()
+    {
+        // Evolve periodically (e.g. during waves)
+        if (Time.time - lastEvolutionTime > evolutionInterval)
+        {
+            EvolveGenes();
+            lastEvolutionTime = Time.time;
+        }
+    }
+
+    private void EvolveGenes()
+    {
+        if (currentGenerationFitness.Count < 5) return; // Need enough data
+
+        Debug.Log($"[Genetic] Evolving... Samples: {currentGenerationFitness.Count}");
+
+        // 1. Sort by Fitness (Descending)
+        currentGenerationFitness.Sort((a, b) => b.Fitness.CompareTo(a.Fitness));
+
+        // 2. Select Elites (Top 20%)
+        int eliteCount = Mathf.Max(1, currentGenerationFitness.Count / 5);
+        List<EnemyGenes> nextGen = new List<EnemyGenes>();
+
+        for (int i = 0; i < eliteCount; i++)
+        {
+            nextGen.Add(currentGenerationFitness[i].Genes);
+        }
+        
+        currentBestGenes = nextGen[0]; // Track best
+        
+        // 3. Fill the rest with mutated offspring
+        while (nextGen.Count < genePool.Count)
+        {
+            // Tournament selection or biased random
+            EnemyGenes parent = nextGen[Random.Range(0, eliteCount)]; // Simple: Pick from elites
+            nextGen.Add(Mutate(parent));
+        }
+
+        // 4. Update Pool
+        genePool = nextGen;
+        currentGenerationFitness.Clear(); 
+        
+        // LOG: Detailed evolution summary
+        Debug.Log($"[GENETIC] ══════════════════════════════");
+        Debug.Log($"[GENETIC] EVOLUTION COMPLETE!");
+        Debug.Log($"[GENETIC] Best Performer: HP={currentBestGenes.HealthMultiplier:F2}x, Dmg={currentBestGenes.DamageMultiplier:F2}x, Spd={currentBestGenes.SpeedMultiplier:F2}x");
+        Debug.Log($"[GENETIC] Dominant Trait: {currentBestGenes.GetDominantTrait()}");
+        Debug.Log($"[GENETIC] Gene Pool: {genePool.Count} variants | Elites: {eliteCount}");
+        Debug.Log($"[GENETIC] ══════════════════════════════");
+    }
+
+    private EnemyGenes Mutate(EnemyGenes parent)
+    {
+        EnemyGenes child = parent;
+
+        if (Random.value < MUTATION_RATE)
+        {
+            // Pick trait to mutate
+            int trait = Random.Range(0, 3);
+            float mutation = Random.Range(0f, MUTATION_STRENGTH); // Always positive (0 to +Strength)
+            
+            // Apply mutation enforcing "Non-Decreasing" logic (Add to existing)
+            switch (trait)
+            {
+                case 0: // HP
+                    child.HealthMultiplier += mutation;
+                    child.HealthMultiplier = Mathf.Min(child.HealthMultiplier, MAX_MULTIPLIER);
+                    break;
+                case 1: // Dmg
+                    child.DamageMultiplier += mutation;
+                    child.DamageMultiplier = Mathf.Min(child.DamageMultiplier, MAX_MULTIPLIER);
+                    break;
+                case 2: // Speed
+                    child.SpeedMultiplier += mutation;
+                    child.SpeedMultiplier = Mathf.Min(child.SpeedMultiplier, MAX_MULTIPLIER);
+                    break;
+            }
+        }
+        
+        return child;
     }
 }
 
