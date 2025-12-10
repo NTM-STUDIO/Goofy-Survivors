@@ -88,6 +88,9 @@ public class PlayerSpawnManager : NetworkBehaviour
         {
             var p = Instantiate(prefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
             InitializePlayerSystems(p);
+            
+            // Inicializa o EnemyDespawner com o player recém-spawned
+            InitializeEnemyDespawner(p);
         }
     }
 
@@ -133,6 +136,26 @@ public class PlayerSpawnManager : NetworkBehaviour
 
         // Inicializa UI local no Host se for ele a spawnar
         if (clientId == NetworkManager.Singleton.LocalClientId) InitializeClientsClientRpc();
+        
+        // Inicializa o EnemyDespawner com o primeiro player spawned (só precisa de um)
+        if (IsServer)
+        {
+            var playerObj = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clientId);
+            if (playerObj != null)
+            {
+                InitializeEnemyDespawner(playerObj.gameObject);
+            }
+        }
+    }
+
+    private void InitializeEnemyDespawner(GameObject playerObj)
+    {
+        var enemyDespawner = FindObjectOfType<EnemyDespawner>();
+        if (enemyDespawner != null && playerObj != null)
+        {
+            enemyDespawner.Initialize(playerObj);
+            Debug.Log($"[PlayerSpawnManager] EnemyDespawner inicializado com {playerObj.name}");
+        }
     }
 
     [ClientRpc]
