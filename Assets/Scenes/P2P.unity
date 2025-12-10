@@ -3109,8 +3109,8 @@ MonoBehaviour:
   - assetPrefab: {fileID: 383518980796734899, guid: 3c470efbfdb7fc2489ee1cbd65392cda, type: 3}
     weight: 0.5
   decorationDensity: 0.01
-  mapWidth: 10000
-  mapHeight: 10000
+  mapWidth: 1000
+  mapHeight: 1000
   chunkSize: 40
   viewDistance: 2
 --- !u!4 &729974982
