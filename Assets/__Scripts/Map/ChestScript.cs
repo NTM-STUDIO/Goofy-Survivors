@@ -53,6 +53,11 @@ public class ChestScript : MonoBehaviour
             // Pick a random weapon from the list of available ones.
             int randomIndex = Random.Range(0, availableWeapons.Count);
             WeaponData newWeapon = availableWeapons[randomIndex];
+            
+            Debug.Log($"[ChestScript] Opening chest for {interactingPlayer.name}. " +
+                      $"Available: {availableWeapons.Count}/{allPossibleWeapons.Count} weapons. " +
+                      $"Giving: {newWeapon.weaponName} (id={randomIndex})");
+
 
             // Award only to the interacting player
             var gm = GameManager.Instance;

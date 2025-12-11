@@ -31,6 +31,9 @@ public class MapConsumable : NetworkBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Player")) return;
+        
+        // Prevent double-consumption from multiple colliders or rapid triggers
+        if (consumed) return;
 
         // If networking is active, let the server handle the interaction via RPC
         var nm = NetworkManager.Singleton;
@@ -63,7 +66,9 @@ public class MapConsumable : NetworkBehaviour
             return;
         }
 
-        // Single-player fallback
+        // Single-player fallback - mark as consumed FIRST to prevent double triggers
+        consumed = true;
+        
         if (CompareTag("Chest") && chestScript != null)
         {
             var pwmLocal = other.GetComponentInParent<PlayerWeaponManager>();
