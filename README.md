@@ -282,16 +282,6 @@ As capturas abaixo demonstram a evolução genética ao longo das primeiras onda
 | ![Wave 1](./Assets/Screenshots/Waves/wave1.png) | ![Wave 2](./Assets/Screenshots/Waves/wave2.png) | ![Wave 3](./Assets/Screenshots/Waves/wave3.png) |
 | Inimigos brancos (1.0x) | Primeiros tons avermelhados | Vermelhos dominantes |
 
-**Por que os inimigos ficam vermelhos?**
-
-A cor vermelha indica **evolução focada em Damage**. Isto acontece porque a função de fitness favorece inimigos que causam dano ao jogador antes de morrer:
-
-```
-Fitness = (Dano × 2.0) + (Tempo × 0.5) + (Eficiência × 0.3) + BónusVelocidade
-```
-
-Como o dano tem peso **2.0x** (o maior), inimigos que causam mais dano têm maior probabilidade de reproduzir, passando genes de `DamageMultiplier` elevado para a próxima geração. Após poucas ondas, a população converge para inimigos com alto dano — refletido visualmente pela cor vermelha intensa.
-
 
 ### Elitismo e Diversidade
 
@@ -382,8 +372,6 @@ O sistema de cores mapeia os genes evoluídos para feedback visual imediato:
 | **Verde** | Alto Health (HP) | Sobrevivência prolongada |
 | **Azul/Ciano** | Alta Velocidade | Bónus de velocidade no fitness |
 | **Tons mistos** | Genes balanceados | Crossover de múltiplos traços |
-
-No nosso teste, a **dominância vermelha** (Damage) emergiu rapidamente porque o fator de dano (peso 2.0x) é o mais influente na função de fitness.
 
 
 ### Benefícios de Design
