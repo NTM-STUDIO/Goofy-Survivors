@@ -32,9 +32,7 @@ Este readme descreve a implementação de três sistemas de IA no jogo Goofy Sur
 
 Este repositório implementa três sistemas de IA integrados no jogo Goofy Survivors: um sistema de
 pathfinding baseado em A* para navegação em grids, uma máquina de estados (FSM) para controlo comportamental
-dos inimigos e um algoritmo genético para evolução automática da dificuldade entre ondas. O README v2
-resume as decisões arquiteturais, constantes e fluxos suficientes para que o avaliador compreenda a
-implementação sem inspecionar o código-fonte; inclui ainda exemplos de chamadas cruciais e integração.
+dos inimigos e um algoritmo genético para evolução automática da dificuldade entre ondas. 
 
 **Pontos principais implementados**
 - Pathfinding A*: grid discretizado, `FindPath()` retorna lista de Vector3, heurística e custos g/h/f.
@@ -184,7 +182,7 @@ A State Machine:
 - Separa comportamentos em entidades independentes e testáveis
 - Define transições explícitas com prioridades claras
 - Evita comportamentos conflitantes
-- Permite cache de estados (O(1) lookup)
+- Permite cache de estados
 
 ---
 
@@ -192,7 +190,7 @@ A State Machine:
 
 ### Descrição
 
-Implementa evolução darwiniana para inimigos: avalia fitness, seleciona genes superiores, combina (crossover) e altera (mutação), criando progressão automática de dificuldade.
+O algoritmo genético: avalia fitness, seleciona genes superiores, combina (crossover) e altera (mutação), criando progressão automática de dificuldade.
 
 ### Cromossoma
 
@@ -240,8 +238,6 @@ Assim, apenas inimigos rápidos que causaram dano recebem bónus de velocidade.
 
 ### Seleção e Reprodução
 
-**Seleção Aleatória do Top 50%**: Para cada filho, dois pais são escolhidos aleatoriamente do top 50% dos indivíduos com melhor fitness (não é tournament selection de 5).
-
 **Uniform Crossover**: Cada gene (vida, dano, velocidade) tem 50% de probabilidade de vir de cada pai.
 
 **Mutação Bidirecional**:
@@ -287,7 +283,7 @@ As capturas abaixo demonstram a evolução genética ao longo das primeiras onda
 
 O algoritmo preserva:
 - **Elitismo**: Top 20% dos melhores genes passa à geração seguinte sem mutação
-- **Diversidade**: Em cada geração, são injetados genes aleatórios (`CreateRandomGenes(0.8f, 1.5f)`) e sempre o gene base (`EnemyGenes.Default`) para evitar convergência prematura
+- **Diversidade**: Em cada geração, são injetados genes aleatórios (`CreateRandomGenes(0.8f, 1.5f)`) e sempre o gene base (`EnemyGenes.Default`)
 
 ```csharp
 nextGen.Add(CreateRandomGenes(0.8f, 1.5f));
@@ -387,7 +383,3 @@ O sistema de cores mapeia os genes evoluídos para feedback visual imediato:
 A implementação de três sistemas de IA em sinergia cria uma experiência progressivamente desafiante e adaptativa. O algoritmo genético é crucial, pois permite que os inimigos evoluam naturalmente, criando a ilusão de uma população inteligente que aprende.
 
 ---
-
-**Data:** Dezembro 2025  
-**Engine:** Unity with Netcode for GameObjects  
-**Linguagem:** C#
