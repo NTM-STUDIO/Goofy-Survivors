@@ -282,7 +282,7 @@ As capturas abaixo demonstram a evolução genética ao longo das primeiras onda
 ### Elitismo e Diversidade
 
 O algoritmo preserva:
-- **Elitismo**: Top 20% dos melhores genes passa à geração seguinte sem mutação
+- **Elitismo**: Os melhores genes passa à geração seguinte sem mutação
 - **Diversidade**: Em cada geração, são injetados genes aleatórios (`CreateRandomGenes(0.8f, 1.5f)`) e sempre o gene base (`EnemyGenes.Default`)
 
 ```csharp
