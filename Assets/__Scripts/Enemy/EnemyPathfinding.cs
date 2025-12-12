@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Diagnostics; // Required for Conditional attribute
+using System.Diagnostics;
 
 [RequireComponent(typeof(EnemyMovement))]
 public class EnemyPathfinding : MonoBehaviour
@@ -68,10 +68,6 @@ public class EnemyPathfinding : MonoBehaviour
         FollowPath();
     }
 
-    /// <summary>
-    /// FIXED: Finds the player using the built-in tag system.
-    /// This removes the dependency on the 'ActivePlayers' static list.
-    /// </summary>
     private void FindPlayer()
     {
         GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
@@ -145,8 +141,6 @@ public class EnemyPathfinding : MonoBehaviour
     }
     #endif
 
-    // PERFORMANCE: These methods will only be compiled in the Unity Editor,
-    // removing all logging overhead from final builds.
     [Conditional("UNITY_EDITOR")]
     private void Log(string message)
     {

@@ -32,7 +32,6 @@ public class EnemyProjectileDamage3D : MonoBehaviour
             //Debug.LogWarning("[Projectile Debug] CasterStats have not been set on this projectile!", gameObject);
         }
 
-        // Use caster's effective attack damage if available (includes global difficulty multiplier)
         damage = _casterStats != null ? _casterStats.GetAttackDamage() : 0f;
 
     }

@@ -2,10 +2,6 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-/// <summary>
-/// Componente que controla o efeito de fade-in dos inimigos.
-/// É adicionado automaticamente pelo spawner e funciona em todos os clientes.
-/// </summary>
 public class EnemyFadeEffect : MonoBehaviour
 {
     private bool isInitialized = false;

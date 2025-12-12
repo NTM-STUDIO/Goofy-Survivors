@@ -5,7 +5,6 @@ using Unity.Netcode;
 [RequireComponent(typeof(EnemyStats))]
 public class EnemyProjectileCaster : NetworkBehaviour
 {
-    // --- MODIFIED: Removed the Idle state ---
     private enum AIState { Chasing, Attacking }
     private AIState currentState;
 
@@ -69,7 +68,6 @@ public class EnemyProjectileCaster : NetworkBehaviour
     if (latestPlayer != null) player = latestPlayer;
     float distanceToPlayer = Vector3.Distance(transform.position, player.position);
 
-        // --- MODIFIED: Removed the Idle case ---
         switch (currentState)
         {
             case AIState.Chasing:
@@ -106,7 +104,6 @@ public class EnemyProjectileCaster : NetworkBehaviour
         currentState = newState;
     }
     
-    // --- MODIFIED: The Idle state and all its logic has been removed ---
 
     private void UpdateChasingState(float distanceToPlayer)
     {
@@ -329,7 +326,6 @@ public class EnemyProjectileCaster : NetworkBehaviour
         }
     }
 
-    // --- MODIFIED: Removed GetCurrentSightRange as it's no longer used ---
     private float GetCurrentFireRate() => GameManager.Instance ? GameManager.Instance.currentFireRate : 2f;
     private float GetCurrentProjectileSpeed() => GameManager.Instance ? GameManager.Instance.currentProjectileSpeed : 15f;
 

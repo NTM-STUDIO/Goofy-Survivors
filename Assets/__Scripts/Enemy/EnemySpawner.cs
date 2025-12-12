@@ -89,11 +89,6 @@ public class EnemySpawner : NetworkBehaviour
         InitializeGeneticAlgorithm();
     }
     
-
-    /// <summary>
-    /// Stops all spawning coroutines and cleans up any active enemies.
-    /// This is called by the GameManager when the game ends or resets to the lobby.
-    /// </summary>
 public void StopAndReset()
     {
         Debug.Log("[EnemySpawner] StopAndReset called. Resetting waves.");
@@ -593,9 +588,6 @@ public void StopAndReset()
         }
     }
 
-    /// <summary>
-    /// NOVO: Calcula o lado oposto baseado na posição de um inimigo que deu despawn
-    /// </summary>
     private SpawnSide GetOppositeSide(Vector3 despawnedPosition)
     {
         if (playerPositions.Count == 0)
@@ -737,9 +729,6 @@ public void StopAndReset()
         SpawnReplacementEnemy(enemyToRespawn);
     }
 
-    /// <summary>
-    /// NOVO: Spawna um novo inimigo para substituir um que foi destruído
-    /// </summary>
     public void SpawnReplacementEnemy(GameObject destroyedEnemy)
     {
         if (destroyedEnemy == null)
@@ -876,15 +865,37 @@ public void StopAndReset()
     }
     
     // --- GENETIC ALGORITHM LOGIC ---
+    // IMPROVED: Added crossover, bidirectional mutation, diversity injection, better fitness
 
     private void InitializeGeneticAlgorithm()
     {
-        // Start with a pool of default genes
-        for (int i = 0; i < 10; i++)
+        // Start with a diverse pool of genes (not just defaults)
+        genePool.Clear();
+        
+        // Half with default genes
+        for (int i = 0; i < 5; i++)
         {
             genePool.Add(EnemyGenes.Default);
         }
+        
+        // Half with slight random variations for initial diversity
+        for (int i = 0; i < 5; i++)
+        {
+            genePool.Add(CreateRandomGenes(1.0f, 1.3f)); // Slight variation from 1.0x to 1.3x
+        }
+        
         lastEvolutionTime = Time.time;
+        Debug.Log($"[GENETIC] Initialized gene pool with {genePool.Count} diverse starting genes");
+    }
+
+    private EnemyGenes CreateRandomGenes(float minMult, float maxMult)
+    {
+        return new EnemyGenes
+        {
+            HealthMultiplier = Random.Range(minMult, maxMult),
+            DamageMultiplier = Random.Range(minMult, maxMult),
+            SpeedMultiplier = Random.Range(minMult, maxMult)
+        };
     }
 
     private EnemyGenes GetGeneFromPool()
@@ -895,18 +906,32 @@ public void StopAndReset()
 
     public void ReportEnemyFitness(EnemyGenes genes, float damageDealt, float timeAlive)
     {
-        // Fitness Function:
-        // We want enemies that deal damage OR survive long enough to be annoying.
-        // Weight: Damage is more important (threat). Survival is secondary.
-        // Example: Fitness = Damage * 2 + Survival
+        // IMPROVED FITNESS FUNCTION:
+        // - Damage dealt is important (threat to player)
+        // - Survival time matters (annoying factor)
+        // - Efficiency bonus: damage per health point invested
+        // - Penalty for being too slow (didn't reach player)
         
-        float fitness = (damageDealt * 2.0f) + (timeAlive * 0.5f);
+        float baseFitness = (damageDealt * 2.0f) + (timeAlive * 0.5f);
+        
+        // Efficiency: damage dealt relative to health investment
+        float healthInvestment = Mathf.Max(1f, genes.HealthMultiplier);
+        float efficiency = damageDealt / healthInvestment;
+        
+        // Speed bonus: faster enemies that dealt damage are more effective
+        float speedBonus = (genes.SpeedMultiplier > 1f && damageDealt > 0) ? genes.SpeedMultiplier * 0.5f : 0f;
+        
+        // Final fitness with efficiency consideration
+        float fitness = baseFitness + (efficiency * 0.3f) + speedBonus;
         
         currentGenerationFitness.Add(new GeneFitnessData { Genes = genes, Fitness = fitness });
         
-        // LOG: Report individual fitness
-        Debug.Log($"[GENETIC] Enemy died - Fitness: {fitness:F1} (Dmg: {damageDealt:F1}, Alive: {timeAlive:F1}s) | " +
-                  $"Genes: HP={genes.HealthMultiplier:F2}x, Spd={genes.SpeedMultiplier:F2}x, Dmg={genes.DamageMultiplier:F2}x");
+        // LOG: Report individual fitness (less verbose)
+        if (fitness > 5f) // Only log noteworthy performers
+        {
+            Debug.Log($"[GENETIC] Strong enemy died - Fitness: {fitness:F1} | " +
+                      $"Genes: HP={genes.HealthMultiplier:F2}x, Spd={genes.SpeedMultiplier:F2}x, Dmg={genes.DamageMultiplier:F2}x");
+        }
     }
 
     private void Update()
@@ -923,15 +948,16 @@ public void StopAndReset()
     {
         if (currentGenerationFitness.Count < 5) return; // Need enough data
 
-        Debug.Log($"[Genetic] Evolving... Samples: {currentGenerationFitness.Count}");
+        Debug.Log($"[GENETIC] Evolving... Samples: {currentGenerationFitness.Count}");
 
-        // 1. Sort by Fitness (Descending)
+        // Sort by Fitness (Descending)
         currentGenerationFitness.Sort((a, b) => b.Fitness.CompareTo(a.Fitness));
 
-        // 2. Select Elites (Top 20%)
-        int eliteCount = Mathf.Max(1, currentGenerationFitness.Count / 5);
+        // Select Elites (Top 20%) - GUARANTEED to survive
+        int eliteCount = Mathf.Max(2, currentGenerationFitness.Count / 5);
         List<EnemyGenes> nextGen = new List<EnemyGenes>();
 
+        // Add elites directly (elitism preserved)
         for (int i = 0; i < eliteCount; i++)
         {
             nextGen.Add(currentGenerationFitness[i].Genes);
@@ -939,51 +965,75 @@ public void StopAndReset()
         
         currentBestGenes = nextGen[0]; // Track best
         
-        // 3. Fill the rest with mutated offspring
-        while (nextGen.Count < genePool.Count)
+        // Fill most of the pool with crossover + mutation offspring
+        int targetPoolSize = Mathf.Max(genePool.Count, 10);
+        while (nextGen.Count < targetPoolSize - 2) // Leave room for diversity injection
         {
-            // Tournament selection or biased random
-            EnemyGenes parent = nextGen[Random.Range(0, eliteCount)]; // Simple: Pick from elites
-            nextGen.Add(Mutate(parent));
+            // Tournament selection: pick 2 parents from top 50%
+            int topHalf = Mathf.Max(eliteCount, currentGenerationFitness.Count / 2);
+            EnemyGenes parent1 = currentGenerationFitness[Random.Range(0, topHalf)].Genes;
+            EnemyGenes parent2 = currentGenerationFitness[Random.Range(0, topHalf)].Genes;
+            
+            // CROSSOVER: Combine traits from both parents
+            EnemyGenes child = Crossover(parent1, parent2);
+            
+            // MUTATE: Can now increase OR decrease traits
+            child = Mutate(child);
+            
+            nextGen.Add(child);
         }
+        
+        // DIVERSITY INJECTION: Add some random genes to prevent convergence
+        nextGen.Add(CreateRandomGenes(0.8f, 1.5f)); // Fresh random genes
+        nextGen.Add(EnemyGenes.Default); // Always keep a baseline
 
-        // 4. Update Pool
+        // Update Pool
         genePool = nextGen;
         currentGenerationFitness.Clear(); 
         
-        // LOG: Detailed evolution summary
         Debug.Log($"[GENETIC] ══════════════════════════════");
         Debug.Log($"[GENETIC] EVOLUTION COMPLETE!");
         Debug.Log($"[GENETIC] Best Performer: HP={currentBestGenes.HealthMultiplier:F2}x, Dmg={currentBestGenes.DamageMultiplier:F2}x, Spd={currentBestGenes.SpeedMultiplier:F2}x");
         Debug.Log($"[GENETIC] Dominant Trait: {currentBestGenes.GetDominantTrait()}");
-        Debug.Log($"[GENETIC] Gene Pool: {genePool.Count} variants | Elites: {eliteCount}");
+        Debug.Log($"[GENETIC] Gene Pool: {genePool.Count} variants | Elites preserved: {eliteCount}");
         Debug.Log($"[GENETIC] ══════════════════════════════");
+    }
+
+    private EnemyGenes Crossover(EnemyGenes parent1, EnemyGenes parent2)
+    {
+        return new EnemyGenes
+        {
+            HealthMultiplier = Random.value > 0.5f ? parent1.HealthMultiplier : parent2.HealthMultiplier,
+            DamageMultiplier = Random.value > 0.5f ? parent1.DamageMultiplier : parent2.DamageMultiplier,
+            SpeedMultiplier = Random.value > 0.5f ? parent1.SpeedMultiplier : parent2.SpeedMultiplier
+        };
     }
 
     private EnemyGenes Mutate(EnemyGenes parent)
     {
         EnemyGenes child = parent;
+        const float MIN_MULTIPLIER = 0.5f; // Floor to prevent too weak enemies
 
         if (Random.value < MUTATION_RATE)
         {
             // Pick trait to mutate
             int trait = Random.Range(0, 3);
-            float mutation = Random.Range(0f, MUTATION_STRENGTH); // Always positive (0 to +Strength)
             
-            // Apply mutation enforcing "Non-Decreasing" logic (Add to existing)
+            float mutation = Random.Range(-MUTATION_STRENGTH, MUTATION_STRENGTH);
+            
             switch (trait)
             {
                 case 0: // HP
                     child.HealthMultiplier += mutation;
-                    child.HealthMultiplier = Mathf.Min(child.HealthMultiplier, MAX_MULTIPLIER);
+                    child.HealthMultiplier = Mathf.Clamp(child.HealthMultiplier, MIN_MULTIPLIER, MAX_MULTIPLIER);
                     break;
                 case 1: // Dmg
                     child.DamageMultiplier += mutation;
-                    child.DamageMultiplier = Mathf.Min(child.DamageMultiplier, MAX_MULTIPLIER);
+                    child.DamageMultiplier = Mathf.Clamp(child.DamageMultiplier, MIN_MULTIPLIER, MAX_MULTIPLIER);
                     break;
                 case 2: // Speed
                     child.SpeedMultiplier += mutation;
-                    child.SpeedMultiplier = Mathf.Min(child.SpeedMultiplier, MAX_MULTIPLIER);
+                    child.SpeedMultiplier = Mathf.Clamp(child.SpeedMultiplier, MIN_MULTIPLIER, MAX_MULTIPLIER);
                     break;
             }
         }
@@ -992,7 +1042,7 @@ public void StopAndReset()
     }
 }
 
-// Estas classes permanecem as mesmas
+
 [System.Serializable]
 public class WaveEnemy
 {
