@@ -365,7 +365,7 @@ O sistema de cores mapeia os genes evoluídos para feedback visual imediato:
 | **Branco** | Genes base (1.0x) | Sem evolução significativa |
 | **Vermelho** | Alto Damage | Fitness favorece dano causado |
 | **Verde** | Alto Health (HP) | Sobrevivência prolongada |
-| **Azul/Ciano** | Alta Velocidade | Bónus de velocidade no fitness |
+| **Azul** | Alta Velocidade | Bónus de velocidade no fitness |
 | **Tons mistos** | Genes balanceados | Crossover de múltiplos traços |
 
 
@@ -374,7 +374,7 @@ O sistema de cores mapeia os genes evoluídos para feedback visual imediato:
 - **Separação de Responsabilidades**: Cada sistema é independente
 - **Extensibilidade**: Novos estados adicionam-se sem modificar código existente
 - **Reutilização**: Pathfinding utilizado por qualquer entidade
-- **Performance**: Cache de estados e lookup O(1)
+- **Performance**: Cache de estados
 
 ---
 
