@@ -339,18 +339,6 @@ public void Die()
 }
 ```
 
-
-## Como executar / Build
-
-- **Editor & Versão:** Abra o projecto no Unity 2021.3 LTS ou superior (recomendado). Verifiquem a versão no `ProjectSettings`.
-- **Dependências mínimas:**
-    - Unity Netcode for GameObjects (Netcode) — para multiplayer e sincronização de `EnemyGenes`.
-    - TextMeshPro — para HUD/Popups caso seja usado.
-    - (Opcional) Firebase / Google services se usarem autenticação/analytics — ficheiro `google-services.json` presente.
-- **Executar localmente:** Abrir a cena principal em `Assets/Scenes/` e clicar em `Play` no Editor.
-- **Multiplayer (testes locais):** Executar uma instância como Host (Server+Client) via UI do Netcode e ligar clientes.
-- **Build:** Fazer `File > Build Settings...` e incluir a cena principal; escolher plataforma e `Build`.
-
 ## Estrutura de Código importante
 
 - Pathfinding: `__Scripts/Pathfinding/` (`Pathfinding.cs`, `Grid.cs`, `Node.cs`)
