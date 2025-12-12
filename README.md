@@ -386,8 +386,6 @@ O sistema de cores mapeia os genes evoluídos para feedback visual imediato:
 
 A implementação de três sistemas de IA em sinergia cria uma experiência progressivamente desafiante e adaptativa. O algoritmo genético é crucial, pois permite que os inimigos evoluam naturalmente, criando a ilusão de uma população inteligente que aprende.
 
-As implementações seguem princípios sólidos de engenharia de software (SOLID, design patterns) facilitando manutenção e futuras extensões.
-
 ---
 
 **Data:** Dezembro 2025  
