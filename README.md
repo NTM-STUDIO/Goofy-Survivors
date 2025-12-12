@@ -21,7 +21,7 @@ Este readme descreve a implementação de três sistemas de IA no jogo Goofy Sur
 
 ---
 
-**Informação da Equipa (Preencham com NOME e NÚMERO)**
+**Grupo**
 
 - **Membro 1:** Gonçalo Veloso - 22348
 - **Membro 2:** Martim Moreira - 22354
