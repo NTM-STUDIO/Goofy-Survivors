@@ -5,9 +5,6 @@ using System.Collections.Generic;
 
 namespace EnemyAI
 {
-    /// <summary>
-    /// Main enemy AI state machine controller.
-    /// </summary>
     [RequireComponent(typeof(EnemyStats))]
     [RequireComponent(typeof(Rigidbody))]
     public class EnemyStateMachine : NetworkBehaviour

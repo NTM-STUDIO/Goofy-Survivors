@@ -104,6 +104,10 @@ public void StopAndReset()
         // --- IMPORTANTE: TEM DE TER ISTO ---
         waveIndex = 0; 
         // -----------------------------------
+        
+        // Reset genetic algorithm to default genes for fresh start
+        InitializeGeneticAlgorithm();
+        currentGenerationFitness.Clear();
 
         // Código de destruir inimigos restantes...
         EnemyStats[] allEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
@@ -869,23 +873,18 @@ public void StopAndReset()
 
     private void InitializeGeneticAlgorithm()
     {
-        // Start with a diverse pool of genes (not just defaults)
+        // First wave: ALL enemies use default genes (1.0x baseline)
+        // Diversity is only introduced AFTER first evolution cycle
         genePool.Clear();
         
-        // Half with default genes
-        for (int i = 0; i < 5; i++)
+        // All default genes for wave 1 - no unfair advantage
+        for (int i = 0; i < 10; i++)
         {
             genePool.Add(EnemyGenes.Default);
         }
         
-        // Half with slight random variations for initial diversity
-        for (int i = 0; i < 5; i++)
-        {
-            genePool.Add(CreateRandomGenes(1.0f, 1.3f)); // Slight variation from 1.0x to 1.3x
-        }
-        
         lastEvolutionTime = Time.time;
-        Debug.Log($"[GENETIC] Initialized gene pool with {genePool.Count} diverse starting genes");
+        Debug.Log($"[GENETIC] Initialized gene pool with {genePool.Count} DEFAULT genes (Wave 1 baseline)");
     }
 
     private EnemyGenes CreateRandomGenes(float minMult, float maxMult)
