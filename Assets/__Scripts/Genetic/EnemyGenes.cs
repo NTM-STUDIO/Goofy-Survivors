@@ -8,9 +8,9 @@ public struct EnemyGenes : INetworkSerializable, IEquatable<EnemyGenes>
     public float SpeedMultiplier;
     public float HealthMultiplier;
     public float DamageMultiplier;
-    // Removed SizeMultiplier as requested
+
     
-    // Default constructor for standard genes (base stats)
+    // Base Stats
     public static EnemyGenes Default => new EnemyGenes
     {
         SpeedMultiplier = 1.0f,
@@ -40,36 +40,21 @@ public struct EnemyGenes : INetworkSerializable, IEquatable<EnemyGenes>
         float dmg = Mathf.Max(0, DamageMultiplier - 1f);
         float total = spd + hp + dmg;
 
-        if (total <= 0.01f) return Color.white; // Base stats
+        if (total <= 0.01f) return Color.white;
 
         // Normalize
-        float r = dmg / total;   // Red = Damage
-        float g = hp / total;    // Green = HP
-        float b = spd / total;   // Blue = Speed
+        float r = dmg / total;
+        float g = hp / total;
+        float b = spd / total;
 
-        // Mix with white to keep it visible/not too dark
-        // Or simply use the RGB components directly to tint
+        // Inverted color scheme
         return new Color(1f - g - b * 0.5f, 1f - r - b * 0.5f, 1f - r - g); 
-        // Wait, standard tinting logic usually Multiplies.
-        // Let's return a tint color where the specialized channel is saturated.
-        // If high HP -> Greenish (R low, B low)
         
-        // Simpler approach:
-        // Base color is White. Subtract channels of weaker stats.
-        // Pure HP (Green) -> R=0, B=0, G=1.
-        
-        // Let's use an additive influence on a neutral base or just simple RGB mixing
-        // Red = Dmg, Green = Hp, Blue = Spd.
-        // Base is (1,1,1).
-        // If Dmg is high, we want Reddish. (1, 0, 0)
-        
-        float intensity = Mathf.Clamp01(total); // How "mutated" it is
+        float intensity = Mathf.Clamp01(total);
         
         // Target color based on ratios
         Color target = new Color(r, g, b);
         
-        // If mutation is small, look normal. If high, look mutated.
-        // Ensure it's not too dark: normalize max component to 1
         float maxC = Mathf.Max(target.r, target.g, target.b);
         if (maxC > 0)
         {
