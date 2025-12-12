@@ -1,4 +1,4 @@
-# Sistemas de IA - Documentação Técnica
+# Sistemas de IA
 
 ## Índice
 1. [Visão Geral](#visão-geral)
