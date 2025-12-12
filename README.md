@@ -325,7 +325,6 @@ public void Die()
     {
         EnemySpawner.Instance.ReportEnemyFitness(CurrentGenes, DamageDealt, TimeAlive);
     }
-    // ... resto da lógica de morte
 }
 ```
 
