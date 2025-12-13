@@ -5803,11 +5803,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a3c542cb615724548a3e1c1cac0d8eed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  despawnRadius: 80
+  despawnRadius: 115
   checkInterval: 0.2
   fadeOutDuration: 0.5
-  requireOffScreen: 1
   showGizmo: 1
+  showDebugLogs: 0
   enemySpawner: {fileID: 1700906640}
 --- !u!114 &1574925562 stripped
 MonoBehaviour:

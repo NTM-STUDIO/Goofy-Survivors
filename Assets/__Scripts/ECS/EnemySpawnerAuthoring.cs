@@ -11,7 +11,8 @@ public class EnemySpawnerAuthoring : MonoBehaviour
     {
         public override void Bake(EnemySpawnerAuthoring authoring)
         {
-            var entity = GetEntity(TransformUsageFlags.None);
+            // MUDANÇA CRÍTICA: Usar Dynamic para garantir que a entidade tenha LocalTransform
+            var entity = GetEntity(TransformUsageFlags.Dynamic);
             
             AddComponent(entity, new EnemySpawnerData
             {

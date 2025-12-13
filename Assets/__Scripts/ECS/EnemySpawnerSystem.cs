@@ -6,33 +6,49 @@ using Unity.Mathematics;
 [BurstCompile]
 public partial struct EnemySpawnerSystem : ISystem
 {
-    [BurstCompile]
+// [BurstCompile] // Comentado para Debug
     public void OnUpdate(ref SystemState state)
     {
-        if (!SystemAPI.HasSingleton<PlayerPositionSingleton>()) return;
+        if (!SystemAPI.HasSingleton<PlayerPositionSingleton>()) 
+        {
+            UnityEngine.Debug.LogWarning("EnemySpawnerSystem: PlayerPositionSingleton não encontrado! Certifique-se de que o script 'PlayerBridge' está no Player.");
+            return;
+        }
+        
         float3 playerPos = SystemAPI.GetSingleton<PlayerPositionSingleton>().Position;
 
         double currentTime = SystemAPI.Time.ElapsedTime;
-        
-        // Usamos o GlobalSystemVersion como semente simples, mas para aleatoriedade real por frame/entidade
-        // é ideal ter um componente Random. Para este exemplo simples, usaremos um Random temporário.
         var random = Unity.Mathematics.Random.CreateFromIndex((uint)(currentTime * 1000));
 
-        foreach (var (spawner, transform) in SystemAPI.Query<RefRW<EnemySpawnerData>, RefRO<LocalTransform>>())
+        int spawnerCount = 0;
+        // REMOVIDO: RefRO<LocalTransform> da query, pois não estamos usando a posição do spawner, mas sim do player.
+        // Isso garante que o spawner seja encontrado mesmo se não tiver Transform.
+        foreach (var spawner in SystemAPI.Query<RefRW<EnemySpawnerData>>())
         {
+            spawnerCount++;
+            if (spawner.ValueRO.PrefabToSpawn == Entity.Null)
+            {
+                UnityEngine.Debug.LogError("EnemySpawnerSystem: PrefabToSpawn é NULL! Verifique se arrastou o Prefab do Esqueleto no Inspector do Spawner.");
+                continue;
+            }
+
             if (currentTime >= spawner.ValueRO.NextSpawnTime)
             {
+                UnityEngine.Debug.Log($"EnemySpawnerSystem: Spawnando inimigo em {currentTime}");
                 var entity = state.EntityManager.Instantiate(spawner.ValueRO.PrefabToSpawn);
                 
-                // Calcular posição aleatória em círculo (XZ plane)
                 float2 randomCircle = random.NextFloat2Direction() * spawner.ValueRO.SpawnRadius;
                 float3 spawnPos = playerPos + new float3(randomCircle.x, 0, randomCircle.y);
 
-                // Define a posição inicial
                 state.EntityManager.SetComponentData(entity, LocalTransform.FromPosition(spawnPos));
 
                 spawner.ValueRW.NextSpawnTime = (float)currentTime + spawner.ValueRO.SpawnRate;
             }
+        }
+
+        if (spawnerCount == 0)
+        {
+            UnityEngine.Debug.LogWarning("EnemySpawnerSystem: Nenhum componente 'EnemySpawnerData' encontrado! Verifique se o GameObject do Spawner está na SubScene e tem o script Authoring.");
         }
     }
 }

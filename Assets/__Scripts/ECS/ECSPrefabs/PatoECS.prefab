@@ -305,7 +305,7 @@ GameObject:
   - component: {fileID: 476431355898181283}
   - component: {fileID: 4605444287108962587}
   m_Layer: 0
-  m_Name: Pato
+  m_Name: PatoECS
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
