@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using PlayerAI;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(PlayerStats))]
@@ -7,27 +8,38 @@ public class Movement : NetworkBehaviour
 {
     private Rigidbody rb;
     private PlayerStats playerStats;
+    private PlayerStateMachine stateMachine;
     private Vector3 moveInput;
     private const float cameraAngleY = 45f;
     private const float horizontalNerfFactor = 0.56f;
 
     // Referência ao GameManager
     private GameManager gameManager;
+    
+    // If true, FSM handles movement - this script becomes inactive
+    private bool fsmActive = false;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
         playerStats = GetComponent<PlayerStats>();
+        stateMachine = GetComponent<PlayerStateMachine>();
         rb.useGravity = false;
         rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
 
-        gameManager = GameManager.Instance; // Obter referência ao GameManager
+        gameManager = GameManager.Instance;
         if(gameManager == null)
             Debug.LogError("Movement: GameManager não encontrado!");
+        
+        // If FSM is attached and enabled, let it handle movement
+        fsmActive = stateMachine != null && stateMachine.enabled;
     }
 
     void Update()
     {
+        // If FSM is handling movement, skip this script's logic
+        if (fsmActive) return;
+        
         // Somente aplica IsOwner se estivermos em P2P
         if (gameManager != null && gameManager.isP2P && !IsOwner) return;
 
@@ -44,6 +56,9 @@ public class Movement : NetworkBehaviour
 
     void FixedUpdate()
     {
+        // If FSM is handling movement, skip this script's logic
+        if (fsmActive) return;
+        
         if (gameManager != null && gameManager.isP2P && !IsOwner) return;
 
         // If downed, hard-stop movement immediately
@@ -69,6 +84,6 @@ public class Movement : NetworkBehaviour
         if (Mathf.Abs(moveInput.x) > 0.1f && Mathf.Abs(moveInput.z) > 0.1f)
             diagonalCompensation = 1f / Mathf.Sqrt(2f);
 
-    rb.linearVelocity = movementDirection * playerStats.movementSpeed * diagonalCompensation;
+        rb.linearVelocity = movementDirection * playerStats.movementSpeed * diagonalCompensation;
     }
 }

@@ -869,8 +869,6 @@ public void StopAndReset()
     }
     
     // --- GENETIC ALGORITHM LOGIC ---
-    // IMPROVED: Added crossover, bidirectional mutation, diversity injection, better fitness
-
     private void InitializeGeneticAlgorithm()
     {
         // First wave: ALL enemies use default genes (1.0x baseline)
