@@ -7,7 +7,6 @@ public class EnemySpawner : NetworkBehaviour
 {
     private enum SpawnSide { Left, Right, Top, Bottom }
 
-    // Add this near your other class variables at the top
     private Coroutine spawningCoroutine;
 
     [Header("Wave Configuration")]
@@ -101,9 +100,7 @@ public void StopAndReset()
 
         StopAllCoroutines();
 
-        // --- IMPORTANTE: TEM DE TER ISTO ---
         waveIndex = 0; 
-        // -----------------------------------
         
         // Reset genetic algorithm to default genes for fresh start
         InitializeGeneticAlgorithm();
@@ -121,7 +118,6 @@ public void StopAndReset()
         }
     }
 
-    // NOVO: Atualiza posições de todos os players na rede
     private void UpdatePlayerPositions()
     {
         playerPositions.Clear();
@@ -178,7 +174,6 @@ public void StopAndReset()
         Debug.LogError("EnemySpawner: No active players found by any method! Spawning will use fallback position.");
     }
 
-    // NOVO: Calcula o centro de todos os players
     private Vector3 GetPlayersCenter()
     {
         if (playerPositions.Count == 0)
@@ -194,9 +189,6 @@ public void StopAndReset()
 
     private int GetPlayerCountMultiplier()
     {
-        // Em multiplayer, cada jogador recebe a wave completa
-        // Isso significa: 2 jogadores = 2x inimigos (wave completa para cada um)
-        // O XP é compartilhado, então ambos sobem de nível juntos
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             if (NetworkManager.Singleton.IsServer)
@@ -253,8 +245,6 @@ public void StopAndReset()
             Wave currentWave = waves[waveIndex];
             Debug.Log("Starting Wave: " + (currentWave.waveName != "" ? currentWave.waveName : (waveIndex + 1).ToString()));
 
-            // Calculate multiplier based on number of connected players
-            // RECALCULA a cada wave para suportar jogadores que entrem/saiam
             int playerMultiplier = GetPlayerCountMultiplier();
             Debug.Log($"[EnemySpawner] Wave {waveIndex}: playerMultiplier = {playerMultiplier}");
 
@@ -282,7 +272,6 @@ public void StopAndReset()
 
             while (totalEnemiesToSpawn > 0)
             {
-                // NOVO: Atualiza posições dos players a cada spawn
                 UpdatePlayerPositions();
 
                 int roll = Random.Range(0, totalEnemiesToSpawn);
@@ -401,7 +390,6 @@ public void StopAndReset()
         Debug.Log("All waves completed!");
     }
 
-    // --- FUNÇÃO DE POSIÇÃO DE SPAWN TOTALMENTE REESCRITA E CORRIGIDA ---
     private Vector3 GetSpawnPosition3D(SpawnSide side)
     {
         if (mainCamera == null) return Vector3.zero;
@@ -461,7 +449,6 @@ public void StopAndReset()
         return spawnPoint + offsetDir.normalized * spawnBuffer;
     }
 
-    // NOVO: Calcula spawn baseado em TODOS os players, não apenas câmera local
     private Vector3 GetSpawnPositionForAllPlayers(SpawnSide side)
     {
         if (playerPositions.Count == 0)
@@ -491,7 +478,6 @@ public void StopAndReset()
             playerBounds.Encapsulate(pos);
         }
 
-        // AUMENTADO: Expande significativamente os bounds para garantir spawn em toda a volta
         // Isso evita que inimigos spawnem apenas nos cantos
         const float minSpread = 50f; // Aumentado de 10f para 50f
         Vector3 size = playerBounds.size;
@@ -506,7 +492,6 @@ public void StopAndReset()
         // Expande os bounds pelo buffer para garantir spawn fora da vista
         playerBounds.Expand(new Vector3(spawnBuffer * 2f, 0f, spawnBuffer * 2f));
 
-        // NOVO: Range extra para spawnar além dos bounds dos players
         // Isso garante que inimigos apareçam em toda a extensão de cada lado
         const float extraSpawnRange = 40f;
 
@@ -902,13 +887,7 @@ public void StopAndReset()
     }
 
     public void ReportEnemyFitness(EnemyGenes genes, float damageDealt, float timeAlive)
-    {
-        // IMPROVED FITNESS FUNCTION:
-        // - Damage dealt is important (threat to player)
-        // - Survival time matters (annoying factor)
-        // - Efficiency bonus: damage per health point invested
-        // - Penalty for being too slow (didn't reach player)
-        
+    {        
         float baseFitness = (damageDealt * 2.0f) + (timeAlive * 0.5f);
         
         // Efficiency: damage dealt relative to health investment
@@ -924,7 +903,7 @@ public void StopAndReset()
         currentGenerationFitness.Add(new GeneFitnessData { Genes = genes, Fitness = fitness });
         
         // LOG: Report individual fitness (less verbose)
-        if (fitness > 5f) // Only log noteworthy performers
+        if (fitness > 5f)
         {
             Debug.Log($"[GENETIC] Strong enemy died - Fitness: {fitness:F1} | " +
                       $"Genes: HP={genes.HealthMultiplier:F2}x, Spd={genes.SpeedMultiplier:F2}x, Dmg={genes.DamageMultiplier:F2}x");
