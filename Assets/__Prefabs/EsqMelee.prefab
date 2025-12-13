@@ -223,6 +223,7 @@ GameObject:
   - component: {fileID: 6562184088800466058}
   - component: {fileID: 6297376134751599430}
   - component: {fileID: 215032439087966243}
+  - component: {fileID: -8133759210201554829}
   m_Layer: 7
   m_Name: EsqMelee
   m_TagString: Enemy
@@ -259,7 +260,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2172043712
+  GlobalObjectIdHash: 1640774031
   InScenePlacedSourceGlobalObjectIdHash: 1640774031
   DeferredDespawnTick: 0
   Ownership: 1
@@ -358,6 +359,10 @@ MonoBehaviour:
     dropChance: 10
   - orbPrefab: {fileID: 8326750618715067698, guid: 4bda2674e362ef44687d23c2a36d07b4, type: 3}
     dropChance: 90
+  CurrentGenes:
+    SpeedMultiplier: 0
+    HealthMultiplier: 0
+    DamageMultiplier: 0
 --- !u!114 &215032439087966243
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -404,3 +409,22 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 0
   SlerpPosition: 0
+--- !u!114 &-8133759210201554829
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9116392235869641759}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d61ea162f48960e4c985377e2680db58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  initialState: 2
+  debugMode: 1
+  targetUpdateInterval: 1
+  attackRange: 1.5
+  attackCooldown: 1.5
+  stunDuration: 0.5

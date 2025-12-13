@@ -1,4 +1,3 @@
-// Filename: ConnectionState.cs
 using System;
 using Unity.Netcode;
 using UnityEngine;

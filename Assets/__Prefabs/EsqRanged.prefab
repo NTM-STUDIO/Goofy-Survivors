@@ -230,6 +230,7 @@ GameObject:
   - component: {fileID: 6297376134751599430}
   - component: {fileID: 3865741410058004988}
   - component: {fileID: 5601596419032903263}
+  - component: {fileID: 2977248138916684069}
   m_Layer: 7
   m_Name: EsqRanged
   m_TagString: Enemy
@@ -294,7 +295,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1856379022
+  GlobalObjectIdHash: 1636982426
   InScenePlacedSourceGlobalObjectIdHash: 1636982426
   DeferredDespawnTick: 0
   Ownership: 1
@@ -340,6 +341,10 @@ MonoBehaviour:
     dropChance: 75
   - orbPrefab: {fileID: 8326750618715067698, guid: b16da58f35868b846a58e1a345e542c0, type: 3}
     dropChance: 25
+  CurrentGenes:
+    SpeedMultiplier: 0
+    HealthMultiplier: 0
+    DamageMultiplier: 0
 --- !u!114 &3865741410058004988
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -406,3 +411,22 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &2977248138916684069
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9116392235869641759}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d61ea162f48960e4c985377e2680db58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  initialState: 2
+  debugMode: 0
+  targetUpdateInterval: 1
+  attackRange: 1.5
+  attackCooldown: 1.5
+  stunDuration: 0.5

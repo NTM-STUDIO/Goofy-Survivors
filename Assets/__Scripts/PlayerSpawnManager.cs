@@ -20,7 +20,6 @@ public class PlayerSpawnManager : NetworkBehaviour
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
             Debug.Log(">>> [PlayerSpawnManager] Servidor Iniciado. À espera de jogadores.");
             
-            // Regista prefabs para evitar erros de hash
             RegisterRuntimePrefabs();
         }
     }
@@ -42,7 +41,6 @@ public class PlayerSpawnManager : NetworkBehaviour
 
     private void OnClientConnected(ulong clientId)
     {
-        // Se alguém entrar a meio do jogo, spawna logo
         if (GameManager.Instance.CurrentState == GameManager.GameState.Playing)
         {
             StartCoroutine(SpawnPlayerForClientRoutine(clientId));
@@ -56,7 +54,6 @@ public class PlayerSpawnManager : NetworkBehaviour
     {
         if (GameManager.Instance.isP2P)
         {
-            // Verifica se somos Host através do NetworkManager
             if (NetworkManager.Singleton.IsHost)
             {
                 foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
@@ -89,8 +86,7 @@ public class PlayerSpawnManager : NetworkBehaviour
             var p = Instantiate(prefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
             InitializePlayerSystems(p);
             
-            // Inicializa o EnemyDespawner com o player recém-spawned
-            InitializeEnemyDespawner(p);
+            InitializeEnemyDespawner(p);    
         }
     }
 
@@ -98,17 +94,14 @@ public class PlayerSpawnManager : NetworkBehaviour
     {
         yield return new WaitForSeconds(0.1f);
 
-        // Verifica se já existe jogador
         if (NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out var client))
         {
-            if (client.PlayerObject != null) yield break; // Já tem boneco
+            if (client.PlayerObject != null) yield break;
         }
 
-        // Escolhe Prefab
         GameObject prefabToUse = null;
         if (p2pSelections.TryGetValue(clientId, out var sel)) prefabToUse = sel;
 
-        // Fallbacks
         if (prefabToUse == null && LoadoutSelections.CharacterPrefabsContext != null && LoadoutSelections.CharacterPrefabsContext.Count > 0)
             prefabToUse = LoadoutSelections.CharacterPrefabsContext[0];
 
@@ -117,7 +110,6 @@ public class PlayerSpawnManager : NetworkBehaviour
 
         if (prefabToUse != null)
         {
-            // Instancia e Spawna na Rede
             var instance = Instantiate(prefabToUse, playerSpawnPoint.position, playerSpawnPoint.rotation);
             var netObj = instance.GetComponent<NetworkObject>();
 
@@ -125,19 +117,15 @@ public class PlayerSpawnManager : NetworkBehaviour
             {
                 netObj.SpawnAsPlayerObject(clientId, true);
 
-                // Regista no Revive System
                 if (GameManager.Instance.reviveManager) 
                     GameManager.Instance.reviveManager.RegisterPlayer(clientId);
                 
-                // --- AQUI ESTÁ A CORREÇÃO DA ARMA ---
                 StartCoroutine(GiveStartingWeapon(clientId));
             }
         }
 
-        // Inicializa UI local no Host se for ele a spawnar
         if (clientId == NetworkManager.Singleton.LocalClientId) InitializeClientsClientRpc();
         
-        // Inicializa o EnemyDespawner com o primeiro player spawned (só precisa de um)
         if (IsServer)
         {
             var playerObj = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clientId);
@@ -150,7 +138,7 @@ public class PlayerSpawnManager : NetworkBehaviour
 
     private void InitializeEnemyDespawner(GameObject playerObj)
     {
-        var enemyDespawner = FindObjectOfType<EnemyDespawner>();
+        var enemyDespawner = FindFirstObjectByType<EnemyDespawner>();
         if (enemyDespawner != null && playerObj != null)
         {
             enemyDespawner.Initialize(playerObj);
@@ -167,19 +155,10 @@ public class PlayerSpawnManager : NetworkBehaviour
         }
     }
 
-    // --- ESTE É O MÉTODO QUE DÁ A ARMA NO MULTIPLAYER ---
     private IEnumerator GiveStartingWeapon(ulong clientId)
     {
-        // Espera 0.5s para garantir que o objeto foi propagado na rede e inicializado
         yield return new WaitForSeconds(0.5f);
-        
-        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(clientId, out var netObj))
-        {
-             // Se não encontrou pelo ID do cliente, tenta encontrar pelo PlayerObject do cliente
-             // (O TryGetValue acima procura por NetworkObjectId, mas o clientId é diferente)
-        }
 
-        // Correção: Vamos buscar o objeto do jogador corretamente
         NetworkObject playerObject = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clientId);
 
         if (playerObject != null)
@@ -204,8 +183,8 @@ public class PlayerSpawnManager : NetworkBehaviour
 
     private void InitializePlayerSystems(GameObject playerObj)
     {
-        FindObjectOfType<PlayerExperience>()?.Initialize(); 
-        FindObjectOfType<UpgradeManager>()?.Initialize(playerObj);
+        FindFirstObjectByType<PlayerExperience>()?.Initialize(); 
+        FindFirstObjectByType<UpgradeManager>()?.Initialize(playerObj);
         if (!playerObj.GetComponent<ApplyRunesOnSpawn>()) 
             playerObj.AddComponent<ApplyRunesOnSpawn>();
     }

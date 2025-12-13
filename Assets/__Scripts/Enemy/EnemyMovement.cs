@@ -56,10 +56,14 @@ public class EnemyMovement : NetworkBehaviour
     private Vector3 debugDestination;
     private bool hasDebugTarget;
 
+    // State Machine Integration
+    private EnemyAI.EnemyStateMachine stateMachine;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         stats = GetComponent<EnemyStats>();
+        stateMachine = GetComponent<EnemyAI.EnemyStateMachine>();
 
         if (randomizeOnAwake) RandomiseBehaviour();
         flankSign = Random.value < 0.5f ? -1f : 1f;
@@ -79,6 +83,14 @@ public class EnemyMovement : NetworkBehaviour
     {
         // Only the server should simulate enemy movement.
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && !IsServer) return;
+
+        // --- STATE MACHINE INTEGRATION ---
+        // Se tem State Machine, verifica se o estado atual permite movimento
+        if (stateMachine != null && !IsMovementAllowedByStateMachine())
+        {
+            rb.linearVelocity = Vector3.zero;
+            return;
+        }
 
         // --- KNOCKBACK FIX ---
         if (stats.IsKnockedBack)
@@ -146,9 +158,6 @@ public class EnemyMovement : NetworkBehaviour
         hasDebugTarget = true;
     }
 
-    /// <summary>
-    /// Procura na lista do PlayerManager qual jogador está mais perto DESTE inimigo especificamente.
-    /// </summary>
     private void FindLocalClosestPlayer()
     {
         // Lista temporária para busca
@@ -306,7 +315,7 @@ public class EnemyMovement : NetworkBehaviour
     }
 
     // --- NOVO: O Cliente pede para levar dano ---
-    [ServerRpc(RequireOwnership = false)]
+    [Rpc(SendTo.Server, RequireOwnership = false)]
     private void RequestPlayerDamageServerRpc(ulong targetClientId)
     {
         // O Servidor verifica o Cooldown para evitar spam/batota
@@ -367,6 +376,24 @@ public class EnemyMovement : NetworkBehaviour
         if (roll < flankThreshold) behaviour = PursuitBehaviour.PredictiveFlank;
         else if (roll < predictiveThreshold) behaviour = PursuitBehaviour.Predictive;
         else behaviour = PursuitBehaviour.Direct;
+    }
+
+    private bool IsMovementAllowedByStateMachine()
+    {
+        if (stateMachine == null) return true; // Sem state machine = movimento livre
+        
+        var state = stateMachine.CurrentStateType;
+        return state == EnemyAI.EnemyStateType.Chasing || 
+               state == EnemyAI.EnemyStateType.Fleeing ||
+               state == EnemyAI.EnemyStateType.None; // None = ainda não inicializou
+    }
+
+    public Transform GetCurrentTarget() => currentTarget;
+
+    public void SetTarget(Transform target)
+    {
+        currentTarget = target;
+        targetRb = target != null ? target.GetComponent<Rigidbody>() : null;
     }
 
 #if UNITY_EDITOR
