@@ -896,7 +896,7 @@ MonoBehaviour:
   reviveManager: {fileID: 2072456960}
   eventManager: {fileID: 458583903}
   mapGenerator: {fileID: 729974981}
-  uiManager: {fileID: 0}
+  uiManager: {fileID: 765059249}
   networkCurrentTime:
     m_InternalValue: 0
 --- !u!1 &653212128
@@ -1162,6 +1162,18 @@ PrefabInstance:
     - target: {fileID: 578362964087946758, guid: eb205d45defe3514ea261e14646bb0e2, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1230226604644644242, guid: eb205d45defe3514ea261e14646bb0e2, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1230226604644644242, guid: eb205d45defe3514ea261e14646bb0e2, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 765059249}
+    - target: {fileID: 1230226604644644242, guid: eb205d45defe3514ea261e14646bb0e2, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: PlayButton
       objectReference: {fileID: 0}
     - target: {fileID: 1350592396174642261, guid: eb205d45defe3514ea261e14646bb0e2, type: 3}
       propertyPath: m_AnchorMax.y
@@ -1521,6 +1533,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6725024130786807265, guid: eb205d45defe3514ea261e14646bb0e2, type: 3}
   m_PrefabInstance: {fileID: 765059247}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &765059249 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 27624718271170665, guid: eb205d45defe3514ea261e14646bb0e2, type: 3}
+  m_PrefabInstance: {fileID: 765059247}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7871fc416df605642bec8130682477b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &788642269
 GameObject:
   m_ObjectHideFlags: 0
@@ -1940,8 +1963,8 @@ MonoBehaviour:
   despawnRadius: 115
   checkInterval: 0.2
   fadeOutDuration: 0.5
+  requireOffScreen: 1
   showGizmo: 1
-  showDebugLogs: 0
   enemySpawner: {fileID: 0}
 --- !u!1 &1640394566
 GameObject:
@@ -2178,6 +2201,51 @@ MonoBehaviour:
   midGameScalingFactor: 1.14
   lateGameScalingFactor: 1.15
   endGameScalingFactor: 1.2
+--- !u!1 &1800258057
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1800258058}
+  - component: {fileID: 1800258059}
+  m_Layer: 0
+  m_Name: DamageVisualsManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1800258058
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1800258057}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2034675216}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1800258059
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1800258057}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c79447227ee42d4da8227291c86b9b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DamagePopupPrefab: {fileID: 1151078973031816182, guid: 48036a6b9a0774c408db15d75147741d, type: 3}
 --- !u!1 &1838544141
 GameObject:
   m_ObjectHideFlags: 0
@@ -2257,6 +2325,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 652298567}
+  - {fileID: 1800258058}
   - {fileID: 1162585564}
   - {fileID: 1772095424}
   - {fileID: 1572984512}

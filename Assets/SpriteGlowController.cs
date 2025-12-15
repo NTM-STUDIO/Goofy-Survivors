@@ -47,7 +47,7 @@ public class SpriteGlowController : MonoBehaviour
         if (_renderer == null) return;
 
         // 1. Pega o estado atual
-        _renderer.GetPropertyBlock(_propBlock);
+            _renderer.GetPropertyBlock(_propBlock);
 
         // 2. Define os valores
         _propBlock.SetFloat(BloomRef, bloomIntensity);

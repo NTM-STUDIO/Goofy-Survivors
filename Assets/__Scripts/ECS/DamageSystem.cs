@@ -93,6 +93,7 @@ public partial struct CollisionDamageSystem : ISystem
             EnemyTagLookup = SystemAPI.GetComponentLookup<EnemyTag>(true),
             ProjectileDataLookup = SystemAPI.GetComponentLookup<ProjectileData>(true),
             ProjectileTagLookup = SystemAPI.GetComponentLookup<ProjectileTag>(true),
+            ParentLookup = SystemAPI.GetComponentLookup<Parent>(true), // Adicionado para suportar hierarquia
             CommandBuffer = SystemAPI.GetSingleton<EndFixedStepSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged)
         };
 
@@ -106,6 +107,7 @@ public partial struct CollisionDamageSystem : ISystem
         [ReadOnly] public ComponentLookup<EnemyTag> EnemyTagLookup;
         [ReadOnly] public ComponentLookup<ProjectileData> ProjectileDataLookup;
         [ReadOnly] public ComponentLookup<ProjectileTag> ProjectileTagLookup;
+        [ReadOnly] public ComponentLookup<Parent> ParentLookup; // Lookup para checar pais
         public EntityCommandBuffer CommandBuffer;
 
         public void Execute(TriggerEvent triggerEvent)
@@ -113,16 +115,47 @@ public partial struct CollisionDamageSystem : ISystem
             Entity entityA = triggerEvent.EntityA;
             Entity entityB = triggerEvent.EntityB;
 
-            // Caso 1: A é Projétil, B é Inimigo
-            if (ProjectileTagLookup.HasComponent(entityA) && EnemyTagLookup.HasComponent(entityB))
+            // Tenta identificar quem é quem (suportando colisão no filho)
+            Entity projectileA = GetProjectile(entityA);
+            Entity enemyB = GetEnemy(entityB);
+
+            if (projectileA != Entity.Null && enemyB != Entity.Null)
             {
-                ApplyDamage(entityB, entityA);
+                ApplyDamage(enemyB, projectileA);
+                return;
             }
-            // Caso 2: B é Projétil, A é Inimigo
-            else if (ProjectileTagLookup.HasComponent(entityB) && EnemyTagLookup.HasComponent(entityA))
+
+            Entity projectileB = GetProjectile(entityB);
+            Entity enemyA = GetEnemy(entityA);
+
+            if (projectileB != Entity.Null && enemyA != Entity.Null)
             {
-                ApplyDamage(entityA, entityB);
+                ApplyDamage(enemyA, projectileB);
+                return;
             }
+        }
+
+        // Helper para encontrar a entidade correta (mesmo se o collider estiver num filho)
+        private Entity GetProjectile(Entity e)
+        {
+            if (ProjectileTagLookup.HasComponent(e)) return e;
+            if (ParentLookup.HasComponent(e))
+            {
+                Entity parent = ParentLookup[e].Value;
+                if (ProjectileTagLookup.HasComponent(parent)) return parent;
+            }
+            return Entity.Null;
+        }
+
+        private Entity GetEnemy(Entity e)
+        {
+            if (EnemyTagLookup.HasComponent(e)) return e;
+            if (ParentLookup.HasComponent(e))
+            {
+                Entity parent = ParentLookup[e].Value;
+                if (EnemyTagLookup.HasComponent(parent)) return parent;
+            }
+            return Entity.Null;
         }
 
         void ApplyDamage(Entity enemy, Entity projectile)

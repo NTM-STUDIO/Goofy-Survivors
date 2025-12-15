@@ -30,22 +30,24 @@ public partial struct EnemyMovementSystem : ISystem
 
             if (movement.ValueRO.HasTarget)
             {
+                // Lógica replicada do EnemyMovement.cs (Fallback Isometric Logic)
                 float3 direction = movement.ValueRO.TargetPosition - transform.ValueRO.Position;
+                
+                // Zera o Y (XZ plane only)
+                direction.y = 0f;
+
                 float distanceSq = math.lengthsq(direction);
 
                 if (distanceSq > 0.001f)
                 {
-                    float3 dirNormalized = math.normalize(direction);
-                    transform.ValueRW.Position += dirNormalized * stats.ValueRO.MoveSpeed * deltaTime;
+                    // Aplica a correção isométrica no eixo X (0.70710678f)
+                    // Isso compensa a distorção visual da câmera isométrica
+                    direction.x *= 0.70710678f;
 
-                    // Simple facing logic for 2D/2.5D
-                    if (dirNormalized.x != 0)
-                    {
-                        // If moving left (x < 0), rotate 180 degrees on Y. If right, 0 degrees.
-                        // Adjust this based on your sprite's default facing direction.
-                        bool facingLeft = dirNormalized.x < 0;
-                        transform.ValueRW.Rotation = quaternion.RotateY(facingLeft ? math.PI : 0);
-                    }
+                    float3 dirNormalized = math.normalize(direction);
+                    
+                    // Aplica a velocidade
+                    transform.ValueRW.Position += dirNormalized * stats.ValueRO.MoveSpeed * deltaTime;
                 }
             }
         }

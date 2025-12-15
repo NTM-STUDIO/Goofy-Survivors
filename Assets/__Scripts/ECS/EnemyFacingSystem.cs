@@ -26,16 +26,38 @@ public partial struct EnemyFacingSystem : ISystem
 
             bool facingLeft = direction.x < 0;
 
-            // Rotações fixas para Isométrico 2.5D
-            // Direita: X=30, Y=45
-            // Esquerda: X=30, Y=135 (Espelhado no eixo Y visualmente para trás) ou Y=-45 (Espelhado para frente)
-            // Teste qual fica melhor com seu sprite!
+            // Lógica de Flip Simples (Escala X)
+            // Isso preserva a rotação isométrica original (30, 45, 0) e apenas espelha o sprite
+            float currentScaleX = math.abs(visualTransform.Scale); // Assume escala uniforme base
             
-            quaternion rotationRight = quaternion.Euler(math.radians(30), math.radians(45), 0);
-            // Tente 135 se o sprite ficar de costas, ou -45 se ficar de frente
-            quaternion rotationLeft = quaternion.Euler(math.radians(30), math.radians(135), 0); 
+            // Se o sprite original olha para a direita:
+            // Esquerda = Scale -1
+            // Direita = Scale 1
+            
+            // Nota: LocalTransform tem apenas 'Scale' (uniforme). 
+            // Para escala não-uniforme (X negativo), precisamos usar PostTransformMatrix ou mudar a rotação.
+            // Como LocalTransform não suporta escala negativa em um eixo só facilmente sem Matrix,
+            // Vamos usar a Rotação Y para flipar, mas mantendo a inclinação X.
 
-            visualTransform.Rotation = facingLeft ? rotationLeft : rotationRight;
+            // Rotação Base (Direita): X=30, Y=45, Z=0
+            // Rotação Flip (Esquerda): X=30, Y=225 (45+180), Z=0  <-- Isso gira "por trás"
+            // OU Espelhar via Y axis rotation relativa.
+
+            if (facingLeft)
+            {
+                // Vira para a esquerda (Flip Horizontal visual)
+                // Se o sprite é 2D billboarded, Y=180 resolve.
+                // Se é isométrico 3D, precisamos ajustar.
+                // Vamos tentar a rotação que você usava no editor:
+                // Direita: (30, 45, 0)
+                // Esquerda: (30, 135, 0) ?? Teste visual
+                visualTransform.Rotation = quaternion.Euler(math.radians(30), math.radians(135), 0);
+            }
+            else
+            {
+                // Vira para a direita (Normal)
+                visualTransform.Rotation = quaternion.Euler(math.radians(30), math.radians(45), 0);
+            }
 
             state.EntityManager.SetComponentData(visualEntity, visualTransform);
         }

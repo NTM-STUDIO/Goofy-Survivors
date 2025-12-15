@@ -11,12 +11,27 @@ public class PlayerBridge : MonoBehaviour
     private EntityManager _entityManager;
     private PlayerWeaponManager _weaponManager;
     private WeaponRegistry _weaponRegistry;
+    private bool _initialized = false;
 
     // Fila de armas para adicionar (caso o ECS ainda não tenha carregado o Registry)
     private Queue<WeaponData> _pendingWeapons = new Queue<WeaponData>();
 
     void Start()
     {
+        TryInitialize();
+    }
+
+    void TryInitialize()
+    {
+        if (_initialized) return;
+        
+        // Espera pelo World ECS estar pronto
+        if (World.DefaultGameObjectInjectionWorld == null)
+        {
+            // Não desativa - vai tentar novamente no Update
+            return;
+        }
+        
         _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _weaponManager = GetComponent<PlayerWeaponManager>();
         
@@ -36,6 +51,8 @@ public class PlayerBridge : MonoBehaviour
             typeof(PlayerStatsECS),
             typeof(LocalTransform) // Adiciona LocalTransform para a câmera seguir
         );
+
+        Debug.Log($"[PlayerBridge] Player Entity created: {_playerEntity}");
 
         // Inicializa Stats Básicos
         _entityManager.SetComponentData(_playerEntity, new PlayerStatsData
@@ -68,6 +85,8 @@ public class PlayerBridge : MonoBehaviour
         {
             _weaponManager.OnWeaponAdded += HandleWeaponAdded;
         }
+        
+        _initialized = true;
     }
 
     private void HandleWeaponAdded(WeaponData weaponData)
@@ -77,6 +96,13 @@ public class PlayerBridge : MonoBehaviour
 
     void Update()
     {
+        // Tenta inicializar se ainda não conseguiu
+        if (!_initialized)
+        {
+            TryInitialize();
+            return;
+        }
+        
         if (_entityManager.Exists(_playerEntity))
         {
             float3 pos = (float3)transform.position;
