@@ -100,6 +100,7 @@ public class PlayerStats : NetworkBehaviour
     public string OriginalSortingLayer => _originalSortingLayer;
 
     public event Action<int, int> OnHealthChanged;
+    public event Action<MutationType, float> OnMutationBuffAbsorbed;
 
     /// <summary>
     /// Records damage dealt by this player. Called by EnemyStats when damage is applied.
@@ -434,6 +435,9 @@ public class PlayerStats : NetworkBehaviour
         if (type == MutationType.Health) { Heal(20); return; }
         ApplyBuffEffect(type, true);
         activeBuffs.Add(new ActiveBuff { type = type, timer = stolenBuffDuration });
+        
+        // Notify listeners (e.g. ShieldWeapon) about the absorbed buff
+        OnMutationBuffAbsorbed?.Invoke(type, stolenBuffDuration);
     }
 
     private void HandleBuffExpiration()

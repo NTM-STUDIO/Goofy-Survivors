@@ -389,7 +389,8 @@ public class EnemyStats : NetworkBehaviour
         moveSpeed = originalMoveSpeed;
         if (enemyRenderer != null)
         {
-            enemyRenderer.color = originalColor;
+            // Revert to GENETIC color, not just white
+            enemyRenderer.color = originalColor * CurrentGenes.GetGeneColor();
         }
         CurrentMutation = MutationType.None;
 
@@ -436,7 +437,8 @@ public class EnemyStats : NetworkBehaviour
         }
         else
         {
-            enemyRenderer.color = originalColor;
+            // Revert to GENETIC color
+            enemyRenderer.color = originalColor * CurrentGenes.GetGeneColor();
         }
         flashCoroutine = null;
     }
@@ -630,6 +632,12 @@ public class EnemyStats : NetworkBehaviour
 
         // Damage
         baseDamage *= genes.DamageMultiplier;
+        
+        // --- FIX: Update "Original" baseline to include Genetics ---
+        // This ensures that if a mutation is stolen/removed, we revert to the EVOLVED stats, not the weak prefab stats.
+        originalBaseHealth = baseHealth;
+        originalBaseDamage = baseDamage;
+        originalMoveSpeed = moveSpeed;
         
         // LOG: Show genetic modifications
         if (genes.HealthMultiplier > 1.01f || genes.SpeedMultiplier > 1.01f || genes.DamageMultiplier > 1.01f)

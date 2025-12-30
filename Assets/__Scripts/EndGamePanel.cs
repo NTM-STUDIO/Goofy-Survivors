@@ -598,48 +598,23 @@ public class EndGamePanel : MonoBehaviour
     private void OnPlayAgainRestart()
     {
         // Clear visual stats but DON'T reset local cache yet
-        // The tracker will be reset by GameManager when the NEW game starts
         ClearAbilityStats();
         
-        // NOTE: We intentionally keep abilityDamageTotals and damageDone until the panel is disabled
-        // This ensures stats are available for late saves or multiplayer sync
-
         // Ensure the game is not paused
         try { GameManager.Instance.RequestResume(); } catch { }
         Time.timeScale = 1f;
 
-        // Prefer calling the centralized Restart flow to keep behavior identical to the pause menu
-        var settings = Object.FindFirstObjectByType<SettingsManager>(FindObjectsInactive.Include);
-        if (settings != null)
+        // Redirect to Main Menu / Lobby (ActionLeaveToLobby handles P2P vs Singleplayer check)
+        // This resets loadout and returns to title screen as requested.
+        Debug.Log("[EndGamePanel] Leave button clicked. Returning to Main Menu.");
+        if (GameManager.Instance != null)
         {
-            Debug.Log("[EndGamePanel] Found SettingsManager, calling UI_Restart()");
-            settings.UI_Restart();
-            return;
-        }
-
-        // Fallbacks if SettingsManager is not present for some reason
-        try
-        {
-            // Try a soft singleplayer restart first
-            GameManager.Instance.SoftResetSinglePlayerWorld();
-            GameManager.Instance.StartGame();
-            // Hide this panel to avoid overlay after restarting
-            gameObject.SetActive(false);
-            return;
-        }
-        catch { }
-
-        // Final fallback: reload current scene (handles both SP and MP when no manager is available)
-        var nm = NetworkManager.Singleton;
-        var currentScene = SceneManager.GetActiveScene().name;
-        var nsm = nm != null ? nm.SceneManager : null;
-        if (nsm != null && nm.IsServer)
-        {
-            nsm.LoadScene(currentScene, LoadSceneMode.Single);
+            GameManager.Instance.ActionLeaveToLobby();
         }
         else
         {
-            SceneManager.LoadScene(currentScene, LoadSceneMode.Single);
+             // Fallback if GM is missing
+             SceneManager.LoadScene("Splash");
         }
     }
 }
