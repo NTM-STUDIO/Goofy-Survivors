@@ -54,6 +54,10 @@ public class DefaultLoadoutInitializer : MonoBehaviour
         {
             // Carregar escolhas anteriores guardadas
             LoadoutSelections.LoadFromPlayerPrefs();
+            
+            // Validate that we actually got something; if not (e.g. index out of bounds), fill with defaults
+            LoadoutSelections.EnsureValidDefaults();
+            
             Debug.Log($"[DefaultLoadoutInitializer] Loaded from PlayerPrefs: Character={LoadoutSelections.SelectedCharacterPrefab?.name}, Weapon={LoadoutSelections.SelectedWeapon?.name}");
         }
         else
