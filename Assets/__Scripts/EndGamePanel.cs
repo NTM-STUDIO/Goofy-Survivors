@@ -16,6 +16,7 @@ public class EndGamePanel : MonoBehaviour
     [SerializeField] private Button saveButton;
     [SerializeField] private TextMeshProUGUI buttonText; // Reference to button text
     [SerializeField] private TextMeshProUGUI saveStatusText; // Optional: feedback message (e.g., "Score saved!")
+    [SerializeField] private Button leaveButton;
     
     [Header("Ability Stats Display")]
     [Tooltip("ScrollView onde as estatísticas das habilidades serão exibidas")]
@@ -54,13 +55,19 @@ public class EndGamePanel : MonoBehaviour
         {
             Debug.Log("[EndGamePanel] Using existing database instance");
         }
-        gameManager = GameManager.Instance;
-        
-        if (gameManager == null)
+        if (database == null)
         {
-            Debug.LogError("FATAL ERROR: EndGamePanel could not find GameManager.Instance!");
-            return;
+            // Create a local DB instance for this client
+            database = gameObject.AddComponent<db>();
+            Debug.Log("[EndGamePanel] Created local database instance for this client");
         }
+        else
+        {
+            Debug.Log("[EndGamePanel] Using existing database instance");
+        }
+        
+        // Removed unsafe caching of GameManager.Instance in Awake to avoid race conditions.
+        // We now access GameManager.Instance dynamically in UpdateEndGameStats.
 
         if (PlayerPrefs.HasKey("PlayerId"))
         {
@@ -99,6 +106,10 @@ public class EndGamePanel : MonoBehaviour
         if (playAgainButton != null)
         {
             playAgainButton.onClick.AddListener(OnPlayAgainRestart);
+        }
+        if (leaveButton != null)
+        {
+            leaveButton.onClick.AddListener(OnLeaveClicked);
         }
     }
 
@@ -351,10 +362,17 @@ public class EndGamePanel : MonoBehaviour
         // Clear any lingering stats from previous runs
         ClearAbilityStats();
         
+        // Ensure GameManager exists before accessing
+        if (GameManager.Instance == null)
+        {
+             Debug.LogWarning("[EndGamePanel] GameManager.Instance is null! Cannot update stats correctly.");
+             return;
+        }
+
         // --- Calculate and Display Time Survived (THE CLEAN WAY) ---
         // --- THIS IS THE FINAL FIX ---
-        float totalTime = gameManager.GetTotalGameTime();
-        float remainingTime = gameManager.GetRemainingTime();
+        float totalTime = GameManager.Instance.GetTotalGameTime();
+        float remainingTime = GameManager.Instance.GetRemainingTime();
         timeLasted = totalTime - remainingTime;
 
         int minutes = Mathf.FloorToInt(timeLasted / 60);
@@ -376,7 +394,7 @@ public class EndGamePanel : MonoBehaviour
         else
         {
             // Fallback to old system (combined Reaper damage) if player not found
-            damageDone = gameManager.GetReaperDamage();
+            damageDone = GameManager.Instance.GetReaperDamage();
             Debug.LogWarning($"[EndGamePanel] Could not find local PlayerStats, using combined Reaper damage fallback: {damageDone:F0}");
             
             // Fallback para estatísticas combinadas
@@ -597,23 +615,43 @@ public class EndGamePanel : MonoBehaviour
 
     private void OnPlayAgainRestart()
     {
-        // Clear visual stats but DON'T reset local cache yet
+        // --- RESTORED: Play Again (Restart Logic) ---
+        Debug.Log("[EndGamePanel] Play Again clicked. Restarting game...");
+
+        ClearAbilityStats();
+        try { GameManager.Instance.RequestResume(); } catch { }
+        Time.timeScale = 1f;
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.ActionPlayAgain();
+        }
+        else
+        {
+            var settings = Object.FindFirstObjectByType<SettingsManager>(FindObjectsInactive.Include);
+            if (settings != null) settings.UI_Restart();
+        }
+    }
+
+    private void OnLeaveClicked()
+    {
+        // --- NEW: Leave Button (Main Menu) ---
+        Debug.Log("[EndGamePanel] Leave button clicked. Returning to Main Menu.");
+
+        // Clear visual stats
         ClearAbilityStats();
         
         // Ensure the game is not paused
         try { GameManager.Instance.RequestResume(); } catch { }
         Time.timeScale = 1f;
 
-        // Redirect to Main Menu / Lobby (ActionLeaveToLobby handles P2P vs Singleplayer check)
-        // This resets loadout and returns to title screen as requested.
-        Debug.Log("[EndGamePanel] Leave button clicked. Returning to Main Menu.");
+        // Redirect to Main Menu / Lobby
         if (GameManager.Instance != null)
         {
             GameManager.Instance.ActionLeaveToLobby();
         }
         else
         {
-             // Fallback if GM is missing
              SceneManager.LoadScene("Splash");
         }
     }

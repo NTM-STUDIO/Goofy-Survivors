@@ -77,20 +77,15 @@ public class ReviveManager : NetworkBehaviour
         if (NetworkManager.Singleton.ConnectedClients.TryGetValue(targetId, out var targetClient) && targetClient.PlayerObject != null)
         {
             var stats = targetClient.PlayerObject.GetComponent<PlayerStats>();
-            if (stats != null)
+            if (stats != null && stats.IsSpawned && stats.CurrentHpNetVar != null)
             {
+                // NetVar in PlayerStats handles the sync automatically now!
                 stats.ApplyDamage(amount, pos, iframe);
-                SyncHpClientRpc(targetClient.PlayerObject.NetworkObjectId, stats.CurrentHp, stats.maxHp);
             }
         }
     }
 
-    [ClientRpc]
-    private void SyncHpClientRpc(ulong netId, int hp, int max)
-    {
-        if(NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(netId, out var o))
-            o.GetComponent<PlayerStats>()?.ClientSyncHp(hp, max);
-    }
+    // REMOVED SyncHpClientRpc - logic is now handled by PlayerStats NetworkVariable
 
     private void Update()
     {
@@ -141,9 +136,8 @@ public class ReviveManager : NetworkBehaviour
                     var ps = downedClient.PlayerObject.GetComponent<PlayerStats>();
                     if (ps != null) 
                     {
-                        ps.ServerReviveToFixedHp(10);
+                        ps.ServerReviveToFixedHp(10); // Auto-syncs via NetVar
                         ps.SetDownedState(false); 
-                        SyncHpClientRpc(downedClient.PlayerObject.NetworkObjectId, 10, ps.maxHp);
                     }
                     
                     PlayReviveVFXClientRpc(downedClient.PlayerObject.NetworkObjectId);

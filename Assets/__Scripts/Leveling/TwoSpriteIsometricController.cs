@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class TwoSpriteIsometricController : MonoBehaviour
+public class TwoSpriteIsometricController : Unity.Netcode.NetworkBehaviour
 {
     [Header("Base Isometric Sprites")]
     public Sprite frontFacingSprite; // Used for looking "down" or "front"
@@ -25,6 +25,13 @@ public class TwoSpriteIsometricController : MonoBehaviour
     private Transform playerTransform;
     private float currentTargetYAngle = 0f;
 
+    // Network Variable for syncing look direction in multiplayer
+    // Only the Owner (local player) can write to this variable. Everyone can read.
+    private Unity.Netcode.NetworkVariable<Vector2> netLookDirection = new Unity.Netcode.NetworkVariable<Vector2>(
+        Vector2.down, 
+        Unity.Netcode.NetworkVariableReadPermission.Everyone, 
+        Unity.Netcode.NetworkVariableWritePermission.Owner);
+
     void Awake()
     {
         if (visualsTransform == null || spriteRenderer == null)
@@ -46,9 +53,8 @@ public class TwoSpriteIsometricController : MonoBehaviour
             }
             else
             {
-                Debug.LogError("Player with tag 'Player' not found! The enemy needs this reference.");
-                enabled = false;
-                return;
+                // Warn but don't disable yet, player might spawn later
+                // Debug.LogError("Player with tag 'Player' not found! The enemy needs this reference.");
             }
         }
 
@@ -58,20 +64,98 @@ public class TwoSpriteIsometricController : MonoBehaviour
         }
     }
 
+    public override void OnNetworkSpawn()
+    {
+        if (isPlayer && !IsOwner)
+        {
+            // Initialize with current network state
+            UpdatePlayerVisuals(netLookDirection.Value);
+            
+            // Subscribe to changes
+            netLookDirection.OnValueChanged += OnLookDirectionChanged;
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (isPlayer)
+        {
+            netLookDirection.OnValueChanged -= OnLookDirectionChanged;
+        }
+    }
+
+    private void OnLookDirectionChanged(Vector2 previous, Vector2 current)
+    {
+        UpdatePlayerVisuals(current);
+    }
+
     void FixedUpdate()
     {
         if (isPlayer)
         {
-            // --- PLAYER LOGIC (UNCHANGED) ---
-            float moveX = Input.GetAxisRaw("Horizontal");
-            float moveY = Input.GetAxisRaw("Vertical");
-            Vector2 moveInput = new Vector2(moveX, moveY);
-            lastLookDirection = moveInput.normalized;
-            UpdatePlayerVisuals(lastLookDirection);
+            // --- PLAYER MULTIPLAYER LOGIC ---
+            if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening && IsSpawned)
+            {
+                if (IsOwner)
+                {
+                    // LOCAL PLAYER: Read Inputs, Apply Visuals, Update Network
+                    float moveX = Input.GetAxisRaw("Horizontal");
+                    float moveY = Input.GetAxisRaw("Vertical");
+                    Vector2 moveInput = new Vector2(moveX, moveY);
+                    
+                    if (moveInput.sqrMagnitude > 0.01f)
+                    {
+                        lastLookDirection = moveInput.normalized;
+                        // Sync to network only if changed significantly to save bandwidth (optional optimization)
+                        if (Vector2.Distance(netLookDirection.Value, lastLookDirection) > 0.05f)
+                        {
+                            netLookDirection.Value = lastLookDirection;
+                        }
+                    }
+                    UpdatePlayerVisuals(lastLookDirection);
+                }
+                else
+                {
+                    // REMOTE PLAYER: Visuals are updated via OnValueChanged or reading NetVar
+                    // No input reading here! This fixes the "Blend" issue.
+                }
+            }
+            // --- PLAYER SINGLEPLAYER / OFFLINE LOGIC ---
+            else
+            {
+                float moveX = Input.GetAxisRaw("Horizontal");
+                float moveY = Input.GetAxisRaw("Vertical");
+                Vector2 moveInput = new Vector2(moveX, moveY);
+                if (moveInput.sqrMagnitude > 0.01f) lastLookDirection = moveInput.normalized;
+                UpdatePlayerVisuals(lastLookDirection);
+            }
         }
         else
         {
-            // --- ENEMY LOGIC ---
+            // --- ENEMY MULTIPLAYER GUARD ---
+            // In multiplayer, enemy facing should be driven by NetworkEnemyVisuals (server authoritative).
+            // This component otherwise runs on every client and will fight the networked flip.
+            if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening && IsSpawned)
+            {
+                // If this enemy has NetworkEnemyVisuals, do not run per-client facing logic.
+                if (GetComponent<NetworkEnemyVisuals>() != null)
+                {
+                    return;
+                }
+                // Otherwise, only let the server run enemy visuals logic.
+                if (!IsServer)
+                {
+                    return;
+                }
+            }
+
+            // --- ENEMY LOGIC (No Networking needed usually, server driven) ---
+            if (playerTransform == null)
+            {
+                 GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+                 if (playerObject != null) playerTransform = playerObject.transform;
+            }
+
             if (playerTransform != null)
             {
                 Vector3 directionToPlayer = playerTransform.position - transform.position;
@@ -123,6 +207,12 @@ public class TwoSpriteIsometricController : MonoBehaviour
         }
 
         // 2. Determine Horizontal Facing (Flip Sprite on X-axis)
+        // If another component (NetworkEnemyVisuals) is responsible for flipX, don't fight it.
+        if (GetComponent<NetworkEnemyVisuals>() != null)
+        {
+            return;
+        }
+
         // This assumes your base sprites are drawn facing left.
         // If your sprites are drawn facing right, change this to offset.x < 0.
         if (offset.x > 0) // Player is to the right of the enemy
