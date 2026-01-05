@@ -28,6 +28,14 @@ public static class LoadoutSelections
         SelectedRunes = (runes != null) ? new List<RuneDefinition>(runes.Where(r => r != null)) : new List<RuneDefinition>();
     }
 
+    public static void ResetSelections()
+    {
+        SelectedCharacterPrefab = null;
+        SelectedWeapon = null;
+        SelectedRunes = new List<RuneDefinition>();
+        Debug.Log("[LoadoutSelections] Selections reset to null. Next run will generate new defaults.");
+    }
+
     // Check if player has ever configured their loadout manually
     public static bool HasBeenConfigured()
     {
@@ -110,9 +118,19 @@ public static class LoadoutSelections
 
         // Weapon
         int weaponIndex = PlayerPrefs.GetInt(K_WEAPON_INDEX, -1);
-        if (weaponIndex >= 0 && WeaponRegistryContext != null)
+        if (weaponIndex >= 0 && WeaponRegistryContext != null && WeaponRegistryContext.allWeapons != null)
         {
-            SelectedWeapon = WeaponRegistryContext.GetWeaponData(weaponIndex);
+            if (weaponIndex < WeaponRegistryContext.allWeapons.Count)
+            {
+                SelectedWeapon = WeaponRegistryContext.GetWeaponData(weaponIndex);
+            }
+            else
+            {
+                Debug.LogWarning($"[LoadoutSelections] Saved weapon index {weaponIndex} is out of bounds (Count: {WeaponRegistryContext.allWeapons.Count}). Resetting selection.");
+                // Fallback to random or default if needed, or just leave it null so EnsureValidDefaults can handle it if called.
+                // For now we just avoid the crash.
+                SelectedWeapon = null;
+            }
         }
 
         // Runes

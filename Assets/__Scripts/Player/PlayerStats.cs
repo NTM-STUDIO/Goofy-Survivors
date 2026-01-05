@@ -23,6 +23,11 @@ public class PlayerStats : NetworkBehaviour
     public NetworkVariable<bool> IsDownedNetVar = new NetworkVariable<bool>(false, 
         NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    // NEW: Network Variable for HP (The fix for Multiplayer Sync)
+    // WritePermission is Server-only to prevent cheating. Everyone can read to update UI.
+    public NetworkVariable<int> CurrentHpNetVar = new NetworkVariable<int>(100,
+        NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     // Propriedade pública inteligente:
     // Se estivermos ligados à rede, lê da variável de rede.
     // Se for Singleplayer, lê de uma variável local interna.
@@ -31,7 +36,7 @@ public class PlayerStats : NetworkBehaviour
     {
         get 
         {
-            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+            if (IsSpawned)
                 return IsDownedNetVar.Value;
             return _isDownedLocal;
         }
@@ -82,7 +87,7 @@ public class PlayerStats : NetworkBehaviour
     [HideInInspector] public float totalReaperDamageDealt;
 
     [Header("Health & Invincibility")]
-    [SerializeField] private int currentHp;
+    [SerializeField] private int _localHp; // Renamed from currentHp to avoid confusion
     [SerializeField] private float invincibilityDuration = 0.6f;
     [SerializeField] private bool invincible = false;
     [SerializeField] private SpriteRenderer spriteRenderer;
@@ -100,6 +105,17 @@ public class PlayerStats : NetworkBehaviour
     public string OriginalSortingLayer => _originalSortingLayer;
 
     public event Action<int, int> OnHealthChanged;
+    public event Action<MutationType, float> OnMutationBuffAbsorbed;
+
+    // Hybrid Property for HP
+    public int CurrentHp
+    {
+        get
+        {
+            if (IsSpawned) return CurrentHpNetVar.Value;
+            return _localHp;
+        }
+    }
 
     /// <summary>
     /// Records damage dealt by this player. Called by EnemyStats when damage is applied.
@@ -174,7 +190,7 @@ public class PlayerStats : NetworkBehaviour
     public event Action OnDeath;
 
     public bool IsInvincible => invincible;
-    public int CurrentHp => currentHp;
+    // CurrentHp property is already visible from previous edit
     [HideInInspector] public float healingReceivedMultiplier = 1f;
 
     private void Awake()
@@ -193,8 +209,24 @@ public class PlayerStats : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         _isLocalOwner = IsOwner;
+        
         // Ouve mudanças na variável para atualizar o sprite
         IsDownedNetVar.OnValueChanged += OnDownedStateChanged;
+        
+        // NEW: Listen for HP changes to update UI/Events (for both owner and other clients)
+        CurrentHpNetVar.OnValueChanged += OnHealthNetVarChanged;
+        
+        // Initialize local value from NetVar (for late joiners or re-sync)
+        if (IsServer)
+        {
+            CurrentHpNetVar.Value = _localHp;
+        }
+        else
+        {
+            _localHp = CurrentHpNetVar.Value;
+            OnHealthChanged?.Invoke(_localHp, maxHp);
+        }
+
         // Atualiza estado inicial
         UpdateVisuals(IsDownedNetVar.Value);
     }
@@ -202,6 +234,17 @@ public class PlayerStats : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         IsDownedNetVar.OnValueChanged -= OnDownedStateChanged;
+        CurrentHpNetVar.OnValueChanged -= OnHealthNetVarChanged;
+    }
+
+    private void OnHealthNetVarChanged(int previous, int current)
+    {
+        // Update local backing field for consistency (e.g. if we become host later, or just for debugging)
+        _localHp = current;
+        
+        // Notify UI and listeners
+        OnHealthChanged?.Invoke(current, maxHp);
+        UpdateUI();
     }
 
     private void OnDownedStateChanged(bool previous, bool current)
@@ -305,21 +348,38 @@ public class PlayerStats : NetworkBehaviour
         }
     }
 
+    // --- HELPERS PARA HP HÍBRIDO ---
+    private void SetHealth(int value)
+    {
+        int clamped = Mathf.Clamp(value, 0, maxHp);
+        
+        if (IsSpawned && IsServer)
+        {
+            CurrentHpNetVar.Value = clamped; // Auto-syncs to clients
+        }
+        else
+        {
+            _localHp = clamped;
+            // In Singleplayer/Offline, we must manually fire events
+            OnHealthChanged?.Invoke(_localHp, maxHp);
+            UpdateUI();
+        }
+    }
+
     // --- CORE GAMEPLAY ---
     public void Heal(int amount)
     {
-        if (amount <= 0 || currentHp <= 0) return; // Não cura se estiver morto
+        if (amount <= 0 || CurrentHp <= 0) return; // Não cura se estiver morto
         int scaled = Mathf.CeilToInt(amount * Mathf.Max(0f, healingReceivedMultiplier));
-        currentHp = Mathf.Clamp(currentHp + scaled, 0, maxHp);
+        SetHealth(CurrentHp + scaled);
         
         OnHealed?.Invoke();
-        OnHealthChanged?.Invoke(currentHp, maxHp);
-        UpdateUI();
+        // UI update is handled by SetHealth -> OnValueChanged or manual call
     }
 
     public void ApplyDamage(float amount, Vector3? hitFromWorldPos = null, float? customIFrameDuration = null) 
     { 
-        if (amount <= 0f || invincible || currentHp <= 0) return; 
+        if (amount <= 0f || invincible || CurrentHp <= 0) return; 
 
         // If this is a Shadow Clone, delegate damage handling to it and STOP here to avoid messing up UI/Network
         var clone = GetComponent<ShadowClone>();
@@ -332,20 +392,28 @@ public class PlayerStats : NetworkBehaviour
             return;
         }
         
-        int damageInt = Mathf.CeilToInt(amount); 
-        currentHp = Mathf.Clamp(currentHp - damageInt, 0, maxHp); 
+        int damageInt = Mathf.CeilToInt(amount);
+        
+        // IMPORTANT: In MP, only Server can modify NetVar. In SP, local modifies _localHp.
+        // If Client calls this (e.g. from prediction), we should probably ignore or forward to server?
+        // BUT: In this game's architecture, damage is usually calculated on Server (Enemies) or locally in SP.
+        // If a Client takes environmental damage, it should use an RPC. 
+        // For now, we assume this is called on Server or SP.
+        if (IsSpawned && !IsServer) return;
+
+        SetHealth(CurrentHp - damageInt);
         
         if (spriteRenderer != null) { StopCoroutine(nameof(FlashRoutine)); StartCoroutine(FlashRoutine()); } 
         
         OnDamaged?.Invoke(); 
-        OnHealthChanged?.Invoke(currentHp, maxHp); 
+        // OnHealthChanged is handled by SetHealth
         
         float iFrames = customIFrameDuration.HasValue ? Mathf.Max(0f, customIFrameDuration.Value) : invincibilityDuration; 
         if (iFrames > 0f) StartCoroutine(InvincibilityRoutine(iFrames)); 
         
-        if (currentHp <= 0) HandleDeath(); 
+        if (CurrentHp <= 0) HandleDeath(); 
         
-        UpdateUI();
+        // UpdateUI handled by SetHealth
     }
 
     // --- REVIVE HELPERS (Simplificados) ---
@@ -353,18 +421,11 @@ public class PlayerStats : NetworkBehaviour
     
     public void ServerReviveToFixedHp(int hp)
     {
-        currentHp = Mathf.Clamp(hp, 1, maxHp);
-        // Nota: O ReviveManager chama SetDownedState(false) separadamente
-        OnHealthChanged?.Invoke(currentHp, maxHp);
-        UpdateUI();
+        // Only Server calls this
+        SetHealth(hp);
     }
 
-    public void ClientSyncHp(int hp, int max)
-    {
-        currentHp = Mathf.Clamp(hp, 0, max);
-        OnHealthChanged?.Invoke(currentHp, maxHp);
-        UpdateUI();
-    }
+    // REMOVED ClientSyncHp as it is now redundant with NetVar!
 
     // --- COMPATIBILIDADE ---
     public void ClientApplyDownedState() { /* Deprecated, use SetDownedState */ }
@@ -397,8 +458,6 @@ public class PlayerStats : NetworkBehaviour
         
         foreach (var bonus in characterData.startingBonuses) ApplyStatBonus(bonus);
         
-        currentHp = maxHp;
-        
         if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         if (spriteRenderer != null)
         {
@@ -407,7 +466,18 @@ public class PlayerStats : NetworkBehaviour
             _originalSortingLayer = spriteRenderer.sortingLayerName;
         }
         
-        OnHealthChanged?.Invoke(currentHp, maxHp);
+        // Initial Health Set
+        if (IsSpawned && IsServer)
+        {
+            CurrentHpNetVar.Value = maxHp;
+            _localHp = maxHp;
+        }
+        else
+        {
+            _localHp = maxHp;
+        }
+        
+        OnHealthChanged?.Invoke(_localHp, maxHp);
         UpdateUI();
     }
 
@@ -421,7 +491,8 @@ public class PlayerStats : NetworkBehaviour
         if (nm == null || !nm.IsListening || _isLocalOwner)
         {
             var uiManager = FindFirstObjectByType<UIManager>();
-            if (uiManager != null) uiManager.UpdateHealthBar(currentHp, maxHp);
+            // Use property CurrentHp
+            if (uiManager != null) uiManager.UpdateHealthBar(CurrentHp, maxHp);
         }
     }
 
@@ -434,6 +505,9 @@ public class PlayerStats : NetworkBehaviour
         if (type == MutationType.Health) { Heal(20); return; }
         ApplyBuffEffect(type, true);
         activeBuffs.Add(new ActiveBuff { type = type, timer = stolenBuffDuration });
+        
+        // Notify listeners (e.g. ShieldWeapon) about the absorbed buff
+        OnMutationBuffAbsorbed?.Invoke(type, stolenBuffDuration);
     }
 
     private void HandleBuffExpiration()
@@ -500,7 +574,7 @@ public class PlayerStats : NetworkBehaviour
     }
 
     // Setters (Simplificados para poupar espaço, lógica igual)
-    public void IncreaseMaxHP(int amount) { maxHp += amount; currentHp += amount; UpdateUI(); OnHealthChanged?.Invoke(currentHp, maxHp); }
+    public void IncreaseMaxHP(int amount) { maxHp += amount; SetHealth(CurrentHp + amount); }
     public void IncreaseHPRegen(float amount) { hpRegen += amount; }
     public void IncreaseDamageMultiplier(float amount) { damageMultiplier += amount; }
     public void IncreaseCritChance(float amount) { critChance += amount; }
@@ -532,5 +606,5 @@ public class PlayerStats : NetworkBehaviour
     private IEnumerator InvincibilityRoutine(float duration) { invincible = true; yield return new WaitForSeconds(duration); invincible = false; }
     private IEnumerator FlashRoutine() { if (spriteRenderer == null) yield break; spriteRenderer.color = hurtFlashColor; yield return new WaitForSeconds(hurtFlashTime); spriteRenderer.color = _originalColor; }
     private IEnumerator HealthRegenRoutine() { while (true) { yield return new WaitForSeconds(1f); ApplyHealthRegen(); } }
-    private void ApplyHealthRegen() { if (hpRegen > 0f && currentHp > 0 && currentHp < maxHp) { Heal(Mathf.CeilToInt(hpRegen)); } }
+    private void ApplyHealthRegen() { if (hpRegen > 0f && CurrentHp > 0 && CurrentHp < maxHp) { Heal(Mathf.CeilToInt(hpRegen)); } }
 }

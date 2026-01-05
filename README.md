@@ -28,7 +28,7 @@ Este readme descreve a implementação de três sistemas de IA no jogo Goofy Sur
 
 ---
 
-**Resumo do Trabalho (Texto do Trabalho Prático)**
+**Resumo do Trabalho ()**
 
 Este repositório implementa três sistemas de IA integrados no jogo Goofy Survivors: um sistema de
 pathfinding baseado em A* para navegação em grids, uma máquina de estados (FSM) para controlo comportamental

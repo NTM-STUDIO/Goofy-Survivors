@@ -355,13 +355,26 @@ public class GameManager : NetworkBehaviour
         // 1. Limpa o mapa e objetos
         CleanupGameWorld();
 
-        // 2. Define o estado para PreGame (Lobby)
+        // 2. Reset Loadout Selections (Force new random generation next time)
+        if (!isP2P)
+        {
+            LoadoutSelections.ResetSelections();
+        }
+
+        // 3. Define o estado para PreGame (Lobby)
         CurrentState = GameState.PreGame;
 
-        // 3. Diz ao UI Manager para mostrar o Lobby
+        // 3. Diz ao UI Manager para mostrar o Lobby ou Menu Principal
         if (uiManager != null)
         {
-            uiManager.ReturnToLobby(); // Certifica-te que tens este método no UIManager
+            if (isP2P)
+            {
+                uiManager.ReturnToLobby(); 
+            }
+            else
+            {
+                uiManager.ReturnToMainMenu();
+            }
         }
 
         // Em Multiplayer Host, isto mantém a sala aberta mas volta ao ecrã de seleção

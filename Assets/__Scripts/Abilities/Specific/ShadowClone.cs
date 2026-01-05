@@ -73,7 +73,6 @@ public class ShadowClone : MonoBehaviour
             else
             {
                 // Ensure colliders/visuals are enabled for a player-like clone
-                stats.ClientSyncHp(stats.CurrentHp, stats.maxHp);
                 Debug.Log("[ShadowClone] Keeping PlayerStats active for player-like behavior");
             }
         }

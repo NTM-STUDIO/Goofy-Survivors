@@ -108,8 +108,42 @@ public class EnemyStats : NetworkBehaviour
         }
     }
 
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        
+        // CLIENT-SIDE INITIALIZATION (runs AFTER NetworkVariables sync)
+        if (!IsServer)
+        {
+            // Read synchronized values
+            MaxHealth = netMaxHealth.Value;
+            CurrentHealth = netCurrentHealth.Value;
+            baseDamage = netBaseDamage.Value;
+            moveSpeed = netMoveSpeed.Value;
+            CurrentMutation = (MutationType)netMutation.Value;
+            CurrentGenes = netGenes.Value;
+            
+            // Apply visuals NOW (after sync)
+            UpdateGeneVisuals();
+            
+            // Apply mutation colors if mutation is present
+            if (CurrentMutation != MutationType.None)
+            {
+                ApplyMutationColorVisuals();
+            }
+            
+            // Subscribe to future changes
+            netCurrentHealth.OnValueChanged += OnNetworkHealthChanged;
+            netMutation.OnValueChanged += OnNetworkMutationChanged;
+            netGenes.OnValueChanged += OnGenesChanged;
+            
+            Debug.Log($"[EnemyStats] Client spawned with genes: {CurrentGenes.GetDominantTrait()}, Mutation: {CurrentMutation}");
+        }
+    }
+
     void Start()
     {
+        // SERVER-SIDE INITIALIZATION
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             if (IsServer)
@@ -126,25 +160,11 @@ public class EnemyStats : NetworkBehaviour
                 netMutation.Value = (int)CurrentMutation;
                 netGenes.Value = CurrentGenes;
             }
-            else
-            {
-                MaxHealth = netMaxHealth.Value;
-                CurrentHealth = netCurrentHealth.Value;
-                baseDamage = netBaseDamage.Value;
-                moveSpeed = netMoveSpeed.Value;
-                CurrentMutation = (MutationType)netMutation.Value;
-                CurrentGenes = netGenes.Value;
-                
-                // Visuals for client
-                UpdateGeneVisuals();
-
-                netCurrentHealth.OnValueChanged += OnNetworkHealthChanged;
-                netMutation.OnValueChanged += OnNetworkMutationChanged;
-                netGenes.OnValueChanged += OnGenesChanged;
-            }
+            // Client initialization moved to OnNetworkSpawn()
         }
         else
         {
+            // SINGLEPLAYER
             float finalHealth = baseHealth * (GameManager.Instance != null ? GameManager.Instance.currentEnemyHealthMultiplier : 1f);
             MaxHealth = finalHealth;
             CurrentHealth = finalHealth;
@@ -206,15 +226,16 @@ public class EnemyStats : NetworkBehaviour
             // GENETIC TRACKING
             DamageDealt += damage;
 
-            if (damagePopupPrefab != null)
+            // VISUALS: Trigger Popup on ALL Clients (Reliable)
+            if (damage > 0f)
             {
-                Instantiate(damagePopupPrefab, popupSpawnPoint.position, Quaternion.identity).GetComponent<DamagePopup>().Setup(Mathf.RoundToInt(damage), isCritical);
+                ShowDamagePopupClientRpc(damage, isCritical);
             }
 
+            // VISUAL: Trigger flash on ALL clients via ClientRpc
             if (enemyRenderer != null)
             {
-                if (flashCoroutine != null) StopCoroutine(flashCoroutine);
-                flashCoroutine = StartCoroutine(FlashColor());
+                TriggerFlashColorClientRpc();
             }
 
             // Record damage for the attacker if available (notify owner via ClientRpc in multiplayer)
@@ -316,15 +337,16 @@ public class EnemyStats : NetworkBehaviour
         float newHealth = netCurrentHealth.Value - damage;
         netCurrentHealth.Value = newHealth;
 
-        if (damagePopupPrefab != null)
+        // VISUALS: Trigger Popup on ALL Clients (Reliable)
+        if (damage > 0f)
         {
-            Instantiate(damagePopupPrefab, popupSpawnPoint.position, Quaternion.identity).GetComponent<DamagePopup>().Setup(Mathf.RoundToInt(damage), isCritical);
+            ShowDamagePopupClientRpc(damage, isCritical);
         }
 
+        // VISUAL: Trigger flash on ALL clients via ClientRpc
         if (enemyRenderer != null)
         {
-            if (flashCoroutine != null) StopCoroutine(flashCoroutine);
-            flashCoroutine = StartCoroutine(FlashColor());
+            TriggerFlashColorClientRpc();
         }
 
         // Record damage for the attacker if available (notify owner via ClientRpc)
@@ -345,22 +367,37 @@ public class EnemyStats : NetworkBehaviour
         }
     }
 
+    [ClientRpc]
+    private void ShowDamagePopupClientRpc(float damage, bool isCritical)
+    {
+        if (damagePopupPrefab != null && popupSpawnPoint != null)
+        {
+            Instantiate(damagePopupPrefab, popupSpawnPoint.position, Quaternion.identity)
+                .GetComponent<DamagePopup>().Setup(Mathf.RoundToInt(damage), isCritical);
+        }
+    }
+    
+    /// <summary>
+    /// ClientRpc to trigger flash color effect on all clients synchronously.
+    /// </summary>
+    [ClientRpc]
+    private void TriggerFlashColorClientRpc()
+    {
+        if (enemyRenderer != null)
+        {
+            if (flashCoroutine != null) StopCoroutine(flashCoroutine);
+            flashCoroutine = StartCoroutine(FlashColor());
+        }
+    }
+
     private void OnNetworkHealthChanged(float oldValue, float newValue)
     {
         float damageTaken = oldValue - newValue;
         CurrentHealth = newValue;
-        if (damageTaken > 0f)
-        {
-            if (damagePopupPrefab != null && popupSpawnPoint != null)
-            {
-                Instantiate(damagePopupPrefab, popupSpawnPoint.position, Quaternion.identity).GetComponent<DamagePopup>().Setup(Mathf.RoundToInt(damageTaken), false);
-            }
-            if (enemyRenderer != null)
-            {
-                if (flashCoroutine != null) StopCoroutine(flashCoroutine);
-                flashCoroutine = StartCoroutine(FlashColor());
-            }
-        }
+        
+        // Removed Popup spawning here to avoid duplicates (now handled by RPC)
+        // Flash is now triggered via ClientRpc to ensure sync across all clients
+        
         if (newValue <= 0f)
         {
             gameObject.SetActive(false);
@@ -370,13 +407,32 @@ public class EnemyStats : NetworkBehaviour
     private void OnNetworkMutationChanged(int oldVal, int newVal)
     {
         CurrentMutation = (MutationType)newVal;
+        ApplyMutationColorVisuals();
+    }
+    
+    /// <summary>
+    /// Applies mutation color visuals based on current mutation type.
+    /// Works with genetic colors when no mutation is present.
+    /// </summary>
+    private void ApplyMutationColorVisuals()
+    {
         if (enemyRenderer == null) return;
+        
         switch (CurrentMutation)
         {
-            case MutationType.Health: enemyRenderer.color = healthMutationColor; break;
-            case MutationType.Damage: enemyRenderer.color = damageMutationColor; break;
-            case MutationType.Speed: enemyRenderer.color = speedMutationColor; break;
-            default: enemyRenderer.color = originalColor; break;
+            case MutationType.Health: 
+                enemyRenderer.color = healthMutationColor; 
+                break;
+            case MutationType.Damage: 
+                enemyRenderer.color = damageMutationColor; 
+                break;
+            case MutationType.Speed: 
+                enemyRenderer.color = speedMutationColor; 
+                break;
+            default: 
+                // When no mutation, apply genetic color
+                enemyRenderer.color = originalColor * CurrentGenes.GetGeneColor();
+                break;
         }
     }
 
@@ -389,7 +445,8 @@ public class EnemyStats : NetworkBehaviour
         moveSpeed = originalMoveSpeed;
         if (enemyRenderer != null)
         {
-            enemyRenderer.color = originalColor;
+            // Revert to GENETIC color, not just white
+            enemyRenderer.color = originalColor * CurrentGenes.GetGeneColor();
         }
         CurrentMutation = MutationType.None;
 
@@ -436,7 +493,8 @@ public class EnemyStats : NetworkBehaviour
         }
         else
         {
-            enemyRenderer.color = originalColor;
+            // Revert to GENETIC color
+            enemyRenderer.color = originalColor * CurrentGenes.GetGeneColor();
         }
         flashCoroutine = null;
     }
@@ -576,12 +634,42 @@ public class EnemyStats : NetworkBehaviour
             currentKnockbackResistance += resistanceIncreasePerHit;
             currentKnockbackResistance = Mathf.Min(currentKnockbackResistance, maxResistance);
         }
+        
+        // MULTIPLAYER: Replicate knockback visual effect to all clients
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && IsServer)
+        {
+            ApplyKnockbackVisualClientRpc(effectiveForce, effectiveDuration, direction.normalized);
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]
     private void ApplyKnockbackServerRpc(float knockbackForce, float duration, Vector3 direction, float penetration)
     {
         ApplyKnockback(knockbackForce, duration, direction, penetration);
+    }
+    
+    /// <summary>
+    /// ClientRpc to replicate knockback visual effect on all clients.
+    /// This ensures smooth knockback animation even for non-authoritative clients.
+    /// </summary>
+    [ClientRpc]
+    private void ApplyKnockbackVisualClientRpc(float force, float duration, Vector3 normalizedDirection)
+    {
+        // Skip on server as it already applied the effect
+        if (IsServer) return;
+        
+        // Apply visual knockback effect on clients
+        if (stateMachine != null)
+        {
+            // Let state machine handle the visual effect
+            stateMachine.TriggerKnockback(normalizedDirection, force, duration);
+        }
+        else if (rb != null)
+        {
+            // Fallback: apply impulse directly for visual effect
+            if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
+            knockbackCoroutine = StartCoroutine(KnockbackRoutine(force, duration, normalizedDirection));
+        }
     }
 
     private IEnumerator KnockbackRoutine(float force, float duration, Vector3 direction)
@@ -596,13 +684,24 @@ public class EnemyStats : NetworkBehaviour
         knockbackCoroutine = null;
     }
 
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        
+        if (!IsServer)
+        {
+            netCurrentHealth.OnValueChanged -= OnNetworkHealthChanged;
+            netMutation.OnValueChanged -= OnNetworkMutationChanged;
+            netGenes.OnValueChanged -= OnGenesChanged;
+        }
+    }
+
     private void OnDisable()
     {
-        if (NetworkManager.Singleton != null && !IsServer)
+        // Cleanup handled in OnNetworkDespawn for networked objects
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
         {
-            if (netCurrentHealth != null) netCurrentHealth.OnValueChanged -= OnNetworkHealthChanged;
-            if (netMutation != null) netMutation.OnValueChanged -= OnNetworkMutationChanged;
-            if (netGenes != null) netGenes.OnValueChanged -= OnGenesChanged;
+            // Singleplayer cleanup if needed
         }
     }
 
@@ -630,6 +729,12 @@ public class EnemyStats : NetworkBehaviour
 
         // Damage
         baseDamage *= genes.DamageMultiplier;
+        
+        // --- FIX: Update "Original" baseline to include Genetics ---
+        // This ensures that if a mutation is stolen/removed, we revert to the EVOLVED stats, not the weak prefab stats.
+        originalBaseHealth = baseHealth;
+        originalBaseDamage = baseDamage;
+        originalMoveSpeed = moveSpeed;
         
         // LOG: Show genetic modifications
         if (genes.HealthMultiplier > 1.01f || genes.SpeedMultiplier > 1.01f || genes.DamageMultiplier > 1.01f)

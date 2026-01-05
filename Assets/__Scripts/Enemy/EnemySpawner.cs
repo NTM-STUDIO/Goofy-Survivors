@@ -118,7 +118,7 @@ public void StopAndReset()
         }
     }
 
-    private void UpdatePlayerPositions()
+    private void UpdatePlayerPositions(bool quiet = false)
     {
         playerPositions.Clear();
 
@@ -171,7 +171,7 @@ public void StopAndReset()
             return;
         }
 
-        Debug.LogError("EnemySpawner: No active players found by any method! Spawning will use fallback position.");
+        if (!quiet) Debug.LogError("EnemySpawner: No active players found by any method! Spawning will use fallback position.");
     }
 
     private Vector3 GetPlayersCenter()
@@ -239,6 +239,32 @@ public void StopAndReset()
     {
         Debug.Log("EnemySpawner: Beginning wave spawning.");
         yield return null; // Espera um frame para garantir que tudo foi inicializado
+        
+        // CRITICAL FIX: Wait for players to spawn before starting enemy waves
+        // This prevents the race condition where enemies try to spawn before players exist
+        int playerCheckAttempts = 0;
+        const int maxPlayerCheckAttempts = 10;
+        const float playerCheckDelay = 0.3f;
+        
+        while (playerCheckAttempts < maxPlayerCheckAttempts)
+        {
+            UpdatePlayerPositions(true);
+            
+            if (playerPositions.Count > 0)
+            {
+                Debug.Log($"EnemySpawner: Found {playerPositions.Count} player(s). Starting enemy spawning.");
+                break;
+            }
+            
+            playerCheckAttempts++;
+            Debug.LogWarning($"EnemySpawner: No players found yet (attempt {playerCheckAttempts}/{maxPlayerCheckAttempts}). Waiting {playerCheckDelay}s...");
+            yield return new WaitForSeconds(playerCheckDelay);
+        }
+        
+        if (playerPositions.Count == 0)
+        {
+            Debug.LogError("EnemySpawner: CRITICAL - No players found after all retry attempts! Enemy spawning will proceed with fallback positions, but gameplay may be broken.");
+        }
         
         while (waveIndex < waves.Count)
         {

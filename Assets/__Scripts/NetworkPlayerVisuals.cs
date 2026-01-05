@@ -4,14 +4,21 @@ using Unity.Netcode;
 public class NetworkPlayerVisuals : NetworkBehaviour
 {
     [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private float directionThreshold = 0.1f; // Threshold para considerar movimento
     
-    // Variável de rede: True = Direita, False = Esquerda
-    // Permissão de escrita: Owner (o dono do jogador controla a sua direção)
-    private NetworkVariable<bool> isFacingRight = new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    // Variável de rede: True = Direita, False = Esquerda (apenas servidor escreve)
+    private NetworkVariable<bool> isFacingRight = new NetworkVariable<bool>(
+        true,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+    
+    private Rigidbody rb;
+    private bool lastLocalFacing = true;
 
     private void Awake()
     {
         if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        rb = GetComponent<Rigidbody>();
     }
 
     public override void OnNetworkSpawn()
@@ -27,25 +34,56 @@ public class NetworkPlayerVisuals : NetworkBehaviour
 
     private void Update()
     {
-        if (IsOwner)
-        {
-            // Deteta input local e atualiza a variável de rede
-            float moveX = Input.GetAxisRaw("Horizontal");
+        if (rb == null) return;
 
-            if (moveX > 0.1f && !isFacingRight.Value)
+        bool networkActive = NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening;
+        Vector3 velocity = rb.linearVelocity;
+        float moveX = velocity.x;
+        bool hasMovement = Mathf.Abs(moveX) > directionThreshold;
+        bool shouldFaceRight = hasMovement ? moveX > 0f : lastLocalFacing;
+
+        if (networkActive)
+        {
+            if (IsServer)
             {
-                isFacingRight.Value = true;
+                ApplyServerFacing(shouldFaceRight);
             }
-            else if (moveX < -0.1f && isFacingRight.Value)
+            else if (IsOwner)
             {
-                isFacingRight.Value = false;
+                // Atualiza localmente para feedback imediato
+                if (shouldFaceRight != lastLocalFacing)
+                {
+                    UpdateSpriteFlip(shouldFaceRight);
+                    ReportFacingDirectionServerRpc(shouldFaceRight);
+                }
             }
         }
+        else
+        {
+            UpdateSpriteFlip(shouldFaceRight);
+        }
+
+        lastLocalFacing = shouldFaceRight;
     }
 
     private void OnFacingDirectionChanged(bool previous, bool current)
     {
         UpdateSpriteFlip(current);
+    }
+
+    private void ApplyServerFacing(bool facingRight)
+    {
+        if (isFacingRight.Value != facingRight)
+        {
+            isFacingRight.Value = facingRight;
+            UpdateSpriteFlip(facingRight);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void ReportFacingDirectionServerRpc(bool facingRight)
+    {
+        ApplyServerFacing(facingRight);
     }
 
     private void UpdateSpriteFlip(bool facingRight)

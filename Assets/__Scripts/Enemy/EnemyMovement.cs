@@ -88,7 +88,7 @@ public class EnemyMovement : NetworkBehaviour
         // Se tem State Machine, verifica se o estado atual permite movimento
         if (stateMachine != null && !IsMovementAllowedByStateMachine())
         {
-            rb.linearVelocity = Vector3.zero;
+            // FIX: Don't zero velocity here! Let physics (Knockback) handle it.
             return;
         }
 

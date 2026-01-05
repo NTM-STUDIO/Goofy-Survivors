@@ -23,6 +23,8 @@ public class ShieldWeapon : MonoBehaviour
 
     private Coroutine activeBuffCoroutine;
 
+    private PlayerStats connectedStats;
+
     void Awake()
     {
         if (shieldRenderer == null)
@@ -38,6 +40,43 @@ public class ShieldWeapon : MonoBehaviour
         
         // Set the shield to its default color when it's first created.
         shieldRenderer.color = defaultColor;
+    }
+
+    void Start()
+    {
+        ConnectToPlayerStats();
+    }
+
+    private void ConnectToPlayerStats()
+    {
+        if (connectedStats != null) return;
+
+        // Try to find stats in parent (OrbitingWeapon -> Player)
+        connectedStats = GetComponentInParent<PlayerStats>();
+        
+        if (connectedStats != null)
+        {
+            // Enable the belt buff logic in PlayerStats
+            connectedStats.hasBeltBuffItem = true;
+            // Subscribe for visual updates
+            connectedStats.OnMutationBuffAbsorbed += HandleBuffAbsorbed;
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (connectedStats != null)
+        {
+            // We don't necessarily disable the flag on destroy because duplicates might exist,
+            // but for safety in single-item logic we could. 
+            // For now, just unsubscribe events.
+            connectedStats.OnMutationBuffAbsorbed -= HandleBuffAbsorbed;
+        }
+    }
+    
+    private void HandleBuffAbsorbed(MutationType type, float duration)
+    {
+        AbsorbBuff(type, duration);
     }
 
     /// <summary>

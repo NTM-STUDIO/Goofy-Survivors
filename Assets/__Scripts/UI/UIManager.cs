@@ -423,6 +423,23 @@ public class UIManager : MonoBehaviour
         // Call the central setup method, which will correctly show/hide the start button.
         SetupLobbyUI();
     }
+
+    public void ReturnToMainMenu()
+    {
+        Debug.Log("[UIManager] Returning to Main Menu.");
+
+        // Hide in-game panels
+        inGameHudContainer.SetActive(false);
+        endGamePanel.SetActive(false);
+        pauseMenu.SetActive(false);
+        
+        // Hide Multiplayer panels
+        lobbyPanel.SetActive(false);
+        multiplayerPanel.SetActive(false);
+
+        // Show Main Menu
+        painelPrincipal.SetActive(true);
+    }
     #endregion
 
     #region UI Helper Methods
