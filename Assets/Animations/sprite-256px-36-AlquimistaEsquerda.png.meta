@@ -1,0 +1,945 @@
+fileFormatVersion: 2
+guid: eb9675d5b1b457745a07ae2cf5140f1f
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 0
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_0
+      rect:
+        serializedVersion: 2
+        x: 21
+        y: 1370
+        width: 170
+        height: 262
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2f2d40b0b9f53e745a393ca16bb99267
+      internalID: 1772427758
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_1
+      rect:
+        serializedVersion: 2
+        x: 213
+        y: 1368
+        width: 169
+        height: 262
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f0d12cb32b5ee0548b0f8f6a58a627d3
+      internalID: -1919365308
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_2
+      rect:
+        serializedVersion: 2
+        x: 406
+        y: 1368
+        width: 167
+        height: 261
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a93d5798f09337f45977e7827b713330
+      internalID: -1176771957
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_3
+      rect:
+        serializedVersion: 2
+        x: 595
+        y: 1369
+        width: 168
+        height: 259
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 46263e94d2fb5ba409af15cb673d3f21
+      internalID: -996005753
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_4
+      rect:
+        serializedVersion: 2
+        x: 774
+        y: 1372
+        width: 173
+        height: 255
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9c679a8d32e520e44bd08f3e0ecc890e
+      internalID: -931684414
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_5
+      rect:
+        serializedVersion: 2
+        x: 960
+        y: 1374
+        width: 176
+        height: 253
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d3efa73c7c0860e4fb8e07a776f1a2f6
+      internalID: -948315198
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_6
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 1099
+        width: 183
+        height: 256
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 132c856e20847694a95d152f948df0df
+      internalID: 1253633564
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_7
+      rect:
+        serializedVersion: 2
+        x: 194
+        y: 1093
+        width: 184
+        height: 261
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a3673c1b17395fd42a7eb5d7ce9c5b20
+      internalID: -1446473811
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_8
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 1092
+        width: 185
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 32314a934dd5ac8489cf9ed734342594
+      internalID: 515771488
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_9
+      rect:
+        serializedVersion: 2
+        x: 579
+        y: 1093
+        width: 183
+        height: 262
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 126d2b43160b3644197d1470dba21fe2
+      internalID: -97565996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_10
+      rect:
+        serializedVersion: 2
+        x: 784
+        y: 1095
+        width: 171
+        height: 265
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 87479fc56a081af448699f7cd6e3f39d
+      internalID: 1581193431
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_11
+      rect:
+        serializedVersion: 2
+        x: 977
+        y: 1096
+        width: 169
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: be3c9dce2aca9824fa1d295377c7634e
+      internalID: -1905252871
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_12
+      rect:
+        serializedVersion: 2
+        x: 22
+        y: 825
+        width: 169
+        height: 263
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8b493cc02b293054a874741f9d7bf50a
+      internalID: 1755256977
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_13
+      rect:
+        serializedVersion: 2
+        x: 214
+        y: 825
+        width: 168
+        height: 262
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ca0ef6bc29faf19469602487e8171f66
+      internalID: -771297714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_14
+      rect:
+        serializedVersion: 2
+        x: 404
+        y: 824
+        width: 168
+        height: 259
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6c091a1ec7bc5954997eb23ab28b83ce
+      internalID: 1953958812
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_15
+      rect:
+        serializedVersion: 2
+        x: 587
+        y: 827
+        width: 171
+        height: 256
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1b4c3d33fb9ba8845801654266f5727f
+      internalID: 625690933
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_16
+      rect:
+        serializedVersion: 2
+        x: 772
+        y: 828
+        width: 175
+        height: 256
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 02b7328502d63cd429ec8ac275943e43
+      internalID: -1745579587
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_17
+      rect:
+        serializedVersion: 2
+        x: 957
+        y: 830
+        width: 181
+        height: 254
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f0594e32502a87a448c698554f3f8c0b
+      internalID: -810558858
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_18
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 551
+        width: 184
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e5805cf94f61cdf43a6e711a1e33cb74
+      internalID: -806982028
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_19
+      rect:
+        serializedVersion: 2
+        x: 193
+        y: 549
+        width: 187
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 694a8b57577b1654ca44881ae1eda69a
+      internalID: -742015111
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_20
+      rect:
+        serializedVersion: 2
+        x: 386
+        y: 548
+        width: 184
+        height: 261
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5e213e28eeb25cd44bbc791c076288fd
+      internalID: -1604957765
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_21
+      rect:
+        serializedVersion: 2
+        x: 586
+        y: 549
+        width: 177
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 05e590562d7659b40b4c9b7ce32b4840
+      internalID: 2054056796
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_22
+      rect:
+        serializedVersion: 2
+        x: 782
+        y: 550
+        width: 173
+        height: 265
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 168894ef388727643bed757055db3c1d
+      internalID: -884616780
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_23
+      rect:
+        serializedVersion: 2
+        x: 976
+        y: 551
+        width: 170
+        height: 265
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b3a21c06cc4ad9943af33db32b9d0544
+      internalID: 1435494422
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_24
+      rect:
+        serializedVersion: 2
+        x: 22
+        y: 280
+        width: 169
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c363f71d49c58d94ca7573e21f3f6bfc
+      internalID: 1964527605
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_25
+      rect:
+        serializedVersion: 2
+        x: 214
+        y: 280
+        width: 168
+        height: 262
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 69b486df0dc558045bbcd03a6f22d5a5
+      internalID: 1329529105
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_26
+      rect:
+        serializedVersion: 2
+        x: 404
+        y: 280
+        width: 169
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 19c8727b20a0042439cf27bee15bea55
+      internalID: 1021159262
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_27
+      rect:
+        serializedVersion: 2
+        x: 593
+        y: 281
+        width: 169
+        height: 259
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b12a75a6423846f44a5afba3e1405a4a
+      internalID: 792474689
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_28
+      rect:
+        serializedVersion: 2
+        x: 777
+        y: 283
+        width: 171
+        height: 257
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e459ae02953885f4492916e241fdc260
+      internalID: 219085087
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_29
+      rect:
+        serializedVersion: 2
+        x: 959
+        y: 286
+        width: 177
+        height: 254
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dcc939dcd818c8743ab12ad0d44828b5
+      internalID: -961120378
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_30
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 12
+        width: 182
+        height: 256
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7543f3d1f7df36743bb519825e55d192
+      internalID: 1708405166
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_31
+      rect:
+        serializedVersion: 2
+        x: 195
+        y: 6
+        width: 183
+        height: 261
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d54ef40eb80ed5f4c9a62efd0a774690
+      internalID: 1994626366
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_32
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 4
+        width: 185
+        height: 261
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 82b6d178005af934fb3987df5c7a7041
+      internalID: -2042318930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_33
+      rect:
+        serializedVersion: 2
+        x: 579
+        y: 4
+        width: 183
+        height: 262
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0fdb6f695aae3e9498554e4480470284
+      internalID: 468878000
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_34
+      rect:
+        serializedVersion: 2
+        x: 774
+        y: 5
+        width: 180
+        height: 263
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a77cf7fdb82b28846bd6837eeff66abb
+      internalID: 448915017
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-AlquimistaEsquerda_35
+      rect:
+        serializedVersion: 2
+        x: 977
+        y: 7
+        width: 169
+        height: 265
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f292717a597b42341879a45215f4d991
+      internalID: 870762658
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 1c84dd20991a39a488d41160e176894a
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      sprite-256px-36-AlquimistaEsquerda_0: 1772427758
+      sprite-256px-36-AlquimistaEsquerda_1: -1919365308
+      sprite-256px-36-AlquimistaEsquerda_10: 1581193431
+      sprite-256px-36-AlquimistaEsquerda_11: -1905252871
+      sprite-256px-36-AlquimistaEsquerda_12: 1755256977
+      sprite-256px-36-AlquimistaEsquerda_13: -771297714
+      sprite-256px-36-AlquimistaEsquerda_14: 1953958812
+      sprite-256px-36-AlquimistaEsquerda_15: 625690933
+      sprite-256px-36-AlquimistaEsquerda_16: -1745579587
+      sprite-256px-36-AlquimistaEsquerda_17: -810558858
+      sprite-256px-36-AlquimistaEsquerda_18: -806982028
+      sprite-256px-36-AlquimistaEsquerda_19: -742015111
+      sprite-256px-36-AlquimistaEsquerda_2: -1176771957
+      sprite-256px-36-AlquimistaEsquerda_20: -1604957765
+      sprite-256px-36-AlquimistaEsquerda_21: 2054056796
+      sprite-256px-36-AlquimistaEsquerda_22: -884616780
+      sprite-256px-36-AlquimistaEsquerda_23: 1435494422
+      sprite-256px-36-AlquimistaEsquerda_24: 1964527605
+      sprite-256px-36-AlquimistaEsquerda_25: 1329529105
+      sprite-256px-36-AlquimistaEsquerda_26: 1021159262
+      sprite-256px-36-AlquimistaEsquerda_27: 792474689
+      sprite-256px-36-AlquimistaEsquerda_28: 219085087
+      sprite-256px-36-AlquimistaEsquerda_29: -961120378
+      sprite-256px-36-AlquimistaEsquerda_3: -996005753
+      sprite-256px-36-AlquimistaEsquerda_30: 1708405166
+      sprite-256px-36-AlquimistaEsquerda_31: 1994626366
+      sprite-256px-36-AlquimistaEsquerda_32: -2042318930
+      sprite-256px-36-AlquimistaEsquerda_33: 468878000
+      sprite-256px-36-AlquimistaEsquerda_34: 448915017
+      sprite-256px-36-AlquimistaEsquerda_35: 870762658
+      sprite-256px-36-AlquimistaEsquerda_4: -931684414
+      sprite-256px-36-AlquimistaEsquerda_5: -948315198
+      sprite-256px-36-AlquimistaEsquerda_6: 1253633564
+      sprite-256px-36-AlquimistaEsquerda_7: -1446473811
+      sprite-256px-36-AlquimistaEsquerda_8: 515771488
+      sprite-256px-36-AlquimistaEsquerda_9: -97565996
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
