@@ -81,7 +81,7 @@ public class GuaranteedRarityGiver : NetworkBehaviour
         Destroy(gameObject);
     }
 
-    [ServerRpc(RequireOwnership = false)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestTriggerServerRpc(bool mythical)
     {
         ServerProcessTrigger(mythical);

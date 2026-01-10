@@ -111,7 +111,7 @@ public class DifficultyManager : NetworkBehaviour
         else ModifyXpServerRpc(amount);
     }
 
-    [ServerRpc(RequireOwnership = false)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void ModifyXpServerRpc(float amount) => netSharedXpMult.Value += amount;
 
     // Chamado pelo GameManager quando alguém apanha um orbe
@@ -135,13 +135,13 @@ public class DifficultyManager : NetworkBehaviour
         else PresentRarityServerRpc(rarityName);
     }
 
-    [ServerRpc(RequireOwnership = false)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void PresentRarityServerRpc(string n) => PresentRarityClientRpc(n);
 
     [ClientRpc]
     private void PresentRarityClientRpc(string n)
     {
-        var um = FindObjectOfType<UpgradeManager>();
+        var um = FindFirstObjectByType<UpgradeManager>();
         if (um) um.PresentGuaranteedRarityChoices(um.GetRarityTiers().FirstOrDefault(r => r.name == n));
     }
 

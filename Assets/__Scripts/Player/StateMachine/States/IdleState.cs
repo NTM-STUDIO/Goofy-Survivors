@@ -1,3 +1,5 @@
+using PlayerAI;
+
 namespace PlayerAI.States
 {
     public class IdleState : IPlayerState
@@ -6,6 +8,11 @@ namespace PlayerAI.States
 
         public void Enter(PlayerStateMachine ctx)
         {
+            if (ctx.Animator != null)
+            {
+                ctx.Animator.Play("Idle");
+            }
+
             if (ctx.Rb != null)
             {
                 ctx.Rb.linearVelocity = UnityEngine.Vector3.zero;
@@ -32,8 +39,8 @@ namespace PlayerAI.States
             if (ctx.HasMoveInput)
                 return PlayerStateType.Moving;
 
-            if (ctx.Stats != null && ctx.Stats.IsInvincible)
-                return PlayerStateType.Damaged;
+            // Don't transition to Damaged from Idle - let MovingState handle it
+            // This prevents animation conflicts when taking damage while idle
 
             return null;
         }

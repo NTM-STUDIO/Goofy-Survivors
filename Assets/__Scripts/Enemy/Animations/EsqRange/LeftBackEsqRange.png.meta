@@ -1,0 +1,958 @@
+fileFormatVersion: 2
+guid: 231f95a5e2874ae4e8840c91f2e3ef0f
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 0
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: LeftBackEsqRange_0
+      rect:
+        serializedVersion: 2
+        x: 21
+        y: 1354
+        width: 228
+        height: 257
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 96339018b71948445a4b6df979fecb06
+      internalID: 657699008
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_1
+      rect:
+        serializedVersion: 2
+        x: 296
+        y: 1356
+        width: 232
+        height: 257
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c7ada4fe950d5cc42ae5f880e6bb1ccc
+      internalID: 843044985
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_2
+      rect:
+        serializedVersion: 2
+        x: 572
+        y: 1356
+        width: 235
+        height: 258
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 13ae267f361992745b49471bcef3cd99
+      internalID: 786012539
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_3
+      rect:
+        serializedVersion: 2
+        x: 849
+        y: 1357
+        width: 238
+        height: 257
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a41e8b316c9153340b3212b3b88cc944
+      internalID: -1768333505
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_4
+      rect:
+        serializedVersion: 2
+        x: 1125
+        y: 1357
+        width: 244
+        height: 257
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a4b71490d6499d2478d8504237caaa94
+      internalID: 1210947303
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_5
+      rect:
+        serializedVersion: 2
+        x: 1403
+        y: 1357
+        width: 248
+        height: 257
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9433b65f76f92ae4e8c864bae82d57ac
+      internalID: 2014691034
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_6
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 1088
+        width: 251
+        height: 257
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 76b29af46e377ba40a1e1e0cba3c7755
+      internalID: -431368466
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_7
+      rect:
+        serializedVersion: 2
+        x: 281
+        y: 1087
+        width: 252
+        height: 256
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ee77355265ea5254f87bb24473b6f815
+      internalID: 1872058420
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_8
+      rect:
+        serializedVersion: 2
+        x: 562
+        y: 1087
+        width: 251
+        height: 254
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 49cdf6d321a4d614d89d6f436ab785c2
+      internalID: 1043601617
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_9
+      rect:
+        serializedVersion: 2
+        x: 844
+        y: 1086
+        width: 248
+        height: 252
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cccac5d69be82774a91d17b763d56e20
+      internalID: -732148535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_10
+      rect:
+        serializedVersion: 2
+        x: 1127
+        y: 1085
+        width: 243
+        height: 250
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9cb6fe2615f73ce43a0f6f0f3f556a9d
+      internalID: -1547655496
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_11
+      rect:
+        serializedVersion: 2
+        x: 1409
+        y: 1085
+        width: 239
+        height: 249
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0d21b00102b12324ea0da024b4fca103
+      internalID: 665644941
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_12
+      rect:
+        serializedVersion: 2
+        x: 11
+        y: 817
+        width: 237
+        height: 248
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4b0c258c44c6b3d489b067913c311c19
+      internalID: 717382107
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_13
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 820
+        width: 234
+        height: 246
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3029a6216a511cd418a6f42f6490af8d
+      internalID: 2064498138
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_14
+      rect:
+        serializedVersion: 2
+        x: 577
+        y: 821
+        width: 231
+        height: 245
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6bd548194dda8dd42bebec394a62d872
+      internalID: 641643700
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_15
+      rect:
+        serializedVersion: 2
+        x: 863
+        y: 823
+        width: 224
+        height: 244
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d59cb58b5d24428419148e4b967cf51c
+      internalID: 583162208
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_16
+      rect:
+        serializedVersion: 2
+        x: 1147
+        y: 823
+        width: 221
+        height: 246
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: aa751ac115591d743876718667c07ec6
+      internalID: -1909142990
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_17
+      rect:
+        serializedVersion: 2
+        x: 1430
+        y: 824
+        width: 217
+        height: 244
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 43e154b867164a245b0a44579cd1df78
+      internalID: -299614758
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_18
+      rect:
+        serializedVersion: 2
+        x: 30
+        y: 555
+        width: 215
+        height: 242
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cb664bc7f9259fb468ed4b9d703c85ba
+      internalID: 366675130
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_19
+      rect:
+        serializedVersion: 2
+        x: 310
+        y: 554
+        width: 212
+        height: 239
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6be5579911ae03441b6fe421e3b0f642
+      internalID: -708149228
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_20
+      rect:
+        serializedVersion: 2
+        x: 590
+        y: 553
+        width: 210
+        height: 237
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ade33ac75b9eea44b80eacb121a6a835
+      internalID: 1149831842
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_21
+      rect:
+        serializedVersion: 2
+        x: 869
+        y: 552
+        width: 210
+        height: 238
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 96be84371d2375b478f1c02f4ebe2862
+      internalID: -1007758221
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_22
+      rect:
+        serializedVersion: 2
+        x: 1144
+        y: 552
+        width: 213
+        height: 240
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a34daa1e8144934488280baf9de1c7e8
+      internalID: -1160956997
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_23
+      rect:
+        serializedVersion: 2
+        x: 1420
+        y: 552
+        width: 215
+        height: 242
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4d64f00311fce1842a39c2fc494215d3
+      internalID: 617365571
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_24
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 283
+        width: 217
+        height: 244
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0b5a41692bf10184494ec5293b953f91
+      internalID: -982339899
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_25
+      rect:
+        serializedVersion: 2
+        x: 290
+        y: 287
+        width: 222
+        height: 243
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 95895f2033259684ca4bacbe1cad53d1
+      internalID: -1597989845
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_26
+      rect:
+        serializedVersion: 2
+        x: 566
+        y: 287
+        width: 226
+        height: 245
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5847b06f003bcea4ca6ed871783b80fe
+      internalID: 133296874
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_27
+      rect:
+        serializedVersion: 2
+        x: 843
+        y: 288
+        width: 228
+        height: 245
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dada330dc80602e43a62d5f7b2ca76c1
+      internalID: 85722257
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_28
+      rect:
+        serializedVersion: 2
+        x: 1120
+        y: 288
+        width: 236
+        height: 245
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 82e02827070721845a70cd4b73c61f25
+      internalID: 1482987054
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_29
+      rect:
+        serializedVersion: 2
+        x: 1400
+        y: 288
+        width: 237
+        height: 244
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 34ce77ec419fcbd4890c8e9ad1c3b5cd
+      internalID: 1606434974
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_30
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 18
+        width: 238
+        height: 243
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bbbded558d07d0c4599c914e5a2b4b39
+      internalID: 7413939
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_31
+      rect:
+        serializedVersion: 2
+        x: 281
+        y: 18
+        width: 237
+        height: 238
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b8e9a76a3e2a9a9478447b89774025fd
+      internalID: 1197985608
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_32
+      rect:
+        serializedVersion: 2
+        x: 563
+        y: 17
+        width: 233
+        height: 236
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 66ffebf7710765f42926c00f79b7d66b
+      internalID: 1394540956
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_33
+      rect:
+        serializedVersion: 2
+        x: 847
+        y: 16
+        width: 227
+        height: 236
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 30af2cfe432ed7440ad56c6207a3ae1d
+      internalID: -717978981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_34
+      rect:
+        serializedVersion: 2
+        x: 1133
+        y: 19
+        width: 221
+        height: 233
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ad9451c88d6e72e44bdd1c9ea6cef9c3
+      internalID: 184406036
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LeftBackEsqRange_35
+      rect:
+        serializedVersion: 2
+        x: 1421
+        y: 22
+        width: 212
+        height: 231
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9ecb0d30a44a7a046abae37651989b17
+      internalID: 1079562148
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 16abe14320809a7418e115339801347c
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      LeftBackEsqRange_0: 657699008
+      LeftBackEsqRange_1: 843044985
+      LeftBackEsqRange_10: -1547655496
+      LeftBackEsqRange_11: 665644941
+      LeftBackEsqRange_12: 717382107
+      LeftBackEsqRange_13: 2064498138
+      LeftBackEsqRange_14: 641643700
+      LeftBackEsqRange_15: 583162208
+      LeftBackEsqRange_16: -1909142990
+      LeftBackEsqRange_17: -299614758
+      LeftBackEsqRange_18: 366675130
+      LeftBackEsqRange_19: -708149228
+      LeftBackEsqRange_2: 786012539
+      LeftBackEsqRange_20: 1149831842
+      LeftBackEsqRange_21: -1007758221
+      LeftBackEsqRange_22: -1160956997
+      LeftBackEsqRange_23: 617365571
+      LeftBackEsqRange_24: -982339899
+      LeftBackEsqRange_25: -1597989845
+      LeftBackEsqRange_26: 133296874
+      LeftBackEsqRange_27: 85722257
+      LeftBackEsqRange_28: 1482987054
+      LeftBackEsqRange_29: 1606434974
+      LeftBackEsqRange_3: -1768333505
+      LeftBackEsqRange_30: 7413939
+      LeftBackEsqRange_31: 1197985608
+      LeftBackEsqRange_32: 1394540956
+      LeftBackEsqRange_33: -717978981
+      LeftBackEsqRange_34: 184406036
+      LeftBackEsqRange_35: 1079562148
+      LeftBackEsqRange_4: 1210947303
+      LeftBackEsqRange_5: 2014691034
+      LeftBackEsqRange_6: -431368466
+      LeftBackEsqRange_7: 1872058420
+      LeftBackEsqRange_8: 1043601617
+      LeftBackEsqRange_9: -732148535
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

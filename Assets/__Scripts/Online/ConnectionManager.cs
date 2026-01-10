@@ -41,8 +41,9 @@ namespace MyGame.ConnectionSystem.Connection
     {
         public static ConnectionManager Instance { get; private set; }
 
-        private NetworkManager m_NetworkManager;
-        public NetworkManager NetworkManager => m_NetworkManager;
+        [System.NonSerialized]
+        private NetworkManager _networkManager;
+        public new NetworkManager NetworkManager => _networkManager;
 
         // This is the synchronized "source of truth" for who is in the lobby.
         public NetworkList<PlayerData> PlayerList { get; private set; }
@@ -88,8 +89,8 @@ namespace MyGame.ConnectionSystem.Connection
 
         void Start()
         {
-            m_NetworkManager = FindObjectOfType<NetworkManager>();
-            if (m_NetworkManager == null)
+            _networkManager = FindFirstObjectByType<NetworkManager>();
+            if (_networkManager == null)
             {
                 Debug.LogError("[ConnectionManager] FATAL: NetworkManager not found in scene!");
                 return;
@@ -111,27 +112,27 @@ namespace MyGame.ConnectionSystem.Connection
             m_CurrentState.Enter();
 
             // Subscribe to NetworkManager events
-            m_NetworkManager.OnClientConnectedCallback += HandleClientConnected;
-            m_NetworkManager.OnClientDisconnectCallback += HandleClientDisconnected;
-            m_NetworkManager.OnConnectionEvent += OnConnectionEvent;
-            m_NetworkManager.OnServerStarted += OnServerStarted;
-            m_NetworkManager.ConnectionApprovalCallback += ApprovalCheck;
-            m_NetworkManager.OnTransportFailure += OnTransportFailure;
-            m_NetworkManager.OnServerStopped += OnServerStopped;
+            _networkManager.OnClientConnectedCallback += HandleClientConnected;
+            _networkManager.OnClientDisconnectCallback += HandleClientDisconnected;
+            _networkManager.OnConnectionEvent += OnConnectionEvent;
+            _networkManager.OnServerStarted += OnServerStarted;
+            _networkManager.ConnectionApprovalCallback += ApprovalCheck;
+            _networkManager.OnTransportFailure += OnTransportFailure;
+            _networkManager.OnServerStopped += OnServerStopped;
         }
 
-        void OnDestroy()
+        protected new void OnDestroy()
         {
-            if (m_NetworkManager != null)
+            if (_networkManager != null)
             {
                 // ALWAYS unsubscribe from events to prevent memory leaks and errors.
-                m_NetworkManager.OnClientConnectedCallback -= HandleClientConnected;
-                m_NetworkManager.OnClientDisconnectCallback -= HandleClientDisconnected;
-                m_NetworkManager.OnConnectionEvent -= OnConnectionEvent;
-                m_NetworkManager.OnServerStarted -= OnServerStarted;
-                m_NetworkManager.ConnectionApprovalCallback -= ApprovalCheck;
-                m_NetworkManager.OnTransportFailure -= OnTransportFailure;
-                m_NetworkManager.OnServerStopped -= OnServerStopped;
+                _networkManager.OnClientConnectedCallback -= HandleClientConnected;
+                _networkManager.OnClientDisconnectCallback -= HandleClientDisconnected;
+                _networkManager.OnConnectionEvent -= OnConnectionEvent;
+                _networkManager.OnServerStarted -= OnServerStarted;
+                _networkManager.ConnectionApprovalCallback -= ApprovalCheck;
+                _networkManager.OnTransportFailure -= OnTransportFailure;
+                _networkManager.OnServerStopped -= OnServerStopped;
             }
         }
         #endregion
@@ -139,13 +140,13 @@ namespace MyGame.ConnectionSystem.Connection
         #region Player List Management (Server-Side)
         private void HandleClientConnected(ulong clientId)
         {
-            if (!m_NetworkManager.IsServer) return;
+            if (!_networkManager.IsServer) return;
             PlayerList.Add(new PlayerData { ClientId = clientId, PlayerName = $"Player {clientId + 1}" });
         }
 
         private void HandleClientDisconnected(ulong clientId)
         {
-            if (!m_NetworkManager.IsServer) return;
+            if (!_networkManager.IsServer) return;
             for (int i = 0; i < PlayerList.Count; i++)
             {
                 if (PlayerList[i].ClientId == clientId)
@@ -165,13 +166,13 @@ namespace MyGame.ConnectionSystem.Connection
                 m_CurrentState.OnClientConnected(data.ClientId);
 
                 // If the client that connected is this local machine...
-                if (data.ClientId == m_NetworkManager.LocalClientId)
+                if (data.ClientId == _networkManager.LocalClientId)
                 {
                     OnClientConnected?.Invoke();
 
                     // And if this machine is also the server, it means we have successfully started hosting.
                     // This is the correct time to fire the event for host-specific UI.
-                    if (m_NetworkManager.IsServer)
+                    if (_networkManager.IsServer)
                     {
                         Debug.Log("[ConnectionManager] Host has connected to itself. Firing OnHostingStarted event.");
                         OnHostingStarted?.Invoke();
@@ -206,7 +207,7 @@ namespace MyGame.ConnectionSystem.Connection
         private void OnServerStopped(bool wasHost)
         {
             // Clear the list when the server stops to ensure clients see an empty lobby if they reconnect.
-            if (m_NetworkManager.IsServer)
+            if (_networkManager.IsServer)
             {
                 PlayerList.Clear();
             }
@@ -229,7 +230,7 @@ namespace MyGame.ConnectionSystem.Connection
             }
         }
 
-        public async void StartClient(string playerName, string joinCode)
+        public void StartClient(string playerName, string joinCode)
         {
             OnStartingClient?.Invoke();
             try

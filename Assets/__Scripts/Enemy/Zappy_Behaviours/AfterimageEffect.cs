@@ -65,6 +65,7 @@ public class AfterimageEffect : MonoBehaviour
         
         while (isActive)
         {
+            yield return new WaitForEndOfFrame();
             CreateAfterimage();
             yield return new WaitForSeconds(spawnInterval);
         }
@@ -75,12 +76,14 @@ public class AfterimageEffect : MonoBehaviour
         if (originalSprite == null) return;
         
         GameObject afterimage = new GameObject("Afterimage");
-        afterimage.transform.position = transform.position;
+        Transform targetTransform = originalSprite.transform;
+
+        afterimage.transform.position = targetTransform.position;
         if (overrideRotation)
         {
             if (relativeToObject)
             {
-                afterimage.transform.rotation = Quaternion.Euler(rotationEuler) * transform.rotation;
+                afterimage.transform.rotation = Quaternion.Euler(rotationEuler) * targetTransform.rotation;
             }
             else
             {
@@ -89,9 +92,9 @@ public class AfterimageEffect : MonoBehaviour
         }
         else
         {
-            afterimage.transform.rotation = transform.rotation;
+            afterimage.transform.rotation = targetTransform.rotation;
         }
-        afterimage.transform.localScale = transform.localScale;
+        afterimage.transform.localScale = targetTransform.lossyScale;
         
         SpriteRenderer afterimageSprite = afterimage.AddComponent<SpriteRenderer>();
         afterimageSprite.sprite = originalSprite.sprite;

@@ -89,7 +89,14 @@ public class EnemyPathfinding : MonoBehaviour
 
     private void UpdatePath()
     {
-        Vector3? targetPosition = TargetOverride.HasValue ? TargetOverride.Value : (player != null ? player.position : (Vector3?)null);
+        // Prioritiza o alvo do EnemyMovement se existir
+        Transform finalTarget = player;
+        if (movement != null && movement.GetCurrentTarget() != null)
+        {
+            finalTarget = movement.GetCurrentTarget();
+        }
+
+        Vector3? targetPosition = TargetOverride.HasValue ? TargetOverride.Value : (finalTarget != null ? finalTarget.position : (Vector3?)null);
 
         if (!targetPosition.HasValue || Pathfinding.Instance == null) return;
         

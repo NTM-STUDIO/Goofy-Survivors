@@ -131,7 +131,7 @@ public class ExperienceOrb : NetworkBehaviour
         foreach(var c in GetComponentsInChildren<Collider>()) c.enabled = false;
     }
 
-    [ServerRpc(RequireOwnership = false)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestCollectServerRpc()
     {
         if (!IsSpawned) return;

@@ -5797,7 +5797,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a3c542cb615724548a3e1c1cac0d8eed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  despawnRadius: 80
+  despawnRadius: 0
   checkInterval: 0.2
   fadeOutDuration: 0.5
   requireOffScreen: 1
@@ -5819,67 +5819,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 3262395820356865524, guid: 46bc9978c974c9d41b95aca3968ad8e8, type: 3}
   m_PrefabInstance: {fileID: 991131516}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &1604320565
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1360779047976011945, guid: 9eba52b3230f26a409fa3823046b8f34, type: 3}
-      propertyPath: GlobalObjectIdHash
-      value: 1504398559
-      objectReference: {fileID: 0}
-    - target: {fileID: 5160719082514619542, guid: 9eba52b3230f26a409fa3823046b8f34, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -13.636799
-      objectReference: {fileID: 0}
-    - target: {fileID: 5160719082514619542, guid: 9eba52b3230f26a409fa3823046b8f34, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 11.6
-      objectReference: {fileID: 0}
-    - target: {fileID: 5160719082514619542, guid: 9eba52b3230f26a409fa3823046b8f34, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 22.287289
-      objectReference: {fileID: 0}
-    - target: {fileID: 5160719082514619542, guid: 9eba52b3230f26a409fa3823046b8f34, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5160719082514619542, guid: 9eba52b3230f26a409fa3823046b8f34, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5160719082514619542, guid: 9eba52b3230f26a409fa3823046b8f34, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5160719082514619542, guid: 9eba52b3230f26a409fa3823046b8f34, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5160719082514619542, guid: 9eba52b3230f26a409fa3823046b8f34, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5160719082514619542, guid: 9eba52b3230f26a409fa3823046b8f34, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5160719082514619542, guid: 9eba52b3230f26a409fa3823046b8f34, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6260151671241025186, guid: 9eba52b3230f26a409fa3823046b8f34, type: 3}
-      propertyPath: m_Name
-      value: FlyingPan
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 9eba52b3230f26a409fa3823046b8f34, type: 3}
 --- !u!1 &1640394566
 GameObject:
   m_ObjectHideFlags: 0
@@ -6137,73 +6076,53 @@ MonoBehaviour:
   - waveName: Wave Inicial (Perfect)
     enemies:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
-      enemyCount: 40
-    - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
-      enemyCount: 1
-    timeUntilNextWave: 0
-    spawnInterval: 0.7
-  - waveName: Second Wave
-    enemies:
-    - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
-      enemyCount: 3
-    - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
-      enemyCount: 300
-    timeUntilNextWave: 0
-    spawnInterval: 0.2
-  - waveName: Third Wave
-    enemies:
-    - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
-      enemyCount: 200
-    - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
-      enemyCount: 4
-    - enemyPrefab: {fileID: 4496776415297934645, guid: 28ba9582f3e390c4dbc1cf3917ba07b9, type: 3}
+      enemyCount: 20
+    - enemyPrefab: {fileID: 9116392235869641759, guid: a6cce02c86a5d554a892f55c697d168a, type: 3}
       enemyCount: 1
     timeUntilNextWave: 0
     spawnInterval: 0.1
-  - waveName: Fourth Wave
-    enemies:
-    - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
-      enemyCount: 5
-    - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
-      enemyCount: 500
-    timeUntilNextWave: 0
-    spawnInterval: 0.05
-  - waveName: Fifth Wave
-    enemies:
-    - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
-      enemyCount: 7
-    - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
-      enemyCount: 50
-    timeUntilNextWave: 0
-    spawnInterval: 0.04
-  - waveName: Sixth Wave
-    enemies:
-    - enemyPrefab: {fileID: 9116392235869641759, guid: 292724c474b181d49956753c0168f88a, type: 3}
-      enemyCount: 8
-    - enemyPrefab: {fileID: 4496776415297934645, guid: 28ba9582f3e390c4dbc1cf3917ba07b9, type: 3}
-      enemyCount: 1
-    timeUntilNextWave: 0
-    spawnInterval: 0.02
-  - waveName: Seventh Wave
-    enemies:
-    - enemyPrefab: {fileID: 3628100632088497594, guid: ba70a9bcdc2136a43a532f2731d03e56, type: 3}
-      enemyCount: 5
-    - enemyPrefab: {fileID: 4496776415297934645, guid: 28ba9582f3e390c4dbc1cf3917ba07b9, type: 3}
-      enemyCount: 2
-    timeUntilNextWave: 0
-    spawnInterval: 0.2
-  - waveName: Eigth Wave (Igris)
-    enemies:
-    - enemyPrefab: {fileID: 9116392235869641759, guid: a6cce02c86a5d554a892f55c697d168a, type: 3}
-      enemyCount: 1
-    timeUntilNextWave: 25
-    spawnInterval: 1
-  - waveName: Nineth Wave (Infinite Skeletons)
+  - waveName: Wave Inicial (Perfect)
     enemies:
     - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
-      enemyCount: 9999
+      enemyCount: 20
+    timeUntilNextWave: 0
+    spawnInterval: 0.1
+  - waveName: Wave Inicial (Perfect)
+    enemies:
+    - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
+      enemyCount: 20
     timeUntilNextWave: 5
-    spawnInterval: 0.05
+    spawnInterval: 0.01
+  - waveName: Wave Inicial (Perfect)
+    enemies:
+    - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
+      enemyCount: 20
+    timeUntilNextWave: 5
+    spawnInterval: 0.01
+  - waveName: Wave Inicial (Perfect)
+    enemies:
+    - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
+      enemyCount: 20
+    timeUntilNextWave: 0
+    spawnInterval: 0.01
+  - waveName: Wave Inicial (Perfect)
+    enemies:
+    - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
+      enemyCount: 20
+    timeUntilNextWave: 5
+    spawnInterval: 0.01
+  - waveName: Wave Inicial (Perfect)
+    enemies:
+    - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
+      enemyCount: 20
+    timeUntilNextWave: 5
+    spawnInterval: 0.01
+  - waveName: Wave Inicial (Perfect)
+    enemies:
+    - enemyPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
+      enemyCount: 1000
+    timeUntilNextWave: 0
+    spawnInterval: 0.01
   waveIndex: 0
   groundLevelY: 0
   spawnBuffer: 30
@@ -6889,10 +6808,10 @@ MonoBehaviour:
   xpSlider: {fileID: 991131520}
   levelText: {fileID: 991131519}
   upgradeManager: {fileID: 1162585565}
-  earlyLevelXpBonus: 65
-  midGameScalingFactor: 1.14
-  lateGameScalingFactor: 1.15
-  endGameScalingFactor: 1.2
+  earlyLevelXpBonus: 0
+  midGameScalingFactor: 0
+  lateGameScalingFactor: 0
+  endGameScalingFactor: 0
 --- !u!1 &1775336804
 GameObject:
   m_ObjectHideFlags: 0
@@ -8113,4 +8032,3 @@ SceneRoots:
   - {fileID: 614526251}
   - {fileID: 1640394568}
   - {fileID: 1656728699}
-  - {fileID: 1604320565}

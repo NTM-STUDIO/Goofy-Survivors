@@ -108,9 +108,9 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: -1060449055
-  m_SortingLayer: 1
-  m_SortingOrder: 0
+  m_SortingLayerID: -394448813
+  m_SortingLayer: 3
+  m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 5d7b8ffb8a236164eb524d6491191f4d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -294,9 +294,9 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 1781815235
-  m_SortingLayer: 5
-  m_SortingOrder: 0
+  m_SortingLayerID: -394448813
+  m_SortingLayer: 3
+  m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 5d7b8ffb8a236164eb524d6491191f4d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -448,7 +448,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2619295852
+  GlobalObjectIdHash: 2909326390
   InScenePlacedSourceGlobalObjectIdHash: 2909326390
   DeferredDespawnTick: 0
   Ownership: 1
@@ -531,7 +531,7 @@ MonoBehaviour:
   popupSpawnPoint: {fileID: 4933882025670287544}
   baseHealth: 5000
   baseDamage: 500
-  moveSpeed: 20
+  moveSpeed: 7
   mutationChance: 0.1
   minMutationBonus: 0.2
   maxMutationBonus: 0.5
@@ -545,6 +545,10 @@ MonoBehaviour:
   orbDrops:
   - orbPrefab: {fileID: 8326750618715067698, guid: cf8c502583dc846429ef24883c06c64e, type: 3}
     dropChance: 100
+  CurrentGenes:
+    SpeedMultiplier: 0
+    HealthMultiplier: 0
+    DamageMultiplier: 0
 --- !u!114 &63635398346227256
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -33,7 +33,7 @@ public class HealthBarUI : MonoBehaviour
 #if UNITY_2023_1_OR_NEWER
                 playerStats = Object.FindFirstObjectByType<PlayerStats>();
 #else
-                playerStats = FindObjectOfType<PlayerStats>();
+                playerStats = FindFirstObjectByType<PlayerStats>();
 #endif
             }
         }

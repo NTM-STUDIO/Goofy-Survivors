@@ -360,8 +360,8 @@ public class PlayerWeaponManager : NetworkBehaviour
     }
 
     // Allows clients to request interaction with a consumable/chest via their own player object (always spawned)
-    [ServerRpc(RequireOwnership = false)]
-    public void RequestInteractWithConsumableServerRpc(ulong consumableNetId, ServerRpcParams rpcParams = default)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void RequestInteractWithConsumableServerRpc(ulong consumableNetId, RpcParams rpcParams = default)
     {
         if (!IsServer) return;
         var spawnMgr = NetworkManager.Singleton?.SpawnManager;

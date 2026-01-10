@@ -1,4 +1,5 @@
 using UnityEngine;
+using PlayerAI;
 
 namespace PlayerAI.States
 {
@@ -8,6 +9,11 @@ namespace PlayerAI.States
 
         public void Enter(PlayerStateMachine ctx)
         {
+            if (ctx.Animator != null)
+            {
+                ctx.Animator.Play("Downed");
+            }
+
             if (ctx.Rb != null)
             {
                 ctx.Rb.linearVelocity = Vector3.zero;

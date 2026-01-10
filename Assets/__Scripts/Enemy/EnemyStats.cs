@@ -28,12 +28,6 @@ public class EnemyStats : NetworkBehaviour
     public float baseDamage = 10;
     public float moveSpeed = 3f;
 
-    [Header("Mutations")]
-    [Range(0f, 1f)]
-    [SerializeField] private float mutationChance = 0.1f;
-    [SerializeField] private float minMutationBonus = 0.2f;
-    [SerializeField] private float maxMutationBonus = 0.5f;
-
     [Header("Mutation Colors")]
     [SerializeField] private Color healthMutationColor = Color.green;
     [SerializeField] private Color damageMutationColor = Color.red;
@@ -149,16 +143,22 @@ public class EnemyStats : NetworkBehaviour
             if (IsServer)
             {
                 float finalHealth = baseHealth * (GameManager.Instance != null ? GameManager.Instance.currentEnemyHealthMultiplier : 1f);
-                ApplyMutation();
                 MaxHealth = finalHealth;
                 CurrentHealth = finalHealth;
 
+                // Sync all values to network (mutations already applied to base stats)
                 netMaxHealth.Value = MaxHealth;
                 netCurrentHealth.Value = CurrentHealth;
                 netBaseDamage.Value = baseDamage;
                 netMoveSpeed.Value = moveSpeed;
                 netMutation.Value = (int)CurrentMutation;
                 netGenes.Value = CurrentGenes;
+                
+                // Apply mutation visuals if mutation was applied
+                if (CurrentMutation != MutationType.None)
+                {
+                    ApplyMutationColorVisuals();
+                }
             }
             // Client initialization moved to OnNetworkSpawn()
         }
@@ -169,6 +169,12 @@ public class EnemyStats : NetworkBehaviour
             MaxHealth = finalHealth;
             CurrentHealth = finalHealth;
             UpdateGeneVisuals();
+            
+            // Apply mutation visuals if mutation was applied
+            if (CurrentMutation != MutationType.None)
+            {
+                ApplyMutationColorVisuals();
+            }
         }
         
         startTime = Time.time;
@@ -296,7 +302,7 @@ public class EnemyStats : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void TakeDamageServerRpc(float damage, bool isCritical, ulong attackerNetId = 0)
     {
         // Reconstruct attacker reference from NetworkObjectId
@@ -458,18 +464,31 @@ public class EnemyStats : NetworkBehaviour
         return stolenType;
     }
 
-    private void ApplyMutation()
+    // Called by EnemySpawner to apply wave-specific mutation BEFORE Start()
+    public void ApplyWaveMutation(MutationType mutationType, float bonusMultiplier)
     {
-        if (UnityEngine.Random.value > mutationChance) return;
-        int mutationChoice = UnityEngine.Random.Range(0, 3);
-        float bonusMultiplier = UnityEngine.Random.Range(minMutationBonus, maxMutationBonus);
-
-        switch (mutationChoice)
+        if (mutationType == MutationType.None) return;
+        
+        CurrentMutation = mutationType;
+        
+        // Apply multiplier to BASE stats (before MaxHealth/CurrentHealth are calculated in Start())
+        switch (mutationType)
         {
-            case 0: CurrentMutation = MutationType.Health; baseHealth *= (1 + bonusMultiplier); if (enemyRenderer != null) enemyRenderer.color = healthMutationColor; break;
-            case 1: CurrentMutation = MutationType.Damage; baseDamage *= (1 + bonusMultiplier); if (enemyRenderer != null) enemyRenderer.color = damageMutationColor; break;
-            case 2: CurrentMutation = MutationType.Speed; moveSpeed *= (1 + bonusMultiplier); if (enemyRenderer != null) enemyRenderer.color = speedMutationColor; break;
+            case MutationType.Health:
+                baseHealth *= (1 + bonusMultiplier);
+                if (enemyRenderer != null) enemyRenderer.color = healthMutationColor;
+                break;
+            case MutationType.Damage:
+                baseDamage *= (1 + bonusMultiplier);
+                if (enemyRenderer != null) enemyRenderer.color = damageMutationColor;
+                break;
+            case MutationType.Speed:
+                moveSpeed *= (1 + bonusMultiplier);
+                if (enemyRenderer != null) enemyRenderer.color = speedMutationColor;
+                break;
         }
+        
+        Debug.Log($"[MUTATION] Applied {mutationType} mutation (+{bonusMultiplier*100:F0}%) to base stats");
     }
 
     public float GetAttackDamage()
@@ -642,7 +661,7 @@ public class EnemyStats : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void ApplyKnockbackServerRpc(float knockbackForce, float duration, Vector3 direction, float penetration)
     {
         ApplyKnockback(knockbackForce, duration, direction, penetration);
@@ -757,8 +776,13 @@ public class EnemyStats : NetworkBehaviour
     {
         if (enemyRenderer != null)
         {
-            // Reset to original before tinting to avoid double tinting layers
-             enemyRenderer.color = originalColor * CurrentGenes.GetGeneColor();
+            // Only apply genetic colors if there's NO mutation active
+            // Mutations have visual priority over genetic tinting
+            if (CurrentMutation == MutationType.None)
+            {
+                enemyRenderer.color = originalColor * CurrentGenes.GetGeneColor();
+            }
+            // If there's a mutation, keep the mutation color
         }
     }
 }

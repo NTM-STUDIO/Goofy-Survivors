@@ -1,4 +1,5 @@
 using UnityEngine;
+using PlayerAI;
 
 namespace PlayerAI.States
 {
@@ -8,10 +9,49 @@ namespace PlayerAI.States
 
         private const float cameraAngleY = 45f;
         private const float horizontalNerfFactor = 0.56f;
+        private const float idleTransitionDelay = 0.1f; // Buffer time before transitioning to Idle
+        
+        // Track current animation to avoid spamming Animator
+        private string currentAnimState = "";
+        private float timeWithoutInput = 0f;
 
-        public void Enter(PlayerStateMachine ctx) { }
+        public void Enter(PlayerStateMachine ctx) 
+        { 
+            // Reset and force update on enter
+            currentAnimState = "";
+            timeWithoutInput = 0f;
+            UpdateAnimation(ctx);
+        }
 
-        public void Tick(PlayerStateMachine ctx) { }
+        public void Tick(PlayerStateMachine ctx) 
+        {
+            // Track time without input for smoother transitions
+            if (!ctx.HasMoveInput)
+            {
+                timeWithoutInput += Time.deltaTime;
+            }
+            else
+            {
+                timeWithoutInput = 0f;
+            }
+            
+            UpdateAnimation(ctx);
+        }
+
+        private void UpdateAnimation(PlayerStateMachine ctx)
+        {
+            if (ctx.Animator == null) return;
+
+            // Use LastHorizontalDirection from StateMachine (updated in UpdateInput)
+            // This ensures consistent direction even during vertical-only movement
+            string targetAnim = (ctx.LastHorizontalDirection >= 0) ? "Moving_Right" : "Moving_Left";
+
+            if (targetAnim != currentAnimState)
+            {
+                ctx.Animator.Play(targetAnim);
+                currentAnimState = targetAnim;
+            }
+        }
 
         public void FixedTick(PlayerStateMachine ctx)
         {
@@ -45,7 +85,8 @@ namespace PlayerAI.States
             if (ctx.Stats != null && ctx.Stats.IsDowned)
                 return PlayerStateType.Downed;
 
-            if (!ctx.HasMoveInput)
+            // Add buffer time before transitioning to Idle to prevent flickering
+            if (timeWithoutInput > idleTransitionDelay)
                 return PlayerStateType.Idle;
 
             if (ctx.Stats != null && ctx.Stats.IsInvincible)

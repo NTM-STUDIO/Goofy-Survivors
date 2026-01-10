@@ -339,7 +339,7 @@ public class GameEventManager : NetworkBehaviour
             // Desativa o controller da câmara no player local
             var advCam = cam.GetComponentInParent<AdvancedCameraController>();
             if (advCam == null) advCam = cam.GetComponent<AdvancedCameraController>();
-            if (advCam == null) advCam = FindObjectOfType<AdvancedCameraController>();
+            if (advCam == null) advCam = FindFirstObjectByType<AdvancedCameraController>();
             
             if (advCam != null && advCam.enabled)
             {

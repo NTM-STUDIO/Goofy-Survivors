@@ -103,7 +103,7 @@ public class UpgradeManager : NetworkBehaviour
             else
             {
                 // Fallback para Singleplayer se a rede não estiver pronta
-                playerStats = FindObjectOfType<PlayerStats>();
+                playerStats = FindFirstObjectByType<PlayerStats>();
             }
         }
 

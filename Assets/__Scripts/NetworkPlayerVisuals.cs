@@ -80,7 +80,7 @@ public class NetworkPlayerVisuals : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void ReportFacingDirectionServerRpc(bool facingRight)
     {
         ApplyServerFacing(facingRight);

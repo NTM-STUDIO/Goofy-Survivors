@@ -8,6 +8,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/P2P.unity
     guid: 8a98bf4a2ad20674c94e23264f358ce1
+  - enabled: 1
+    path: Assets/Scenes/ani.unity
+    guid: a31818f325d98e349b5c6dbf4b06a9a1
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

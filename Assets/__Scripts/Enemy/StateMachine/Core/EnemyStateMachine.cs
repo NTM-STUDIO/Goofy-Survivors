@@ -26,6 +26,7 @@ namespace EnemyAI
         public EnemyStats Stats { get; private set; }
         public Rigidbody Rb { get; private set; }
         public EnemyMovement Movement { get; private set; }
+        public Animator Animator { get; private set; }
         public Transform CurrentTarget { get; private set; }
         
         public EnemyStateType CurrentStateType => currentState?.StateType ?? EnemyStateType.None;
@@ -49,6 +50,8 @@ namespace EnemyAI
             Stats = GetComponent<EnemyStats>();
             Rb = GetComponent<Rigidbody>();
             Movement = GetComponent<EnemyMovement>();
+            Animator = GetComponentInChildren<Animator>();
+            if (Animator == null) Debug.LogWarning($"[EnemyStateMachine] Animator not found on {gameObject.name}");
             CacheAllStates();
         }
 

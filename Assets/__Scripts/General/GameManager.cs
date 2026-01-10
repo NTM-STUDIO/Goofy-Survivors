@@ -172,11 +172,11 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     private void ShowLevelUpUIClientRpc()
     {
-        var upgradeManager = FindObjectOfType<UpgradeManager>();
+        var upgradeManager = FindFirstObjectByType<UpgradeManager>();
         if (upgradeManager != null) upgradeManager.GenerateAndShowOptions();
     }
 
-    [ServerRpc(RequireOwnership = false)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     public void ConfirmUpgradeSelectionServerRpc()
     {
         playersPendingUpgrade--;
@@ -195,7 +195,7 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     private void CloseLevelUpUIClientRpc()
     {
-        var upgradeManager = FindObjectOfType<UpgradeManager>();
+        var upgradeManager = FindFirstObjectByType<UpgradeManager>();
         if (upgradeManager != null) upgradeManager.ClosePanel();
     }
 
@@ -293,7 +293,7 @@ public class GameManager : NetworkBehaviour
         if (reviveManager) reviveManager.ResetReviveState();
         if (eventManager) eventManager.ResetEvents();
 
-        var enemySpawner = FindObjectOfType<EnemySpawner>();
+        var enemySpawner = FindFirstObjectByType<EnemySpawner>();
         if (enemySpawner) enemySpawner.StartSpawning();
 
         if (isP2P) StartGameClientRpc();
@@ -406,7 +406,7 @@ public class GameManager : NetworkBehaviour
     {
         // 1. Parar Spawners e Corrotinas
         if (uiManager) uiManager.ShowEndGamePanel(false);
-        var enemySpawner = FindObjectOfType<EnemySpawner>();
+        var enemySpawner = FindFirstObjectByType<EnemySpawner>();
         if (enemySpawner) enemySpawner.StopAndReset();
 
         // 2. Destruir Inimigos e Jogadores
@@ -447,14 +447,14 @@ public class GameManager : NetworkBehaviour
 
         // 3. Resetar Managers
         if (mapGenerator) mapGenerator.ClearMap();
-        else FindObjectOfType<MapGenerator>()?.ClearMap();
+        else FindFirstObjectByType<MapGenerator>()?.ClearMap();
 
         if (difficultyManager) difficultyManager.ResetDifficulty();
         if (reviveManager) reviveManager.ResetReviveState();
         if (eventManager) eventManager.ResetEvents();
 
         // Reset XP
-        FindObjectOfType<PlayerExperience>()?.ResetState();
+        FindFirstObjectByType<PlayerExperience>()?.ResetState();
 
         Time.timeScale = 1f; // Garante que o tempo volta ao normal
     }
@@ -547,7 +547,7 @@ public class GameManager : NetworkBehaviour
         }
 
         // 3. LIMPEZA DO UPGRADE MANAGER (Limpa fila de níveis)
-        var upgradeManager = FindObjectOfType<UpgradeManager>();
+        var upgradeManager = FindFirstObjectByType<UpgradeManager>();
         if (upgradeManager != null)
         {
             upgradeManager.ForceReset(); // <--- CHAMA O NOVO MÉTODO
@@ -564,10 +564,10 @@ public class GameManager : NetworkBehaviour
         foreach (var d in FindObjectsByType<DamagePopup>(FindObjectsSortMode.None)) Destroy(d.gameObject);
 
         if (mapGenerator) mapGenerator.ClearMap();
-        else FindObjectOfType<MapGenerator>()?.ClearMap();
+        else FindFirstObjectByType<MapGenerator>()?.ClearMap();
 
-        FindObjectOfType<PlayerExperience>()?.ResetState();
-        FindObjectOfType<EnemySpawner>()?.StopAndReset();
+        FindFirstObjectByType<PlayerExperience>()?.ResetState();
+        FindFirstObjectByType<EnemySpawner>()?.StopAndReset();
 
         if (difficultyManager) difficultyManager.ResetDifficulty();
         if (eventManager) eventManager.ResetEvents(); // Não esqueças de resetar os eventos do Boss
@@ -598,7 +598,7 @@ public class GameManager : NetworkBehaviour
     public void ServerApplyPlayerDamage(ulong id, float a, Vector3? p = null, float? i = null)
     {
         if (isP2P) reviveManager?.ServerApplyPlayerDamage(id, a, p, i);
-        else FindObjectOfType<PlayerStats>()?.ApplyDamage(a, p, i);
+        else FindFirstObjectByType<PlayerStats>()?.ApplyDamage(a, p, i);
     }
     public float GetRemainingTime() => isP2P ? networkCurrentTime.Value : localTime;
     public void SetGameState(GameState newState) => CurrentState = newState;

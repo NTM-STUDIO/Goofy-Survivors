@@ -53,6 +53,7 @@ public class BossVisuals : MonoBehaviour
     private EnemyStats trackedBoss;
     private int currentMilestoneIndex = 0;
     private float lastDamageChecked = 0f;
+    public float LastDamageChecked => lastDamageChecked;
 
     private void Start()
     {

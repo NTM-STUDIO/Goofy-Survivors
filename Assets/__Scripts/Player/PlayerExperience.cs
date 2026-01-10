@@ -74,7 +74,7 @@ public class PlayerExperience : NetworkBehaviour
 
     public void Initialize()
     {
-        if (upgradeManager == null) upgradeManager = FindObjectOfType<UpgradeManager>();
+        if (upgradeManager == null) upgradeManager = FindFirstObjectByType<UpgradeManager>();
         UpdateUI();
     }
 

@@ -58,10 +58,19 @@ public class EnemySpawner : NetworkBehaviour
     private const float MAX_MULTIPLIER = 3.0f; // Cap stats at 3x base
     private const float MUTATION_RATE = 0.2f;
     private const float MUTATION_STRENGTH = 0.15f;
-
+    
+    // --- GENETIC DATA ---
     private List<EnemyGenes> genePool = new List<EnemyGenes>();
     private List<GeneFitnessData> currentGenerationFitness = new List<GeneFitnessData>();
     private EnemyGenes currentBestGenes = EnemyGenes.Default;
+    
+    // Performance tracking per trait
+    private Dictionary<MutationType, float> traitPerformance = new Dictionary<MutationType, float>()
+    {
+        { MutationType.Health, 1.0f },
+        { MutationType.Damage, 1.0f },
+        { MutationType.Speed, 1.0f }
+    };
 
     private struct GeneFitnessData
     {
@@ -343,6 +352,14 @@ public void StopAndReset()
                             // Ensure prefab is registered and has a NetworkObject so it replicates to clients
                             RuntimeNetworkPrefabRegistry.TryRegister(selectedEnemy.enemyPrefab);
                             GameObject spawned = Instantiate(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
+                            
+                            // CRITICAL: Apply genes and mutations IMMEDIATELY after Instantiate, BEFORE Start() runs
+                            var stats = spawned.GetComponent<EnemyStats>();
+                            if (stats != null)
+                            {
+                                stats.ApplyGenes(GetGeneFromPool());
+                            }
+                            
                             var netObj = spawned.GetComponent<NetworkObject>();
                             if (netObj == null)
                             {
@@ -364,21 +381,19 @@ public void StopAndReset()
                                     GameManager.Instance.ApplyMidgameMutationToEnemy(es);
                                 }
                             }
-                            
-                            // GENETIC: Apply Stats (Server)
-                            if (spawned != null)
-                            {
-                                var stats = spawned.GetComponent<EnemyStats>();
-                                if (stats != null)
-                                {
-                                    stats.ApplyGenes(GetGeneFromPool());
-                                }
-                            }
                         }
                         else
                         {
                             // Single-player or no network: classic instantiate.
                             GameObject spawned = Instantiate(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
+                            
+                            // CRITICAL: Apply genes and mutations IMMEDIATELY after Instantiate, BEFORE Start() runs
+                            var stats = spawned.GetComponent<EnemyStats>();
+                            if (stats != null)
+                            {
+                                stats.ApplyGenes(GetGeneFromPool());
+                            }
+                            
                             var fadeEffect = spawned.AddComponent<EnemyFadeEffect>();
                             fadeEffect.StartFadeIn(fadeInDuration);
 
@@ -388,16 +403,6 @@ public void StopAndReset()
                                 if (es != null)
                                 {
                                     GameManager.Instance.ApplyMidgameMutationToEnemy(es);
-                                }
-                            }
-                            
-                            // GENETIC: Apply Stats (Singleplayer)
-                            if (spawned != null)
-                            {
-                                var stats = spawned.GetComponent<EnemyStats>();
-                                if (stats != null)
-                                {
-                                    stats.ApplyGenes(GetGeneFromPool());
                                 }
                             }
                         }
@@ -411,6 +416,10 @@ public void StopAndReset()
             }
 
             yield return new WaitForSeconds(currentWave.timeUntilNextWave);
+            
+            // AUTOMATIC EVOLUTION: Evolve at the end of every wave
+            EvolveGenes();
+            
             waveIndex++;
         }
         Debug.Log("All waves completed!");
@@ -911,20 +920,91 @@ public void StopAndReset()
         if (genePool.Count == 0) return EnemyGenes.Default;
         return genePool[Random.Range(0, genePool.Count)];
     }
+    
+    // Determine which mutation type to apply based on genetic algorithm results
+    private MutationType DetermineDominantMutation()
+    {
+        if (currentBestGenes.Equals(EnemyGenes.Default))
+        {
+            // No evolution data yet, start with balanced approach
+            return MutationType.Health;
+        }
+        
+        // Analyze the TOP performing genes (elite pool) to determine dominant trait
+        // This looks at actual performance data, not just one sample
+        float healthScore = 0f;
+        float damageScore = 0f;
+        float speedScore = 0f;
+        
+        // If we have fitness data, analyze it
+        if (currentGenerationFitness.Count > 0)
+        {
+            // Take top 20% of performers
+            int topCount = Mathf.Max(1, currentGenerationFitness.Count / 5);
+            
+            for (int i = 0; i < topCount && i < currentGenerationFitness.Count; i++)
+            {
+                var genes = currentGenerationFitness[i].Genes;
+                var fitness = currentGenerationFitness[i].Fitness;
+                
+                // Weight each trait by how much it contributes to fitness
+                // Traits above 1.0 are evolved traits
+                float healthContribution = Mathf.Max(0, genes.HealthMultiplier - 1f);
+                float damageContribution = Mathf.Max(0, genes.DamageMultiplier - 1f);
+                float speedContribution = Mathf.Max(0, genes.SpeedMultiplier - 1f);
+                
+                // Scale by fitness (better performers have more influence)
+                float fitnessWeight = fitness / (topCount - i); // Earlier = higher weight
+                healthScore += healthContribution * fitnessWeight;
+                damageScore += damageContribution * fitnessWeight;
+                speedScore += speedContribution * fitnessWeight;
+            }
+        }
+        else
+        {
+            // Fallback: Use best genes directly
+            healthScore = Mathf.Max(0, currentBestGenes.HealthMultiplier - 1f);
+            damageScore = Mathf.Max(0, currentBestGenes.DamageMultiplier - 1f);
+            speedScore = Mathf.Max(0, currentBestGenes.SpeedMultiplier - 1f);
+        }
+        
+        // Update performance tracking
+        traitPerformance[MutationType.Health] = healthScore;
+        traitPerformance[MutationType.Damage] = damageScore;
+        traitPerformance[MutationType.Speed] = speedScore;
+        
+        // Return mutation that matches the highest-scoring trait
+        if (damageScore >= healthScore && damageScore >= speedScore)
+        {
+            return MutationType.Damage;
+        }
+        else if (healthScore >= speedScore)
+        {
+            return MutationType.Health;
+        }
+        else
+        {
+            return MutationType.Speed;
+        }
+    }
 
     public void ReportEnemyFitness(EnemyGenes genes, float damageDealt, float timeAlive)
     {        
-        float baseFitness = (damageDealt * 2.0f) + (timeAlive * 0.5f);
+        // REBALANCED: Give more weight to damage dealing, less to survival
+        float baseFitness = (damageDealt * 3.0f) + (timeAlive * 0.3f);
         
         // Efficiency: damage dealt relative to health investment
         float healthInvestment = Mathf.Max(1f, genes.HealthMultiplier);
         float efficiency = damageDealt / healthInvestment;
         
         // Speed bonus: faster enemies that dealt damage are more effective
-        float speedBonus = (genes.SpeedMultiplier > 1f && damageDealt > 0) ? genes.SpeedMultiplier * 0.5f : 0f;
+        float speedBonus = (genes.SpeedMultiplier > 1f && damageDealt > 0) ? genes.SpeedMultiplier * 1.0f : 0f;
         
-        // Final fitness with efficiency consideration
-        float fitness = baseFitness + (efficiency * 0.3f) + speedBonus;
+        // Damage trait bonus: reward high damage genes
+        float damageTraitBonus = (genes.DamageMultiplier > 1f && damageDealt > 0) ? genes.DamageMultiplier * 0.8f : 0f;
+        
+        // Final fitness with balanced consideration
+        float fitness = baseFitness + (efficiency * 0.4f) + speedBonus + damageTraitBonus;
         
         currentGenerationFitness.Add(new GeneFitnessData { Genes = genes, Fitness = fitness });
         
@@ -991,12 +1071,20 @@ public void StopAndReset()
 
         // Update Pool
         genePool = nextGen;
+        
+        // Determine which trait is dominant BEFORE clearing fitness data
+        string dominantTrait = currentBestGenes.GetDominantTrait();
+        MutationType nextMutation = DetermineDominantMutation();
+        
+        // Clear fitness data for next generation
         currentGenerationFitness.Clear(); 
         
         Debug.Log($"[GENETIC] ══════════════════════════════");
         Debug.Log($"[GENETIC] EVOLUTION COMPLETE!");
         Debug.Log($"[GENETIC] Best Performer: HP={currentBestGenes.HealthMultiplier:F2}x, Dmg={currentBestGenes.DamageMultiplier:F2}x, Spd={currentBestGenes.SpeedMultiplier:F2}x");
-        Debug.Log($"[GENETIC] Dominant Trait: {currentBestGenes.GetDominantTrait()}");
+        Debug.Log($"[GENETIC] Dominant Trait: {dominantTrait}");
+        Debug.Log($"[GENETIC] Trait Performance Scores - Health: {traitPerformance[MutationType.Health]:F2}, Damage: {traitPerformance[MutationType.Damage]:F2}, Speed: {traitPerformance[MutationType.Speed]:F2}");
+        Debug.Log($"[GENETIC] Next Mutation: {nextMutation} (highest-performing trait in elite pool)");
         Debug.Log($"[GENETIC] Gene Pool: {genePool.Count} variants | Elites preserved: {eliteCount}");
         Debug.Log($"[GENETIC] ══════════════════════════════");
     }

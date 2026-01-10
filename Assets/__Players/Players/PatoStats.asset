@@ -23,7 +23,7 @@ MonoBehaviour:
   attackSpeedMultiplier: 1
   projectileCount: 0
   projectileSizeMultiplier: 1
-  projectileSpeedMultiplier: 1
+  cooldownReduction: 0
   durationMultiplier: 1
   knockbackMultiplier: 1
   movementSpeed: 20

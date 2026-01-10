@@ -68,7 +68,7 @@ public class ReviveManager : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void NotifyDownedServerRpc(ulong clientId) => NotifyPlayerDowned(clientId);
 
     public void ServerApplyPlayerDamage(ulong targetId, float amount, Vector3? pos, float? iframe)

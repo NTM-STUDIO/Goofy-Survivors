@@ -10,10 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 2682051627743952468}
   - component: {fileID: 3394193308120317800}
-  - component: {fileID: 1880927956876971757}
   - component: {fileID: 4719598060223026307}
   - component: {fileID: 4993268136660888013}
   - component: {fileID: 7401310591700256757}
+  - component: {fileID: 6913759490006984456}
   m_Layer: 7
   m_Name: Visuals
   m_TagString: Enemy
@@ -31,7 +31,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.23911765, y: 0.3696438, z: -0.09904577, w: 0.89239913}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.86, y: 1.86, z: 1.86}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 8102928579760724059}
@@ -80,7 +80,7 @@ SpriteRenderer:
   m_SortingLayerID: -394448813
   m_SortingLayer: 3
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 23c36bcfbe251274b94f5f19200b6e8d, type: 3}
+  m_Sprite: {fileID: -782947851, guid: cf8f4a6c4c6384e41bbe8a0cd6c7ab38, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -91,32 +91,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &1880927956876971757
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2260676395805754897}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a3933c8f6f364ee4bb5d5d4941df3808, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  UpRightSprite: {fileID: 21300000, guid: 2db4e1c95741fe84db6db9e66d988321, type: 3}
-  UpLeftSprite: {fileID: 21300000, guid: 12b9554dd93011c498674669bcf79e7e, type: 3}
-  DownRightSprite: {fileID: 21300000, guid: 23c36bcfbe251274b94f5f19200b6e8d, type: 3}
-  DownLeftSprite: {fileID: 21300000, guid: fd257706353d63341b58bc7ec291741a, type: 3}
-  firePoint: {fileID: 0}
-  directionVector_Red: {x: 1, y: 0, z: 0}
-  directionVector_Blue: {x: 0, y: 0, z: 1}
-  directionVector_Green: {x: -1, y: 0, z: 0}
-  directionVector_Yellow: {x: 0, y: 0, z: -1}
-  showGizmos: 1
-  manualFlipImage: 0
-  manualOverrideDirection: 0
-  manualQuadrant: 2
-  applyOverridesEveryFrame: 1
 --- !u!136 &4719598060223026307
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -139,7 +113,7 @@ CapsuleCollider:
   m_Radius: 1.5440507
   m_Height: 16.636177
   m_Direction: 2
-  m_Center: {x: -0.01953181, y: 3.369981, z: 6.4516397}
+  m_Center: {x: 0.73, y: 2.74, z: 7.16}
 --- !u!136 &4993268136660888013
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -162,7 +136,7 @@ CapsuleCollider:
   m_Radius: 1.35
   m_Height: 16.636175
   m_Direction: 2
-  m_Center: {x: 0.08778152, y: 1.35, z: 6.4516387}
+  m_Center: {x: 0.73, y: 0.94, z: 7.16}
 --- !u!114 &7401310591700256757
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -178,6 +152,28 @@ MonoBehaviour:
   bloomIntensity: 0.91
   emissionColor: {r: 1, g: 1, b: 1, a: 1}
   emissionPower: 0
+--- !u!95 &6913759490006984456
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2260676395805754897}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: fa8a1450ebcf7af41b1d2dcbc55c0f19, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &3785565571435141611
 GameObject:
   m_ObjectHideFlags: 0
@@ -344,7 +340,7 @@ MonoBehaviour:
   baseHealth: 12
   baseDamage: 6
   moveSpeed: 9
-  mutationChance: 0.1
+  mutationChance: 0.5
   minMutationBonus: 1
   maxMutationBonus: 1.5
   healthMutationColor: {r: 0, g: 1, b: 0, a: 1}
@@ -427,4 +423,3 @@ MonoBehaviour:
   targetUpdateInterval: 1
   attackRange: 1.5
   attackCooldown: 1.5
-  stunDuration: 0.5

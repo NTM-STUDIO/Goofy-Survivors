@@ -1,0 +1,958 @@
+fileFormatVersion: 2
+guid: b3b88b65a46d5c14ca72a49efa71b0fb
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 0
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: backrunzappy_0
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 1560
+        width: 183
+        height: 268
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bbaf3af0815cf3e41bf331bffded7050
+      internalID: -1189016611
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_1
+      rect:
+        serializedVersion: 2
+        x: 187
+        y: 1556
+        width: 184
+        height: 254
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 86fb8a93fee0ecb4c875964fd0d61e1c
+      internalID: -1038486906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_2
+      rect:
+        serializedVersion: 2
+        x: 378
+        y: 1557
+        width: 181
+        height: 277
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: aa8d80b550b3eb6439d0dd0315f3cf79
+      internalID: -656285927
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_3
+      rect:
+        serializedVersion: 2
+        x: 562
+        y: 1559
+        width: 182
+        height: 277
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1d3f075c5b9fcd9479ccf5ffd48fdab1
+      internalID: -318520738
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_4
+      rect:
+        serializedVersion: 2
+        x: 749
+        y: 1556
+        width: 182
+        height: 277
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 92958a7928fc8b54495b58be76c7c281
+      internalID: -386187052
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_5
+      rect:
+        serializedVersion: 2
+        x: 939
+        y: 1552
+        width: 180
+        height: 262
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0f43dde27cf1c384f9cc8702fd7a9dd7
+      internalID: -636148645
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_6
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 1266
+        width: 179
+        height: 256
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e1f8849ab33d52c4385ff1a34262c330
+      internalID: -1657260298
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_7
+      rect:
+        serializedVersion: 2
+        x: 190
+        y: 1266
+        width: 182
+        height: 260
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 99c3e30a55fcc8e4fbd6d495c01715b8
+      internalID: -1819223505
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_8
+      rect:
+        serializedVersion: 2
+        x: 375
+        y: 1254
+        width: 184
+        height: 264
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7be3dbbb2b98fd24288b683fadafff30
+      internalID: 244687265
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_9
+      rect:
+        serializedVersion: 2
+        x: 561
+        y: 1249
+        width: 185
+        height: 256
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b491dbde559a8524fb5c6186718adae5
+      internalID: -1709301602
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_10
+      rect:
+        serializedVersion: 2
+        x: 752
+        y: 1250
+        width: 181
+        height: 256
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1a9baf627289bb94a8c900ee53fd4c9c
+      internalID: -499075619
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_11
+      rect:
+        serializedVersion: 2
+        x: 943
+        y: 1244
+        width: 177
+        height: 270
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 358072888b5b4bc44b9e230f16b5f2b6
+      internalID: -937541782
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_12
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 946
+        width: 183
+        height: 275
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: edf56f6c986d16b4c8830c8aba397406
+      internalID: 1610613864
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_13
+      rect:
+        serializedVersion: 2
+        x: 187
+        y: 942
+        width: 183
+        height: 274
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0d88eede6f3ee7f4cb480d22f10b95c4
+      internalID: 362020213
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_14
+      rect:
+        serializedVersion: 2
+        x: 374
+        y: 939
+        width: 184
+        height: 259
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0f07c4e1b1ee64949ae8e5a622bf5ec3
+      internalID: -1363251092
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_15
+      rect:
+        serializedVersion: 2
+        x: 565
+        y: 940
+        width: 181
+        height: 260
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5803c6122d5f67747921420dfdaa6e95
+      internalID: 1560419903
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_16
+      rect:
+        serializedVersion: 2
+        x: 754
+        y: 961
+        width: 179
+        height: 258
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0fa9ba916325fa34eaddf3691b46dd53
+      internalID: 2137952209
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_17
+      rect:
+        serializedVersion: 2
+        x: 936
+        y: 949
+        width: 184
+        height: 267
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c197a3eae0e67ed49b86749ac7fe85dd
+      internalID: -234694757
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_18
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 637
+        width: 185
+        height: 263
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8049eb5efc7d7a445a4f73abffe00a1a
+      internalID: 620095545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_19
+      rect:
+        serializedVersion: 2
+        x: 188
+        y: 638
+        width: 184
+        height: 254
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 17a17d2a68a1b1747a378100fbd1e616
+      internalID: -1772174649
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_20
+      rect:
+        serializedVersion: 2
+        x: 376
+        y: 640
+        width: 182
+        height: 274
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2f494c01ba3157541a880f3fc91958c1
+      internalID: -997023680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_21
+      rect:
+        serializedVersion: 2
+        x: 561
+        y: 638
+        width: 184
+        height: 276
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dff2570ff8a0fd94a873d8e576398998
+      internalID: -1185622493
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_22
+      rect:
+        serializedVersion: 2
+        x: 748
+        y: 634
+        width: 184
+        height: 271
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5eca39df4e50fa74da6b209e297dcd81
+      internalID: -330194258
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_23
+      rect:
+        serializedVersion: 2
+        x: 939
+        y: 635
+        width: 181
+        height: 261
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 96eb4f5f0fa89b64dbaee29de82aa0b1
+      internalID: 415422626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_24
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 338
+        width: 177
+        height: 260
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1eb700e1caab91a4290570896353b765
+      internalID: -1123658395
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_25
+      rect:
+        serializedVersion: 2
+        x: 193
+        y: 348
+        width: 179
+        height: 258
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8ba0fe775c4433c47b1173ad1feef24f
+      internalID: -1828943737
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_26
+      rect:
+        serializedVersion: 2
+        x: 375
+        y: 336
+        width: 184
+        height: 265
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 33747a50744a9b34681403b626ac02b9
+      internalID: -425085444
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_27
+      rect:
+        serializedVersion: 2
+        x: 561
+        y: 332
+        width: 185
+        height: 260
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a2fcb32db74e1f3488a50c78c4f00d28
+      internalID: 393610725
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_28
+      rect:
+        serializedVersion: 2
+        x: 756
+        y: 326
+        width: 177
+        height: 269
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fd1f9565213866b4f9125c3510af3c10
+      internalID: -94190421
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_29
+      rect:
+        serializedVersion: 2
+        x: 936
+        y: 334
+        width: 183
+        height: 275
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b0de1c3d73a95b34fb667f3c487ed0cf
+      internalID: 1701374015
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_30
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 25
+        width: 183
+        height: 276
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4dba92c2cae473445bba2ea6207bc5c6
+      internalID: 803759707
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_31
+      rect:
+        serializedVersion: 2
+        x: 188
+        y: 21
+        width: 182
+        height: 273
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bc7629deb58ac114ebd260b83a2850b8
+      internalID: 1835135569
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_32
+      rect:
+        serializedVersion: 2
+        x: 378
+        y: 22
+        width: 180
+        height: 262
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3150a235574c40849a231c0641a4c4ba
+      internalID: -1218667901
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_33
+      rect:
+        serializedVersion: 2
+        x: 569
+        y: 32
+        width: 177
+        height: 260
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 41041c659ac03ef4d87320ddb73a1194
+      internalID: -864276337
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_34
+      rect:
+        serializedVersion: 2
+        x: 754
+        y: 43
+        width: 179
+        height: 257
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6f6ff0bb6ee15544294319512a4650c8
+      internalID: 804879744
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: backrunzappy_35
+      rect:
+        serializedVersion: 2
+        x: 936
+        y: 34
+        width: 184
+        height: 263
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3080bc9e736118348a92510f026f467e
+      internalID: 1144893112
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: c1013ab1583938b429aaf30f877dd1d0
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      backrunzappy_0: -1189016611
+      backrunzappy_1: -1038486906
+      backrunzappy_10: -499075619
+      backrunzappy_11: -937541782
+      backrunzappy_12: 1610613864
+      backrunzappy_13: 362020213
+      backrunzappy_14: -1363251092
+      backrunzappy_15: 1560419903
+      backrunzappy_16: 2137952209
+      backrunzappy_17: -234694757
+      backrunzappy_18: 620095545
+      backrunzappy_19: -1772174649
+      backrunzappy_2: -656285927
+      backrunzappy_20: -997023680
+      backrunzappy_21: -1185622493
+      backrunzappy_22: -330194258
+      backrunzappy_23: 415422626
+      backrunzappy_24: -1123658395
+      backrunzappy_25: -1828943737
+      backrunzappy_26: -425085444
+      backrunzappy_27: 393610725
+      backrunzappy_28: -94190421
+      backrunzappy_29: 1701374015
+      backrunzappy_3: -318520738
+      backrunzappy_30: 803759707
+      backrunzappy_31: 1835135569
+      backrunzappy_32: -1218667901
+      backrunzappy_33: -864276337
+      backrunzappy_34: 804879744
+      backrunzappy_35: 1144893112
+      backrunzappy_4: -386187052
+      backrunzappy_5: -636148645
+      backrunzappy_6: -1657260298
+      backrunzappy_7: -1819223505
+      backrunzappy_8: 244687265
+      backrunzappy_9: -1709301602
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

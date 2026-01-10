@@ -26,6 +26,7 @@ public class MeleePitchfork : NetworkBehaviour
     private float stabDuration = 0.3f;
     private float finalDistance = 2.5f;
     private float attackCooldown = 0f;
+    public float AttackCooldown => attackCooldown;
     private float currentAngle = 0f;
 
     public void Initialize(Vector3 direction, PlayerStats stats, WeaponData data)

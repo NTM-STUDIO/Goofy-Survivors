@@ -238,7 +238,7 @@ public class OrbitingWeapon : NetworkBehaviour
     }
 
     // Server-only: write networked config so late-joiners can initialize without RPC history
-    [ServerRpc(RequireOwnership = false)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     public void ServerSetNetworkConfigServerRpc(ulong ownerId, int weaponId, float startAngle)
     {
         ownerNetId.Value = ownerId;

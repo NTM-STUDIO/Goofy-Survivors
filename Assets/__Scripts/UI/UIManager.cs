@@ -54,7 +54,6 @@ public class UIManager : MonoBehaviour
 
     private ConnectionManager connectionManager;
     private GameManager gameManager;
-    private int selectedCharacterIndex = 0;
 
     /// <summary>
     /// Focuses camera on the reaper, shows a message above him, then returns control.

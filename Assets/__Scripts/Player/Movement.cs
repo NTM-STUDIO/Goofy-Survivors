@@ -1,6 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
-using PlayerAI;
+using PlayerAI; // State Machine namespace
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(PlayerStats))]

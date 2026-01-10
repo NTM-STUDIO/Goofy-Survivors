@@ -1,0 +1,958 @@
+fileFormatVersion: 2
+guid: 7323a471266b8c948b7e80de8ab237ea
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 0
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 6
+  spritePivot: {x: 0, y: 0}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: topleftesqmelee_0
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 1429
+        width: 196
+        height: 268
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3a2a434baaf87954eb8ee75728ad1c20
+      internalID: -1268608183
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_1
+      rect:
+        serializedVersion: 2
+        x: 214
+        y: 1432
+        width: 200
+        height: 270
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2bab4908eae22f940925f7f0f14dc74a
+      internalID: 611330027
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_2
+      rect:
+        serializedVersion: 2
+        x: 422
+        y: 1432
+        width: 198
+        height: 270
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a2161047ef45c7541b24f87930b7a5ec
+      internalID: 755797882
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_3
+      rect:
+        serializedVersion: 2
+        x: 629
+        y: 1429
+        width: 195
+        height: 265
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ce9f4c589bffccc45991a0f0a45574b1
+      internalID: 228899790
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_4
+      rect:
+        serializedVersion: 2
+        x: 836
+        y: 1428
+        width: 185
+        height: 258
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c5ccc700929320f4d870a4e1420aee4f
+      internalID: -2081753480
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_5
+      rect:
+        serializedVersion: 2
+        x: 1043
+        y: 1431
+        width: 182
+        height: 253
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e561460d4d637314d9f66695dcd3090a
+      internalID: 1679017542
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_6
+      rect:
+        serializedVersion: 2
+        x: 9
+        y: 1147
+        width: 183
+        height: 261
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1cfaa08bf0b77ef47987e0f3c9f49fa9
+      internalID: -1935118475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_7
+      rect:
+        serializedVersion: 2
+        x: 218
+        y: 1156
+        width: 184
+        height: 264
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2cde87d1d41488e4eb6ac76c444f6f5d
+      internalID: -1464509611
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_8
+      rect:
+        serializedVersion: 2
+        x: 425
+        y: 1156
+        width: 184
+        height: 264
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e8d90638246e3484abe4e7239b3c262a
+      internalID: -1730476417
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_9
+      rect:
+        serializedVersion: 2
+        x: 631
+        y: 1150
+        width: 185
+        height: 266
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9fa802e7eed769a40a69fb09e70c7e6f
+      internalID: 215785821
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_10
+      rect:
+        serializedVersion: 2
+        x: 836
+        y: 1145
+        width: 183
+        height: 264
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7783434232940964d902a760bdeac7dd
+      internalID: -2004575414
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_11
+      rect:
+        serializedVersion: 2
+        x: 1040
+        y: 1143
+        width: 180
+        height: 256
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fdabf776a32e2214cab532b26fd20606
+      internalID: 1339707091
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_12
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 862
+        width: 197
+        height: 268
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 05896c5c849ff4049bb506676b3e66ff
+      internalID: 308522747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_13
+      rect:
+        serializedVersion: 2
+        x: 214
+        y: 866
+        width: 200
+        height: 269
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b8e3b6a54fd52254a93e18d7d89a9e9e
+      internalID: 1161264108
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_14
+      rect:
+        serializedVersion: 2
+        x: 421
+        y: 867
+        width: 200
+        height: 269
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c26591ea8528f3f45aec404c385d9ca1
+      internalID: -642656514
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_15
+      rect:
+        serializedVersion: 2
+        x: 629
+        y: 862
+        width: 195
+        height: 266
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 831cf050d1ce0c240a0e2929d983454c
+      internalID: 1706905520
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_16
+      rect:
+        serializedVersion: 2
+        x: 836
+        y: 860
+        width: 185
+        height: 259
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 43b5c3e0a1877e84c81d02306e52c54a
+      internalID: 1358849220
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_17
+      rect:
+        serializedVersion: 2
+        x: 1044
+        y: 864
+        width: 183
+        height: 262
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fc6845805757176438eaceb5c4ed4c1e
+      internalID: 1942131093
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_18
+      rect:
+        serializedVersion: 2
+        x: 10
+        y: 582
+        width: 183
+        height: 266
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 61a3b9ac8f92c444a98747623e294cbf
+      internalID: 526779207
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_19
+      rect:
+        serializedVersion: 2
+        x: 218
+        y: 588
+        width: 184
+        height: 264
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cc443d741db9b94409df46f66f74a4c6
+      internalID: -1793361005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_20
+      rect:
+        serializedVersion: 2
+        x: 424
+        y: 584
+        width: 185
+        height: 264
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a6a94aab47dc21942b9653be7c264e4d
+      internalID: 999739515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_21
+      rect:
+        serializedVersion: 2
+        x: 629
+        y: 578
+        width: 183
+        height: 261
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f02e87c0ae1fb934f8917685d8412296
+      internalID: -1877772961
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_22
+      rect:
+        serializedVersion: 2
+        x: 835
+        y: 576
+        width: 181
+        height: 255
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d4cf8870aebcca347bd9cddc0d0d1b6f
+      internalID: -465050240
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_23
+      rect:
+        serializedVersion: 2
+        x: 1041
+        y: 575
+        width: 183
+        height: 264
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ef2951c420fb03f4ebf0ef2fce91a651
+      internalID: 951374542
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_24
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 292
+        width: 196
+        height: 270
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 63c1ce605e8a0ca478257c48e1ba4756
+      internalID: -1456871770
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_25
+      rect:
+        serializedVersion: 2
+        x: 215
+        y: 298
+        width: 199
+        height: 270
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dbf235674f9f04c4c91628953997e4d4
+      internalID: 1254879234
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_26
+      rect:
+        serializedVersion: 2
+        x: 422
+        y: 296
+        width: 198
+        height: 270
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c88d8c99394f4b54da42218be844d33e
+      internalID: 662878232
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_27
+      rect:
+        serializedVersion: 2
+        x: 629
+        y: 294
+        width: 193
+        height: 266
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ae26cdb74446bf94a9749df8ade7b140
+      internalID: -1404078402
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_28
+      rect:
+        serializedVersion: 2
+        x: 836
+        y: 292
+        width: 182
+        height: 253
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9e0f76fb6f42ecd42a55a70d3ec55b54
+      internalID: -220954558
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_29
+      rect:
+        serializedVersion: 2
+        x: 1044
+        y: 295
+        width: 183
+        height: 263
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 47e292020a58f264ba53d8288551b59f
+      internalID: 951278731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_30
+      rect:
+        serializedVersion: 2
+        x: 11
+        y: 20
+        width: 184
+        height: 264
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ae4045f02d0f2b84abc29cd4e3fda252
+      internalID: 497109628
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_31
+      rect:
+        serializedVersion: 2
+        x: 218
+        y: 22
+        width: 184
+        height: 262
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0b8d0d7dbe9697f4592469d82b8eab06
+      internalID: 50912880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_32
+      rect:
+        serializedVersion: 2
+        x: 424
+        y: 15
+        width: 185
+        height: 263
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 36c6f0c9d91d76a41a39ac9368dce08a
+      internalID: 648279633
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_33
+      rect:
+        serializedVersion: 2
+        x: 628
+        y: 8
+        width: 180
+        height: 254
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b675455513b4e774db6497496a1dac58
+      internalID: 1185600409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_34
+      rect:
+        serializedVersion: 2
+        x: 834
+        y: 7
+        width: 179
+        height: 257
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1e240d13d396ae347a330b2d94b332d7
+      internalID: -1796442110
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: topleftesqmelee_35
+      rect:
+        serializedVersion: 2
+        x: 1041
+        y: 9
+        width: 194
+        height: 269
+      alignment: 6
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 517ef04b404d9e54a9f892f62d2e0573
+      internalID: -1261053347
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      topleftesqmelee_0: -1268608183
+      topleftesqmelee_1: 611330027
+      topleftesqmelee_10: -2004575414
+      topleftesqmelee_11: 1339707091
+      topleftesqmelee_12: 308522747
+      topleftesqmelee_13: 1161264108
+      topleftesqmelee_14: -642656514
+      topleftesqmelee_15: 1706905520
+      topleftesqmelee_16: 1358849220
+      topleftesqmelee_17: 1942131093
+      topleftesqmelee_18: 526779207
+      topleftesqmelee_19: -1793361005
+      topleftesqmelee_2: 755797882
+      topleftesqmelee_20: 999739515
+      topleftesqmelee_21: -1877772961
+      topleftesqmelee_22: -465050240
+      topleftesqmelee_23: 951374542
+      topleftesqmelee_24: -1456871770
+      topleftesqmelee_25: 1254879234
+      topleftesqmelee_26: 662878232
+      topleftesqmelee_27: -1404078402
+      topleftesqmelee_28: -220954558
+      topleftesqmelee_29: 951278731
+      topleftesqmelee_3: 228899790
+      topleftesqmelee_30: 497109628
+      topleftesqmelee_31: 50912880
+      topleftesqmelee_32: 648279633
+      topleftesqmelee_33: 1185600409
+      topleftesqmelee_34: -1796442110
+      topleftesqmelee_35: -1261053347
+      topleftesqmelee_4: -2081753480
+      topleftesqmelee_5: 1679017542
+      topleftesqmelee_6: -1935118475
+      topleftesqmelee_7: -1464509611
+      topleftesqmelee_8: -1730476417
+      topleftesqmelee_9: 215785821
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

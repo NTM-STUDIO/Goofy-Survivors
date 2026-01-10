@@ -41,9 +41,9 @@ GameObject:
   m_Component:
   - component: {fileID: 5480164594443825868}
   - component: {fileID: 8947401097208141202}
-  - component: {fileID: 6451281974338076264}
   - component: {fileID: 6532990679494418986}
   - component: {fileID: 1220579941828103973}
+  - component: {fileID: 3649979377829807720}
   m_Layer: 0
   m_Name: Visuals
   m_TagString: Player
@@ -60,9 +60,9 @@ Transform:
   m_GameObject: {fileID: 2055715870274457301}
   serializedVersion: 2
   m_LocalRotation: {x: 0.23911765, y: 0.3696438, z: -0.09904577, w: 0.89239913}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: -0.97, y: -0.33, z: 0}
+  m_LocalScale: {x: 2.2, y: 2.2, z: 2.2}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 4699548477950847601}
   m_Father: {fileID: 8274304304770015266}
@@ -90,7 +90,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10308, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -111,36 +111,17 @@ SpriteRenderer:
   m_SortingLayerID: -394448813
   m_SortingLayer: 3
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: b68ca4f941c1025498ede9b5b1036c04, type: 3}
+  m_Sprite: {fileID: 2144493984, guid: 310bd77327893e54ab863dfc49de80e8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 10.24, y: 5.76}
+  m_Size: {x: 1.74, y: 2.53}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
-  m_SpriteSortPoint: 0
---- !u!114 &6451281974338076264
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2055715870274457301}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6a9f4b87971adc9498ac2f9a339e6133, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  flipMode: 0
-  UpRightSprite: {fileID: 21300000, guid: 512c4a08604afe048a21179e7adf5412, type: 3}
-  UpLeftSprite: {fileID: 21300000, guid: 599f49afbac36a54b98c1a2f6f745bc1, type: 3}
-  DownRightSprite: {fileID: 21300000, guid: 496b596a78c84b44797088d8a71c7efa, type: 3}
-  DownLeftSprite: {fileID: 21300000, guid: 512c4a08604afe048a21179e7adf5412, type: 3}
-  firePoint: {fileID: 0}
-  velocityThreshold: 0.1
+  m_SpriteSortPoint: 1
 --- !u!136 &6532990679494418986
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -160,10 +141,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 1.4591798
+  m_Radius: 0.7
   m_Height: 5.544503
   m_Direction: 2
-  m_Center: {x: -0.31592524, y: 3.5681722, z: 1.2883835}
+  m_Center: {x: -0.06, y: 1.82, z: 1.2883835}
 --- !u!136 &1220579941828103973
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -183,10 +164,32 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 1.31
-  m_Height: 2.37
+  m_Radius: 0.76
+  m_Height: 5.544503
   m_Direction: 2
-  m_Center: {x: 0, y: 3.5681722, z: 0}
+  m_Center: {x: -0.06, y: 0.76, z: 1.288383}
+--- !u!95 &3649979377829807720
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2055715870274457301}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: ab96a647c3630774395157e794e64112, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &2495185030629852636
 GameObject:
   m_ObjectHideFlags: 0
@@ -214,7 +217,7 @@ Transform:
   m_GameObject: {fileID: 2495185030629852636}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.92, z: 1.55}
+  m_LocalPosition: {x: 0, y: 0.78, z: 1.55}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -303,6 +306,7 @@ GameObject:
   - component: {fileID: -5859217750854589408}
   - component: {fileID: -2411956963275685616}
   - component: {fileID: 476431355898181283}
+  - component: {fileID: 2494733770144138537}
   m_Layer: 0
   m_Name: Pato
   m_TagString: Player
@@ -412,6 +416,8 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   IsDownedNetVar:
     m_InternalValue: 0
+  CurrentHpNetVar:
+    m_InternalValue: 100
   hasBeltBuffItem: 0
   stolenBuffDuration: 10
   beltHealthBonus: 0.2
@@ -436,9 +442,9 @@ MonoBehaviour:
   pierceCount: 0
   totalDamageDealt: 0
   totalReaperDamageDealt: 0
-  currentHp: 0
+  _localHp: 0
   invincibilityDuration: 0.4
-  invincible: 0
+  invincible: 1
   spriteRenderer: {fileID: 8947401097208141202}
   downedSprite: {fileID: 21300000, guid: fa879e9aa31e3574089917b0dce51c88, type: 3}
   hurtFlashColor: {r: 0.9716981, g: 0.041251317, b: 0.041251317, a: 1}
@@ -562,6 +568,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &2494733770144138537
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5781343528486485951}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9cf2275474970e84686c297d64b50180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  initialState: 1
+  debugMode: 1
+  SpriteFacesLeftByDefault: 0
 --- !u!1 &8711001021886645921
 GameObject:
   m_ObjectHideFlags: 0

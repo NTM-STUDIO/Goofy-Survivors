@@ -47,14 +47,11 @@ public struct EnemyGenes : INetworkSerializable, IEquatable<EnemyGenes>
         float g = hp / total;
         float b = spd / total;
 
-        // Inverted color scheme
-        return new Color(1f - g - b * 0.5f, 1f - r - b * 0.5f, 1f - r - g); 
-        
         float intensity = Mathf.Clamp01(total);
-        
+
         // Target color based on ratios
         Color target = new Color(r, g, b);
-        
+
         float maxC = Mathf.Max(target.r, target.g, target.b);
         if (maxC > 0)
         {
@@ -65,7 +62,7 @@ public struct EnemyGenes : INetworkSerializable, IEquatable<EnemyGenes>
             target = Color.white;
         }
 
-        return Color.Lerp(Color.white, target, Mathf.Min(1f, total)); 
+        return Color.Lerp(Color.white, target, Mathf.Min(1f, intensity)); 
     }
 
     public string GetDominantTrait()

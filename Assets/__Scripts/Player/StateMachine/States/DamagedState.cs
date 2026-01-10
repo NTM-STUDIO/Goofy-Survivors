@@ -1,4 +1,5 @@
 using UnityEngine;
+using PlayerAI;
 
 namespace PlayerAI.States
 {
@@ -9,9 +10,39 @@ namespace PlayerAI.States
         private const float cameraAngleY = 45f;
         private const float horizontalNerfFactor = 0.56f;
 
-        public void Enter(PlayerStateMachine ctx) { }
+        public void Enter(PlayerStateMachine ctx) 
+        { 
+            // DON'T change animation - keep running animation active
+            // This allows the player to see movement continue even when taking damage
+            // if (ctx.Animator != null)
+            // {
+            //     ctx.Animator.Play("Damaged");
+            // }
+        }
 
-        public void Tick(PlayerStateMachine ctx) { }
+        public void Tick(PlayerStateMachine ctx) 
+        {
+             // Update animation to reflect current movement direction, 
+             // so the player doesn't look "stuck" in the wrong direction while taking damage.
+             UpdateAnimation(ctx);
+        }
+
+        private void UpdateAnimation(PlayerStateMachine ctx)
+        {
+            if (ctx.Animator == null) return;
+
+            if (ctx.HasMoveInput)
+            {
+                // If moving, play the directional moving animation
+                string targetAnim = (ctx.LastHorizontalDirection >= 0) ? "Moving_Right" : "Moving_Left";
+                ctx.Animator.Play(targetAnim);
+            }
+            else
+            {
+                // If stopped, play Idle (or Damaged if you have one)
+                ctx.Animator.Play("Idle");
+            }
+        }
 
         public void FixedTick(PlayerStateMachine ctx)
         {

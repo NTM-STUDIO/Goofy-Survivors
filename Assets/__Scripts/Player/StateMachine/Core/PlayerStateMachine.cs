@@ -15,10 +15,16 @@ namespace PlayerAI
         [SerializeField] private PlayerStateType initialState = PlayerStateType.Idle;
         [SerializeField] private bool debugMode = false;
 
+        [Header("Visual Settings")]
+        [Tooltip("Enable this if your default animation/sprite faces LEFT.")]
+        public bool SpriteFacesLeftByDefault = false;
+
         // Public context for states
         public PlayerStats Stats { get; private set; }
         public Rigidbody Rb { get; private set; }
         public Movement Movement { get; private set; }
+        public Animator Animator { get; private set; }
+        public SpriteRenderer SpriteRenderer { get; private set; }
         
         public PlayerStateType CurrentStateType => currentState?.StateType ?? PlayerStateType.None;
         public float TimeInCurrentState => Time.time - stateEnterTime;
@@ -27,6 +33,9 @@ namespace PlayerAI
         public Vector3 MoveInput { get; private set; }
         public bool HasMoveInput => MoveInput.sqrMagnitude > 0.0001f;
         
+        // Visual state tracking
+        public float LastHorizontalDirection { get; set; } = 1f; // 1 for Right, -1 for Left
+
         // Damage state data
         public float DamageStateEndTime { get; set; }
         public PlayerStateType PreDamageState { get; set; }
@@ -43,6 +52,18 @@ namespace PlayerAI
             Stats = GetComponent<PlayerStats>();
             Rb = GetComponent<Rigidbody>();
             Movement = GetComponent<Movement>();
+            Animator = GetComponentInChildren<Animator>();
+            SpriteRenderer = GetComponentInChildren<SpriteRenderer>();
+            if (Animator == null) Debug.LogError($"[PlayerStateMachine] Animator not found on {gameObject.name} or its children!");
+            if (SpriteRenderer == null) Debug.LogWarning($"[PlayerStateMachine] SpriteRenderer not found on {gameObject.name} or its children!");
+
+            // Check for conflicting scripts
+            var spriteFlipper = GetComponentInChildren<Player4WaySpriteFlipperIsometric>();
+            if (spriteFlipper != null && spriteFlipper.enabled)
+            {
+                Debug.LogWarning($"[PlayerStateMachine] Conflict detected: 'Player4WaySpriteFlipperIsometric' is enabled. It might override the Animator. Consider disabling it.");
+            }
+            
             gameManager = GameManager.Instance;
             CacheAllStates();
         }
@@ -60,7 +81,7 @@ namespace PlayerAI
             TransitionTo(initialState);
         }
 
-        private void OnDestroy()
+        protected new void OnDestroy()
         {
             if (Stats != null)
             {
@@ -98,6 +119,13 @@ namespace PlayerAI
 
         private void UpdateInput()
         {
+            // Safety: Force zero input if game is paused (TimeScale ~ 0)
+            if (Time.timeScale < 0.001f)
+            {
+                MoveInput = Vector3.zero;
+                return;
+            }
+
             // Only capture input if not downed
             if (Stats != null && Stats.IsDowned)
             {
@@ -105,11 +133,20 @@ namespace PlayerAI
                 return;
             }
 
-            MoveInput = new Vector3(
-                Input.GetAxisRaw("Horizontal"),
-                0f,
-                Input.GetAxisRaw("Vertical")
-            );
+            float h = Input.GetAxisRaw("Horizontal");
+            float v = Input.GetAxisRaw("Vertical");
+
+            // DEADZONE: Prevent stick drift or tiny inputs from preventing Idle state
+            if (Mathf.Abs(h) < 0.1f) h = 0f;
+            if (Mathf.Abs(v) < 0.1f) v = 0f;
+
+            MoveInput = new Vector3(h, 0f, v);
+
+            // Update facing direction memory immediately when input changes
+            if (Mathf.Abs(MoveInput.x) > 0.01f)
+            {
+                LastHorizontalDirection = MoveInput.x;
+            }
         }
 
         public void TransitionTo(PlayerStateType newStateType)
@@ -125,6 +162,8 @@ namespace PlayerAI
             
             currentState = newState;
             stateEnterTime = Time.time;
+            
+            if (debugMode) Debug.Log($"[PlayerSM] Entering state: {newStateType}");
             currentState.Enter(this);
 
             if (debugMode) Debug.Log($"[PlayerSM] {gameObject.name}: {previousType} -> {newStateType}");

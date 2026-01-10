@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic; // Necessário para Listas
+using EnemyAI; // State Machine namespace
 
 [RequireComponent(typeof(Rigidbody))]
 public class EnemyMovement : NetworkBehaviour
@@ -57,13 +58,13 @@ public class EnemyMovement : NetworkBehaviour
     private bool hasDebugTarget;
 
     // State Machine Integration
-    private EnemyAI.EnemyStateMachine stateMachine;
+    private EnemyStateMachine stateMachine;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         stats = GetComponent<EnemyStats>();
-        stateMachine = GetComponent<EnemyAI.EnemyStateMachine>();
+        stateMachine = GetComponent<EnemyStateMachine>();
 
         if (randomizeOnAwake) RandomiseBehaviour();
         flankSign = Random.value < 0.5f ? -1f : 1f;
@@ -107,8 +108,8 @@ public class EnemyMovement : NetworkBehaviour
             searchTimer = targetUpdateInterval;
         }
 
-        // Se não tiver alvo, fica parado
-        if (currentTarget == null)
+        // Se não tiver alvo E não tiver direção de pathfinding, fica parado
+        if (currentTarget == null && TargetDirection == Vector3.zero)
         {
             rb.linearVelocity = Vector3.zero;
             hasDebugTarget = false;
@@ -315,7 +316,7 @@ public class EnemyMovement : NetworkBehaviour
     }
 
     // --- NOVO: O Cliente pede para levar dano ---
-    [Rpc(SendTo.Server, RequireOwnership = false)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestPlayerDamageServerRpc(ulong targetClientId)
     {
         // O Servidor verifica o Cooldown para evitar spam/batota
@@ -383,9 +384,9 @@ public class EnemyMovement : NetworkBehaviour
         if (stateMachine == null) return true; // Sem state machine = movimento livre
         
         var state = stateMachine.CurrentStateType;
-        return state == EnemyAI.EnemyStateType.Chasing || 
-               state == EnemyAI.EnemyStateType.Fleeing ||
-               state == EnemyAI.EnemyStateType.None; // None = ainda não inicializou
+        return state == EnemyStateType.Chasing || 
+               state == EnemyStateType.Fleeing ||
+               state == EnemyStateType.None; // None = ainda não inicializou
     }
 
     public Transform GetCurrentTarget() => currentTarget;

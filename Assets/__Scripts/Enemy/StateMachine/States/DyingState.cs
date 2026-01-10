@@ -12,6 +12,8 @@ namespace EnemyAI.States
             ctx.Rb.linearVelocity = Vector3.zero;
             ctx.Rb.isKinematic = true;
             
+            if (ctx.Animator != null) ctx.Animator.Play("Dead");
+            
             var collider = ctx.GetComponent<Collider>();
             if (collider != null) collider.enabled = false;
         }

@@ -5,8 +5,8 @@ using System.Collections.Generic;
 public class EnemyDespawner : MonoBehaviour
 {
     [Header("Despawn Settings")]
-    [Tooltip("The radius around the player. Enemies outside this radius will be removed.")]
-    [SerializeField] private float despawnRadius = 60f;
+    [Tooltip("The radius around the player. Enemies outside this radius will be removed. Set to 0 to disable despawner.")]
+    [SerializeField] private float despawnRadius = 80f;
     [Tooltip("How often (in seconds) to check for enemies to remove.")]
     [SerializeField] private float checkInterval = 3f;
     
@@ -60,8 +60,12 @@ public class EnemyDespawner : MonoBehaviour
         }
 
         // Only start the core logic after a successful initialization.
+        if (despawnRadius <= 0f)
+        {
+            Debug.LogWarning($"EnemyDespawner: despawnRadius is {despawnRadius}. Despawner will be DISABLED. Set a positive value to enable.");
+        }
         StartCoroutine(DespawnEnemiesCoroutine());
-        Debug.Log("EnemyDespawner Initialized successfully.");
+        Debug.Log($"EnemyDespawner Initialized successfully. DespawnRadius: {despawnRadius}");
     }
 
     IEnumerator DespawnEnemiesCoroutine()
@@ -76,6 +80,12 @@ public class EnemyDespawner : MonoBehaviour
     void DespawnFarEnemies()
     {
         if (playerTransform == null || enemySpawner == null) return;
+        
+        // Se despawnRadius for 0 ou negativo, desativa o despawner
+        if (despawnRadius <= 0f)
+        {
+            return;
+        }
 
         EnemyStats[] allEnemies = FindObjectsByType<EnemyStats>(FindObjectsSortMode.None);
         foreach (EnemyStats enemy in allEnemies)

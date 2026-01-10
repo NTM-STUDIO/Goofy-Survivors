@@ -11,6 +11,8 @@ namespace EnemyAI.States
         {
             ctx.Rb.linearVelocity = Vector3.zero;
             ctx.LastAttackTime = Time.time;
+            
+            if (ctx.Animator != null) ctx.Animator.Play("Attack");
         }
 
         public void Tick(EnemyStateMachine ctx) { }

@@ -20,7 +20,7 @@ MonoBehaviour:
   archetype: 3
   targetingStyle: 1
   groupingRange: 5
-  damage: 15
+  damage: 1
   cooldown: 12
   area: 0.5
   amount: 1

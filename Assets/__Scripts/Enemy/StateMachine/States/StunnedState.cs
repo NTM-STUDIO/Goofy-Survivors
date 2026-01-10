@@ -11,6 +11,8 @@ namespace EnemyAI.States
         {
             ctx.Rb.linearVelocity = Vector3.zero;
             stunEndTime = Time.time + 0.5f;
+            
+            if (ctx.Animator != null) ctx.Animator.Play("Stunned");
         }
 
         public void Tick(EnemyStateMachine ctx) { }

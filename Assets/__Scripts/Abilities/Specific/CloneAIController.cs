@@ -22,7 +22,7 @@ public class CloneAIController : MonoBehaviour
 
     private Vector3 intendedVelocity;
 
-    private enum CloneState
+    public enum CloneState
     {
         Following,      
         Engaging,       
@@ -31,6 +31,7 @@ public class CloneAIController : MonoBehaviour
     }
 
     private CloneState currentState = CloneState.Following;
+    public CloneState CurrentState => currentState;
     private float optimalAttackRange = 2f;
     private bool areWeaponsReady = true;
 

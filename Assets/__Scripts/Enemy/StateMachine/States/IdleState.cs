@@ -6,7 +6,11 @@ namespace EnemyAI.States
     {
         public EnemyStateType StateType => EnemyStateType.Idle;
 
-        public void Enter(EnemyStateMachine ctx) => ctx.Rb.linearVelocity = Vector3.zero;
+        public void Enter(EnemyStateMachine ctx)
+        {
+            ctx.Rb.linearVelocity = Vector3.zero;
+            if (ctx.Animator != null) ctx.Animator.Play("Idle");
+        }
         public void Tick(EnemyStateMachine ctx) { }
         public void FixedTick(EnemyStateMachine ctx) => ctx.Rb.linearVelocity = Vector3.zero;
         public void Exit(EnemyStateMachine ctx) { }

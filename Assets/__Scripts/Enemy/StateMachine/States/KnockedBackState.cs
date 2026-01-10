@@ -11,6 +11,8 @@ namespace EnemyAI.States
             ctx.Stats.SetKnockedBack(true);
             ctx.Rb.linearVelocity = Vector3.zero;
             
+            if (ctx.Animator != null) ctx.Animator.Play("Damaged");
+            
             Vector3 force = ctx.KnockbackDirection.normalized * ctx.KnockbackForce;
             force.y = 0;
             ctx.Rb.AddForce(force, ForceMode.Impulse);

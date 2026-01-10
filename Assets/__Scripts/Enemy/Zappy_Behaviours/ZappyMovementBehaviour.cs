@@ -78,6 +78,7 @@ public class ZappyMovementBehaviour : EnemyBehaviour
     
     private Transform targetPlayer;
     private Rigidbody rb;
+    private Animator animator;
     private AfterimageEffect afterimageEffect;
     private SpriteRenderer spriteRenderer;
     
@@ -85,6 +86,7 @@ public class ZappyMovementBehaviour : EnemyBehaviour
     private float nextDirectionChangeTime;
     private Vector3 currentMoveDirection;
     private Vector3 erraticOffset;
+    private string currentAnimState;
     private bool isInitialized;
     
     private Color originalColor;
@@ -102,6 +104,7 @@ public class ZappyMovementBehaviour : EnemyBehaviour
     {
         base.Awake();
         
+        animator = GetComponentInChildren<Animator>();
         rb = GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -150,6 +153,8 @@ public class ZappyMovementBehaviour : EnemyBehaviour
     
     private void LateUpdate()
     {
+        UpdateDirectionalAnimation();
+
         // Auto-manage afterimages based on velocity
         if (useAfterimages && afterimageEffect != null && isInitialized)
         {
@@ -630,6 +635,56 @@ public class ZappyMovementBehaviour : EnemyBehaviour
         }
         
         yield return null;
+    }
+
+    private void UpdateDirectionalAnimation()
+    {
+        if (animator == null || targetPlayer == null) return;
+
+        bool isRetreating = (currentState == MovementState.Retreating);
+
+        // Se estiver parado, toca Idle
+        if (rb.linearVelocity.sqrMagnitude < 0.1f && currentState != MovementState.SpeedBurst && currentState != MovementState.Retreating)
+        {
+             if (currentAnimState != "Idle")
+             {
+                animator.Play("Idle");
+                currentAnimState = "Idle";
+             }
+             return; 
+        }
+
+        Vector3 posRelativeToPlayer = transform.position - targetPlayer.position;
+
+        // Rotacionar para alinhar com a tela (-45 graus)
+        Quaternion screenRotation = Quaternion.Euler(0, -45f, 0);
+        Vector3 screenPos = screenRotation * posRelativeToPlayer;
+
+        float x = screenPos.x; 
+        float z = screenPos.z; 
+
+        string targetAnim = "Moving_BottomRight"; 
+
+        if (z > 0) // Inimigo ACIMA do player
+        {
+            if (x > 0) // Inimigo DIREITA (TopRight)
+                targetAnim = isRetreating ? "Moving_TopRight" : "Moving_BottomLeft";
+            else       // Inimigo ESQUERDA (TopLeft)
+                targetAnim = isRetreating ? "Moving_TopLeft" : "Moving_BottomRight";
+        }
+        else // Inimigo ABAIXO do player
+        {
+            if (x > 0) // Inimigo DIREITA (BottomRight)
+                targetAnim = isRetreating ? "Moving_BottomRight" : "Moving_TopLeft";
+            else       // Inimigo ESQUERDA (BottomLeft)
+                targetAnim = isRetreating ? "Moving_BottomLeft" : "Moving_TopRight";
+        }
+
+        if (currentAnimState != targetAnim)
+        {
+            animator.Play(targetAnim);
+            currentAnimState = targetAnim;
+        }
     }
     
     /// <summary>
