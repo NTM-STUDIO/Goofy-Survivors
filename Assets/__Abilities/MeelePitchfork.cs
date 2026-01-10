@@ -12,10 +12,11 @@ public class MeleePitchfork : NetworkBehaviour
     [Header("Settings")]
     [SerializeField] private float stabDistance = 2.5f; 
     [SerializeField] private AnimationCurve stabCurve = new AnimationCurve(new Keyframe(0, 0), new Keyframe(0.5f, 1), new Keyframe(1, 0));
-    [SerializeField] private float rotationSpeed = 10f; // Velocidade de rotação suave para o inimigo
+    [SerializeField] private float rotationSpeed = 10f;
 
-    // Ajuste extra se o sprite estiver virado para cima (põe 90 ou -90 aqui)
-    [SerializeField] private float visualRotationOffset = 0f; 
+    [Header("Fixed Rotation (X and Y are locked)")]
+    [SerializeField] private float fixedXRotation = 30f;
+    [SerializeField] private float fixedYRotation = 45f;
 
     private PlayerStats ownerStats;
     private WeaponData weaponData;
@@ -25,9 +26,7 @@ public class MeleePitchfork : NetworkBehaviour
     private float sizeScale = 1f;
     private float stabDuration = 0.3f;
     private float finalDistance = 2.5f;
-    private float attackCooldown = 0f;
-    public float AttackCooldown => attackCooldown;
-    private float currentAngle = 0f;
+    private float currentZAngle = 0f;  // Only Z rotates to aim
 
     public void Initialize(Vector3 direction, PlayerStats stats, WeaponData data)
     {
@@ -41,33 +40,44 @@ public class MeleePitchfork : NetworkBehaviour
             else visualTransform = transform;
         }
 
-        // Calcula escala baseada nos stats
+        // Calculate scale based on stats
         sizeScale = weaponData.area * (stats != null ? stats.projectileSizeMultiplier : 1f);
         visualTransform.localScale = Vector3.one * sizeScale;
 
-        // Calcula duração do ataque baseada no attack speed
-        float speedStats = (stats != null) ? Mathf.Max(0.1f, stats.attackSpeedMultiplier) : 1f;
-        stabDuration = weaponData.duration / speedStats;
+        // Calculate attack duration based on attack speed (faster attack speed = faster stab)
+        float speedMult = (stats != null) ? Mathf.Max(0.1f, stats.attackSpeedMultiplier) : 1f;
+        stabDuration = weaponData.duration / speedMult;
         finalDistance = stabDistance * sizeScale;
 
-        // Ângulo inicial na direção passada
+        // Initial Z angle from direction (X and Y are fixed)
         if (direction != Vector3.zero)
         {
-            currentAngle = Mathf.Atan2(direction.z, direction.x) * Mathf.Rad2Deg;
-            visualTransform.localRotation = Quaternion.Euler(0, 0, currentAngle + visualRotationOffset);
+            currentZAngle = Mathf.Atan2(direction.z, direction.x) * Mathf.Rad2Deg;
         }
+        ApplyRotation();
 
         isInitialized = true;
         
-        // Começa a atacar infinitamente
+        // Start infinite attack loop
         StartCoroutine(InfiniteAttackLoop());
+    }
+
+    /// <summary>
+    /// Apply rotation with fixed X=30, Y=45, and only Z rotating to aim at enemies
+    /// </summary>
+    private void ApplyRotation()
+    {
+        if (visualTransform != null)
+        {
+            visualTransform.localRotation = Quaternion.Euler(fixedXRotation, fixedYRotation, currentZAngle);
+        }
     }
 
     private void Update()
     {
         if (!isInitialized || visualTransform == null) return;
 
-        // Encontra o inimigo mais próximo e roda suavemente para ele
+        // Find closest enemy and smoothly rotate Z to aim at them
         Transform closestEnemy = FindClosestEnemy();
         
         if (closestEnemy != null)
@@ -77,23 +87,23 @@ public class MeleePitchfork : NetworkBehaviour
             
             if (dirToEnemy.sqrMagnitude > 0.01f)
             {
-                float targetAngle = Mathf.Atan2(dirToEnemy.z, dirToEnemy.x) * Mathf.Rad2Deg;
-                currentAngle = Mathf.LerpAngle(currentAngle, targetAngle, Time.deltaTime * rotationSpeed);
-                visualTransform.localRotation = Quaternion.Euler(0, 0, currentAngle + visualRotationOffset);
+                float targetZAngle = Mathf.Atan2(dirToEnemy.z, dirToEnemy.x) * Mathf.Rad2Deg;
+                currentZAngle = Mathf.LerpAngle(currentZAngle, targetZAngle, Time.deltaTime * rotationSpeed);
+                ApplyRotation();
             }
         }
         else
         {
-            // Se não há inimigos, aponta na direção do movimento do jogador
+            // No enemies - aim in player's movement direction
             if (ownerStats != null && ownerStats.TryGetComponent<Rigidbody>(out var rb))
             {
                 Vector3 vel = rb.linearVelocity;
                 vel.y = 0;
                 if (vel.sqrMagnitude > 0.1f)
                 {
-                    float targetAngle = Mathf.Atan2(vel.z, vel.x) * Mathf.Rad2Deg;
-                    currentAngle = Mathf.LerpAngle(currentAngle, targetAngle, Time.deltaTime * rotationSpeed);
-                    visualTransform.localRotation = Quaternion.Euler(0, 0, currentAngle + visualRotationOffset);
+                    float targetZAngle = Mathf.Atan2(vel.z, vel.x) * Mathf.Rad2Deg;
+                    currentZAngle = Mathf.LerpAngle(currentZAngle, targetZAngle, Time.deltaTime * rotationSpeed);
+                    ApplyRotation();
                 }
             }
         }
@@ -126,14 +136,15 @@ public class MeleePitchfork : NetworkBehaviour
     {
         while (true)
         {
-            // Espera pelo cooldown do ataque
-            float cooldown = weaponData.cooldown / (ownerStats != null ? ownerStats.attackSpeedMultiplier : 1f);
-            yield return new WaitForSeconds(cooldown);
+            // Wait for cooldown (uses CDR to reduce cooldown)
+            float cdr = (ownerStats != null) ? ownerStats.cooldownReduction : 0f;
+            float cooldown = weaponData.cooldown * (1f - Mathf.Clamp(cdr, 0f, 0.9f));
+            yield return new WaitForSeconds(Mathf.Max(0.1f, cooldown));
 
-            // Limpa lista de inimigos atingidos para este stab
+            // Clear hit list for this stab
             hitEnemiesThisStab.Clear();
 
-            // Executa a animação de stab
+            // Execute stab animation
             yield return StartCoroutine(StabRoutine());
         }
     }
@@ -149,13 +160,17 @@ public class MeleePitchfork : NetworkBehaviour
             float progress = timer / stabDuration;
             float curveVal = stabCurve.Evaluate(progress);
 
-            // Move o visual na direção local (frente = right porque rodamos em Z)
-            visualTransform.localPosition = startLocalPos + (Vector3.right * curveVal * finalDistance);
+            // Calculate stab direction based on current Z angle (in world XZ plane)
+            float zRad = currentZAngle * Mathf.Deg2Rad;
+            Vector3 stabDir = new Vector3(Mathf.Cos(zRad), 0, Mathf.Sin(zRad));
+            
+            // Move visual in stab direction
+            visualTransform.localPosition = startLocalPos + (stabDir * curveVal * finalDistance);
 
             yield return null;
         }
 
-        // Volta à posição inicial
+        // Return to start position
         visualTransform.localPosition = startLocalPos;
     }
 
@@ -176,11 +191,13 @@ public class MeleePitchfork : NetworkBehaviour
                 {
                     enemy.TakeDamageFromAttacker(dmg.damage, dmg.isCritical, ownerStats);
                     
-                    // Empurra na direção do visual (para onde a arma aponta)
+                    // Knockback in the direction the weapon is aiming (based on Z angle)
+                    float zRad = currentZAngle * Mathf.Deg2Rad;
+                    Vector3 knockbackDir = new Vector3(Mathf.Cos(zRad), 0, Mathf.Sin(zRad));
+                    
                     float kb = weaponData.knockback * ownerStats.knockbackMultiplier;
-                    // Knockback penetration scales with knockback multiplier bonus
                     float knockbackPen = Mathf.Clamp01((ownerStats.knockbackMultiplier - 1f) * 0.5f);
-                    if (kb > 0) enemy.ApplyKnockback(kb, 0.2f, visualTransform.right, knockbackPen);
+                    if (kb > 0) enemy.ApplyKnockback(kb, 0.2f, knockbackDir, knockbackPen);
                 }
             }
         }

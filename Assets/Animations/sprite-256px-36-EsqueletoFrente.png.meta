@@ -1,0 +1,945 @@
+fileFormatVersion: 2
+guid: 41dfb7030ba38f142a9256c9aed98204
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 0
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_0
+      rect:
+        serializedVersion: 2
+        x: 14
+        y: 1434
+        width: 192
+        height: 259
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bd0349b55c515ba4883a20f081c86725
+      internalID: -1829509558
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_1
+      rect:
+        serializedVersion: 2
+        x: 235
+        y: 1434
+        width: 191
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8a574a00e83bf91408cc7d7347be3c63
+      internalID: -58182398
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_2
+      rect:
+        serializedVersion: 2
+        x: 459
+        y: 1434
+        width: 191
+        height: 268
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 349918ad822d2bd4db94dddba2e32771
+      internalID: 379388556
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_3
+      rect:
+        serializedVersion: 2
+        x: 683
+        y: 1438
+        width: 191
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c4660e4c7d25a5743962010f808f1287
+      internalID: 80495076
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_4
+      rect:
+        serializedVersion: 2
+        x: 910
+        y: 1438
+        width: 188
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 82da85ddfbfa42a4ab221591a45fdcc9
+      internalID: 645253495
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_5
+      rect:
+        serializedVersion: 2
+        x: 1133
+        y: 1438
+        width: 189
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5b929350b3c2e634d9e148df59fd5471
+      internalID: -1740271610
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_6
+      rect:
+        serializedVersion: 2
+        x: 27
+        y: 1154
+        width: 187
+        height: 256
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: de605f05fa4f0bb419e69c47dea1537e
+      internalID: -1430107362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_7
+      rect:
+        serializedVersion: 2
+        x: 254
+        y: 1150
+        width: 187
+        height: 256
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c173fce9b8b9a704992a5696fd4cea30
+      internalID: -1856659227
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_8
+      rect:
+        serializedVersion: 2
+        x: 486
+        y: 1151
+        width: 180
+        height: 254
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ca8bd2607a4dddf43a47023950d521d3
+      internalID: 608725577
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_9
+      rect:
+        serializedVersion: 2
+        x: 710
+        y: 1154
+        width: 175
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a40997ce591e260409c4fec1e04b3338
+      internalID: -219906127
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_10
+      rect:
+        serializedVersion: 2
+        x: 931
+        y: 1154
+        width: 174
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: de601597217aed04d9625a6c128cc499
+      internalID: 1690798331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_11
+      rect:
+        serializedVersion: 2
+        x: 1151
+        y: 1154
+        width: 175
+        height: 265
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b278da81b0538064e97ac1389771f373
+      internalID: -1909165765
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_12
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 871
+        width: 179
+        height: 263
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b44d8f539c811a74ca66dfb14db9f407
+      internalID: 278796078
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_13
+      rect:
+        serializedVersion: 2
+        x: 251
+        y: 874
+        width: 187
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8cd14d8abe673d343887400637a1282f
+      internalID: 344173287
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_14
+      rect:
+        serializedVersion: 2
+        x: 470
+        y: 870
+        width: 188
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b0eac4a582f646f4bbe52391718b5fda
+      internalID: -1321081897
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_15
+      rect:
+        serializedVersion: 2
+        x: 687
+        y: 866
+        width: 191
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5cd2eab1c4f62674c98a26e44ccee67a
+      internalID: -355496011
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_16
+      rect:
+        serializedVersion: 2
+        x: 907
+        y: 862
+        width: 191
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e142d255e09860847a68050d945201b4
+      internalID: -595750710
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_17
+      rect:
+        serializedVersion: 2
+        x: 1122
+        y: 863
+        width: 192
+        height: 259
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 91648f1e4a14db744b075b657d5d4f30
+      internalID: 1387302482
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_18
+      rect:
+        serializedVersion: 2
+        x: 14
+        y: 582
+        width: 191
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f61beec61a7c78e4281e2982718b3f28
+      internalID: -1488784593
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_19
+      rect:
+        serializedVersion: 2
+        x: 238
+        y: 582
+        width: 191
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: db5afc4d573942d4b9ca6d088e9ffac2
+      internalID: 638751699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_20
+      rect:
+        serializedVersion: 2
+        x: 462
+        y: 582
+        width: 191
+        height: 268
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 788e1ce8eda07f0458a846710ab35256
+      internalID: 791185748
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_21
+      rect:
+        serializedVersion: 2
+        x: 686
+        y: 586
+        width: 188
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9a4cab0655347164cbafafafe1560556
+      internalID: -580389422
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_22
+      rect:
+        serializedVersion: 2
+        x: 914
+        y: 585
+        width: 188
+        height: 257
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2b92e6a9b25e1d94d9107266e09cbd9e
+      internalID: -1597042690
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_23
+      rect:
+        serializedVersion: 2
+        x: 1141
+        y: 582
+        width: 186
+        height: 256
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 35c86abca6c2d0b4faeff4c509f9bf02
+      internalID: -1769478770
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_24
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 298
+        width: 186
+        height: 256
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 446a933f30a6cbf41b9a30563955c8ac
+      internalID: 1389503585
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_25
+      rect:
+        serializedVersion: 2
+        x: 266
+        y: 298
+        width: 177
+        height: 256
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 82c334dda1fa4724499bc99762bbb1e3
+      internalID: -1807106240
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_26
+      rect:
+        serializedVersion: 2
+        x: 490
+        y: 299
+        width: 172
+        height: 263
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a53cfe80a5c38be4cace361c2e8ddb1f
+      internalID: 1793053782
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_27
+      rect:
+        serializedVersion: 2
+        x: 709
+        y: 302
+        width: 173
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 701388a5ecbed394891a5b3b222cb50a
+      internalID: 1163453655
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_28
+      rect:
+        serializedVersion: 2
+        x: 927
+        y: 302
+        width: 175
+        height: 265
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 34a5a8973e72f054a8339e4f33df2bd0
+      internalID: 1394074773
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_29
+      rect:
+        serializedVersion: 2
+        x: 1143
+        y: 303
+        width: 179
+        height: 263
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4d760e7151fb7c8438a1fbdd72c826f8
+      internalID: -1300120799
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_30
+      rect:
+        serializedVersion: 2
+        x: 30
+        y: 22
+        width: 184
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: afb7045e2946e664e8db8cac006f4497
+      internalID: -1081837738
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_31
+      rect:
+        serializedVersion: 2
+        x: 245
+        y: 18
+        width: 193
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d52650b2bed3c6641ba7c38b2075bc49
+      internalID: -1381638947
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_32
+      rect:
+        serializedVersion: 2
+        x: 463
+        y: 10
+        width: 195
+        height: 264
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e29caa775d7b6ef4b8588061bf53e4fa
+      internalID: 1171892295
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_33
+      rect:
+        serializedVersion: 2
+        x: 683
+        y: 10
+        width: 191
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 02ce8409674e9844494b315e43da7694
+      internalID: 1519205366
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_34
+      rect:
+        serializedVersion: 2
+        x: 903
+        y: 10
+        width: 191
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 78ae1cae048542940a983c55f395c6ab
+      internalID: -1256818484
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-EsqueletoFrente_35
+      rect:
+        serializedVersion: 2
+        x: 1122
+        y: 14
+        width: 192
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2946b80bc98f6f94b85618e40b280cfb
+      internalID: -694133951
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 7a95186d243c06b40967f36217fa2048
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      sprite-256px-36-EsqueletoFrente_0: -1829509558
+      sprite-256px-36-EsqueletoFrente_1: -58182398
+      sprite-256px-36-EsqueletoFrente_10: 1690798331
+      sprite-256px-36-EsqueletoFrente_11: -1909165765
+      sprite-256px-36-EsqueletoFrente_12: 278796078
+      sprite-256px-36-EsqueletoFrente_13: 344173287
+      sprite-256px-36-EsqueletoFrente_14: -1321081897
+      sprite-256px-36-EsqueletoFrente_15: -355496011
+      sprite-256px-36-EsqueletoFrente_16: -595750710
+      sprite-256px-36-EsqueletoFrente_17: 1387302482
+      sprite-256px-36-EsqueletoFrente_18: -1488784593
+      sprite-256px-36-EsqueletoFrente_19: 638751699
+      sprite-256px-36-EsqueletoFrente_2: 379388556
+      sprite-256px-36-EsqueletoFrente_20: 791185748
+      sprite-256px-36-EsqueletoFrente_21: -580389422
+      sprite-256px-36-EsqueletoFrente_22: -1597042690
+      sprite-256px-36-EsqueletoFrente_23: -1769478770
+      sprite-256px-36-EsqueletoFrente_24: 1389503585
+      sprite-256px-36-EsqueletoFrente_25: -1807106240
+      sprite-256px-36-EsqueletoFrente_26: 1793053782
+      sprite-256px-36-EsqueletoFrente_27: 1163453655
+      sprite-256px-36-EsqueletoFrente_28: 1394074773
+      sprite-256px-36-EsqueletoFrente_29: -1300120799
+      sprite-256px-36-EsqueletoFrente_3: 80495076
+      sprite-256px-36-EsqueletoFrente_30: -1081837738
+      sprite-256px-36-EsqueletoFrente_31: -1381638947
+      sprite-256px-36-EsqueletoFrente_32: 1171892295
+      sprite-256px-36-EsqueletoFrente_33: 1519205366
+      sprite-256px-36-EsqueletoFrente_34: -1256818484
+      sprite-256px-36-EsqueletoFrente_35: -694133951
+      sprite-256px-36-EsqueletoFrente_4: 645253495
+      sprite-256px-36-EsqueletoFrente_5: -1740271610
+      sprite-256px-36-EsqueletoFrente_6: -1430107362
+      sprite-256px-36-EsqueletoFrente_7: -1856659227
+      sprite-256px-36-EsqueletoFrente_8: 608725577
+      sprite-256px-36-EsqueletoFrente_9: -219906127
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

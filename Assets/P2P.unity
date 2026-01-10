@@ -1393,7 +1393,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3037580400
+  GlobalObjectIdHash: 1419956611
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -3088,16 +3088,22 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   networkedAssets:
   - assetPrefab: {fileID: 1010114737999647873, guid: 400cca9a532574a48875d09870502710, type: 3}
-    weight: 0.1
+    weight: 1
   - assetPrefab: {fileID: 485895516535105435, guid: 5922ebbfd4d78944e8dc01825f225fe0, type: 3}
-    weight: 0.01
+    weight: 0.1
   - assetPrefab: {fileID: 2745972941608320513, guid: ff73d214ee77c384b9df26ce0a06af07, type: 3}
-    weight: 10
+    weight: 4
+  - assetPrefab: {fileID: 2745972941608320513, guid: 6b2f136fab7a6174c81dd7a479d9e269, type: 3}
+    weight: 4
+  - assetPrefab: {fileID: 2745972941608320513, guid: 75f388b5c18475f42aba699d5d15149b, type: 3}
+    weight: 4
   networkedDensity: 0.01
   decorationAssets:
   - assetPrefab: {fileID: 7593117020678281446, guid: cc5fe909f8431a3459f0bd28352c1d66, type: 3}
     weight: 90
   - assetPrefab: {fileID: 383518980796734899, guid: 3c470efbfdb7fc2489ee1cbd65392cda, type: 3}
+    weight: 0.5
+  - assetPrefab: {fileID: 383518980796734899, guid: f8b76e74d57ac7a408ed663d1c92312c, type: 3}
     weight: 0.5
   decorationDensity: 0.01
   mapWidth: 1000
@@ -3131,7 +3137,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3974964947
+  GlobalObjectIdHash: 281431593
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -5989,7 +5995,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2641662
+  GlobalObjectIdHash: 2280982525
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -7529,7 +7535,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2128671626
+  GlobalObjectIdHash: 4248623077
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1

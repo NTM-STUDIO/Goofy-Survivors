@@ -1,0 +1,945 @@
+fileFormatVersion: 2
+guid: ffa812b13eafcbc47af7284c8d22076d
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 0
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_0
+      rect:
+        serializedVersion: 2
+        x: 20
+        y: 1327
+        width: 177
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f7ed99537979c2b4e940b06505ed1d22
+      internalID: 282818642
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_1
+      rect:
+        serializedVersion: 2
+        x: 217
+        y: 1328
+        width: 177
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 25207f2ea12c736418e081c581b0c809
+      internalID: 1175403429
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_2
+      rect:
+        serializedVersion: 2
+        x: 412
+        y: 1328
+        width: 177
+        height: 253
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 41f13336f1d00c046b77b715da16d931
+      internalID: 1211740280
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_3
+      rect:
+        serializedVersion: 2
+        x: 604
+        y: 1326
+        width: 173
+        height: 258
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b6cdce2d99a37ac4b93efe40a5557f0b
+      internalID: -426704901
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_4
+      rect:
+        serializedVersion: 2
+        x: 801
+        y: 1326
+        width: 172
+        height: 258
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 46dd2b6fa2116b947a54049977477b9e
+      internalID: 526510202
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_5
+      rect:
+        serializedVersion: 2
+        x: 997
+        y: 1323
+        width: 171
+        height: 258
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8e601b5a96352b944a05293ff77e8e97
+      internalID: -1134821494
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_6
+      rect:
+        serializedVersion: 2
+        x: 11
+        y: 1056
+        width: 166
+        height: 257
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2585fceb429eaad47bab6bd6cbd2c4a9
+      internalID: 1576010545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_7
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 1056
+        width: 165
+        height: 257
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5d849ff6e0fa5104fb556b57b6346b4f
+      internalID: -1880428137
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_8
+      rect:
+        serializedVersion: 2
+        x: 406
+        y: 1057
+        width: 170
+        height: 258
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 16652b75a76154445bd2a075d615476c
+      internalID: 1489457131
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_9
+      rect:
+        serializedVersion: 2
+        x: 604
+        y: 1057
+        width: 171
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bb53efd7d1e98e14dbb2ac0fb20bf5d2
+      internalID: 242065840
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_10
+      rect:
+        serializedVersion: 2
+        x: 803
+        y: 1059
+        width: 175
+        height: 261
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b21939b2e576418438929013cdc59498
+      internalID: 835578106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_11
+      rect:
+        serializedVersion: 2
+        x: 1003
+        y: 1061
+        width: 177
+        height: 256
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 192885f66373a2941b417246259414d9
+      internalID: 1210510356
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_12
+      rect:
+        serializedVersion: 2
+        x: 19
+        y: 798
+        width: 178
+        height: 253
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c7815bfdfbfb1c84e81d679483aeaadb
+      internalID: 1548226109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_13
+      rect:
+        serializedVersion: 2
+        x: 215
+        y: 800
+        width: 178
+        height: 253
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b44e1c7ada2c6fd4da035195de61d86f
+      internalID: -1869640826
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_14
+      rect:
+        serializedVersion: 2
+        x: 410
+        y: 800
+        width: 178
+        height: 255
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 806df7f64158b90408489e6e068f0f19
+      internalID: -482078916
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_15
+      rect:
+        serializedVersion: 2
+        x: 602
+        y: 797
+        width: 175
+        height: 258
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d31e6a2316da1d646b000117d5589265
+      internalID: 15079435
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_16
+      rect:
+        serializedVersion: 2
+        x: 798
+        y: 795
+        width: 174
+        height: 258
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 75792b8dbc261ed498b490c468d88cb4
+      internalID: 899353363
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_17
+      rect:
+        serializedVersion: 2
+        x: 994
+        y: 793
+        width: 168
+        height: 256
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5cea68ed085535d4dbd0d13ede39420d
+      internalID: -320361571
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_18
+      rect:
+        serializedVersion: 2
+        x: 11
+        y: 529
+        width: 173
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 30a56f8c1c0e01f408fc469a41770fff
+      internalID: -1991658558
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_19
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 531
+        width: 176
+        height: 261
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8fb4c66eae18dc7418e6b81b9d934a95
+      internalID: -850877034
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_20
+      rect:
+        serializedVersion: 2
+        x: 410
+        y: 532
+        width: 177
+        height: 259
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b800e388b49d9354b9ab9de9f9a387af
+      internalID: -172243524
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_21
+      rect:
+        serializedVersion: 2
+        x: 608
+        y: 532
+        width: 178
+        height: 257
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6e8610664453c1c42a5a6b482de924a4
+      internalID: 132414354
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_22
+      rect:
+        serializedVersion: 2
+        x: 807
+        y: 536
+        width: 178
+        height: 249
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bf54cbbe152017e4da198346ff1c7b92
+      internalID: 1992597376
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_23
+      rect:
+        serializedVersion: 2
+        x: 1005
+        y: 536
+        width: 177
+        height: 249
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ef3e8d6da8f36fb4d95476a579cf75ea
+      internalID: 539501434
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_24
+      rect:
+        serializedVersion: 2
+        x: 13
+        y: 271
+        width: 176
+        height: 257
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1e31ae5bdb7933943afb3b233f45bc8c
+      internalID: -245773212
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_25
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 270
+        width: 174
+        height: 258
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 50cc2a8ded98cc447ac5e8f6f48df495
+      internalID: -1098984085
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_26
+      rect:
+        serializedVersion: 2
+        x: 405
+        y: 269
+        width: 173
+        height: 259
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 89bd9025f4f78014e8b5f922e72c0740
+      internalID: -219889857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_27
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 265
+        width: 170
+        height: 257
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bb841f0867cebec46a71ba39089a33b3
+      internalID: 621717687
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_28
+      rect:
+        serializedVersion: 2
+        x: 797
+        y: 265
+        width: 168
+        height: 256
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 06e7333106a1a6d4ba01b525a8ed049e
+      internalID: 331341349
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_29
+      rect:
+        serializedVersion: 2
+        x: 996
+        y: 264
+        width: 168
+        height: 257
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9e712f7053b6d9f4fb052a74a6a393b1
+      internalID: -793787335
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_30
+      rect:
+        serializedVersion: 2
+        x: 12
+        y: 1
+        width: 172
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f29cb153155ccb4459bb9cb6ed8cef32
+      internalID: -1391908531
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_31
+      rect:
+        serializedVersion: 2
+        x: 210
+        y: 2
+        width: 172
+        height: 261
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 77210776d4823164281b22c9d3044152
+      internalID: 715246881
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_32
+      rect:
+        serializedVersion: 2
+        x: 410
+        y: 3
+        width: 175
+        height: 261
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 384f6d132e6d6064c8412f41a1a77f95
+      internalID: 1439503411
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_33
+      rect:
+        serializedVersion: 2
+        x: 607
+        y: 4
+        width: 177
+        height: 260
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0424d51fe36a12d4d90529fa79b3e3fa
+      internalID: 1944908968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_34
+      rect:
+        serializedVersion: 2
+        x: 807
+        y: 6
+        width: 178
+        height: 253
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7e7373babe0603a4597ff7516addf444
+      internalID: -1099804057
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sprite-256px-36-PatoRodado_35
+      rect:
+        serializedVersion: 2
+        x: 1005
+        y: 8
+        width: 177
+        height: 249
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 219f05986c1d94442ac185e5c8a29a2b
+      internalID: 436118666
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 9662eb9d91428f0498e5d3b75adc8ee7
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      sprite-256px-36-PatoRodado_0: 282818642
+      sprite-256px-36-PatoRodado_1: 1175403429
+      sprite-256px-36-PatoRodado_10: 835578106
+      sprite-256px-36-PatoRodado_11: 1210510356
+      sprite-256px-36-PatoRodado_12: 1548226109
+      sprite-256px-36-PatoRodado_13: -1869640826
+      sprite-256px-36-PatoRodado_14: -482078916
+      sprite-256px-36-PatoRodado_15: 15079435
+      sprite-256px-36-PatoRodado_16: 899353363
+      sprite-256px-36-PatoRodado_17: -320361571
+      sprite-256px-36-PatoRodado_18: -1991658558
+      sprite-256px-36-PatoRodado_19: -850877034
+      sprite-256px-36-PatoRodado_2: 1211740280
+      sprite-256px-36-PatoRodado_20: -172243524
+      sprite-256px-36-PatoRodado_21: 132414354
+      sprite-256px-36-PatoRodado_22: 1992597376
+      sprite-256px-36-PatoRodado_23: 539501434
+      sprite-256px-36-PatoRodado_24: -245773212
+      sprite-256px-36-PatoRodado_25: -1098984085
+      sprite-256px-36-PatoRodado_26: -219889857
+      sprite-256px-36-PatoRodado_27: 621717687
+      sprite-256px-36-PatoRodado_28: 331341349
+      sprite-256px-36-PatoRodado_29: -793787335
+      sprite-256px-36-PatoRodado_3: -426704901
+      sprite-256px-36-PatoRodado_30: -1391908531
+      sprite-256px-36-PatoRodado_31: 715246881
+      sprite-256px-36-PatoRodado_32: 1439503411
+      sprite-256px-36-PatoRodado_33: 1944908968
+      sprite-256px-36-PatoRodado_34: -1099804057
+      sprite-256px-36-PatoRodado_35: 436118666
+      sprite-256px-36-PatoRodado_4: 526510202
+      sprite-256px-36-PatoRodado_5: -1134821494
+      sprite-256px-36-PatoRodado_6: 1576010545
+      sprite-256px-36-PatoRodado_7: -1880428137
+      sprite-256px-36-PatoRodado_8: 1489457131
+      sprite-256px-36-PatoRodado_9: 242065840
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
