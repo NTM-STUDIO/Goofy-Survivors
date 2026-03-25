@@ -90,8 +90,8 @@ public class NetworkPlayerVisuals : NetworkBehaviour
     {
         if (spriteRenderer != null)
         {
-            // Assume que o sprite original olha para a direita. Se for o contrário, remove o '!'
-            spriteRenderer.flipX = !facingRight; 
+            // Assume que o sprite original olha para a esquerda, logo aplicamos flipX para olhar para a direita
+            spriteRenderer.flipX = facingRight; 
         }
     }
 }

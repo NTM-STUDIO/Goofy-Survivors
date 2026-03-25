@@ -323,6 +323,8 @@ public class GameManager : NetworkBehaviour
         if (isP2P && !IsServer) return;
 
         Debug.Log("[GameManager] Play Again acionado. Limpando e Reiniciando...");
+        Time.timeScale = 1f;
+        StopAllCoroutines();
 
         // 1. Limpa o mapa e objetos
         CleanupGameWorld();
@@ -342,15 +344,38 @@ public class GameManager : NetworkBehaviour
     // OPÇÃO 2: Voltar ao Lobby/Menu (Resetar mas ficar à espera)
     public void ActionLeaveToLobby()
     {
+        Time.timeScale = 1f;
+        StopAllCoroutines();
+
         // Se for Cliente em MP, apenas se desconecta e sai
         if (isP2P && !IsServer)
         {
-            NetworkManager.Singleton.Shutdown();
+            if (NetworkManager.Singleton != null) NetworkManager.Singleton.Shutdown();
             SceneManager.LoadScene("Splash"); // Ou o nome da tua cena de menu
+            
+            if (Instance == this)
+            {
+                Instance = null;
+                Destroy(gameObject);
+            }
             return;
         }
 
         Debug.Log("[GameManager] Leave to Lobby acionado. Limpando e aguardando.");
+
+        // Para Single-Player, em vez de voltar apenas os painéis, vamos forçar refresh se necessário
+        // Ou na verdade, carregar a Splash resolve todos os problemas de "Lag" limpando a cena por completo:
+        if (!isP2P)
+        {
+            // Fully clean reload for single-player
+            SceneManager.LoadScene("Splash");
+            if (Instance == this)
+            {
+                Instance = null;
+                Destroy(gameObject);
+            }
+            return;
+        }
 
         // 1. Limpa o mapa e objetos
         CleanupGameWorld();
@@ -518,6 +543,21 @@ public class GameManager : NetworkBehaviour
         Debug.Log("[GameManager] GAME OVER!");
         CurrentState = GameState.GameOver;
 
+        // Process Loadout/Run Drops
+        if (DropsAndLoadout.LoadoutSystem.Instance != null)
+        {
+            if (GetRemainingTime() <= 0)
+            {
+                // Sobreviveu até ao fim (Ganhou)
+                DropsAndLoadout.LoadoutSystem.Instance.CommitRunDrops();
+            }
+            else
+            {
+                // Morreu antes do fim (Perdeu)
+                DropsAndLoadout.LoadoutSystem.Instance.ClearRunDrops();
+            }
+        }
+
         // Pára o tempo
         Time.timeScale = 0f;
 
@@ -605,4 +645,11 @@ public class GameManager : NetworkBehaviour
     public float GetTotalGameTime() => totalGameTime;
     public void RequestPause(bool pause) => RequestPause(pause, true);
     public void RequestResume() => RequestPause(false);
+
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+        StopAllCoroutines();
+        if (Instance == this) Instance = null;
+    }
 }

@@ -113,6 +113,13 @@ public class EndGamePanel : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (saveButton != null) saveButton.onClick.RemoveListener(SaveScore);
+        if (playAgainButton != null) playAgainButton.onClick.RemoveListener(OnPlayAgainRestart);
+        if (leaveButton != null) leaveButton.onClick.RemoveListener(OnLeaveClicked);
+    }
+
     async void OnEnable()
     {
         // Clear old visual rows but capture current run stats first
@@ -652,7 +659,8 @@ public class EndGamePanel : MonoBehaviour
         }
         else
         {
-             SceneManager.LoadScene("Splash");
+            if (Unity.Netcode.NetworkManager.Singleton != null) Unity.Netcode.NetworkManager.Singleton.Shutdown();
+            SceneManager.LoadScene(0);
         }
     }
 }

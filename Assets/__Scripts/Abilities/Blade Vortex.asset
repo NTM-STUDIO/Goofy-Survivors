@@ -15,7 +15,7 @@ MonoBehaviour:
   weaponID: Blade Vortex
   weaponName: Blade Vortex
   description: Blade Vortex
-  icon: {fileID: 21300000, guid: faf84e49c98521145a76b341e2380079, type: 3}
+  icon: {fileID: 21300000, guid: d5e35cba75a409247a0c0bbdd02a82d1, type: 3}
   weaponPrefab: {fileID: 6260151671241025186, guid: ea8b81df5ec569849bb4c70c39fb7d74, type: 3}
   archetype: 2
   targetingStyle: 0

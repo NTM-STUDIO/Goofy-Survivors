@@ -231,4 +231,6 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  visualRotationOffset: 0
+  rotationSpeed: 10
+  fixedXRotation: 30
+  fixedYRotation: 45

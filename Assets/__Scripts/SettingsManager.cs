@@ -42,6 +42,14 @@ public class SettingsManager : MonoBehaviour
         RefreshRoleUI();
     }
 
+    private void OnDestroy()
+    {
+        if (monitorDropdown != null) monitorDropdown.onValueChanged.RemoveListener(SetMonitor);
+        if (fpsDropdown != null) fpsDropdown.onValueChanged.RemoveListener(SetFpsLimit);
+        if (restartButton != null) restartButton.onClick.RemoveListener(UI_Restart);
+        if (leaveButton != null) leaveButton.onClick.RemoveListener(UI_Leave);
+    }
+
     void Update()
     {
         // Menu de Pausa (ESC)
@@ -102,6 +110,10 @@ public class SettingsManager : MonoBehaviour
     {
         Debug.Log("[SettingsManager] UI_Leave clicado.");
 
+        // FORCE time reset
+        Time.timeScale = 1f;
+        StopAllCoroutines();
+
         // 1. Fecha o menu
         if (settingsPanel) settingsPanel.SetActive(false);
         isPanelOpen = false;
@@ -110,6 +122,11 @@ public class SettingsManager : MonoBehaviour
         if (GameManager.Instance != null)
         {
             GameManager.Instance.ActionLeaveToLobby();
+        }
+        else
+        {
+            if (Unity.Netcode.NetworkManager.Singleton != null) Unity.Netcode.NetworkManager.Singleton.Shutdown();
+            SceneManager.LoadScene(0);
         }
     }
 

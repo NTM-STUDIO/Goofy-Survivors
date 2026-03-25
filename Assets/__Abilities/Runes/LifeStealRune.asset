@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   runeId: 1
   displayName: LifeSteal
-  description: 
-  icon: {fileID: -6850067910205024016, guid: fbab32ca283006546abfe1e0899a44e2, type: 3}
+  description: Heals 1 hp per damage dealt
+  icon: {fileID: 21300000, guid: 866b61d7c88fbc940b6dd40d57a840e6, type: 3}
   rowIndex: 1
   bonuses: []
   effects:

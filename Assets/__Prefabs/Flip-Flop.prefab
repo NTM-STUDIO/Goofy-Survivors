@@ -82,7 +82,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 10.24, y: 5.76}
+  m_Size: {x: 6.53, y: 4.33}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -184,6 +184,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileWeapon
   ShowTopMostFoldoutHeaderGroup: 1
+  visual: {fileID: 0}
+  visualZAngleOffset: 180
 --- !u!54 &3750778801767423170
 Rigidbody:
   m_ObjectHideFlags: 0

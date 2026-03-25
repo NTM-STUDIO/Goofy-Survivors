@@ -46,8 +46,8 @@ TextureImporter:
   spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
-  alignment: 0
-  spritePivot: {x: 0.5, y: 0.5}
+  alignment: 7
+  spritepivot: {x: 0.5, y: 0}
   spritePixelsToUnits: 100
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
@@ -104,7 +104,7 @@ TextureImporter:
         y: 409
         width: 116
         height: 224
-      alignment: 9
+      alignment: 7
       pivot: {x: 0.506174, y: 0.01917948}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -302,7 +302,7 @@ TextureImporter:
         y: 403
         width: 48
         height: 74
-      alignment: 9
+      alignment: 7
       pivot: {x: 0.48162302, y: 0.06489976}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -324,7 +324,7 @@ TextureImporter:
         y: 405
         width: 68
         height: 104
-      alignment: 9
+      alignment: 7
       pivot: {x: 0.51053035, y: 0.045479417}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -346,7 +346,7 @@ TextureImporter:
         y: 405
         width: 79
         height: 133
-      alignment: 9
+      alignment: 7
       pivot: {x: 0.5271915, y: 0.03700589}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -368,7 +368,7 @@ TextureImporter:
         y: 406
         width: 85
         height: 154
-      alignment: 9
+      alignment: 7
       pivot: {x: 0.4913742, y: 0.03356027}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -390,7 +390,7 @@ TextureImporter:
         y: 406
         width: 93
         height: 177
-      alignment: 9
+      alignment: 7
       pivot: {x: 0.5186789, y: 0.025243843}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -412,7 +412,7 @@ TextureImporter:
         y: 408
         width: 98
         height: 202
-      alignment: 9
+      alignment: 7
       pivot: {x: 0.53653264, y: 0.027152872}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
@@ -434,7 +434,7 @@ TextureImporter:
         y: 408
         width: 102
         height: 217
-      alignment: 9
+      alignment: 7
       pivot: {x: 0.48974252, y: 0.024877593}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 

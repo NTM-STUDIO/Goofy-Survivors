@@ -6,7 +6,7 @@ using Unity.Netcode;
 [RequireComponent(typeof(NetworkObject))]
 public class MapConsumable : NetworkBehaviour
 {
-    // Raised whenever any player collects a consumable (chest or drop). Fired on server in MP; locally in SP.
+    // Raised whenever any player collects a consumable. Fired on server in MP; locally in SP.
     public static event System.Action<PlayerStats> OnAnyConsumableCollected;
     [System.Serializable]
     public class DropItem
@@ -16,16 +16,10 @@ public class MapConsumable : NetworkBehaviour
     }
 
     public DropItem[] possibleDrops;
-    public ChestScript chestScript;
     private bool consumed = false;
 
     private void Awake()
     {
-        // If this object is a chest, cache its ChestScript.
-        if (CompareTag("Chest"))
-        {
-            chestScript = GetComponent<ChestScript>();
-        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -69,24 +63,9 @@ public class MapConsumable : NetworkBehaviour
         // Single-player fallback - mark as consumed FIRST to prevent double triggers
         consumed = true;
         
-        if (CompareTag("Chest") && chestScript != null)
-        {
-            var pwmLocal = other.GetComponentInParent<PlayerWeaponManager>();
-            if (pwmLocal == null)
-            {
-                UnityEngine.Debug.LogWarning("MapConsumable (Chest SP): PlayerWeaponManager not found in collider hierarchy; ignoring trigger.");
-                return;
-            }
-            chestScript.OpenChest(pwmLocal);
-            var ps = pwmLocal.GetComponent<PlayerStats>();
-            if (ps != null) { try { OnAnyConsumableCollected?.Invoke(ps); } catch { } }
-        }
-        else
-        {
-            DropRandomItem();
-            var ps = other.GetComponentInParent<PlayerStats>();
-            if (ps != null) { try { OnAnyConsumableCollected?.Invoke(ps); } catch { } }
-        }
+        DropRandomItem();
+        var ps = other.GetComponentInParent<PlayerStats>();
+        if (ps != null) { try { OnAnyConsumableCollected?.Invoke(ps); } catch { } }
 
         Destroy(gameObject);
     }
@@ -95,32 +74,11 @@ public class MapConsumable : NetworkBehaviour
     {
         if (consumed) return;
 
-        if (CompareTag("Chest") && chestScript != null)
+        DropRandomItem();
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerNetId, out var playerNO2) && playerNO2 != null)
         {
-            if (NetworkManager.Singleton == null) return;
-            if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerNetId, out var playerNO) || playerNO == null)
-            {
-                Debug.LogWarning("MapConsumable Server: Player not found by NetId; aborting chest interaction.");
-                return;
-            }
-            var pwm = playerNO.GetComponent<PlayerWeaponManager>();
-            if (pwm == null)
-            {
-                Debug.LogWarning("MapConsumable Server: PlayerWeaponManager missing on player; aborting chest interaction.");
-                return;
-            }
-            chestScript.OpenChest(pwm);
-            var ps = pwm.GetComponent<PlayerStats>();
+            var ps = playerNO2.GetComponent<PlayerStats>();
             if (ps != null) { try { OnAnyConsumableCollected?.Invoke(ps); } catch { } }
-        }
-        else
-        {
-            DropRandomItem();
-            if (NetworkManager.Singleton != null && NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerNetId, out var playerNO2) && playerNO2 != null)
-            {
-                var ps = playerNO2.GetComponent<PlayerStats>();
-                if (ps != null) { try { OnAnyConsumableCollected?.Invoke(ps); } catch { } }
-            }
         }
 
         consumed = true;

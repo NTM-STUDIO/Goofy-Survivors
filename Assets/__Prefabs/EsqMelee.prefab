@@ -110,10 +110,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 1.5440507
+  m_Radius: 0.86
   m_Height: 16.636177
   m_Direction: 2
-  m_Center: {x: 0.73, y: 2.74, z: 7.16}
+  m_Center: {x: 0.03, y: 1.75, z: 7.16}
 --- !u!136 &4993268136660888013
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -133,10 +133,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 1.35
+  m_Radius: 0.81
   m_Height: 16.636175
   m_Direction: 2
-  m_Center: {x: 0.73, y: 0.94, z: 7.16}
+  m_Center: {x: -0.06, y: 0.94, z: 7.16}
 --- !u!114 &7401310591700256757
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -340,9 +340,6 @@ MonoBehaviour:
   baseHealth: 12
   baseDamage: 6
   moveSpeed: 9
-  mutationChance: 0.5
-  minMutationBonus: 1
-  maxMutationBonus: 1.5
   healthMutationColor: {r: 0, g: 1, b: 0, a: 1}
   damageMutationColor: {r: 1, g: 0, b: 0, a: 1}
   speedMutationColor: {r: 0, g: 0, b: 1, a: 1}

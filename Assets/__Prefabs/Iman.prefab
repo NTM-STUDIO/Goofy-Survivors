@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 510323364159733758}
   - component: {fileID: 7658751755402596021}
   - component: {fileID: 2807346469240958309}
+  - component: {fileID: 7428457803172207750}
   m_Layer: 0
   m_Name: Iman
   m_TagString: Untagged
@@ -56,7 +57,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  - {fileID: 2100000, guid: c7db07a78a0b3d14eb6682f0f0cdeb5d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -100,6 +101,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7447d4d8d582034e88967cb00d9342a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  boostRadius: 9999
+  duration: 2
+--- !u!135 &7428457803172207750
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6637732690027600530}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &8860354166154523215
 GameObject:
   m_ObjectHideFlags: 0

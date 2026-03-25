@@ -42,14 +42,26 @@ namespace PlayerAI.States
         {
             if (ctx.Animator == null) return;
 
-            // Use LastHorizontalDirection from StateMachine (updated in UpdateInput)
-            // This ensures consistent direction even during vertical-only movement
+            // Reativa o Animator, já que foi desligado no IdleState
+            if (!ctx.Animator.enabled)
+            {
+                ctx.Animator.enabled = true;
+            }
+
             string targetAnim = (ctx.LastHorizontalDirection >= 0) ? "Moving_Right" : "Moving_Left";
 
             if (targetAnim != currentAnimState)
             {
                 ctx.Animator.Play(targetAnim);
                 currentAnimState = targetAnim;
+            }
+
+            // Garante que a orientação e escala do sprite acompanham
+            if (ctx.SpriteRenderer != null)
+            {
+                ctx.SpriteRenderer.flipX = ctx.LastHorizontalDirection > 0;
+                // Devolve a escala do sprite ao normal ao andar
+                ctx.SpriteRenderer.transform.localScale = ctx.OriginalSpriteLocalScale;
             }
         }
 

@@ -9,5 +9,11 @@ public class StartingMenuManager : MonoBehaviour
     {
         startingMenuUI.SetActive(false);
         unitSelectorUI.SetActive(true);
+        if (UnityEngine.EventSystems.EventSystem.current != null)
+        {
+            var firstSelectable = unitSelectorUI.GetComponentInChildren<UnityEngine.UI.Selectable>();
+            if (firstSelectable != null)
+                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(firstSelectable.gameObject);
+        }
     }
 }

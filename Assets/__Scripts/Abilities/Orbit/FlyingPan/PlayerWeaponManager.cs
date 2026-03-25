@@ -51,13 +51,17 @@ public class PlayerWeaponManager : NetworkBehaviour
         // If a loadout-chosen starting weapon exists (single-player), override before Start() adds default
         try
         {
-            var gm = GameManager.Instance;
-            if (gm != null && !gm.isP2P)
+            var chosen = LoadoutSelections.SelectedWeapon;
+            if (chosen != null)
             {
-                var chosen = LoadoutSelections.SelectedWeapon;
-                if (chosen != null)
+                startingWeapon = chosen;
+            }
+            else if (weaponRegistry != null)
+            {
+                var panela = weaponRegistry.allWeapons.FirstOrDefault(w => w != null && (w.name == "FlyingPan" || w.weaponName == "FlyingPan" || w.name == "Pitchfork" || w.weaponName == "Pitchfork" || w.name == "Panela" || w.weaponName == "Panela"));
+                if (panela != null)
                 {
-                    startingWeapon = chosen;
+                    startingWeapon = panela;
                 }
             }
         }

@@ -129,6 +129,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileWeapon
   ShowTopMostFoldoutHeaderGroup: 1
   visual: {fileID: 0}
+  visualZAngleOffset: 180
 --- !u!58 &-8173885730153259245
 CircleCollider2D:
   m_ObjectHideFlags: 0

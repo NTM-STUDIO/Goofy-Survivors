@@ -266,6 +266,16 @@ public class EnemyMovement : NetworkBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        HandlePlayerCollision(other);
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        HandlePlayerCollision(other);
+    }
+
+    private void HandlePlayerCollision(Collider other)
+    {
         // Verifica se é um Jogador
         if (!other.CompareTag("Player")) return;
 
@@ -284,7 +294,7 @@ public class EnemyMovement : NetworkBehaviour
                 if (GameManager.Instance != null)
                     GameManager.Instance.ServerApplyPlayerDamage(0, dmg, transform.position, null);
 
-                // Knockback Físico Local
+                // Knockback Físico Local do Inimigo (mesmo que o player esteja invencível)
                 Vector3 kbDir = (transform.position - other.transform.position).normalized;
                 stats.ApplyKnockback(selfKnockbackForce, selfKnockbackDuration, kbDir);
             }
@@ -299,7 +309,6 @@ public class EnemyMovement : NetworkBehaviour
         if (netObj != null && netObj.IsLocalPlayer)
         {
             // Verificação local de cooldown para não spamar a rede desnecessariamente
-            // (Nota: O servidor faz a verificação final de segurança)
             if (Time.time >= nextAttackTime)
             {
                 // Pede ao servidor para aplicar o dano
@@ -308,7 +317,7 @@ public class EnemyMovement : NetworkBehaviour
                 // Atualiza cooldown localmente para evitar spam imediato
                 nextAttackTime = Time.time + attackCooldown;
 
-                // Knockback visual imediato no cliente (opcional, mas melhora o feel)
+                // Knockback visual imediato no cliente (mesmo que o player esteja invencível)
                 Vector3 kbDir = (transform.position - other.transform.position).normalized;
                 stats.ApplyKnockback(selfKnockbackForce, selfKnockbackDuration, kbDir);
             }

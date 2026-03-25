@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e6d05400ee891f45aa77f392b4e763c, type: 3}
   m_Name: MoveSpeedRune
   m_EditorClassIdentifier: 
-  runeId: 4
+  runeId: 3
   displayName: MoveSpeed
-  description: 
-  icon: {fileID: -6850067910205024016, guid: fbab32ca283006546abfe1e0899a44e2, type: 3}
+  description: Starts with 10 bonus Move Speed
+  icon: {fileID: 21300000, guid: 79baa15f7bb95104ea4324620b49aa66, type: 3}
   rowIndex: 1
   bonuses:
   - stat: 11

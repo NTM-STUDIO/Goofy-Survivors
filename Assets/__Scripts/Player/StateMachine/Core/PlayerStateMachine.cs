@@ -18,6 +18,10 @@ namespace PlayerAI
         [Header("Visual Settings")]
         [Tooltip("Enable this if your default animation/sprite faces LEFT.")]
         public bool SpriteFacesLeftByDefault = false;
+        [Tooltip("Assign the default sprite to use when the player is stopped (Idle).")]
+        public Sprite DefaultIdleSprite;
+        [Tooltip("Scale to apply to the Idle Sprite (1 = normal, 0.5 = metade do tamanho).")]
+        public float DefaultIdleSpriteScale = 1f;
 
         // Public context for states
         public PlayerStats Stats { get; private set; }
@@ -25,6 +29,7 @@ namespace PlayerAI
         public Movement Movement { get; private set; }
         public Animator Animator { get; private set; }
         public SpriteRenderer SpriteRenderer { get; private set; }
+        public Vector3 OriginalSpriteLocalScale { get; private set; }
         
         public PlayerStateType CurrentStateType => currentState?.StateType ?? PlayerStateType.None;
         public float TimeInCurrentState => Time.time - stateEnterTime;
@@ -56,6 +61,7 @@ namespace PlayerAI
             SpriteRenderer = GetComponentInChildren<SpriteRenderer>();
             if (Animator == null) Debug.LogError($"[PlayerStateMachine] Animator not found on {gameObject.name} or its children!");
             if (SpriteRenderer == null) Debug.LogWarning($"[PlayerStateMachine] SpriteRenderer not found on {gameObject.name} or its children!");
+            else OriginalSpriteLocalScale = SpriteRenderer.transform.localScale;
 
             // Check for conflicting scripts
             var spriteFlipper = GetComponentInChildren<Player4WaySpriteFlipperIsometric>();

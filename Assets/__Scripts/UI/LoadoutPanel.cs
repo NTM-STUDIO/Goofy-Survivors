@@ -4,355 +4,340 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 using System.Linq;
+using DropsAndLoadout;
 
-// Simple, inspector-driven Loadout panel. Wire your UI Buttons/Texts/Images to these fields.
 public class LoadoutPanel : MonoBehaviour
 {
-    [Header("Data Sources")]
-    [Tooltip("List of available characters (PlayerCharacterData). We'll use their playerPrefab for spawning.")]
-    public List<PlayerCharacterData> characters = new List<PlayerCharacterData>();
-    [Tooltip("Registry of all weapons to scroll through.")]
-    public WeaponRegistry weaponRegistry;
-    [Tooltip("List of rune definitions shown as selectable rounded images.")]
-    public List<RuneDefinition> runeCatalog = new List<RuneDefinition>();
+    [Header("Main Panel Frames (Click to open popups)")]
+    public Button weaponFrameButton;
+    public Image weaponFrameIcon;
+    public TextMeshProUGUI weaponFrameName;
+    
+    public Button runeFrameButton;
+    public Image runeFrameIcon;
+    public TextMeshProUGUI runeFrameName;
 
-    [Header("Character UI")]
-    public Button charLeftButton;
-    public Button charRightButton;
-    public TextMeshProUGUI characterNameText;
-    public Image characterPreviewImage; // optional: sprite portrait
-
-    [Header("Weapon UI")]
-    public Button weaponLeftButton;
-    public Button weaponRightButton;
-    public TextMeshProUGUI weaponNameText;
-    public Image weaponIconImage; // optional: weapon icon if you have one in WeaponData
-
-    [Header("Runes UI")]
-    [Tooltip("Parent container holding Toggle children for each rune (optional). If left empty, no auto-build.")]
-    public Transform runeToggleContainer;
-    [Tooltip("Optional Toggle prefab with child Image for the rune icon. If assigned, we'll auto-build the grid.")]
-    public Toggle runeTogglePrefab;
-    public int maxSelectedRunes = 6;
+    [Header("Shared Popup")]
+    public GameObject sharedPopupPanel;
+    public Transform sharedGridContainer;
+    public TextMeshProUGUI optionalPopupTitle;
 
     [Header("Flow Buttons")]
-    public Button applyButton;
-    public Button closeButton;
+    public Button closeLoadoutButton;
+    public Button closePopupButton;
 
-    private int _charIndex = 0;
-    private int _weaponIndex = 0;
-    private HashSet<string> _selectedRuneIds = new HashSet<string>();
-    private readonly List<Toggle> _builtToggles = new List<Toggle>();
+    [Header("Data")]
+    public PlayerCharacterData defaultCharacter;
+    public WeaponRegistry weaponRegistry;
+    public List<RuneDefinition> runeCatalog = new List<RuneDefinition>();
+    public GameObject inventoryItemButtonPrefab;
 
-    // --- NEW: Cache original container sizes to preserve aspect
-    private Dictionary<Image, Vector2> originalContainerSizes = new Dictionary<Image, Vector2>();
+    private string _selectedWeaponUniqueId = "";
+    private string _selectedRuneId = "";
 
     void Awake()
     {
         // Contexts for persistence
-        LoadoutSelections.CharacterPrefabsContext = characters.Select(c => c != null ? c.playerPrefab : null).Where(p => p != null).ToList();
+        if (defaultCharacter != null) {
+            LoadoutSelections.CharacterPrefabsContext = new List<GameObject> { defaultCharacter.playerPrefab };
+        }
         LoadoutSelections.WeaponRegistryContext = weaponRegistry;
         LoadoutSelections.RuneCatalogContext = runeCatalog;
 
         WireButtons();
-        BuildRuneTogglesIfNeeded();
 
         // Load previous selections if available
         LoadoutSelections.LoadFromPlayerPrefs();
-        // Character
-        var savedCharPrefab = LoadoutSelections.SelectedCharacterPrefab;
-        if (savedCharPrefab != null)
-        {
-            int idx = characters.FindIndex(c => c != null && c.playerPrefab == savedCharPrefab);
-            if (idx >= 0) _charIndex = idx;
-        }
+        
         // Weapon
-        var savedWeapon = LoadoutSelections.SelectedWeapon;
-        if (savedWeapon != null && weaponRegistry != null)
+        var savedItem = LoadoutSelections.EquippedWeaponUniqueId;
+        if (!string.IsNullOrEmpty(savedItem))
         {
-            int wid = weaponRegistry.GetWeaponId(savedWeapon);
-            if (wid >= 0) _weaponIndex = wid;
+            _selectedWeaponUniqueId = savedItem;
         }
-        // Runes
-        if (LoadoutSelections.SelectedRunes != null)
+        else if (LoadoutSystem.Instance != null && LoadoutSystem.Instance.Inventory != null)
         {
-            _selectedRuneIds = new HashSet<string>(LoadoutSelections.SelectedRunes.Where(r => r != null).Select(r => r.runeId));
+            var firstWep = LoadoutSystem.Instance.Inventory.FirstOrDefault(x => x.Type == DropType.Weapon);
+            if (firstWep != null)
+            {
+                _selectedWeaponUniqueId = firstWep.ItemUniqueId;
+            }
         }
 
-        RefreshUI();
+        // Runes
+        if (LoadoutSelections.SelectedRunes != null && LoadoutSelections.SelectedRunes.Count > 0)
+        {
+            var firstRune = LoadoutSelections.SelectedRunes.FirstOrDefault(r => r != null);
+            if (firstRune != null) _selectedRuneId = firstRune.runeId;
+        }
+
+        // Hide popups initially
+        if (sharedPopupPanel != null) sharedPopupPanel.SetActive(false);
+
+        RefreshFrames();
+        ApplyAndSave(); // Make sure initial state is saved
     }
 
     private void WireButtons()
     {
-        if (charLeftButton) charLeftButton.onClick.AddListener(() => { ShiftCharacter(-1); });
-        if (charRightButton) charRightButton.onClick.AddListener(() => { ShiftCharacter(1); });
-        if (weaponLeftButton) weaponLeftButton.onClick.AddListener(() => { ShiftWeapon(-1); });
-        if (weaponRightButton) weaponRightButton.onClick.AddListener(() => { ShiftWeapon(1); });
-        if (applyButton) applyButton.onClick.AddListener(Apply);
-        if (closeButton) closeButton.onClick.AddListener(() => gameObject.SetActive(false));
-    }
-
-    private void BuildRuneTogglesIfNeeded()
-    {
-        if (runeToggleContainer == null || runeTogglePrefab == null || runeCatalog == null) return;
-        // Clear existing
-        for (int i = runeToggleContainer.childCount - 1; i >= 0; i--) Destroy(runeToggleContainer.GetChild(i).gameObject);
-        _builtToggles.Clear();
-        // Build new
-        for (int i = 0; i < runeCatalog.Count; i++)
+        if (closeLoadoutButton != null)
         {
-            var rune = runeCatalog[i];
-            var toggle = Instantiate(runeTogglePrefab, runeToggleContainer);
-            toggle.isOn = _selectedRuneIds.Contains(rune != null ? rune.runeId : "");
-            int captured = i;
-            toggle.onValueChanged.AddListener(on => ToggleRune(captured, on));
-            // Ensure a CanvasGroup for consistent greying when disabled
-            var cg = toggle.GetComponent<CanvasGroup>();
-            if (cg == null) cg = toggle.gameObject.AddComponent<CanvasGroup>();
-            // Try to set icon
-            var img = toggle.GetComponentInChildren<Image>();
-            if (img != null && rune != null && rune.icon != null) img.sprite = rune.icon;
-            _builtToggles.Add(toggle);
+            closeLoadoutButton.onClick.RemoveAllListeners();
+            closeLoadoutButton.onClick.AddListener(Close);
+        }
+
+        if (closePopupButton != null)
+        {
+            closePopupButton.onClick.RemoveAllListeners();
+            closePopupButton.onClick.AddListener(CloseSharedPopup);
+        }
+
+        if (weaponFrameButton != null)
+        {
+            weaponFrameButton.onClick.RemoveAllListeners();
+            weaponFrameButton.onClick.AddListener(OpenWeaponPopup);
+        }
+
+        if (runeFrameButton != null)
+        {
+            runeFrameButton.onClick.RemoveAllListeners();
+            runeFrameButton.onClick.AddListener(OpenRunePopup);
         }
     }
 
     public void Open()
     {
         gameObject.SetActive(true);
-        if (runeToggleContainer != null && runeTogglePrefab != null && runeCatalog != null &&
-            runeToggleContainer.childCount != runeCatalog.Count)
-        {
-            BuildRuneTogglesIfNeeded();
-        }
-        RefreshUI();
+        RefreshFrames();
     }
 
     public void OpenLoadout() => Open();
     public void Close() => gameObject.SetActive(false);
 
-    private void RefreshUI()
+    private void RefreshFrames()
     {
-        // Character display
-        var ch = (characters != null && characters.Count > 0) ? characters[Wrap(_charIndex, characters.Count)] : null;
-        if (ch != null)
-        {
-            if (characterNameText) characterNameText.text = ch.characterName;
-
-            if (characterPreviewImage)
-            {
-                Sprite preview = null;
-                if (ch.playerPrefab != null)
-                {
-                    var sr = ch.playerPrefab.GetComponentInChildren<SpriteRenderer>();
-                    if (sr != null) preview = sr.sprite;
-                }
-                SetImageSpritePreserveAspect(characterPreviewImage, preview);
-            }
-        }
-
         // Weapon display
-        if (weaponRegistry != null && weaponRegistry.allWeapons != null && weaponRegistry.allWeapons.Count > 0)
-        {
-            var wd = weaponRegistry.GetWeaponData(Wrap(_weaponIndex, weaponRegistry.allWeapons.Count));
-            if (weaponNameText) weaponNameText.text = wd != null ? wd.name : "-";
-            if (weaponIconImage)
-            {
-                Sprite icon = wd != null ? wd.icon : null;
-                SetImageSpritePreserveAspect(weaponIconImage, icon);
-            }
-        }
+        WeaponData wdToDisplay = null;
+        string wNameToDisplay = "Select Weapon";
 
-        // Runes toggles states
-        if (runeToggleContainer != null)
+        if (LoadoutSystem.Instance != null && LoadoutSystem.Instance.Inventory != null)
         {
-            for (int i = 0; i < runeToggleContainer.childCount && i < runeCatalog.Count; i++)
+            var equippedItem = LoadoutSystem.Instance.Inventory.FirstOrDefault(x => x.ItemUniqueId == _selectedWeaponUniqueId);
+            if (equippedItem != null)
             {
-                var rune = runeCatalog[i];
-                var t = runeToggleContainer.GetChild(i).GetComponent<Toggle>();
-                if (t != null)
+                wNameToDisplay = equippedItem.ItemName;
+                if (weaponRegistry != null && weaponRegistry.allWeapons != null)
                 {
-                    bool desired = rune != null && _selectedRuneIds.Contains(rune.runeId);
-                    if (t.isOn != desired) t.SetIsOnWithoutNotify(desired);
+                    wdToDisplay = weaponRegistry.allWeapons.FirstOrDefault(w => w != null && 
+                        (w.name.Equals(equippedItem.ItemName, System.StringComparison.OrdinalIgnoreCase) || 
+                         w.weaponName.Equals(equippedItem.ItemName, System.StringComparison.OrdinalIgnoreCase) ||
+                         (equippedItem.ItemName.ToLower() == "panela" && (w.name.ToLower().Contains("flyingpan") || w.name.ToLower().Contains("pitchfork")))
+                        ));
                 }
             }
-            ApplyRowInteractivityFromSelection();
         }
-    }
 
-    private void SetImageSpritePreserveAspect(Image image, Sprite sprite)
-    {
-        image.sprite = sprite;
-        image.enabled = sprite != null;
-        if (sprite == null) return;
-
-        RectTransform rt = image.rectTransform;
-
-        // Cache original container size the first time
-        if (!originalContainerSizes.ContainsKey(image))
-            originalContainerSizes[image] = rt.rect.size;
-
-        Vector2 containerSize = originalContainerSizes[image];
-
-        float spriteAspect = sprite.rect.width / sprite.rect.height;
-        float containerAspect = containerSize.x / containerSize.y;
-
-        if (spriteAspect > containerAspect)
+        // Se não conseguiu encontrar o drop ou o inventário está vazio, preenche com a arma Default do sistema de Selections
+        if (wdToDisplay == null && LoadoutSelections.SelectedWeapon != null)
         {
-            rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, containerSize.x);
-            rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, containerSize.x / spriteAspect);
+            wdToDisplay = LoadoutSelections.SelectedWeapon;
+            wNameToDisplay = wdToDisplay.weaponName;
+            if (string.IsNullOrEmpty(wNameToDisplay)) wNameToDisplay = wdToDisplay.name;
         }
-        else
+
+        // Aplica à UI
+        if (weaponFrameName) weaponFrameName.text = wNameToDisplay;
+        if (weaponFrameButton != null)
         {
-            rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, containerSize.y);
-            rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, containerSize.y * spriteAspect);
-        }
-    }
-
-    private void ShiftCharacter(int dir)
-    {
-        if (characters == null || characters.Count == 0) return;
-        _charIndex = Wrap(_charIndex + dir, characters.Count);
-        RefreshUI();
-    }
-
-    private void ShiftWeapon(int dir)
-    {
-        if (weaponRegistry == null || weaponRegistry.allWeapons == null || weaponRegistry.allWeapons.Count == 0) return;
-        _weaponIndex = Wrap(_weaponIndex + dir, weaponRegistry.allWeapons.Count);
-        RefreshUI();
-    }
-
-    private int Wrap(int value, int count)
-    {
-        if (count <= 0) return 0;
-        int m = value % count;
-        if (m < 0) m += count;
-        return m;
-    }
-
-    public void ToggleRune(int index, bool on)
-    {
-        if (index < 0 || index >= runeCatalog.Count) return;
-        var rune = runeCatalog[index];
-        if (rune == null || string.IsNullOrEmpty(rune.runeId)) return;
-
-        if (on)
-        {
-            int row = rune.rowIndex;
-            var alreadyInRow = _selectedRuneIds.FirstOrDefault(id =>
+            Image btnImg = weaponFrameButton.GetComponent<Image>();
+            if (btnImg != null)
             {
-                var r = runeCatalog.FirstOrDefault(rc => rc != null && rc.runeId == id);
-                return r != null && r.rowIndex == row;
-            });
-
-            if (!string.IsNullOrEmpty(alreadyInRow) && alreadyInRow != rune.runeId)
-            {
-                var t = GetToggleAt(index);
-                if (t != null) t.SetIsOnWithoutNotify(false);
-                return;
+                btnImg.sprite = wdToDisplay != null ? wdToDisplay.icon : null;
+                btnImg.type = Image.Type.Simple; // Forçar tipo Simple em vez de Sliced
+                btnImg.preserveAspect = true;
+                
+                var c = btnImg.color;
+                c.a = btnImg.sprite != null ? 1f : 0f;
+                btnImg.color = c;
             }
+        }
 
-            if (string.IsNullOrEmpty(alreadyInRow) && _selectedRuneIds.Count >= maxSelectedRunes)
+        // Rune display
+        var selectedRune = runeCatalog.FirstOrDefault(r => r != null && r.runeId == _selectedRuneId);
+        if (runeFrameName) runeFrameName.text = selectedRune != null ? selectedRune.displayName : "Select Rune";
+        
+        if (runeFrameButton != null)
+        {
+            Image btnImg = runeFrameButton.GetComponent<Image>();
+            if (btnImg != null)
             {
-                var t = GetToggleAt(index);
-                if (t != null) t.SetIsOnWithoutNotify(false);
-                return;
+                btnImg.sprite = selectedRune != null ? selectedRune.icon : null;
+                btnImg.type = Image.Type.Simple; // Forçar tipo Simple para não esburacar Unity
+                btnImg.preserveAspect = true;
+
+                var c = btnImg.color;
+                c.a = btnImg.sprite != null ? 1f : 0f;
+                btnImg.color = c;
             }
-
-            _selectedRuneIds.Add(rune.runeId);
-            SetRowInteractivity(row, false, index);
-        }
-        else
-        {
-            _selectedRuneIds.Remove(rune.runeId);
-            int row = rune.rowIndex;
-            bool anySelectedInRow = _selectedRuneIds.Any(id =>
-            {
-                var r = runeCatalog.FirstOrDefault(rc => rc != null && rc.runeId == id);
-                return r != null && r.rowIndex == row;
-            });
-            if (!anySelectedInRow) SetRowInteractivity(row, true, -1);
         }
     }
 
-    private Toggle GetToggleAt(int index)
+    private void OpenWeaponPopup()
     {
-        if (index < 0 || index >= _builtToggles.Count) return null;
-        return _builtToggles[index];
+        if (sharedPopupPanel != null) sharedPopupPanel.SetActive(true);
+        if (optionalPopupTitle != null) optionalPopupTitle.text = "Choose Weapon";
+        PopulateWeaponInventory();
     }
 
-    private void ApplyRowInteractivityFromSelection()
+    private void OpenRunePopup()
     {
-        var rows = runeCatalog.Where(r => r != null).Select(r => r.rowIndex).Distinct();
-        foreach (var row in rows)
+        if (sharedPopupPanel != null) sharedPopupPanel.SetActive(true);
+        if (optionalPopupTitle != null) optionalPopupTitle.text = "Choose Rune";
+        PopulateRuneInventory();
+    }
+
+    private void CloseSharedPopup()
+    {
+        if (sharedPopupPanel != null) sharedPopupPanel.SetActive(false);
+    }
+
+    private void PopulateWeaponInventory()
+    {
+        if (sharedGridContainer == null || inventoryItemButtonPrefab == null) return;
+        
+        // Clear grid
+        foreach (Transform child in sharedGridContainer) Destroy(child.gameObject);
+        
+        // Populate
+        if (LoadoutSystem.Instance != null && LoadoutSystem.Instance.Inventory != null)
         {
-            bool anySelectedInRow = _selectedRuneIds.Any(id =>
+            var weapons = LoadoutSystem.Instance.Inventory.Where(x => x != null && x.Type == DropType.Weapon).ToList();
+            foreach (var drop in weapons)
             {
-                var r = runeCatalog.FirstOrDefault(rc => rc != null && rc.runeId == id);
-                return r != null && r.rowIndex == row;
-            });
-            if (anySelectedInRow)
-            {
-                int selectedIndex = -1;
-                for (int i = 0; i < runeCatalog.Count; i++)
+                string captureId = drop.ItemUniqueId;
+                GameObject btnObj = Instantiate(inventoryItemButtonPrefab, sharedGridContainer);
+                
+                Sprite icon = null;
+                if (weaponRegistry != null && weaponRegistry.allWeapons != null)
                 {
-                    var r = runeCatalog[i];
-                    if (r != null && _selectedRuneIds.Contains(r.runeId) && r.rowIndex == row)
-                    {
-                        selectedIndex = i; break;
-                    }
+                    // Fallback para nomes antigos como 'Panela' que agora é 'FlyingPan', mas tentar match direto incasensitive primeiro
+                    var matchingWd = weaponRegistry.allWeapons.FirstOrDefault(w => w != null && 
+                        (w.name.Equals(drop.ItemName, System.StringComparison.OrdinalIgnoreCase) || 
+                         w.weaponName.Equals(drop.ItemName, System.StringComparison.OrdinalIgnoreCase) ||
+                         (drop.ItemName.ToLower() == "panela" && (w.name.ToLower().Contains("flyingpan") || w.name.ToLower().Contains("pitchfork")))
+                        ));
+                        
+                    if (matchingWd != null) icon = matchingWd.icon;
                 }
-                SetRowInteractivity(row, false, selectedIndex);
-            }
-            else
-            {
-                SetRowInteractivity(row, true, -1);
+
+                string statsStr = string.Join("\n", drop.Substats.Select(s => s.GetDescription()));
+                string itemDesc = $"{drop.Description}\n\n[Stats]\n{statsStr}";
+
+                SetupInventoryButton(btnObj, drop.ItemName, itemDesc, icon, () => {
+                    _selectedWeaponUniqueId = captureId;
+                    CloseSharedPopup();
+                    RefreshFrames();
+                    ApplyAndSave();
+                });
             }
         }
     }
 
-    private void SetRowInteractivity(int rowIndex, bool enable, int exceptIndex)
+    private void PopulateRuneInventory()
     {
-        for (int i = 0; i < runeCatalog.Count && i < _builtToggles.Count; i++)
+        if (sharedGridContainer == null || inventoryItemButtonPrefab == null) return;
+        
+        // Clear grid
+        foreach (Transform child in sharedGridContainer) Destroy(child.gameObject);
+
+        // Populate
+        if (runeCatalog != null)
         {
-            var def = runeCatalog[i];
-            if (def == null || def.rowIndex != rowIndex || i == exceptIndex) continue;
-            var t = _builtToggles[i];
-            if (t == null) continue;
-            t.interactable = enable;
-            var cg = t.GetComponent<CanvasGroup>();
-            if (cg != null) cg.alpha = enable ? 1f : 0.5f;
+            foreach (var rune in runeCatalog)
+            {
+                if (rune == null) continue;
+
+                string captureId = rune.runeId;
+                GameObject btnObj = Instantiate(inventoryItemButtonPrefab, sharedGridContainer);
+                
+                SetupInventoryButton(btnObj, rune.displayName, rune.description, rune.icon, () => {
+                    _selectedRuneId = captureId;
+                    CloseSharedPopup();
+                    RefreshFrames();
+                    ApplyAndSave();
+                });
+            }
         }
     }
 
-    public void Apply()
+    private void SetupInventoryButton(GameObject btnObj, string itemName, string itemDesc, Sprite itemIcon, UnityEngine.Events.UnityAction onClickAction)
     {
-        PlayerCharacterData ch = (characters != null && characters.Count > 0) ? characters[Wrap(_charIndex, characters.Count)] : null;
-        WeaponData wd = (weaponRegistry != null && weaponRegistry.allWeapons != null && weaponRegistry.allWeapons.Count > 0)
-            ? weaponRegistry.GetWeaponData(Wrap(_weaponIndex, weaponRegistry.allWeapons.Count))
-            : null;
-        List<RuneDefinition> runes = runeCatalog.Where(r => r != null && _selectedRuneIds.Contains(r.runeId)).ToList();
+        Button btn = btnObj.GetComponent<Button>();
+        if (btn != null)
+        {
+            btn.onClick.AddListener(onClickAction);
+        }
 
-        LoadoutSelections.SetSelections(ch != null ? ch.playerPrefab : null, wd, runes);
+        Image targetImage = btnObj.GetComponent<Image>();
+        if (targetImage != null)
+        {
+            targetImage.sprite = itemIcon;
+            targetImage.type = Image.Type.Simple; // Forçar tipo Simple em vez de Sliced nos da grid
+            targetImage.preserveAspect = true;
+            
+            var c = targetImage.color;
+            c.a = itemIcon != null ? 1f : 0f;
+            targetImage.color = c;
+        }
+
+        TextMeshProUGUI txt = btnObj.GetComponentInChildren<TextMeshProUGUI>();
+        if (txt != null) txt.text = itemName;
+
+        TooltipTrigger tooltip = btnObj.GetComponent<TooltipTrigger>();
+        if (tooltip == null)
+        {
+            tooltip = btnObj.AddComponent<TooltipTrigger>();
+        }
+        tooltip.SetContent(itemName, itemDesc, itemIcon);
+    }
+
+    public void ApplyAndSave()
+    {
+        GameObject chPrefab = defaultCharacter != null ? defaultCharacter.playerPrefab : null;
+        
+        WeaponData wd = null;
+        ItemDrop selectedItem = null;
+        if (LoadoutSystem.Instance != null && LoadoutSystem.Instance.Inventory != null)
+        {
+            selectedItem = LoadoutSystem.Instance.Inventory.FirstOrDefault(x => x.ItemUniqueId == _selectedWeaponUniqueId);
+            if (selectedItem != null && weaponRegistry != null && weaponRegistry.allWeapons != null)
+            {
+                wd = weaponRegistry.allWeapons.FirstOrDefault(w => w != null && (w.name == selectedItem.ItemName || w.weaponName == selectedItem.ItemName));
+            }
+        }
+            
+        List<RuneDefinition> runes = new List<RuneDefinition>();
+        var selectedRune = runeCatalog.FirstOrDefault(r => r != null && r.runeId == _selectedRuneId);
+        if (selectedRune != null) runes.Add(selectedRune);
+
+        LoadoutSelections.SetSelections(chPrefab, wd, runes, selectedItem);
         LoadoutSelections.SaveToPlayerPrefs();
         LoadoutSelections.MarkAsConfigured();
 
         var gm = GameManager.Instance;
-        if (gm != null && !gm.isP2P && ch != null && ch.playerPrefab != null)
+        if (gm != null && !gm.isP2P && chPrefab != null)
         {
-            gm.SetChosenPlayerPrefab(ch.playerPrefab);
+            gm.SetChosenPlayerPrefab(chPrefab);
         }
-        // If we're in multiplayer and the player object already exists, send selection now
+
+        // Sync for multiplayer if already spawned
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
         {
-            var playerObj = NetworkManager.Singleton.LocalClient.PlayerObject.gameObject;
-            var sync = playerObj.GetComponent<LoadoutSync>();
+            var sync = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<LoadoutSync>();
             if (sync != null)
             {
                 sync.RequestSendSelectionToServer();
             }
         }
-
-        gameObject.SetActive(false);
     }
 }

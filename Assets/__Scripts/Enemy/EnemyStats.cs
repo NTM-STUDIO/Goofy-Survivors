@@ -69,6 +69,10 @@ public class EnemyStats : NetworkBehaviour
     private readonly NetworkVariable<float> netBaseDamage = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private readonly NetworkVariable<float> netMoveSpeed = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private readonly NetworkVariable<int> netMutation = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<bool> netHasItemDrop = new(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    
+    private DropsAndLoadout.ItemDrop preRolledItemDrop;
+
     // GENERIC GENES SYNC
     private readonly NetworkVariable<EnemyGenes> netGenes = new NetworkVariable<EnemyGenes>(
         EnemyGenes.Default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -130,6 +134,13 @@ public class EnemyStats : NetworkBehaviour
             netCurrentHealth.OnValueChanged += OnNetworkHealthChanged;
             netMutation.OnValueChanged += OnNetworkMutationChanged;
             netGenes.OnValueChanged += OnGenesChanged;
+            netHasItemDrop.OnValueChanged += OnHasItemDropChanged;
+
+            // Apply gold color if it already has an item drop synced
+            if (netHasItemDrop.Value)
+            {
+                ApplyGoldColor();
+            }
             
             Debug.Log($"[EnemyStats] Client spawned with genes: {CurrentGenes.GetDominantTrait()}, Mutation: {CurrentMutation}");
         }
@@ -178,6 +189,20 @@ public class EnemyStats : NetworkBehaviour
         }
         
         startTime = Time.time;
+
+        // Pre-roll for item drop to turn the enemy gold if it drops something!
+        if ((NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening || IsServer) && DropsAndLoadout.WeaponDropSystem.Instance != null)
+        {
+            preRolledItemDrop = DropsAndLoadout.WeaponDropSystem.Instance.PreRollDrop();
+            if (preRolledItemDrop != null)
+            {
+                if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening && IsServer)
+                {
+                    netHasItemDrop.Value = true;
+                }
+                ApplyGoldColor();
+            }
+        }
     }
 
     public void TakeDamage(float damage, bool isCritical)
@@ -422,23 +447,43 @@ public class EnemyStats : NetworkBehaviour
     /// </summary>
     private void ApplyMutationColorVisuals()
     {
+        // Don't override the gold color if it has a drop
+        if (netHasItemDrop.Value || preRolledItemDrop != null) return;
+
         if (enemyRenderer == null) return;
-        
+
         switch (CurrentMutation)
         {
-            case MutationType.Health: 
-                enemyRenderer.color = healthMutationColor; 
+            case MutationType.Health:
+                enemyRenderer.color = healthMutationColor;
                 break;
-            case MutationType.Damage: 
-                enemyRenderer.color = damageMutationColor; 
+            case MutationType.Damage:
+                enemyRenderer.color = damageMutationColor;
                 break;
-            case MutationType.Speed: 
-                enemyRenderer.color = speedMutationColor; 
+            case MutationType.Speed:
+                enemyRenderer.color = speedMutationColor;
                 break;
-            default: 
+            default:
                 // When no mutation, apply genetic color
                 enemyRenderer.color = originalColor * CurrentGenes.GetGeneColor();
                 break;
+        }
+    }
+
+    private void OnHasItemDropChanged(bool previousValue, bool newValue)
+    {
+        if (newValue)
+        {
+            ApplyGoldColor();
+        }
+    }
+
+    private void ApplyGoldColor()
+    {
+        if (enemyRenderer != null)
+        {
+            // Set it to a bright gold/yellow color
+            enemyRenderer.color = new Color(1f, 0.84f, 0f, 1f); 
         }
     }
 
@@ -540,6 +585,10 @@ public class EnemyStats : NetworkBehaviour
             if (IsServer)
             {
                 TryDropOrb();
+                if (DropsAndLoadout.WeaponDropSystem.Instance != null && preRolledItemDrop != null)
+                {
+                    DropsAndLoadout.WeaponDropSystem.Instance.SpawnPreRolledItemDrop(preRolledItemDrop, transform.position);
+                }
                 var netObj = GetComponent<NetworkObject>();
                 if (netObj != null)
                 {
@@ -558,6 +607,10 @@ public class EnemyStats : NetworkBehaviour
         else
         {
             TryDropOrb();
+            if (DropsAndLoadout.WeaponDropSystem.Instance != null && preRolledItemDrop != null)
+            {
+                DropsAndLoadout.WeaponDropSystem.Instance.SpawnPreRolledItemDrop(preRolledItemDrop, transform.position);
+            }
             Destroy(gameObject);
         }
     }
@@ -774,6 +827,9 @@ public class EnemyStats : NetworkBehaviour
 
     private void UpdateGeneVisuals()
     {
+        // Don't override the gold color if it has a drop
+        if (netHasItemDrop.Value || preRolledItemDrop != null) return;
+
         if (enemyRenderer != null)
         {
             // Only apply genetic colors if there's NO mutation active

@@ -66,5 +66,5 @@
     "explorer.fileNesting.patterns": {
         "*.sln": "*.csproj"
     },
-    "dotnet.defaultSolution": "Goofy-Survivors.sln"
+    "dotnet.defaultSolution": "Goofy-Survivors.slnx"
 }

@@ -35,8 +35,10 @@ public class ProjectileWeapon : NetworkBehaviour
         if (rb != null)
         {
             rb.useGravity = false;
-            // Prevent random spinning/rotation drift across clients
+            // Prevent random spinning/rotation drift across clients, and freeze Y position so projectiles don't sink into the ground
+            rb.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotation;
             rb.freezeRotation = true;
+            rb.linearDamping = 0f; // Ensure it doesn't slow down over time
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         }

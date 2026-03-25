@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: d94da2e188342034bbb65a18b16d3656
+guid: c5f6309ef84ade842ae71ad1757a7519
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -46,8 +46,8 @@ TextureImporter:
   spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
-  alignment: 0
-  spritePivot: {x: 0.5, y: 0.5}
+  alignment: 7
+  spritepivot: {x: 0.5, y: 0}
   spritePixelsToUnits: 100
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
@@ -106,6 +106,32 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WindowsStoreApps
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
@@ -117,16 +143,16 @@ TextureImporter:
         y: 0
         width: 1024
         height: 576
-      alignment: 0
+      alignment: 7
       pivot: {x: 0, y: 0}
-      border: {x: 315, y: 69, z: 307, w: 37}
+      border: {x: 322, y: 73, z: 308, w: 39}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: f9acddef5ab76564bbeae75334dec23c
-      internalID: -1692637566
+      spriteID: 77b2057f8d7603d429bb05adbbbbb771
+      internalID: -843250726
       vertices: []
       indices: 
       edges: []
@@ -135,7 +161,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 99a7860c4a76efa4793600cceb9c1051
+    spriteID: 4bb705f9167389240b27dc86cb914e30
     internalID: 0
     vertices: []
     indices: 
@@ -145,7 +171,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      arvore_0: -1692637566
+      arvore_0: -843250726
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

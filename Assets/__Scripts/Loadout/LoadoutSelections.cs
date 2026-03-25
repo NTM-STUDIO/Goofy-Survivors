@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using DropsAndLoadout;
 
 // Central place to store the player's current loadout choices at runtime and to persist minimal state in PlayerPrefs.
 public static class LoadoutSelections
@@ -8,6 +9,8 @@ public static class LoadoutSelections
     // Runtime selections (set by LoadoutPanel before starting)
     public static GameObject SelectedCharacterPrefab { get; private set; }
     public static WeaponData SelectedWeapon { get; private set; }
+    public static ItemDrop SelectedItemDrop { get; private set; }
+    public static string EquippedWeaponUniqueId { get; private set; }
     public static List<RuneDefinition> SelectedRunes { get; private set; } = new List<RuneDefinition>();
 
     // Optional registries to help resolve indices when saving/loading
@@ -20,11 +23,15 @@ public static class LoadoutSelections
     private const string K_WEAPON_INDEX = "Loadout_WeaponIndex";
     private const string K_RUNES_IDS = "Loadout_RunesCSV";
     private const string K_HAS_CONFIGURED = "Loadout_HasConfigured";
+    private const string K_ITEM_UNIQUE_ID = "Loadout_ItemUniqueId";
 
-    public static void SetSelections(GameObject characterPrefab, WeaponData weapon, IEnumerable<RuneDefinition> runes)
+    public static void SetSelections(GameObject characterPrefab, WeaponData weapon, IEnumerable<RuneDefinition> runes, ItemDrop itemDrop = null)
     {
         SelectedCharacterPrefab = characterPrefab;
         SelectedWeapon = weapon;
+        SelectedItemDrop = itemDrop;
+        if (itemDrop != null) EquippedWeaponUniqueId = itemDrop.ItemUniqueId;
+        else EquippedWeaponUniqueId = null;
         SelectedRunes = (runes != null) ? new List<RuneDefinition>(runes.Where(r => r != null)) : new List<RuneDefinition>();
     }
 
@@ -32,6 +39,8 @@ public static class LoadoutSelections
     {
         SelectedCharacterPrefab = null;
         SelectedWeapon = null;
+        SelectedItemDrop = null;
+        EquippedWeaponUniqueId = null;
         SelectedRunes = new List<RuneDefinition>();
         Debug.Log("[LoadoutSelections] Selections reset to null. Next run will generate new defaults.");
     }
@@ -60,12 +69,16 @@ public static class LoadoutSelections
             Debug.Log($"[LoadoutSelections] Auto-selected random character: {SelectedCharacterPrefab.name}");
         }
 
-        // Random weapon if none selected
+        // Default weapon if none selected
         if (SelectedWeapon == null && WeaponRegistryContext != null && WeaponRegistryContext.allWeapons != null && WeaponRegistryContext.allWeapons.Count > 0)
         {
-            int randomWeaponIdx = Random.Range(0, WeaponRegistryContext.allWeapons.Count);
-            SelectedWeapon = WeaponRegistryContext.GetWeaponData(randomWeaponIdx);
-            Debug.Log($"[LoadoutSelections] Auto-selected random weapon: {SelectedWeapon.name}");
+            // Default to Panela/Pitchfork if it exists, else index 0
+            SelectedWeapon = WeaponRegistryContext.allWeapons.FirstOrDefault(w => w != null && (w.name == "FlyingPan" || w.weaponName == "FlyingPan" || w.name == "Pitchfork" || w.weaponName == "Pitchfork" || w.name == "Panela" || w.weaponName == "Panela"));
+            if (SelectedWeapon == null)
+            {
+                SelectedWeapon = WeaponRegistryContext.GetWeaponData(0);
+            }
+            Debug.Log($"[LoadoutSelections] Auto-selected default weapon: {SelectedWeapon.name}");
         }
 
         // Initialize empty runes list if null
@@ -103,6 +116,17 @@ public static class LoadoutSelections
         {
             PlayerPrefs.DeleteKey(K_RUNES_IDS);
         }
+
+        // Save EquippedUniqueId
+        if (!string.IsNullOrEmpty(EquippedWeaponUniqueId))
+        {
+            PlayerPrefs.SetString(K_ITEM_UNIQUE_ID, EquippedWeaponUniqueId);
+        }
+        else
+        {
+            PlayerPrefs.DeleteKey(K_ITEM_UNIQUE_ID);
+        }
+
         PlayerPrefs.Save();
     }
 
@@ -141,6 +165,38 @@ public static class LoadoutSelections
             {
                 var ids = new HashSet<string>(csv.Split(','));
                 SelectedRunes = RuneCatalogContext.Where(r => r != null && ids.Contains(r.runeId)).ToList();
+            }
+        }
+
+        // Restore Items
+        EquippedWeaponUniqueId = PlayerPrefs.GetString(K_ITEM_UNIQUE_ID, null);
+
+        if (!string.IsNullOrEmpty(EquippedWeaponUniqueId) && LoadoutSystem.Instance != null && LoadoutSystem.Instance.Inventory != null)
+        {
+            SelectedItemDrop = LoadoutSystem.Instance.Inventory.FirstOrDefault(i => i.ItemUniqueId == EquippedWeaponUniqueId);
+            
+            // Re-resolve the actual base WeaponData from the selected item drop
+            // to ensure it is robust against WeaponRegistry list changes across game versions.
+            if (SelectedItemDrop != null && WeaponRegistryContext != null && WeaponRegistryContext.allWeapons != null)
+            {
+                string targetName = SelectedItemDrop.ItemName;
+                if (targetName == "Panela") targetName = "FlyingPan"; // Backward compatibility for old saves
+
+                var resolvedWd = WeaponRegistryContext.allWeapons.FirstOrDefault(w => w != null && (w.name == targetName || w.weaponName == targetName));
+                if (resolvedWd != null)
+                {
+                    SelectedWeapon = resolvedWd;
+                }
+            }
+        }
+
+        // Force Panela as the true default if no valid item drop loadout is configured
+        if (SelectedItemDrop == null && WeaponRegistryContext != null && WeaponRegistryContext.allWeapons != null)
+        {
+            var panela = WeaponRegistryContext.allWeapons.FirstOrDefault(w => w != null && (w.name == "FlyingPan" || w.weaponName == "FlyingPan" || w.name == "Pitchfork" || w.weaponName == "Pitchfork" || w.name == "Panela" || w.weaponName == "Panela"));
+            if (panela != null)
+            {
+                SelectedWeapon = panela;
             }
         }
     }

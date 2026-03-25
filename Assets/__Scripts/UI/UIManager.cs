@@ -192,6 +192,8 @@ public class UIManager : MonoBehaviour
             newWeaponPanelCanvasGroup.alpha = 0f;
             newWeaponPanel.SetActive(false);
         }
+
+        SelectFirstSelectable(painelPrincipal);
     }
 
     public void OnStartGameButtonClicked()
@@ -251,6 +253,7 @@ public class UIManager : MonoBehaviour
         multiplayerPanel.SetActive(true);
         hostButton.interactable = true;
         joinButton.interactable = true;
+        SelectFirstSelectable(multiplayerPanel);
     }
 
     // --- THIS IS THE NEW METHOD FOR YOUR LOBBY'S BACK BUTTON ---
@@ -268,6 +271,7 @@ public class UIManager : MonoBehaviour
         multiplayerPanel.SetActive(false);
         lobbyPanel.SetActive(false);
         painelPrincipal.SetActive(true);
+        SelectFirstSelectable(painelPrincipal);
     }
 
     public void QuitButton() => Application.Quit();
@@ -278,6 +282,7 @@ public class UIManager : MonoBehaviour
     {
         if (panelToOpen != null)
         {
+            SelectFirstSelectable(panelToOpen);
             panelToOpen.SetActive(true);
         }
     }
@@ -371,6 +376,8 @@ public class UIManager : MonoBehaviour
         {
             SetConnectionStatus("Connected to lobby. Waiting for host to start...", Color.white);
         }
+
+        SelectFirstSelectable(lobbyPanel);
     }
 
     private void HandleHostSuccess(string lobbyCode)
@@ -438,6 +445,7 @@ public class UIManager : MonoBehaviour
 
         // Show Main Menu
         painelPrincipal.SetActive(true);
+        SelectFirstSelectable(painelPrincipal);
     }
     #endregion
 
@@ -447,7 +455,7 @@ public class UIManager : MonoBehaviour
         multiplayerPanel.SetActive(false);
         lobbyPanel.SetActive(true);
         connectionStatusText.gameObject.SetActive(true);
-        lobbyCodeText.gameObject.SetActive(false);
+        SelectFirstSelectable(lobbyPanel);
     }
 
     private void ReturnToMultiplayerMenu()
@@ -455,6 +463,8 @@ public class UIManager : MonoBehaviour
         lobbyPanel.SetActive(false);
         multiplayerPanel.SetActive(true);
         hostButton.interactable = true;
+        joinButton.interactable = true;
+        SelectFirstSelectable(multiplayerPanel);
         joinButton.interactable = true;
     }
 
@@ -464,6 +474,16 @@ public class UIManager : MonoBehaviour
         connectionStatusText.gameObject.SetActive(true);
         connectionStatusText.text = message;
         connectionStatusText.color = color;
+    }
+
+    private void SelectFirstSelectable(GameObject panel)
+    {
+        if (panel != null && UnityEngine.EventSystems.EventSystem.current != null)
+        {
+            var firstSelectable = panel.GetComponentInChildren<UnityEngine.UI.Selectable>();
+            if (firstSelectable != null)
+                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(firstSelectable.gameObject);
+        }
     }
     #endregion
 
@@ -545,8 +565,15 @@ public class UIManager : MonoBehaviour
 
     public void ShowEndGamePanel(bool show)
     {
-        endGamePanel?.SetActive(show);
-        if (show) inGameHudContainer.SetActive(false);
+        if (endGamePanel != null)
+        {
+            endGamePanel.SetActive(show);
+            if (show)
+            {
+                inGameHudContainer.SetActive(false);
+                SelectFirstSelectable(endGamePanel);
+            }
+        }
     }
 
     public void PlayAgainButton()
@@ -567,7 +594,20 @@ public class UIManager : MonoBehaviour
 
     public void ShowPauseMenu(bool show)
     {
-        pauseMenu?.SetActive(show);
+        if (pauseMenu != null)
+        {
+            pauseMenu.SetActive(show);
+            if (show)
+            {
+                SelectFirstSelectable(pauseMenu);
+            }
+            else
+            {
+                // Optionally clear selection when closing pause menu if returning to game
+                if (UnityEngine.EventSystems.EventSystem.current != null)
+                    UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+            }
+        }
     }
 
     // --- ADICIONAR ISTO AO UIMANAGER.CS ---
@@ -596,7 +636,13 @@ public class UIManager : MonoBehaviour
     public void ToggleStatsPanel()
     {
         if (statsPanel != null)
+        {
             statsPanel.SetActive(!statsPanel.activeSelf);
+            if (statsPanel.activeSelf)
+            {
+                SelectFirstSelectable(statsPanel);
+            }
+        }
     }
 
     public void UpdateXPBar(float currentXP, float requiredXP)

@@ -108,7 +108,9 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  visualRotationOffset: 0
+  rotationSpeed: 10
+  fixedXRotation: 30
+  fixedYRotation: 45
 --- !u!136 &5970226058310386475
 CapsuleCollider:
   m_ObjectHideFlags: 0

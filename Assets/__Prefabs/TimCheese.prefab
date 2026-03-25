@@ -117,7 +117,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 10.24, y: 5.76}
+  m_Size: {x: 3.6, y: 5.46}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -135,8 +135,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a9f4b87971adc9498ac2f9a339e6133, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  LeftSprite: {fileID: 7299931111331947499, guid: 2748bede88421a94eac9792d00d0ba1b, type: 3}
-  RightSprite: {fileID: 7299931111331947499, guid: 2748bede88421a94eac9792d00d0ba1b, type: 3}
+  flipMode: 1
+  UpRightSprite: {fileID: 0}
+  UpLeftSprite: {fileID: 0}
+  DownRightSprite: {fileID: 0}
+  DownLeftSprite: {fileID: 0}
+  firePoint: {fileID: 0}
+  velocityThreshold: 0.1
 --- !u!136 &6532990679494418986
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -418,6 +423,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51ab94343354c7045a23e17c3b9d997b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  IsDownedNetVar:
+    m_InternalValue: 0
+  CurrentHpNetVar:
+    m_InternalValue: 100
   hasBeltBuffItem: 0
   stolenBuffDuration: 10
   beltHealthBonus: 0.2
@@ -429,10 +439,10 @@ MonoBehaviour:
   damageMultiplier: 0
   critChance: 0
   critDamageMultiplier: 0
+  cooldownReduction: 0
   attackSpeedMultiplier: 0
   projectileCount: 0
   projectileSizeMultiplier: 0
-  projectileSpeedMultiplier: 0
   durationMultiplier: 0
   knockbackMultiplier: 0
   movementSpeed: 0
@@ -440,12 +450,16 @@ MonoBehaviour:
   pickupRange: 0
   xpGainMultiplier: 0
   pierceCount: 0
-  currentHp: 0
+  totalDamageDealt: 0
+  totalReaperDamageDealt: 0
+  _localHp: 0
   invincibilityDuration: 0.4
   invincible: 0
   spriteRenderer: {fileID: 8947401097208141202}
+  downedSprite: {fileID: 0}
   hurtFlashColor: {r: 0.9716981, g: 0.041251317, b: 0.041251317, a: 1}
   hurtFlashTime: 0.4
+  healingReceivedMultiplier: 1
 --- !u!114 &7629850890781329749
 MonoBehaviour:
   m_ObjectHideFlags: 0
