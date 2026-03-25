@@ -99,8 +99,13 @@ public class SettingsManager : MonoBehaviour
         // 2. Invoka eventos locais de UI se houver
         onSoftRestart?.Invoke();
 
-        // 3. Manda o GameManager tratar de tudo (Limpar, Resetar, Recomeçar)
-        if (GameManager.Instance != null)
+        // 3. Manda o GameFlowController tratar de tudo
+        GameFlowController flowController = Object.FindFirstObjectByType<GameFlowController>();
+        if (flowController != null)
+        {
+            flowController.RestartRun();
+        }
+        else if (GameManager.Instance != null)
         {
             GameManager.Instance.ActionPlayAgain();
         }
@@ -118,15 +123,20 @@ public class SettingsManager : MonoBehaviour
         if (settingsPanel) settingsPanel.SetActive(false);
         isPanelOpen = false;
 
-        // 2. Manda o GameManager sair para o Lobby/Menu
-        if (GameManager.Instance != null)
+        // 2. Manda o GameFlowController sair para o Lobby/Menu
+        GameFlowController flowController = Object.FindFirstObjectByType<GameFlowController>();
+        if (flowController != null)
+        {
+            flowController.LeaveGame();
+        }
+        else if (GameManager.Instance != null)
         {
             GameManager.Instance.ActionLeaveToLobby();
         }
         else
         {
             if (Unity.Netcode.NetworkManager.Singleton != null) Unity.Netcode.NetworkManager.Singleton.Shutdown();
-            SceneManager.LoadScene(0);
+            UnityEngine.SceneManagement.SceneManager.LoadScene(0);
         }
     }
 

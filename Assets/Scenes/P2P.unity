@@ -8025,7 +8025,6 @@ MonoBehaviour:
   tooltipIcon: {fileID: 130403064}
   showDelay: 0.3
   offset: {x: 15, y: -15}
-  padding: 10
 --- !u!1 &2058575121
 GameObject:
   m_ObjectHideFlags: 0

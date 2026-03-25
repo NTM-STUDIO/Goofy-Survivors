@@ -51,17 +51,13 @@ public class PlayerWeaponManager : NetworkBehaviour
         // If a loadout-chosen starting weapon exists (single-player), override before Start() adds default
         try
         {
-            var chosen = LoadoutSelections.SelectedWeapon;
-            if (chosen != null)
+            var gm = GameManager.Instance;
+            if (gm != null && !gm.isP2P)
             {
-                startingWeapon = chosen;
-            }
-            else if (weaponRegistry != null)
-            {
-                var panela = weaponRegistry.allWeapons.FirstOrDefault(w => w != null && (w.name == "FlyingPan" || w.weaponName == "FlyingPan" || w.name == "Pitchfork" || w.weaponName == "Pitchfork" || w.name == "Panela" || w.weaponName == "Panela"));
-                if (panela != null)
+                var chosen = LoadoutSelections.SelectedWeapon;
+                if (chosen != null)
                 {
-                    startingWeapon = panela;
+                    startingWeapon = chosen;
                 }
             }
         }
@@ -163,6 +159,11 @@ public class PlayerWeaponManager : NetworkBehaviour
             {
                 localWeaponIDs.Add(weaponId);
                 InstantiateWeaponController(weaponId);
+                Debug.Log($"[PlayerWeaponManager] AddWeapon (SP): Added weapon {weaponId} ({weaponData.weaponName})");
+            }
+            else
+            {
+                Debug.LogWarning($"[PlayerWeaponManager] AddWeapon (SP): Player already has weapon {weaponId} ({weaponData.weaponName}). Skipping duplicate.");
             }
         }
     }
@@ -297,6 +298,12 @@ public class PlayerWeaponManager : NetworkBehaviour
         if (!networkWeaponIDs.Contains(weaponId))
         {
             networkWeaponIDs.Add(weaponId);
+            Debug.Log($"[PlayerWeaponManager] AddWeaponServerRpc: Added weapon {weaponId} for client {rpcParams.Receive.SenderClientId}");
+        }
+        else
+        {
+            Debug.LogWarning($"[PlayerWeaponManager] AddWeaponServerRpc: Client {rpcParams.Receive.SenderClientId} already has weapon {weaponId}. Skipping duplicate.");
+            return;
         }
 
         ClientRpcParams clientRpcParams = new ClientRpcParams
@@ -320,6 +327,11 @@ public class PlayerWeaponManager : NetworkBehaviour
     [ClientRpc]
     private void AddWeaponClientRpc(int weaponId, ClientRpcParams clientRpcParams = default)
     {
+        if (localWeaponControllers.Any(c => c.GetWeaponId() == weaponId))
+        {
+            Debug.LogWarning($"[PlayerWeaponManager] AddWeaponClientRpc: Weapon {weaponId} already exists for {gameObject.name}. Skipping duplicate.");
+            return;
+        }
         InstantiateWeaponController(weaponId);
     }
 
@@ -333,6 +345,12 @@ public class PlayerWeaponManager : NetworkBehaviour
         if (!networkWeaponIDs.Contains(weaponId))
         {
             networkWeaponIDs.Add(weaponId);
+            Debug.Log($"[PlayerWeaponManager] Server_GiveWeaponToOwner: Added weapon {weaponId} to {gameObject.name}");
+        }
+        else
+        {
+            Debug.LogWarning($"[PlayerWeaponManager] Server_GiveWeaponToOwner: Player {gameObject.name} already has weapon {weaponId}. Skipping duplicate award.");
+            return;
         }
 
         ClientRpcParams clientRpcParams = new ClientRpcParams
@@ -364,8 +382,8 @@ public class PlayerWeaponManager : NetworkBehaviour
     }
 
     // Allows clients to request interaction with a consumable/chest via their own player object (always spawned)
-    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    public void RequestInteractWithConsumableServerRpc(ulong consumableNetId, RpcParams rpcParams = default)
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestInteractWithConsumableServerRpc(ulong consumableNetId, ServerRpcParams rpcParams = default)
     {
         if (!IsServer) return;
         var spawnMgr = NetworkManager.Singleton?.SpawnManager;

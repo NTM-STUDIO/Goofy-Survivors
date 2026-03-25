@@ -110,10 +110,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.86
+  m_Radius: 0.78
   m_Height: 16.636177
   m_Direction: 2
-  m_Center: {x: 0.03, y: 1.75, z: 7.16}
+  m_Center: {x: -0.05, y: 1.5, z: 7.16}
 --- !u!136 &4993268136660888013
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -237,7 +237,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -7.55, y: 0, z: -6.49}
-  m_LocalScale: {x: 0.7, y: 0.7, z: 0.7}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2682051627743952468}

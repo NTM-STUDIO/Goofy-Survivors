@@ -629,7 +629,12 @@ public class EndGamePanel : MonoBehaviour
         try { GameManager.Instance.RequestResume(); } catch { }
         Time.timeScale = 1f;
 
-        if (GameManager.Instance != null)
+        GameFlowController flowController = Object.FindFirstObjectByType<GameFlowController>();
+        if (flowController != null)
+        {
+            flowController.PlayAgain();
+        }
+        else if (GameManager.Instance != null)
         {
             GameManager.Instance.ActionPlayAgain();
         }
@@ -653,14 +658,19 @@ public class EndGamePanel : MonoBehaviour
         Time.timeScale = 1f;
 
         // Redirect to Main Menu / Lobby
-        if (GameManager.Instance != null)
+        GameFlowController flowController = Object.FindFirstObjectByType<GameFlowController>();
+        if (flowController != null)
+        {
+            flowController.LeaveGame();
+        }
+        else if (GameManager.Instance != null)
         {
             GameManager.Instance.ActionLeaveToLobby();
         }
         else
         {
             if (Unity.Netcode.NetworkManager.Singleton != null) Unity.Netcode.NetworkManager.Singleton.Shutdown();
-            SceneManager.LoadScene(0);
+            UnityEngine.SceneManagement.SceneManager.LoadScene(0);
         }
     }
 }
