@@ -908,6 +908,14 @@ public class PlayerWeaponManager : NetworkBehaviour
         localWeaponControllers.Clear();
     }
 
+    public void RecastAllWeapons()
+    {
+        foreach (var controller in localWeaponControllers)
+        {
+            if (controller != null) controller.Recast();
+        }
+    }
+
     private void SubscribeShieldEvents()
     {
         if (shieldSubscribed) return;

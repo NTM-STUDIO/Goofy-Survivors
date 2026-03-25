@@ -73,7 +73,7 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 580247611
+  m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 2417515d56cfe9140a42c99259a532ac, type: 3}
@@ -161,7 +161,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExperienceOrb
   ShowTopMostFoldoutHeaderGroup: 1
-  xpValue: 0
+  xpValue: 500
   collectionDistance: 2
   maxSpeed: 100
   smoothTime: 0.1

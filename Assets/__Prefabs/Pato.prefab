@@ -41,7 +41,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5480164594443825868}
   - component: {fileID: 8947401097208141202}
-  - component: {fileID: 6532990679494418986}
   - component: {fileID: 1220579941828103973}
   - component: {fileID: 3649979377829807720}
   - component: {fileID: 2672836928103558581}
@@ -109,9 +108,9 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: -394448813
-  m_SortingLayer: 3
-  m_SortingOrder: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 2144493984, guid: 310bd77327893e54ab863dfc49de80e8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -123,29 +122,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 1
---- !u!136 &6532990679494418986
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2055715870274457301}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.61
-  m_Height: 5.544503
-  m_Direction: 2
-  m_Center: {x: -0.06, y: 1.82, z: 1.2883835}
 --- !u!136 &1220579941828103973
 CapsuleCollider:
   m_ObjectHideFlags: 0

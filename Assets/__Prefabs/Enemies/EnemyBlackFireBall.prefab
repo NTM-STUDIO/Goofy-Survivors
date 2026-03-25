@@ -73,9 +73,9 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 1059366671
+  m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 2ca4b6f5bb3972c469243525b6c68a8a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 0.7372549}
   m_FlipX: 0
@@ -160,9 +160,9 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: -946755919
+  m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 6457755217153254001, guid: e4e8468ce3e087446859197aa0204ab6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -225,7 +225,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 154576972
+  GlobalObjectIdHash: 3834545028
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -255,6 +255,7 @@ MonoBehaviour:
   randomizeOnAwake: 1
   predictiveChance: 0.84
   flankChance: 0.53
+  targetUpdateInterval: 1
   leadTime: 0.5
   flankOffset: 5
   flankFalloffDistance: 20
@@ -262,6 +263,7 @@ MonoBehaviour:
   selfKnockbackForce: 50
   selfKnockbackDuration: 0.5
   showGizmos: 1
+  useScreenSpaceCorrection: 1
 --- !u!50 &-2260984766634285481
 Rigidbody2D:
   serializedVersion: 5
@@ -353,9 +355,6 @@ MonoBehaviour:
   baseHealth: 100
   baseDamage: 20
   moveSpeed: 0.5
-  mutationChance: 0.1
-  minMutationBonus: 0.2
-  maxMutationBonus: 0.5
   healthMutationColor: {r: 0, g: 1, b: 0, a: 1}
   damageMutationColor: {r: 1, g: 0, b: 0, a: 1}
   speedMutationColor: {r: 0, g: 0, b: 1, a: 1}
@@ -370,6 +369,10 @@ MonoBehaviour:
     dropChance: 80
   - orbPrefab: {fileID: 2229382513563764699, guid: 1c9fe8c97995a1a45b65587d3a15ed12, type: 3}
     dropChance: 19
+  CurrentGenes:
+    SpeedMultiplier: 0
+    HealthMultiplier: 0
+    DamageMultiplier: 0
 --- !u!114 &9217191526106843967
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -382,12 +385,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d4a1f79341d43842baf333ee95e1156, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyShooter
+  ShowTopMostFoldoutHeaderGroup: 1
   projectilePrefab: {fileID: 6414582260825821178, guid: 866d1886075e0b241ab503c1839ade05, type: 3}
   firePoint: {fileID: 861511522178342120}
   shootRange: 10
   idealRange: 12
   retreatDistance: 8
   spreadAngleDegrees: 10
+  visualsZAngleOffset: 90
 --- !u!114 &674304623050188649
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -400,6 +405,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3e1d4e0f9954c44aa7f76aa7ef76a5d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TwoSpriteIsometricController
+  ShowTopMostFoldoutHeaderGroup: 1
   frontFacingSprite: {fileID: 6457755217153254001, guid: e4e8468ce3e087446859197aa0204ab6, type: 3}
   backFacingSprite: {fileID: -2411140879512065293, guid: 41cd9202056b5014f99f51ccdc298318, type: 3}
   visualsTransform: {fileID: 3967456697048404461}

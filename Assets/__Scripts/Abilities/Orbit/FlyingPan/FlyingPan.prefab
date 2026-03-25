@@ -48,7 +48,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 630707214
+  GlobalObjectIdHash: 1334257297
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -159,8 +159,6 @@ GameObject:
   - component: {fileID: 3618285991855728780}
   - component: {fileID: 4860135759855517427}
   - component: {fileID: 854667456814695300}
-  - component: {fileID: 909310751659159532}
-  - component: {fileID: 6952282977759467017}
   m_Layer: 0
   m_Name: PanSprite
   m_TagString: Untagged
@@ -224,8 +222,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: -394448813
-  m_SortingLayer: 3
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: e041f833cd474374886d1b2992a35ad6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -260,50 +258,4 @@ CapsuleCollider:
   m_Radius: 2.1613004
   m_Height: 18.779741
   m_Direction: 2
-  m_Center: {x: -0.13203816, y: 0.042691085, z: 7.7041683}
---- !u!136 &909310751659159532
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6942697660582106786}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 1.95
-  m_Height: 18.779741
-  m_Direction: 2
-  m_Center: {x: -1.05, y: 0.042691085, z: 7.7041683}
---- !u!136 &6952282977759467017
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6942697660582106786}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 1.95
-  m_Height: 18.779741
-  m_Direction: 2
-  m_Center: {x: 0.88, y: 0.042691085, z: 7.7041683}
+  m_Center: {x: -0.13203816, y: 1.88, z: 7.7041683}

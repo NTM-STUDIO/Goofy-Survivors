@@ -196,6 +196,33 @@ public class UIManager : MonoBehaviour
         SelectFirstSelectable(painelPrincipal);
     }
 
+    void Update()
+    {
+        // Allow Space to act like Enter/Submit for UI interactions so the player can play with the left hand
+        if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.spaceKey.wasPressedThisFrame)
+        {
+            if (UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject != null)
+            {
+                // Verify if there is an active panel overlaying the game (pause, upgrades, etc.) or if the game is paused
+                // Try executing the submit event on the currently selected UI element
+                var submitHandler = UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject.GetComponent<UnityEngine.EventSystems.ISubmitHandler>();
+                if (submitHandler != null)
+                {
+                    submitHandler.OnSubmit(new UnityEngine.EventSystems.BaseEventData(UnityEngine.EventSystems.EventSystem.current));
+                }
+                else
+                {
+                    // Fallback to Click if it's a generic button
+                    var button = UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject.GetComponent<Button>();
+                    if (button != null)
+                    {
+                        button.onClick.Invoke();
+                    }
+                }
+            }
+        }
+    }
+
     public void OnStartGameButtonClicked()
     {
         // We use the GameManager helper property to safely get the instance.

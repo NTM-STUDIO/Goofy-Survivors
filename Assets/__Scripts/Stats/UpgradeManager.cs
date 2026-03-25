@@ -30,6 +30,8 @@ public class UpgradeManager : NetworkBehaviour
     private bool hasChosenThisRound = false; // Se já escolheu nesta ronda
     private GeneratedUpgrade pendingUpgrade = null; // Upgrade escolhido a aguardar aplicação
 
+    public List<StatUpgradeData> AcquiredUpgrades { get; private set; } = new List<StatUpgradeData>();
+
     public class GeneratedUpgrade
     {
         public StatUpgradeData BaseData;
@@ -340,6 +342,9 @@ public class UpgradeManager : NetworkBehaviour
     {
         if (upgrade == null || playerStats == null) return;
         
+        // Add to acquired list for UI representations (Tab menu / StatsPanel)
+        AcquiredUpgrades.Add(upgrade.BaseData);
+
         float value = upgrade.Value;
         switch (upgrade.BaseData.statToUpgrade)
         {

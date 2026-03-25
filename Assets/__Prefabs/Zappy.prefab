@@ -222,7 +222,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2103521596
+  GlobalObjectIdHash: 3985066765
   InScenePlacedSourceGlobalObjectIdHash: 2103521596
   DeferredDespawnTick: 0
   Ownership: 1
@@ -253,9 +253,6 @@ MonoBehaviour:
   baseHealth: 1000
   baseDamage: 5
   moveSpeed: 35
-  mutationChance: 0.1
-  minMutationBonus: 0.2
-  maxMutationBonus: 0.5
   healthMutationColor: {r: 0, g: 1, b: 0, a: 1}
   damageMutationColor: {r: 1, g: 0, b: 0, a: 1}
   speedMutationColor: {r: 0, g: 0, b: 1, a: 1}
@@ -395,9 +392,9 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: -394448813
-  m_SortingLayer: 3
-  m_SortingOrder: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: -1879231278, guid: 9d1c30f622200f947b8c75ec7b54efc4, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0

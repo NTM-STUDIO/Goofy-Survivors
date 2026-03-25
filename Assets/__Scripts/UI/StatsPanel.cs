@@ -1,6 +1,6 @@
 using UnityEngine;
-using TMPro; // Required for using TextMeshPro UI elements
-
+using UnityEngine.UI;
+using TMPro;
 
 public class StatsPanel : MonoBehaviour
 {
@@ -19,44 +19,55 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI projectileSizeMultiplierText;
     [SerializeField] private TextMeshProUGUI cooldownReductionText;
     [SerializeField] private TextMeshProUGUI durationMultiplierText;
-    [SerializeField] private TextMeshProUGUI knockbackMultiplierText;
     [SerializeField] private TextMeshProUGUI movementSpeedText;
     [SerializeField] private TextMeshProUGUI luckText;
-    [SerializeField] private TextMeshProUGUI pickupRangeText;
     [SerializeField] private TextMeshProUGUI xpGainMultiplierText;
 
+    [Header("Stat Icons (RawImage)")]
+    [SerializeField] private RawImage maxHpIcon;
+    [SerializeField] private RawImage hpRegenIcon;
+    [SerializeField] private RawImage damageIcon;
+    [SerializeField] private RawImage critChanceIcon;
+    [SerializeField] private RawImage critDamageIcon;
+    [SerializeField] private RawImage attackSpeedIcon;
+    [SerializeField] private RawImage projectileCountIcon;
+    [SerializeField] private RawImage projectileSizeIcon;
+    [SerializeField] private RawImage cooldownReductionIcon;
+    [SerializeField] private RawImage durationIcon;
+    [SerializeField] private RawImage movementSpeedIcon;
+    [SerializeField] private RawImage luckIcon;
+    [SerializeField] private RawImage xpGainIcon;
+
+    private bool iconsInitialized = false;
+
+    private void Start()
+    {
+        InitializeIconsFromUpgrades();
+    }
 
     private void OnEnable()
     {
-        // Prefer the LOCAL player's PlayerStats when using Netcode
         var nm = Unity.Netcode.NetworkManager.Singleton;
         if (nm != null && nm.IsListening && nm.LocalClient != null && nm.LocalClient.PlayerObject != null)
         {
             playerStats = nm.LocalClient.PlayerObject.GetComponent<PlayerStats>();
         }
-        // Fallback single-player
+        
         if (playerStats == null)
         {
             playerStats = FindFirstObjectByType<PlayerStats>();
         }
 
-        // It's crucial to check if playerStats is assigned to prevent errors.
-        if (playerStats == null)
-        {
-            Debug.LogError("PlayerStats is not assigned in the StatsPanel inspector!");
-            return;
-        }
+        if (playerStats == null) return;
 
-        // Subscribe to the health change event to update HP in real-time.
         playerStats.OnHealthChanged += UpdateHealth;
 
-        // Perform an initial update of all stats.
         UpdateAllStatDisplays();
+        InitializeIconsFromUpgrades();
     }
 
     private void OnDisable()
     {
-        // Unsubscribe from the event when the UI is disabled or destroyed to prevent memory leaks.
         if (playerStats != null)
         {
             playerStats.OnHealthChanged -= UpdateHealth;
@@ -64,33 +75,68 @@ public class StatsPanel : MonoBehaviour
     }
 
     /// <summary>
-    /// Updates all stat text fields. Call this method when stats are changed (e.g., on level up).
+    /// Busca os icones automaticamente à pool de upgrades disponiveis no UpgradeManager e aplica ao painel de stats.
     /// </summary>
+    public void InitializeIconsFromUpgrades()
+    {
+        if (iconsInitialized) return;
+        
+        var uManager = UpgradeManager.Instance;
+        if (uManager == null || uManager.GetAvailableUpgrades() == null) 
+        {
+            return;
+        }
+
+        var availableUpgrades = uManager.GetAvailableUpgrades();
+
+        foreach (var upgrade in availableUpgrades)
+        {
+            if (upgrade == null || upgrade.icon == null) continue;
+
+            Texture tex = upgrade.icon.texture;
+            
+            switch (upgrade.statToUpgrade)
+            {
+                case StatType.MaxHP: if(maxHpIcon) { maxHpIcon.texture = tex; maxHpIcon.gameObject.SetActive(true); } break;
+                case StatType.HPRegen: if(hpRegenIcon) { hpRegenIcon.texture = tex; hpRegenIcon.gameObject.SetActive(true); } break;
+                case StatType.DamageMultiplier: if(damageIcon) { damageIcon.texture = tex; damageIcon.gameObject.SetActive(true); } break;
+                case StatType.CritChance: if(critChanceIcon) { critChanceIcon.texture = tex; critChanceIcon.gameObject.SetActive(true); } break;
+                case StatType.CritDamageMultiplier: if(critDamageIcon) { critDamageIcon.texture = tex; critDamageIcon.gameObject.SetActive(true); } break;
+                case StatType.AttackSpeedMultiplier: if(attackSpeedIcon) { attackSpeedIcon.texture = tex; attackSpeedIcon.gameObject.SetActive(true); } break;
+                case StatType.ProjectileCount: if(projectileCountIcon) { projectileCountIcon.texture = tex; projectileCountIcon.gameObject.SetActive(true); } break;
+                case StatType.ProjectileSizeMultiplier: if(projectileSizeIcon) { projectileSizeIcon.texture = tex; projectileSizeIcon.gameObject.SetActive(true); } break;
+                case StatType.CooldownReduction: if(cooldownReductionIcon) { cooldownReductionIcon.texture = tex; cooldownReductionIcon.gameObject.SetActive(true); } break;
+                case StatType.DurationMultiplier: if(durationIcon) { durationIcon.texture = tex; durationIcon.gameObject.SetActive(true); } break;
+                case StatType.MovementSpeed: if(movementSpeedIcon) { movementSpeedIcon.texture = tex; movementSpeedIcon.gameObject.SetActive(true); } break;
+                case StatType.Luck: if(luckIcon) { luckIcon.texture = tex; luckIcon.gameObject.SetActive(true); } break;
+                case StatType.XPGainMultiplier: if(xpGainIcon) { xpGainIcon.texture = tex; xpGainIcon.gameObject.SetActive(true); } break;
+            }
+        }
+
+        iconsInitialized = true;
+    }
+
     public void UpdateAllStatDisplays()
     {
         if (playerStats == null) return;
 
-        // Update health first
         UpdateHealth(playerStats.CurrentHp, playerStats.maxHp);
 
-        // Update the rest of the stats
         hpRegenText.text = $"HP Regen: {playerStats.hpRegen:F2}/s";
         damageMultiplierText.text = $"Damage: {playerStats.damageMultiplier * 100:F0}%";
-        critChanceText.text = $"Crit Chance: {playerStats.critChance:P1}"; // P1 formats as a percentage with 1 decimal
+        critChanceText.text = $"Crit Chance: {playerStats.critChance:P1}";
         critDamageMultiplierText.text = $"Crit Damage: {playerStats.critDamageMultiplier * 100:F0}%";
         attackSpeedMultiplierText.text = $"Attack Speed: {playerStats.attackSpeedMultiplier * 100:F0}%";
         projectileCountText.text = $"Projectiles: {playerStats.projectileCount}";
         projectileSizeMultiplierText.text = $"Area/Size: {playerStats.projectileSizeMultiplier * 100:F0}%";
         cooldownReductionText.text = $"CDR: {playerStats.cooldownReduction * 100:F0}%";
         durationMultiplierText.text = $"Duration: {playerStats.durationMultiplier * 100:F0}%";
-        knockbackMultiplierText.text = $"Knockback: {playerStats.knockbackMultiplier * 100:F0}%";
         movementSpeedText.text = $"Move Speed: {playerStats.movementSpeed}";
         luckText.text = $"Luck: {playerStats.luck}";
-        pickupRangeText.text = $"Pickup Range: {playerStats.pickupRange}";
+
         var gm = GameManager.Instance;
         if (gm != null && gm.isP2P)
         {
-            // Show team-shared XP multiplier in P2P
             xpGainMultiplierText.text = $"XP Gain: {gm.SharedXpMultiplier:P0}";
         }
         else
@@ -99,14 +145,8 @@ public class StatsPanel : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Callback method to update the health display.
-    /// This is automatically called by the OnHealthChanged event from PlayerStats.
-    /// </summary>
-    /// <param name="current">Current HP</param>
-    /// <param name="max">Maximum HP</param>
     private void UpdateHealth(int current, int max)
     {
-        maxHpText.text = $"Health: {current} / {max}";
+        if (maxHpText) maxHpText.text = $"Health: {current} / {max}";
     }
 }

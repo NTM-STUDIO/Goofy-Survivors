@@ -75,8 +75,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: -394448813
-  m_SortingLayer: 3
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 96a31097255d40a4191ec8e81eaa0c13, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -206,8 +206,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: -1060449055
-  m_SortingLayer: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 9097c213cdd3918449b2bf6fb4fa5f5b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -318,7 +318,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3487261118
+  GlobalObjectIdHash: 3093874011
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -375,9 +375,6 @@ MonoBehaviour:
   baseHealth: 1e+11
   baseDamage: 0
   moveSpeed: 0
-  mutationChance: 0.1
-  minMutationBonus: 0.2
-  maxMutationBonus: 0.5
   healthMutationColor: {r: 0, g: 1, b: 0, a: 1}
   damageMutationColor: {r: 1, g: 0, b: 0, a: 1}
   speedMutationColor: {r: 0, g: 0, b: 1, a: 1}
@@ -386,3 +383,7 @@ MonoBehaviour:
   resistanceIncreasePerHit: 0.1
   maxResistance: 0.8
   orbDrops: []
+  CurrentGenes:
+    SpeedMultiplier: 0
+    HealthMultiplier: 0
+    DamageMultiplier: 0

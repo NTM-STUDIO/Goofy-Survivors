@@ -16,6 +16,8 @@ public class WeaponController : MonoBehaviour
     private float currentCooldown;
     private bool meleeSpawned = false; // Flag para armas melee permanentes
 
+    protected List<GameObject> spawnedObjects = new List<GameObject>();
+
     public bool IsReady => currentCooldown <= 0f;
 
     void Awake()
@@ -49,6 +51,16 @@ public class WeaponController : MonoBehaviour
                 if (weaponManager != null) weaponManager.NotifyShieldActivated(weaponId);
             }
         }
+    }
+
+    public void Recast()
+    {
+        foreach (var obj in spawnedObjects)
+        {
+            if (obj != null) Destroy(obj);
+        }
+        spawnedObjects.Clear();
+        currentCooldown = 0f;
     }
 
     void Update()
@@ -127,6 +139,7 @@ public class WeaponController : MonoBehaviour
                 Vector3 spawnPos = playerStats.transform.position + Vector3.up * 2f;
 
                 GameObject projectileObj = Instantiate(WeaponData.weaponPrefab, spawnPos, Quaternion.identity);
+                spawnedObjects.Add(projectileObj);
 
                 // Remove NetworkObject em SP
                 SafelyRemoveNetworkObject(projectileObj);
@@ -162,6 +175,7 @@ public class WeaponController : MonoBehaviour
         // Usamos Y + 1.5 para a altura
         Vector3 spawnPos = transform.position + new Vector3(0, 1.5f, 0);
         GameObject weaponObj = Instantiate(WeaponData.weaponPrefab, spawnPos, Quaternion.identity);
+        spawnedObjects.Add(weaponObj);
         
         SafelyRemoveNetworkObject(weaponObj, true);
 
@@ -265,6 +279,7 @@ public class WeaponController : MonoBehaviour
         
         Debug.Log($"[WeaponController] Spawning ShadowClone at {spawnPos} (Player at {stats.transform.position})");
         GameObject cloneObj = Instantiate(WeaponData.weaponPrefab, spawnPos, spawnRot);
+        spawnedObjects.Add(cloneObj);
         
         if (cloneObj.transform.parent != null)
         {
@@ -324,6 +339,7 @@ public class WeaponController : MonoBehaviour
         {
             // 1. Instancia sem pai
             GameObject orbitingWeaponObj = Instantiate(WeaponData.weaponPrefab, transform.position, Quaternion.identity);
+            spawnedObjects.Add(orbitingWeaponObj);
 
             // 2. Remove NetworkObject ANTES de definir o pai
             SafelyRemoveNetworkObject(orbitingWeaponObj);
@@ -357,6 +373,7 @@ public class WeaponController : MonoBehaviour
 
             // 1. Instancia sem pai
             GameObject auraObj = Instantiate(WeaponData.weaponPrefab, parent.position, Quaternion.identity);
+            spawnedObjects.Add(auraObj);
 
             // 2. Remove NetworkObject
             SafelyRemoveNetworkObject(auraObj); // Will use Destroy (deferred) if inside physics callback

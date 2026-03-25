@@ -214,6 +214,21 @@ public class PlayerExperience : NetworkBehaviour
 
         int newLvl = CurrentLevel; // Lê o valor atualizado
 
+        // Curar jogadores e recastar armas (Heal e Recast)
+        var allStats = FindObjectsByType<PlayerStats>(FindObjectsSortMode.None);
+        foreach (var stat in allStats)
+        {
+            if (stat != null)
+            {
+                stat.Heal(newLvl);
+                
+                if (stat.TryGetComponent<PlayerWeaponManager>(out var weaponManager))
+                {
+                    weaponManager.RecastAllWeapons();
+                }
+            }
+        }
+
         // Calcula nova dificuldade
         if (newLvl <= 10) currentReq += earlyLevelXpBonus;
         else if (newLvl <= 25) currentReq *= midGameScalingFactor;
