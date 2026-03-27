@@ -1,5 +1,7 @@
 using UnityEngine;
+using Unity.Entities;
 using Unity.Netcode;
+using GoofySurvivors.ECS;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -38,6 +40,12 @@ public class MapGenerator : NetworkBehaviour
     private Dictionary<Vector2Int, List<DecorationInfo>> virtualMap = new Dictionary<Vector2Int, List<DecorationInfo>>();
     // Stores ACTUAL GameObjects currently visible
     private Dictionary<Vector2Int, List<GameObject>> activeChunks = new Dictionary<Vector2Int, List<GameObject>>();
+    // Stores ECS Entities
+    private Dictionary<Vector2Int, Unity.Collections.NativeList<Entity>> activeECSChunks = new Dictionary<Vector2Int, Unity.Collections.NativeList<Entity>>();
+    
+    [Header("ECS Setup")]
+    public bool useECS = true;
+    public DecorationAuthoring ecsAuthoringData;
     
     private struct DecorationInfo
     {
@@ -205,10 +213,43 @@ public class MapGenerator : NetworkBehaviour
     {
         // If already active or no data exists, skip
         if (activeChunks.ContainsKey(chunkCoord)) return;
+        if (activeECSChunks.ContainsKey(chunkCoord)) return;
         if (!virtualMap.ContainsKey(chunkCoord)) return;
 
-        List<GameObject> spawnedObjects = new List<GameObject>();
         List<DecorationInfo> dataList = virtualMap[chunkCoord];
+
+        if (useECS && ecsAuthoringData != null)
+        {
+            var em = World.DefaultGameObjectInjectionWorld.EntityManager;
+            
+            // Try to find the Buffer of prefabs on the Authoring script's associated entity
+            // Using a simple query since Authoring shouldn't be duplicated or we can just fetch it globally
+            var query = em.CreateEntityQuery(typeof(DecorationPrefabElement));
+            if (!query.IsEmpty)
+            {
+                var prefabBuffer = query.GetSingletonBuffer<DecorationPrefabElement>();
+                Unity.Collections.NativeList<Entity> spawnedEntities = new Unity.Collections.NativeList<Entity>(dataList.Count, Unity.Collections.Allocator.Persistent);
+
+                foreach (var info in dataList)
+                {
+                    if (info.prefabIndex < prefabBuffer.Length)
+                    {
+                        var e = em.Instantiate(prefabBuffer[info.prefabIndex].Prefab);
+                        em.SetComponentData(e, new Unity.Transforms.LocalTransform()
+                        {
+                            Position = info.position,
+                            Rotation = Unity.Mathematics.quaternion.identity,
+                            Scale = 1f
+                        });
+                        spawnedEntities.Add(e);
+                    }
+                }
+                activeECSChunks.Add(chunkCoord, spawnedEntities);
+                return;
+            }
+        }
+
+        List<GameObject> spawnedObjects = new List<GameObject>();
 
         // Create a parent container for tidiness
         GameObject chunkParent = new GameObject($"Chunk_{chunkCoord.x}_{chunkCoord.y}");
@@ -234,6 +275,14 @@ public class MapGenerator : NetworkBehaviour
 
     private void UnloadChunk(Vector2Int chunkCoord)
     {
+        if (activeECSChunks.TryGetValue(chunkCoord, out var ecsList))
+        {
+            var em = World.DefaultGameObjectInjectionWorld.EntityManager;
+            em.DestroyEntity(ecsList.AsArray());
+            ecsList.Dispose();
+            activeECSChunks.Remove(chunkCoord);
+        }
+
         if (activeChunks.TryGetValue(chunkCoord, out List<GameObject> objects))
         {
             foreach (var obj in objects)
@@ -253,6 +302,21 @@ public class MapGenerator : NetworkBehaviour
             foreach (var obj in chunkList) Destroy(obj);
         }
         activeChunks.Clear();
+
+        if (World.DefaultGameObjectInjectionWorld != null)
+        {
+            var em = World.DefaultGameObjectInjectionWorld.EntityManager;
+            foreach (var chunkList in activeECSChunks.Values)
+            {
+                if (chunkList.IsCreated)
+                {
+                    em.DestroyEntity(chunkList.AsArray());
+                    chunkList.Dispose();
+                }
+            }
+        }
+        activeECSChunks.Clear();
+
         lastPlayerChunk = new Vector2Int(-999, -999);
 
         // Clear children

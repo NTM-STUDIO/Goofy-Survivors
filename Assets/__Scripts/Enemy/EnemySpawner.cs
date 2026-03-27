@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 public class EnemySpawner : NetworkBehaviour
 {
+    [Header("Object Pooling")]
+    public Dictionary<string, Queue<GameObject>> enemyPool = new Dictionary<string, Queue<GameObject>>();
+
     private enum SpawnSide { Left, Right, Top, Bottom }
 
     private Coroutine spawningCoroutine;
@@ -96,19 +99,59 @@ public class EnemySpawner : NetworkBehaviour
         // Initialize Genes
         InitializeGeneticAlgorithm();
     }
-    
-public void StopAndReset()
-    {
-        Debug.Log("[EnemySpawner] StopAndReset called. Resetting waves.");
 
-        if (spawningCoroutine != null)
+    public GameObject GetEnemyFromPool(GameObject prefab, Vector3 position, Quaternion rotation)
+    {
+        string poolKey = prefab.name;
+        if (!enemyPool.ContainsKey(poolKey)) 
         {
-            StopCoroutine(spawningCoroutine);
-            spawningCoroutine = null;
+            enemyPool[poolKey] = new Queue<GameObject>();
         }
 
-        StopAllCoroutines();
+        if (enemyPool[poolKey].Count > 0)
+        {
+            GameObject pooledObj = enemyPool[poolKey].Dequeue();
+            if (pooledObj != null)
+            {
+                pooledObj.transform.position = position;
+                pooledObj.transform.rotation = rotation;
+                pooledObj.SetActive(true);
+                
+                var stats = pooledObj.GetComponent<EnemyStats>();
+                if (stats != null) stats.ResetEnemyStats();
+                
+                return pooledObj;
+            }
+        }
 
+        GameObject newEnemy = Instantiate(prefab, position, rotation);
+        newEnemy.name = prefab.name; // Keep name clean for pool matching
+        return newEnemy;
+    }
+
+    public void ReturnEnemyToPool(GameObject enemy)
+    {
+        if (enemy == null) return;
+        
+        var netObj = enemy.GetComponent<NetworkObject>();
+        if (netObj != null && netObj.IsSpawned)
+        {
+            netObj.Despawn(false);
+        }
+        
+        enemy.SetActive(false);
+
+        string poolKey = enemy.name.Replace("(Clone)", "").Trim();
+        if (!enemyPool.ContainsKey(poolKey))
+        {
+            enemyPool[poolKey] = new Queue<GameObject>();
+        }
+        enemyPool[poolKey].Enqueue(enemy);
+    }
+
+    public void StopAndReset()
+    {
+        if (spawningCoroutine != null)
         waveIndex = 0; 
         
         // Reset genetic algorithm to default genes for fresh start
@@ -351,7 +394,7 @@ public void StopAndReset()
                         {
                             // Ensure prefab is registered and has a NetworkObject so it replicates to clients
                             RuntimeNetworkPrefabRegistry.TryRegister(selectedEnemy.enemyPrefab);
-                            GameObject spawned = Instantiate(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
+                            GameObject spawned = GetEnemyFromPool(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
                             
                             // CRITICAL: Apply genes and mutations IMMEDIATELY after Instantiate, BEFORE Start() runs
                             var stats = spawned.GetComponent<EnemyStats>();
@@ -385,7 +428,7 @@ public void StopAndReset()
                         else
                         {
                             // Single-player or no network: classic instantiate.
-                            GameObject spawned = Instantiate(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
+                            GameObject spawned = GetEnemyFromPool(selectedEnemy.enemyPrefab, spawnPos, Quaternion.identity);
                             
                             // CRITICAL: Apply genes and mutations IMMEDIATELY after Instantiate, BEFORE Start() runs
                             var stats = spawned.GetComponent<EnemyStats>();
@@ -858,7 +901,7 @@ public void StopAndReset()
             if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
             RuntimeNetworkPrefabRegistry.TryRegister(prefabToSpawn);
-            GameObject spawned = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
+            GameObject spawned = GetEnemyFromPool(prefabToSpawn, spawnPos, Quaternion.identity);
             var netObj = spawned.GetComponent<NetworkObject>();
             if (netObj == null)
             {
@@ -882,7 +925,7 @@ public void StopAndReset()
         }
         else
         {
-            GameObject spawned = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
+            GameObject spawned = GetEnemyFromPool(prefabToSpawn, spawnPos, Quaternion.identity);
             var fadeEffect = spawned.AddComponent<EnemyFadeEffect>();
             fadeEffect.StartFadeIn(fadeInDuration);
         }

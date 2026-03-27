@@ -216,7 +216,7 @@ public class EnemyDespawner : MonoBehaviour
         if (enemy != null)
         {
 
-            Destroy(enemy);
+            EnemySpawner.Instance.ReturnEnemyToPool(enemy);
             
             // Spawn a new enemy
             if (enemySpawner != null)

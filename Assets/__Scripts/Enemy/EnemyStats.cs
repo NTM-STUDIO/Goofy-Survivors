@@ -148,6 +148,27 @@ public class EnemyStats : NetworkBehaviour
 
     void Start()
     {
+        ResetEnemyStats();
+    }
+
+    public void ResetEnemyStats()
+    {
+        // Reset Physics
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        // Reset visual color
+        if (enemyRenderer != null)
+        {
+            enemyRenderer.color = originalColor;
+        }
+
+        IsKnockedBack = false;
+        currentKnockbackResistance = knockbackResistance;
+        
         // SERVER-SIDE INITIALIZATION
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
@@ -592,11 +613,11 @@ public class EnemyStats : NetworkBehaviour
                 var netObj = GetComponent<NetworkObject>();
                 if (netObj != null)
                 {
-                    netObj.Despawn(true);
+                    EnemySpawner.Instance.ReturnEnemyToPool(gameObject);
                 }
                 else
                 {
-                    Destroy(gameObject);
+                    EnemySpawner.Instance.ReturnEnemyToPool(gameObject);
                 }
             }
             else
@@ -611,7 +632,7 @@ public class EnemyStats : NetworkBehaviour
             {
                 DropsAndLoadout.WeaponDropSystem.Instance.SpawnPreRolledItemDrop(preRolledItemDrop, transform.position);
             }
-            Destroy(gameObject);
+            EnemySpawner.Instance.ReturnEnemyToPool(gameObject);
         }
     }
 

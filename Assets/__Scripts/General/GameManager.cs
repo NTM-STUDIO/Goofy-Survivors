@@ -368,7 +368,7 @@ public class GameManager : NetworkBehaviour
         if (!isP2P)
         {
             // Fully clean reload for single-player
-            SceneManager.LoadScene("Splash");
+            SceneManager.LoadScene("P2P");
             if (Instance == this)
             {
                 Instance = null;
