@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78a52d7d696b0d049a0a80709b276b1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bloomIntensity: 0.91
+  bloomIntensity: 0.5
   emissionColor: {r: 1, g: 1, b: 1, a: 1}
   emissionPower: 0
 --- !u!95 &6913759490006984456
@@ -220,6 +220,7 @@ GameObject:
   - component: {fileID: 6297376134751599430}
   - component: {fileID: 215032439087966243}
   - component: {fileID: -8133759210201554829}
+  - component: {fileID: -8418596519079212438}
   m_Layer: 7
   m_Name: EsqMelee
   m_TagString: Enemy
@@ -420,3 +421,26 @@ MonoBehaviour:
   targetUpdateInterval: 1
   attackRange: 1.5
   attackCooldown: 1.5
+<<<<<<< Updated upstream
+=======
+--- !u!114 &-8418596519079212438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9116392235869641759}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ab96253c06ad6e45a44699560068fcf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Health: 100
+  Damage: 10
+  Speed: 10
+  VisualsObject: {fileID: 2260676395805754897}
+  UpRightSprite: {fileID: 21300000, guid: 2db4e1c95741fe84db6db9e66d988321, type: 3}
+  UpLeftSprite: {fileID: 21300000, guid: 12b9554dd93011c498674669bcf79e7e, type: 3}
+  DownRightSprite: {fileID: 21300000, guid: 23c36bcfbe251274b94f5f19200b6e8d, type: 3}
+  DownLeftSprite: {fileID: 21300000, guid: fd257706353d63341b58bc7ec291741a, type: 3}
+>>>>>>> Stashed changes

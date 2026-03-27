@@ -188,14 +188,14 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 416769018}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fb2ed2f2c1a9b1e468d4c25f7cdce444, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SkeletonPrefab: {fileID: 9116392235869641759, guid: a925d913644aeb345998926dcc467c32, type: 3}
-  SpawnRate: 2
-  SpawnRadius: 10
+  SkeletonPrefab: {fileID: 9116392235869641759, guid: 8d1447ec3e124df48ae3e6ccbd13eed8, type: 3}
+  SpawnRate: 10
+  SpawnRadius: 50
 --- !u!4 &416769020
 Transform:
   m_ObjectHideFlags: 0

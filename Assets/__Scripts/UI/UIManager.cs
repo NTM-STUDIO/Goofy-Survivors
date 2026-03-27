@@ -157,7 +157,7 @@ public class UIManager : MonoBehaviour
         if (midgameEventPanel != null) midgameEventPanel.SetActive(false);
     }
 
-    void Awake()
+/*     void Awake()
     {
         connectionManager = ConnectionManager.Instance;
         if (connectionManager == null)
@@ -172,7 +172,7 @@ public class UIManager : MonoBehaviour
         connectionManager.OnStartingClient += HandleStartingClient;
         connectionManager.OnClientConnected += HandleClientSuccess;
         connectionManager.OnConnectionFailed += HandleConnectionFailure;
-    }
+    } */
 
     void Start()
     {
